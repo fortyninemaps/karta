@@ -253,7 +253,7 @@ class Grid(object):
 
     def MinMax(self):
         """ Return the minimum and maximum value of data array. """
-        A = self.data[isnan(self.data)==False]
+        A = self.data[np.isnan(self.data)==False]
         return (A.min(), A.max())
 
     def Sample(self, x, y):
