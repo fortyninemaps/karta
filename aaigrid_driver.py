@@ -143,9 +143,18 @@ class Grid(object):
         return xi, yi
 
     def Read(self, fnm):
-        return self.FromFile(fnm)
+        """ Read an existing ASCII grid file. """
+        return self.fromfile(fnm)
+
+    def read(self, fnm):
+        """ Read an existing ASCII grid file. """
+        return self.fromfile(fnm)
 
     def FromFile(self, fnm):
+        """ Read an existing ASCII grid file. """
+        return self.fromfile(fnm)
+
+    def fromfile(self, fnm):
         """ Read an existing ASCII grid file. """
         try:
             h = []
@@ -208,6 +217,9 @@ class Grid(object):
         return
 
     def FromArray(self, A, hdr):
+        return fromarray(A, hdr)
+
+    def fromarray(self, A, hdr):
         """ Read data from a 2d numpy array. The hdr argument is a dictionary
         of header information, including:
             ncols: [int]
@@ -224,6 +236,9 @@ class Grid(object):
         pass
 
     def ToFile(self, f, reference='center'):
+        return tofile(f, reference='center')
+
+    def tofile(self, f, reference='center'):
         """ Save internal data to f, a file-like object. This is rather slow. """
         if self.data is None:
             raise AAIError("no data to write!")
@@ -245,6 +260,9 @@ class Grid(object):
         return
 
     def ToArray(self):
+        return toarray()
+
+    def toarray(self):
         """ Return a 2d array with internal data. Header information can be
         obtained with Grid.hdr.
         This is just a nicer way of calling Grid.data.copy().
@@ -252,11 +270,17 @@ class Grid(object):
         return self.data.copy()[::-1,:]
 
     def MinMax(self):
+        return minmax()
+
+    def minmax(self):
         """ Return the minimum and maximum value of data array. """
         A = self.data[np.isnan(self.data)==False]
         return (A.min(), A.max())
 
     def Sample(self, x, y):
+        return sample(x, y)
+
+    def sample(self, x, y):
         """ Return the value nearest to x, y, as well as center coordinates of
         the grid cell actually sampled. """
         xi, yi = self._get_indices(x, y)
@@ -274,6 +298,9 @@ class Grid(object):
             return z, (xs, ys)
 
     def GetProfile(self, x0, y0, xf, yf, resolution=10.0):
+        return get_profile(x0, y0, xf, yf, resolution=10.0)
+
+    def get_profile(self, x0, y0, xf, yf, resolution=10.0):
         """ Sample a profile along a line from (x0, y0) to
         (xf, yf), with interval resolution. Return an ndarray.
         Does not interpolate.
@@ -293,11 +320,17 @@ class Grid(object):
         return np.array(z)
 
     def Clip(self, bounds):
+        return clip(bounds)
+
+    def clip(bounds):
         """ Clip the data within an array to bounds = [min, max]. """
         self.data = self.data.clip(bounds[0], bounds[1])
         return
 
     def Resize(self, te):
+        return resize(te)
+
+    def resize(self, te):
         """ Resize array to fit within extents given by te. te is a tuple in the
         form (xmin, xmamx, ymin, ymax).
         If the new dimensions are smaller, the data is clipped. If they are
