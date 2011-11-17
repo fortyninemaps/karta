@@ -12,6 +12,7 @@ class GPXParser:
     """ Used for reading out track data from the GPX files that can be
     exported by many hand-held GPS units. """
     def __init__(self, filename):
+        self.filename = filename
         self.tracks = {}
         try:
             doc = minidom.parse(filename)
@@ -22,7 +23,7 @@ class GPXParser:
         for node in gpx.getElementsByTagName('trk'):
             self.ParseTrack(node)
 
-    def ParseTrack(self, trk):
+    def parsetrack(self, trk):
         name = trk.getElementsByTagName('name')[0].firstChild.data
         if not name in self.tracks:
             self.tracks[name] = {}
@@ -34,20 +35,29 @@ class GPXParser:
                 time = trkpt.getElementsByTagName('time')[0].firstChild.data
                 self.tracks[name][time]={'lat':lat,'lon':lon,'ele':ele}
 
-    def List(self):
+    def list(self):
         """ List all track names within GPXParser. """
         return [str(i) for i in self.tracks.keys()]
 
-    def GetTrack(self, name):
+    def gettrack(self, name):
         """ Return a list of triples containing track coordinates, sorted by
-        time. """
+        time, for track with name. """
         times = self.tracks[name].keys()
         times.sort()
         points = [self.tracks[name][time] for time in times]
         return [(point['lon'],point['lat'],point['ele']) for point in points]
 
-    def GetPolyline(self):
+    def gettimes(self, name):
+        """ Return a list of times for the track with name. """
+        times = self.tracks[name].keys()
+        times.sort()
+        return times
+
+    def getpolyline(self):
+        """ Return a guppy.Polyline containing all tracks. """
         pass
 
-    def SplitNaturalBreaks(self):
+    def split_natural_breaks(self, name):
+        """ Split a track into linear natural segments, with nodes where
+        direction changes. """
         pass
