@@ -10,7 +10,7 @@ from math import sin, cos, sqrt
 import numpy as np
 import traceback
 
-class Grid(object):
+class AAIGrid(object):
     def __init__(self, incoming=None, hdr=None):
         """ Contains the table of data from an ESRI ASCII raster file.
         If fnm (str) is not provided, then the Read() method must be called
@@ -402,7 +402,7 @@ class Grid(object):
         else:
             raise AAIError("no data to resize")
 
-
+Grid = AAIGrid      # For backwards compatibility
 
 class AAIError(Exception):
     def __init__(self, value, detail=None):
