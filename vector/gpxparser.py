@@ -29,7 +29,7 @@ class GPXParser:
             sys.stderr.write('Error occurred parsing {0}\n'.format(filename))
         gpx = doc.documentElement
         for node in gpx.getElementsByTagName('trk'):
-            self.ParseTrack(node)
+            self.parsetrack(node)
 
     def project(self, **kwargs):
         """ Wrapper for libproj.4 Proj class. """
@@ -46,7 +46,7 @@ class GPXParser:
                 lat = self.track[name][t]['lat']
                 ele = self.track[name][t]['ele']
                 x, y = self.Projector(lon, lat)
-                self.tracks_proj[name][t] = {'x':x, 'y':y, 'ele',ele}
+                self.tracks_proj[name][t] = {'x':x, 'y':y, 'ele':ele}
 
     def parsetrack(self, trk):
         name = trk.getElementsByTagName('name')[0].firstChild.data
@@ -60,7 +60,7 @@ class GPXParser:
                 time = trkpt.getElementsByTagName('time')[0].firstChild.data
                 self.tracks[name][time]={'lat':lat,'lon':lon,'ele':ele}
 
-    def list(self):
+    def getnames(self):
         """ List all track names within GPXParser. """
         return [str(i) for i in self.tracks.keys()]
 
