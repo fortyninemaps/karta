@@ -217,7 +217,7 @@ class AAIGrid(object):
         return
 
     def FromArray(self, A, hdr):
-        return fromarray(A, hdr)
+        return self.fromarray(A, hdr)
 
     def fromarray(self, A, hdr):
         """ Read data from a 2d numpy array. The hdr argument is a dictionary
@@ -236,7 +236,7 @@ class AAIGrid(object):
         pass
 
     def ToFile(self, f, reference='center'):
-        return tofile(f, reference='center')
+        return self.tofile(f, reference='center')
 
     def tofile(self, f, reference='center'):
         """ Save internal data to f, a file-like object. This is rather slow. """
@@ -260,7 +260,7 @@ class AAIGrid(object):
         return
 
     def ToArray(self):
-        return toarray()
+        return self.toarray()
 
     def toarray(self):
         """ Return a 2d array with internal data. Header information can be
@@ -270,7 +270,7 @@ class AAIGrid(object):
         return self.data.copy()[::-1,:]
 
     def MinMax(self):
-        return minmax()
+        return self.minmax()
 
     def minmax(self):
         """ Return the minimum and maximum value of data array. """
@@ -278,7 +278,7 @@ class AAIGrid(object):
         return (A.min(), A.max())
 
     def Sample(self, x, y):
-        return sample(x, y)
+        return self.sample(x, y)
 
     def sample(self, x, y):
         """ Return the value nearest to x, y, as well as center coordinates of
@@ -298,7 +298,7 @@ class AAIGrid(object):
             return z, (xs, ys)
 
     def GetProfile(self, x0, y0, xf, yf, resolution=10.0):
-        return get_profile(x0, y0, xf, yf, resolution=10.0)
+        return self.get_profile(x0, y0, xf, yf, resolution=10.0)
 
     def get_profile(self, x0, y0, xf, yf, resolution=10.0):
         """ Sample a profile along a line from (x0, y0) to
@@ -320,7 +320,7 @@ class AAIGrid(object):
         return np.array(z)
 
     def Clip(self, bounds):
-        return clip(bounds)
+        return self.clip(bounds)
 
     def clip(bounds):
         """ Clip the data within an array to bounds = [min, max]. """
@@ -328,7 +328,7 @@ class AAIGrid(object):
         return
 
     def Resize(self, te):
-        return resize(te)
+        return self.resize(te)
 
     def resize(self, te):
         """ Resize array to fit within extents given by te. te is a tuple in the
