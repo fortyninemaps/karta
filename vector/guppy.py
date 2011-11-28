@@ -200,6 +200,16 @@ class Multipoint(object):
 
         return point(point_dist[distances.index(min(distances))][0])
 
+    def max_dimension(self):
+        """ Return the two points in the Multipoint that are furthest
+        from each other. """
+        dist = lambda xy0, xy1: math.sqrt((xy1[0]-xy0[0])**2 + (xy1[1]-xy0[1])**2)
+
+        P = [(p0, p1) for p0 in self.vertices for p1 in self.vertices]
+        D = map(dist, (p[0] for p in P), (p[1] for p in P))
+        return P[D.index(max(D))]
+
+
 
 class Polyline(Multipoint):
     """ This defines the polyline class, from which geographic line
