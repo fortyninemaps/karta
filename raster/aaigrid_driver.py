@@ -1,7 +1,8 @@
 """
 Python ESRI ASCII grid driver
 
-The primary class is Grid, which can be called with a filename argument to open a grid, or can read data from a numpy array.
+The primary class is AAIGrid, which can be called with a filename
+argument to open a grid, or can read data from a numpy array.
 
 Written by Nat Wilson
 """
@@ -13,8 +14,12 @@ import traceback
 class AAIGrid(object):
     def __init__(self, incoming=None, hdr=None):
         """ Contains the table of data from an ESRI ASCII raster file.
-        If fnm (str) is not provided, then the Read() method must be called
-        later with a suitable filename.
+
+        incoming    : either a filename or an ndarray containing the
+                      raster data. If incoming is not provided, then
+                      read() must be called later with a suitable
+                      filename.
+        hdr         : dictionary containing AAIGrid header information
         """
 
         self.data = None
@@ -29,16 +34,16 @@ class AAIGrid(object):
         self.hdr['nodata_value'] = None
         if incoming is not None:
             if isinstance(incoming, str):
-                self.FromFile(incoming)
+                self.fromfile(incoming)
             elif isinstance(incoming, np.ndarray):
-                self.FromArray(incoming, hdr)
+                self.fromarray(incoming, hdr)
 
     def __str__(self):
         if self.data is None:
             stat = 'empty'
         else:
             stat = 'populated'
-        return "{status} AAI Grid instance".format(status=stat)
+        return "{status} AAIGrid instance".format(status=stat)
 
     def __len__(self):
         if self.data is None:
@@ -47,36 +52,36 @@ class AAIGrid(object):
             return len(self.data)
 
     def __add__(self, other):
-        if isinstance(other, Grid):
+        if isinstance(other, AAIGrid):
             if (self.data is not None) and (other.data is not None):
-                return Grid(self.data + other.data, self.hdr)
+                return AAIGrid(self.data + other.data, self.hdr)
             else:
                 raise ValueError("cannot add NoneType data array")
         else:
             raise AAIError("addition with other types not defined")
 
     def __sub__(self, other):
-        if isinstance(other, Grid):
+        if isinstance(other, AAIGrid):
             if (self.data is not None) and (other.data is not None):
-                return Grid(self.data - other.data, self.hdr)
+                return AAIGrid(self.data - other.data, self.hdr)
             else:
                 raise ValueError("cannot subtract NoneType data array")
         else:
             raise AAIError("subtraction with other types not defined")
 
     def __mul__(self, other):
-        if isinstance(other, Grid):
+        if isinstance(other, AAIGrid):
             if (self.data is not None) and (other.data is not None):
-                return Grid(self.data * other.data, self.hdr)
+                return AAIGrid(self.data * other.data, self.hdr)
             else:
                 raise ValueError("cannot multiply NoneType data array")
         else:
             raise AAIError("multiplication with other types not defined")
 
     def __div__(self, other):
-        if isinstance(other, Grid):
+        if isinstance(other, AAIGrid):
             if (self.data is not None) and (other.data is not None):
-                return Grid(self.data / other.data, self.hdr)
+                return AAIGrid(self.data / other.data, self.hdr)
             else:
                 raise ValueError("cannot divide NoneType data array")
         else:
@@ -243,7 +248,7 @@ class AAIGrid(object):
         if self.data is None:
             raise AAIError("no data to write!")
         if reference not in ('center', 'corner'):
-            raise AAIError("reference in Grid.Save() must be 'center' or 'corner'")
+            raise AAIError("reference in AAIGrid.tofile() must be 'center' or 'corner'")
         data_a = self.data.copy()
         data_a[np.isnan(data_a)] = self.hdr['nodata_value']
         f.write("NCOLS {0}\n".format(self.hdr['ncols']))
@@ -264,8 +269,8 @@ class AAIGrid(object):
 
     def toarray(self):
         """ Return a 2d array with internal data. Header information can be
-        obtained with Grid.hdr.
-        This is just a nicer way of calling Grid.data.copy().
+        obtained with AAIGrid.hdr.
+        This is just a nicer way of calling AAIGrid.data.copy().
         """
         return self.data.copy()[::-1,:]
 
@@ -322,8 +327,8 @@ class AAIGrid(object):
     def Clip(self, bounds):
         return self.clip(bounds)
 
-    def clip(bounds):
-        """ Clip the data within an array to bounds = [min, max]. """
+    def clip(self, bounds):
+        """ Clip the z-range in place to bounds = [min, max]. """
         self.data = self.data.clip(bounds[0], bounds[1])
         return
 

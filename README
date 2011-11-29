@@ -9,7 +9,7 @@ geo_tools should be considered experimental, and no assurances are
 provided about the correctness of the code or results derived using it.
 
 The vector module contains a snapshot of the pyshp shapefile library,
-available at http://code.google.com/p/pyshp/. This library is availble
+available at http://code.google.com/p/pyshp/. This library is available
 under the MIT license.
 
 MIT License:
