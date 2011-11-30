@@ -147,6 +147,14 @@ class AAIGrid(object):
         yi = self.data.shape[0] - int(round((y-y0) / d)) - 1
         return xi, yi
 
+    def max(self):
+        """ Return the maximum non-nan in self.data. """
+        return self.data[np.isnan(self.data)==False].max()
+
+    def min(self):
+        """ Return the minimum non-nan in self.data. """
+        return self.data[np.isnan(self.data)==False].min()
+
     def Read(self, fnm):
         """ Read an existing ASCII grid file. """
         return self.fromfile(fnm)
