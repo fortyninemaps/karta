@@ -15,11 +15,12 @@ class AAIGrid(object):
     def __init__(self, incoming=None, hdr=None):
         """ Contains the table of data from an ESRI ASCII raster file.
 
-        incoming    : either a filename or an ndarray containing the
+        *incoming*  : either a filename or an ndarray containing the
                       raster data. If incoming is not provided, then
                       read() must be called later with a suitable
                       filename.
-        hdr         : dictionary containing AAIGrid header information
+
+        *hdr*       : dictionary containing AAIGrid header information
         """
 
         self.data = None
@@ -252,25 +253,42 @@ class AAIGrid(object):
         return self.tofile(f, reference='center')
 
     def tofile(self, f, reference='center'):
-        """ Save internal data to f, a file-like object. This is rather slow. """
+        """ Save internal data to f, either a file-like object or a
+        filename. """
         if self.data is None:
             raise AAIError("no data to write!")
+
         if reference not in ('center', 'corner'):
             raise AAIError("reference in AAIGrid.tofile() must be 'center' or 'corner'")
-        data_a = self.data.copy()
-        data_a[np.isnan(data_a)] = self.hdr['nodata_value']
-        f.write("NCOLS {0}\n".format(self.hdr['ncols']))
-        f.write("NROWS {0}\n".format(self.hdr['nrows']))
-        if reference == 'center':
-            f.write("XLLCENTER {0}\n".format(self.hdr['xllcenter']))
-            f.write("YLLCENTER {0}\n".format(self.hdr['yllcenter']))
-        elif reference == 'corner':
-            f.write("XLLCORNER {0}\n".format(self.hdr['xllcorner']))
-            f.write("YLLCORNER {0}\n".format(self.hdr['yllcorner']))
-        f.write("CELLSIZE {0}\n".format(self.hdr['cellsize']))
-        f.write("NODATA_VALUE {0}\n".format(self.hdr['nodata_value']))
-        #f.writelines([str(row).replace('\n','')[1:-1] + '\n' for row in data_a])
-        f.writelines([str(row).replace(',','')[1:-1] + '\n' for row in data_a.tolist()])
+
+        try:
+            f.read()
+        except AttributeError:
+            f = open(f, "w")
+        except IOError:
+            pass
+
+        try:
+            data_a = self.data.copy()
+            data_a[np.isnan(data_a)] = self.hdr['nodata_value']
+
+            f.write("NCOLS {0}\n".format(self.hdr['ncols']))
+            f.write("NROWS {0}\n".format(self.hdr['nrows']))
+            if reference == 'center':
+                f.write("XLLCENTER {0}\n".format(self.hdr['xllcenter']))
+                f.write("YLLCENTER {0}\n".format(self.hdr['yllcenter']))
+            elif reference == 'corner':
+                f.write("XLLCORNER {0}\n".format(self.hdr['xllcorner']))
+                f.write("YLLCORNER {0}\n".format(self.hdr['yllcorner']))
+            f.write("CELLSIZE {0}\n".format(self.hdr['cellsize']))
+            f.write("NODATA_VALUE {0}\n".format(self.hdr['nodata_value']))
+            f.writelines([str(row).replace(',','')[1:-1] +
+                            '\n' for row in data_a.tolist()])
+
+        except:
+            traceback.print_exc()
+        finally:
+            f.close()
         return
 
     def ToArray(self):
