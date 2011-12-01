@@ -269,7 +269,8 @@ class AAIGrid(object):
             f.write("YLLCORNER {0}\n".format(self.hdr['yllcorner']))
         f.write("CELLSIZE {0}\n".format(self.hdr['cellsize']))
         f.write("NODATA_VALUE {0}\n".format(self.hdr['nodata_value']))
-        f.writelines([str(row).replace('\n','')[1:-1] + '\n' for row in data_a])
+        #f.writelines([str(row).replace('\n','')[1:-1] + '\n' for row in data_a])
+        f.writelines([str(row).replace(',','')[1:-1] + '\n' for row in data_a.tolist()])
         return
 
     def ToArray(self):
