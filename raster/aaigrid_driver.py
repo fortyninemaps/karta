@@ -315,22 +315,37 @@ class AAIGrid(object):
         return self.get_profile(x0, y0, xf, yf, resolution=10.0)
 
     def get_profile(self, x0, y0, xf, yf, resolution=10.0):
-        """ Sample a profile along a line from (x0, y0) to
-        (xf, yf), with interval resolution. Return an ndarray.
+        """ Sample along a line defined as *segments*.
+
+        *segments*      :   iterable containing (x,y) pairs
+        *resolution*    :   sample spacing
+
+        Returns an ndarray.
         Does not interpolate.
         """
-        xlen = xf-x0
-        ylen = yf-y0
-        d = sqrt((xf - x0)**2 + (yf - y0)**2)
+
         z = []
         p = 0
-        while p < d:
-            fd = p / d
-            fx = fd*xlen
-            fy = fd*ylen
-            xi, yi = self._get_indices(x0+fx, y0+fy)
-            z.append(self.data[yi, xi])
-            p += resolution
+        for s, f in zip(segments[:-1], segments[1:]):
+
+            x0 = s[0]
+            y0 = s[1]
+            xf = f[0]
+            yf = f[1]
+
+            xlen = xf-x0
+            ylen = yf-y0
+            d = sqrt((xf - x0)**2 + (yf - y0)**2)
+
+            while p < d:
+                fd = p / d
+                fx = fd*xlen
+                fy = fd*ylen
+                xi, yi = self._get_indices(x0+fx, y0+fy)
+                z.append(self.data[yi, xi])
+                p += resolution
+            p -= d
+
         return np.array(z)
 
     def Clip(self, bounds):
@@ -345,10 +360,13 @@ class AAIGrid(object):
         return self.resize(te)
 
     def resize(self, te):
-        """ Resize array to fit within extents given by te. te is a tuple in the
-        form (xmin, xmamx, ymin, ymax).
-        If the new dimensions are smaller, the data is clipped. If they are
-        larger, nan padding is added.
+        """ Resize array to fit within extents given by te. If the new
+        dimensions are smaller, the data is clipped. If they are larger,
+        nan padding is added.
+
+        *te*        : tuple in the form (xmin, xmamx, ymin, ymax).
+
+        Returns None.
         """
         if self.data is not None:
             xmin1 = self.hdr['xllcenter']
@@ -415,6 +433,7 @@ class AAIGrid(object):
 
         else:
             raise AAIError("no data to resize")
+        return
 
 Grid = AAIGrid      # For backwards compatibility
 
