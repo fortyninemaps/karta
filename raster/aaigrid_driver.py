@@ -34,9 +34,11 @@ class AAIGrid(object):
         self.hdr['cellsize'] = None
         self.hdr['nodata_value'] = None
         if incoming is not None:
-            if isinstance(incoming, str):
+            try:
+                # assume incoming is a file
                 self.fromfile(incoming)
-            elif isinstance(incoming, np.ndarray):
+            except TypeError:
+                # isn't a file, so hopefully an ndarray
                 self.fromarray(incoming, hdr)
 
     def __str__(self):
