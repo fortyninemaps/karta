@@ -150,6 +150,13 @@ class Reader:
         else:
             raise ShapefileException("Shapefile Reader requires a shapefile or file-like object.")
 
+    def __repr__(self):
+        try:
+            shp = self.shapeName
+        except AttributeError:
+            shp = "None"
+        return "shapefile.Reader instance for " + shp
+
     def load(self, shapefile=None):
         """Opens a shapefile from a filename or file-like
         object. Normally this method would be called by the
@@ -800,7 +807,7 @@ class Writer:
         # Compensate for deletion flag
         if self.fields[0][0].startswith("Deletion"): fieldCount -= 1
         if recordList:
-            [record.append(recordList[i]) for i in range(fieldCount)]
+            [record.append(recordList[i] for i in range(fieldCount))]
         elif recordDict:
             for field in self.fields:
                 if field[0] in recordDict:
