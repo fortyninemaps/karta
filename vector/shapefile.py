@@ -744,7 +744,11 @@ class Writer:
                     value = str(value)[0].upper()
                 else:
                     value = str(value)[:size].ljust(size)
-                assert len(value) == size
+                try:
+                    assert len(value) == size
+                except:
+                    import pdb
+                    pdb.set_trace()
                 value = b(value)
                 f.write(value)
 
@@ -804,10 +808,13 @@ class Writer:
         will be added."""
         record = []
         fieldCount = len(self.fields)
+        # Allow records to be passed as a list
+        if len(recordList) == 1:
+            recordList = [i for i in recordList[0]]
         # Compensate for deletion flag
         if self.fields[0][0].startswith("Deletion"): fieldCount -= 1
         if recordList:
-            [record.append(recordList[i] for i in range(fieldCount))]
+            [record.append(recordList[i]) for i in range(fieldCount)]
         elif recordDict:
             for field in self.fields:
                 if field[0] in recordDict:
