@@ -37,7 +37,7 @@ class AAIGrid(object):
             try:
                 # assume incoming is a file
                 self.fromfile(incoming)
-            except TypeError:
+            except UnicodeDecodeError:
                 # isn't a file, so hopefully an ndarray
                 self.fromarray(incoming, hdr)
 
