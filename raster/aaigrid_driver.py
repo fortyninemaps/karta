@@ -334,7 +334,7 @@ class AAIGrid(object):
     def GetProfile(self, x0, y0, xf, yf, resolution=10.0):
         return self.get_profile(x0, y0, xf, yf, resolution=10.0)
 
-    def get_profile(self, x0, y0, xf, yf, resolution=10.0):
+    def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as *segments*.
 
         *segments*      :   iterable containing (x,y) pairs
