@@ -1,10 +1,10 @@
 
 import sys
-sys.path.append("../..")
+sys.path.append("../")
 
 from numpy import *
 import matplotlib.pyplot as plt
-import geo_tools.raster.flow as flow
+import raster.flow as flow
 
 X, Y = meshgrid(range(100), range(100))
 
