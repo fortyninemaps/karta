@@ -4,6 +4,48 @@ Raster functions
 
 import numpy as np
 
+def pad(A, width=1, edges="all", value=0.0):
+    """ Apply padding to an array.
+            *A*         :   array to pad
+            *width*     :   thickness of padding
+            *edges*     :   "all", "left", "right", "top", "bottom"
+            *value"     :   0.0, value to pad with
+    """
+    ny = A.shape[0]
+    nx = A.shape[1]
+
+    if edges == "all":
+        edges = ["left", "right", "bottom", "top"]
+
+    # Build border array
+
+    if "top" == edges or "top" in edges:
+        ny += width
+        y0 = width
+    else:
+        y0 = 0
+    if "bottom" == edges or "bottom" in edges:
+        ny += width
+        yf = -width
+    else:
+        yf = None
+    if "left" == edges or "left" in edges:
+        nx += width
+        x0 = width
+    else:
+        x0 = 0
+    if "right" == edges or "right" in edges:
+        nx += width
+        xf = -width
+    else:
+        xf = None
+
+    B = value * np.ones([ny, nx])
+    B[y0:yf, x0:xf] = A
+
+    return B
+
+
 def slope(D, res=[30.0, 30.0]):
     """ Return the scalar slope at each pixel. Use the neighbourhood
     method.
