@@ -85,3 +85,16 @@ def calculate_vario(points, npoints=150, max_dist=None, interval=None):
 
     return bins[:-1], np.array(variogram)
 
+
+def sph_func(a, h):
+    """ Spherical model function for range *a* and lag *h*. """
+    if h<a:
+        val = 1.5*h/a - 0.5 * (h/a)**3
+    else:
+        val = 1
+    return val
+
+def gau_func(a, h):
+    """ Gaussian model function for range *a* and lag *h*. """
+    val = 1.0 - np.exp(-(h**2 / a**2))
+    return val
