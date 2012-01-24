@@ -267,8 +267,8 @@ def facet_flow(e0, e1, e2, d1=30.0, d2=30.0):
             e0 -------- e1
                   d1
 
-    Based on Tarboton (1997).
-    Originally implemented in MATLAB by Steven L. Eddins.
+    Using method of Tarboton (1997)
+    Based on code implemented by Steven L. Eddins (2007)
     """
 
     s1 = (e0 - e1) / d1             # Equation (1)
@@ -350,6 +350,18 @@ def pixel_flow(E, i, j, d1=30.0, d2=30.0):
 
     return R, S
 
+def dem_flow(D):
+    """ Calculate a flow field (aspect and slope) for an array.
 
+    Uses the D-infinity method of Tarboton (1997)
+    Based on code implemented by Steven L. Eddins (2007)
+    """
+    Dp = raster.pad(D)
+    c = [(i,j) for i in range(1, Dp.shape[0]-1) for j in range(1, Dp.shape[1]-1)]
 
+    ff = map(lambda a: pixel_flow(Dp, a[0], a[1], d1=20.0, d2=20.0), c)
+    R = np.array([i[0] for i in ff]).reshape(D.shape)
+    S = np.array([i[1] for i in ff]).reshape(D.shape)
+
+    return R, S
 
