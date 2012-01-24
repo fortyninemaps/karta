@@ -274,7 +274,7 @@ def facet_flow(e0, e1, e2, d1=30.0, d2=30.0):
     s1 = (e0 - e1) / d1             # Equation (1)
     s2 = (e1 - e2) / d2             # Equation (2)
 
-    r = math.atan2(s2, s1)        # Equation (3)
+    r = math.atan2(s2, s1)          # Equation (3)
     s = math.sqrt(s1*s1 + s2*s2)    # Equation (3)
 
     # Constrain flow direction to lie within or along the edges of the facet
@@ -287,18 +287,17 @@ def facet_flow(e0, e1, e2, d1=30.0, d2=30.0):
     return r, s
 
 
-
 def pixel_flow(E, i, j, d1=30.0, d2=30.0):
     """ Downslope flow direction for DEM pixels.
 
-    Originally implemented by Steven Eddins (2007)
+    Using method of Tarboton (1997)
+    Based on code implemented by Steven L. Eddins (2007)
     """
 
     def border_nans(A):
         """ Return indices of nans that touch the border. """
         raise Exception("border_nans not implemented")
         nans = np.isnan(A)
-
 
     m, n = E.shape
 
@@ -312,24 +311,22 @@ def pixel_flow(E, i, j, d1=30.0, d2=30.0):
 
     # Table 1, page 311
     # Row and column offsets corresponding to e1 and e2 for each entry
-    e1_row_offsets = [0, -1, -1,  0,  0,  1,  1,  0]
-    e1_col_offsets = [1,  0,  0, -1, -1,  0,  0,  1]
+    e1_row_offsets = np.array([0, -1, -1,  0,  0,  1,  1,  0])
+    e1_col_offsets = np.array([1,  0,  0, -1, -1,  0,  0,  1])
 
-    e2_row_offsets = [-1, -1, -1, -1,  1,  1,  1,  1]
-    e2_col_offsets = [ 1,  1, -1, -1, -1, -1,  1,  1]
+    e2_row_offsets = np.array([-1, -1, -1, -1,  1,  1,  1,  1])
+    e2_col_offsets = np.array([ 1,  1, -1, -1, -1, -1,  1,  1])
 
     # Linear e1 and e2 offsets
     e1_linear_offsets = e1_col_offsets * m + e1_row_offsets
-    e2_linear_offsets = e2_col_offsets * m + e1_row_offsets
+    e2_linear_offsets = e2_col_offsets * m + e2_row_offsets
 
     # Initialize R and S based on the first facet
     Eflat = E.flatten()
     E0 = Eflat[e0_idx]
-    try:
-        E1 = Eflat[e0_idx + e1_linear_offsets[0] - 1]
-        E2 = Eflat[e0_idx + e2_linear_offsets[0] - 1]
-    except:
-        pdb.set_trace()
+
+    E1 = Eflat[e0_idx + e1_linear_offsets[0]]
+    E2 = Eflat[e0_idx + e2_linear_offsets[0]]
 
     R, S = facet_flow(E0, E1, E2, d1, d2)
 
@@ -338,24 +335,18 @@ def pixel_flow(E, i, j, d1=30.0, d2=30.0):
     ac = [0,  1,  1,  2,  2,  3,  3,  4]
     af = [1, -1,  1, -1,  1, -1,  1, -1]
 
-    if S > 0:
-        print "hooray!"
-        R = (af[0] * R) + (ac[0] * math.pi / 2.0)
-    else:
-        R = np.nan
-    #R = S > 0 and (af[0] * R) + (ac[0] * math.pi / 2.0) or np.nan
+    R = (af[0] * R) + (ac[0] * math.pi / 2.0) if S > 0 else np.nan
 
     # Compute Rk and Sk corresponding to the k-th facet
     # Where Sk>0 and Sk>S, S=Sk and recompute R(Rk)
     for k in range(1,8):
-        E1 = Eflat[e0_idx + e1_linear_offsets[k] - 1]
-        E2 = Eflat[e0_idx + e2_linear_offsets[k] - 1]
+        E1 = Eflat[e0_idx + e1_linear_offsets[k]]
+        E2 = Eflat[e0_idx + e2_linear_offsets[k]]
         Rk, Sk = facet_flow(E0, E1, E2, d1, d2)
 
-        S = max(S, Sk)
-
-        if (Sk > S) * (Sk > 0.0):
+        if (Sk > S) and (Sk > 0.0):
             R = (af[k] * Rk) + (ac[k] * math.pi / 2.0)
+        S = max(S, Sk)
 
     return R, S
 
