@@ -21,6 +21,18 @@ class AAIGrid(object):
                       filename.
 
         *hdr*       : dictionary containing AAIGrid header information
+
+        Header dictionaries contain the following keys:
+            ncols           (int)
+            nrows           (int)
+            either:
+                xllcenter   (int)
+                yllcenter   (int)
+            or:
+                xllcorner   (int)
+                yllcorner   (int)
+            cellsize        (int)
+            nodata_value    (int)
         """
 
         self.data = None
@@ -37,7 +49,7 @@ class AAIGrid(object):
             try:
                 # assume incoming is a file
                 self.fromfile(incoming)
-            except UnicodeDecodeError:
+            except (TypeError, UnicodeDecodeError):
                 # isn't a file, so hopefully an ndarray
                 self.fromarray(incoming, hdr)
 

@@ -45,213 +45,8 @@ The following license applies to:
 import raster
 import math
 import numpy as np
+from scipy import sparse
 import pdb, time
-
-def dinfinity(D, res=(30.0,30.0)):
-    """ Infinite flow direction scheme of Tarboton (1997). """
-    t0 = time.time()
-    dx = res[0]
-    dy = res[1]
-
-    def get_facet_slope_old(e0, e1, e2, d1, d2, ac, af):
-        #""" Calculate facet slope, where e0 is the central node, e1 is
-        #a node in a cardinal direction, and e2 is a node in a diagonal.
-        #"""
-        ##print e0,e1,e2, "\t", d1,d2, "\t", ac,af
-        #pi = math.pi
-        #s1 = (e0 - e1) / d1
-        #s2 = (e1 - e2) / d2
-        #try:
-            #aspect = math.atan(s2 / s1)
-        #except ZeroDivisionError:
-            #aspect = 0.25 * pi
-        #magnitude = math.sqrt(s1*s1 + s2*s2)
-
-        #if aspect > 0.25*pi:
-            #aspect = 0.25*pi
-            #magnitude = abs((e0 - e2) / math.sqrt(d1*d1 + d2*d2))
-        #elif aspect < -0.25*pi:
-            #aspect = -0.25*pi
-            #magnitude = abs((e0 - e2) / math.sqrt(d1*d1 + d2*d2))
-
-        ## Rotate / flip facet accordng to ac, af
-        #aspect_corr = af * aspect + ac * 0.5*pi
-        ##aspect_corr = aspect
-
-        ##print "\t", magnitude, aspect_corr
-        #return magnitude, aspect_corr
-        return
-
-    def get_facet_slope(e0, e1, e2, d1, d2, ac, af):
-        """ Calculate facet slope, where e0 is the central node, e1 is
-        a node in a cardinal direction, and e2 is a node in a diagonal.
-        """
-        pi = math.pi
-
-        u1 = (0.0, d1, e1-e0)
-        u2 = (d2, 0.0, e2-e1)
-        n = -np.cross(u1, u2)
-        nhat = n / np.linalg.norm(n)
-        nhat[nhat==0.0] = 0.0
-        aspect = math.atan(nhat[0] / nhat[1])
-        slope = math.acos(nhat[2])
-
-        if nhat[1] < 0:
-            aspect += pi
-
-        # For aspects that point inward, flip the sign of slope
-        if aspect < 0:
-            aspect += 2.0*pi
-        if aspect > 0.5*pi and aspect <= 1.5*pi:
-            slope = -slope
-
-        # Rotate / flip facet accordng to ac, af
-        aspect_corr = af * aspect + ac * 0.5*pi
-
-        # Make sure aspect is in the range [0, 2pi)
-        while aspect_corr >= 2*pi:
-            aspect_corr -= 2*pi
-        while aspect_corr < 0.0:
-            aspect_corr += 2*pi
-
-        return slope, aspect_corr
-
-    def get_flow_dir(A, dx, dy):
-        """ For a 3x3 sector A, compute the direction of maximum outward
-        slope (assumed to be the flow direction). Returns nan when
-        indeterminate.
-        """
-        e1 = [(0,1), (0,1), (1,2),
-              (1,0),        (1,2),
-              (1,0), (2,1), (2,1)]
-        e2 = [(0,0), (0,2), (0,2),
-              (0,0),        (2,2),
-              (2,0), (2,0), (2,2)]
-        d1 = [dy, dy, dx,
-              dx,     dx,
-              dx, dy, dy]
-        d2 = [dx, dx, dy,
-              dy,     dy,
-              dy, dx, dx]
-        ac = [0, 0, 1,              # Translation table
-              -1,   1,
-              -1, -2, 2]
-        af = [-1, 1, -1,            # Flipping table
-              1,      1,
-              -1, 1, -1]
-
-        # Compute all slopes
-        fs = map(get_facet_slope, [A[1,1] for _e in e1],
-                                  [A[_e] for _e in e1],
-                                  [A[_e] for _e in e2],
-                                  d1, d2, ac, af)
-
-        # Return the direction of the steepest inward slope, or return 0.0
-        fs.sort()
-        return fs[0][0] < 0 and fs[0][1] or np.nan
-
-
-    # For each cell in D[1:-1, 1:-1], find the flow direction
-    print "Calculating flow directions..."
-
-    # Associate a 3x3 matrix with each cell, composed of neighbouring cells
-    D3 = np.array([
-                  [D[:-2,:-2], D[1:-1,:-2], D[2:,:-2]],
-                  [D[:-2,1:-1], D[1:-1,1:-1], D[2:,1:-1]],
-                  [D[:-2,2:], D[1:-1,2:], D[2:,2:]],
-                  ]).transpose([2,3,1,0])
-
-
-    flow_field = np.zeros_like(D[1:-1,1:-1])
-    for i in range(D3.shape[0]):
-        for j in range(D3.shape[1]):
-            flow_field[i,j] = get_flow_dir(D3[i,j,:,:], dx, dy)
-
-    #get_flow_dir_v = np.vectorize(get_flow_dir)
-    #flow_field = get_flow_dir_v(D3, dx*np.ones_like(D[1:-1,1:-1]),
-                                  #dy*np.ones_like(D[1:-1,1:-1]))
-
-    print "\tdone"
-    #return flow_field         # temporary
-
-    # Upstream calculation
-    def upstream(ff, area, i, j):
-        """ Recursive function for computing upstream area at (i,j),
-        given an array to write to and a flow field.
-        """
-        def proportion(alpha, position):
-            """ Return proportion flowing to center from position given
-            flow angle alpha, and where position is
-                            0   1   2
-                            3   *   4
-                            5   6   7
-            """
-            pi = math.pi
-
-            # Beta is the direction to the centre node
-            BETA = [0.75, 1.0, 1.25, 0.5, 1.5, 0.25, 0.0, 1.75]
-            beta = BETA[position] * pi
-
-            theta = abs(beta-alpha)
-            return theta <= 0.25*pi and (0.25*pi-theta) / (0.25*pi) or 0.0
-
-        if not np.isnan(UA[i,j]):
-
-            return UA[i,j]
-
-        else:
-
-            cumarea = area
-
-            I = [i-1, i-1, i-1,
-                 i,        i,
-                 i+1, i+1, i+1]
-            J = [j-1, j, j+1,
-                 j-1,    j+1,
-                 j-1, j, j+1]
-
-            try:
-                ffij = [ff[i-1, j-1],   ff[i-1, j],     ff[i-1, j+1],
-                        ff[i, j-1],                     ff[i, j+1],
-                        ff[i+1, j-1],   ff[i+1, j],     ff[i+1, j+1]]
-            except IndexError:
-                return 0.0
-
-            iffij = enumerate(ffij)
-
-            # Retains cells where p > 0.0
-            contributors = filter(
-                    lambda a: proportion(a[1], a[0]) > 0.0, iffij)
-
-            # For each contributor, add the upslope area
-            for a in contributors:
-                try:
-                    cumarea += proportion(a[1], a[0]) * upstream(ff, area, I[a[0]], J[a[0]])
-                except IndexError:
-                    pass
-
-            UA[i,j] = cumarea
-
-            return cumarea
-
-
-    # Calculate upstream areas
-    print "Calculating upstream areas..."
-    global UA
-
-    UA = np.nan * np.zeros_like(D)
-    area = res[0] * res[1]
-
-    for i in range(1, D.shape[0]):
-        for j in range(1, D.shape[1]):
-            if np.isnan(UA[i,j]):
-                upstream(flow_field, area, i, j)
-
-    print "\tdone"
-
-    print "time:", time.time() - t0
-
-    return raster.pad(UA)
 
 
 def facet_flow(e0, e1, e2, d1=30.0, d2=30.0):
@@ -322,7 +117,7 @@ def pixel_flow(E, i, j, d1=30.0, d2=30.0):
     e2_linear_offsets = e2_col_offsets * m + e2_row_offsets
 
     # Initialize R and S based on the first facet
-    Eflat = E.flatten()
+    Eflat = E.flat
     E0 = Eflat[e0_idx]
 
     E1 = Eflat[e0_idx + e1_linear_offsets[0]]
@@ -350,6 +145,7 @@ def pixel_flow(E, i, j, d1=30.0, d2=30.0):
 
     return R, S
 
+
 def dem_flow(D):
     """ Calculate a flow field (aspect and slope) for an array.
 
@@ -365,3 +161,116 @@ def dem_flow(D):
 
     return R, S
 
+
+def build_contribution_matrix(R):
+    """ Constructs an (n x n) sparse matrix P, where n is the number of
+    elements in flow direction matrix R.
+    """
+    n = R.size
+    nrow, ncol = R.shape
+    pi = math.pi
+    Rf = R.flat
+
+    P = sparse.lil_matrix((n,n))
+
+    # The primary diagonal
+    P.setdiag(np.ones(n), k=0)
+
+    for i in range(1,nrow-1):
+        for j in range(1,ncol-1):
+            m = i*nrow + j
+            alpha = R[i,j]
+            try:
+                if alpha > 1.75*pi or alpha < 0.25*pi:
+                    # Northward
+                    P[m-ncol, m-2*ncol] = abs(0.25*pi - alpha) / 0.25*pi
+                elif alpha > 0.25*pi and alpha < 0.75*pi:
+                    # Eastward
+                    P[m+1, m+2] = abs(0.25*pi - alpha + 0.5*pi) / 0.25*pi
+                elif alpha > 0.75*pi and alpha < 1.25*pi:
+                    # Southward
+                    P[m+ncol, m+2*ncol] = abs(0.25*pi - alpha + pi) / 0.25*pi
+                elif alpha > 1.25*pi and alpha < 1.75*pi:
+                    # Westward
+                    P[m-1, m-2] = abs(0.25*pi - alpha + 1.5*pi) / 0.25*pi
+            except:
+                print i, j, m, n
+    return P.tocsr()
+
+
+def get_upslope_area(R, res=[20.0, 20.0]):
+
+    # Upstream calculation
+    def upstream(R, area, i, j):
+        """ Recursive function for computing upstream area at (i,j),
+        given an array to write to and a flow field.
+        """
+        def proportion(alpha, position):
+            """ Return proportion flowing to center from position given
+            flow angle alpha, and where position is
+                            0   1   2
+                            3   *   4
+                            5   6   7
+            """
+            pi = math.pi
+
+            # Beta is the direction to the centre node
+            BETA = [0.75, 1.0, 1.25, 0.5, 1.5, 0.25, 0.0, 1.75]
+            beta = BETA[position] * pi
+
+            theta = abs(beta-alpha)
+            return theta <= 0.25*pi and (0.25*pi-theta) / (0.25*pi) or 0.0
+
+        if not np.isnan(UA[i,j]):
+
+            return UA[i,j]
+
+        else:
+
+            cumarea = area
+
+            I = [i-1, i-1, i-1,
+                 i,        i,
+                 i+1, i+1, i+1]
+            J = [j-1, j, j+1,
+                 j-1,    j+1,
+                 j-1, j, j+1]
+
+            try:
+                Rij = [R[i-1, j-1],   R[i-1, j],     R[i-1, j+1],
+                       R[i, j-1],                     R[i, j+1],
+                       R[i+1, j-1],   R[i+1, j],     R[i+1, j+1]]
+            except IndexError:
+                return 0.0
+
+            iRij = enumerate(Rij)
+
+            # Retains cells where p > 0.0
+            contributors = filter(
+                    lambda a: proportion(a[1], a[0]) > 0.0, iRij)
+
+            # For each contributor, add the upslope area
+            for a in contributors:
+                try:
+                    cumarea += proportion(a[1], a[0]) * upstream(R, area, I[a[0]], J[a[0]])
+                except IndexError:
+                    pass
+
+            UA[i,j] = cumarea
+
+            return cumarea
+
+
+    # Calculate upstream areas
+    print "Calculating upstream areas..."
+    global UA
+
+    UA = np.nan * np.zeros_like(R)
+    area = res[0] * res[1]
+
+    for i in range(1, R.shape[0]):
+        for j in range(1, R.shape[1]):
+            if np.isnan(UA[i,j]):
+                upstream(R, area, i, j)
+
+    return UA
