@@ -186,8 +186,8 @@ class AAIGrid(object):
         """ Read an existing ASCII grid file. """
         try:
             h = []
-            # Count the number of header entries
             with open(fnm, 'r') as f:
+                # Count the number of header entries
                 cnt = 0
                 while True:
                     l = f.readline()
@@ -197,14 +197,17 @@ class AAIGrid(object):
                         cnt += 1
                     else:
                         break
-            # Read the header, then the array data
-            with open(fnm, 'r') as f:
+
+                # Read the header, then the array data
+                f.seek(0)
                 for i in range(cnt):
                     h.append(f.readline())
                 data = f.readlines()
+
         except IOError:
             raise AAIError('error while trying to open {0}'.format(fnm))
             return
+
         # Store data internally
         try:
             hs = [rec.split(None,1) for rec in h]
@@ -220,6 +223,9 @@ class AAIGrid(object):
 
             if 'xllcorner' not in hdr.keys():
                 hdr['xllcorner'] = None
+
+            if 'nodata_value' not in hdr.keys():
+                hdr['nodata_value'] = -9999
 
         except:
             traceback.print_exc()
