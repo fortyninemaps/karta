@@ -5,12 +5,14 @@ geospatial data.
 
 import vector
 import vector.stats
-from vector.guppy import  *
-from vector import shapefile
+import vector.guppy as guppy
+import vector.shapefile as shapefile
+
 import raster
 import raster.raster
-import raster.flow
-from raster.aaigrid_driver import AAIGrid
+import raster.streamline
+#import raster.flow         # Has a Scipy dependency
+import raster.aaigrid_driver as aaigrid_driver
 
 #__all__ = ["vector", "vector.guppy", "raster.aaigrid_driver"]
 

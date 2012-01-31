@@ -1,5 +1,5 @@
 """
-Submodule for handling streamlines generated from arrays of raster data.
+Submodule for generating streamlines from vector field rasters.
 """
 
 from math import ceil
@@ -9,9 +9,9 @@ def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=1000, res=(1.0, 1.0)):
     scheme, starting from *x0*, *y0*. A pair of lists with coordinates
     in X and Y is returned.
 
-    *ds* is the stepsize
+    *ds* is the step size
     *max_nodes* is the maximum number of steps to take. Iteration will
-        be terminated automatically when the streamline reaches the edge
+        be terminated automatically if the streamline reaches the edge
         of the vector field.
     *res* is the resolution of *U*, *V*, in the same units as *x0*, *y0*.
     """
