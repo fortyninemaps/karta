@@ -274,7 +274,10 @@ class AAIGrid(object):
 
     def tofile(self, f, reference='center'):
         """ Save internal data to f, either a file-like object or a
-        filename. """
+        filename.
+            reference: specify a header reference
+                       "center" | "corner"
+        """
         if self.data is None:
             raise AAIError("no data to write!")
 
