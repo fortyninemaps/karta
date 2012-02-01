@@ -3,14 +3,40 @@ README
 geo_tools contains a collection of loosely-related Python modules for
 performing lightweight geospatial data analysis. geo_tools replicates
 the functionality of GDAL, OGR, and GSTAT in some cases, but does so in
-a minimal package with few dependencies.
+a minimal package with few dependencies, and attempts to solve problems
+in ways that would be considered `pythonic'.
 
 geo_tools should be considered experimental, and no assurances are
 provided about the correctness of the code or results derived using it.
 
-The vector module contains a snapshot of the pyshp shapefile library,
-available at http://code.google.com/p/pyshp/. This library is available
-under the MIT license.
+
+CONTENTS
+
+    vector
+        gpx_parser      Parser for GPX files exported from GPS devices
+        guppy           Vector geometry classes
+        shapefile       Snapshot of pyshp module for reading and writing
+                        shapefiles
+        stats           Geostatistical functions
+        xy              XY(Z) table functions
+
+    raster
+        aaigrid_driver  Class for reading and writing ESRI ASCII Grids
+        flow            Stream flow functions
+        raster          General purpose raster math
+        streamline      Streamline calculation
+
+    tests
+        miscellaneous test scripts
+
+
+LICENSE
+
+This software is provided under the MIT license.
+
+The vector module contains a snapshot of the pyshp shapefile module,
+available at http://code.google.com/p/pyshp/. This module is also
+available under the MIT license.
 
 MIT License:
 
@@ -33,3 +59,4 @@ BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
 ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
