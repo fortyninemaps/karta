@@ -103,6 +103,57 @@ def vector_field(D):
     return pad(U), pad(V)
 
 
+def fill_sinks(Z):
+    """ Fill sinks in a DEM following the algorithm of Wang and Liu
+    (2006).
+
+    Wang, L. and Liu, H. An efficient method for identifying and filling
+    surface depressions in digital elevation models for hydrologic
+    analysis and modelling. International Journal of Geographical
+    Information Science, 20:2 (2006).
+    """
+
+    def neighbours_of(a):
+        i, j, z = a
+        return ((i-1, j-1), (i, j-1), (i+1, j-1),
+                (i-1, j), (i+1, j),
+                (i-1, j+1), (i, j+1), (i+1, j+1))
+
+    # Initialize SPILL and CLOSED
+    SPILL = Z.copy()
+    CLOSED = np.zeros_like(Z)
+
+    # Get the boundary cells
+    ny, nx = Z.shape
+    B = [(i, 0) for i in range(ny)]
+    B.extend([(i, nx) for i in range(ny)])
+    B.extend([(0, j) for j in range(nx)])
+    B.extend([(ny, j) for j in range(nx)])
+
+    # Get z along the boundary
+    for b in B:
+        SPILL[b] = Z[b]
+        OPEN.append((b[0], b[1], Z[b]))
+
+    while len(OPEN) > 0:
+
+        # Sort OPEN
+        OPEN.sort(key=lambda a: a[2])
+        c = OPEN.pop(-1)
+
+        CLOSED[c[0], c[1]] = 1
+
+        # For neighbours *n* of *c*
+        N = neighbours_of(c)
+        for n in N:
+            Zn = Z[n[0], n[1]]
+            if (CLOSED[n[0], n[1]] == 0 and (n[0], n[1], Zn)
+                not in OPEN):
+                SPILL[n[0], n[1]] = max(Zn, SPILL[c[0], c[1]])
+
+    return SPILL
+
+
 #def fill_holes(D):
 #    """ Fill sinks in *D* so that local depressions become plateaus. """
 #
