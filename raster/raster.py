@@ -129,13 +129,12 @@ def fill_sinks(Z):
     # Initialize SPILL and CLOSED
     SPILL = Z.copy()
     CLOSED = np.zeros_like(Z)
+    OPEN = []
 
     # Get the boundary cells
     ny, nx = Z.shape
-    B = [(i, 0) for i in range(ny)]
-    B.extend([(i, nx) for i in range(ny)])
-    B.extend([(0, j) for j in range(nx)])
-    B.extend([(ny, j) for j in range(nx)])
+    B = [(i, j) for i in range(ny) for j in (0, nx-1)]
+    B.extend([(i, j) for i in (0, ny-1) for j in range(nx)])
 
     # Get z along the boundary
     for b in B:
@@ -144,49 +143,19 @@ def fill_sinks(Z):
 
     while len(OPEN) > 0:
 
-        # Sort OPEN
-        OPEN.sort(key=lambda a: a[2])
-        c = OPEN.pop(-1)
+        OPEN.sort(key=lambda a: a[2], reverse=True)
+        c = OPEN.pop()
+        CLOSED[c[:2]] = 1
 
-        CLOSED[c[0], c[1]] = 1
-
-        # For neighbours *n* of *c*
         N = neighbours_of(c)
         for n in N:
-            Zn = Z[n[0], n[1]]
-            if (CLOSED[n[0], n[1]] == 0 and (n[0], n[1], Zn)
-                not in OPEN):
-                SPILL[n[0], n[1]] = max(Zn, SPILL[c[0], c[1]])
+            if (n[0]>=ny or n[0]<0 or n[1]>=nx or n[1]<0) is False:
+                Zn = Z[n]
+                if CLOSED[n] == 0 and (n[0], n[1], Zn) not in OPEN:
+                    SPILL[n] = max(Zn, SPILL[c[0], c[1]])
+                    OPEN.append((n[0], n[1], Zn))
 
     return SPILL
-
-
-#def fill_holes(D):
-#    """ Fill sinks in *D* so that local depressions become plateaus. """
-#
-#    def in_sink(A, MASK):
-#        """ Searches the nine surrounding pixels and returns True if the
-#        current pixel is in or part of a sink. """
-#        inomask = np.nonzero(MASK.flat == 0)[0]
-#        AF = A.flat
-#        for i in inomask:
-#            if AF[i] < A[2,2]:
-#                return False
-#        return True
-#
-#    MASK = np.zeros(D.shape)
-#
-#    for i in range(1, D.shape[0]-1):
-#        for j in range(1, D.shape[1]-1):
-#
-#            if in_sink(D[i-1:i+2, j-1:j+2], MASK):
-#                MASK[i,j] = 1
-#                
-
-
-
-    return
-
 
 
 def viewshed(D, i, j, r=-1):
