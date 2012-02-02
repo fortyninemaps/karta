@@ -73,6 +73,7 @@ def slope(D, res=[30.0, 30.0]):
 
     return pad(np.sqrt(Ddx*Ddx + Ddy*Ddy))
 
+
 def aspect(D, res=[30.0, 30.0]):
     """ Return the slope aspect for each pixel.
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Aspect%20works
@@ -85,6 +86,7 @@ def aspect(D, res=[30.0, 30.0]):
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
 
     return pad(np.arctan2(Ddy, -Ddx))
+
 
 def vector_field(D):
     """ Computes a U,V vector field of potential D. Scalar components of
@@ -99,6 +101,35 @@ def vector_field(D):
     V = Ddy / M[np.isnan(M)==False].max()
 
     return pad(U), pad(V)
+
+
+#def fill_holes(D):
+#    """ Fill sinks in *D* so that local depressions become plateaus. """
+#
+#    def in_sink(A, MASK):
+#        """ Searches the nine surrounding pixels and returns True if the
+#        current pixel is in or part of a sink. """
+#        inomask = np.nonzero(MASK.flat == 0)[0]
+#        AF = A.flat
+#        for i in inomask:
+#            if AF[i] < A[2,2]:
+#                return False
+#        return True
+#
+#    MASK = np.zeros(D.shape)
+#
+#    for i in range(1, D.shape[0]-1):
+#        for j in range(1, D.shape[1]-1):
+#
+#            if in_sink(D[i-1:i+2, j-1:j+2], MASK):
+#                MASK[i,j] = 1
+#                
+
+
+
+    return
+
+
 
 def viewshed(D, i, j, r=-1):
     """ Return the viewshed on *D* at (i,j).

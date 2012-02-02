@@ -4,7 +4,8 @@ Submodule for generating streamlines from vector field rasters.
 
 from math import ceil
 
-def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0)):
+def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
+                 tol=None, momentum=False):
     """ Integrate velocity field (*U*, *V*) using a 4th-order Runge-Kutte
     scheme, starting from *x0*, *y0*. A pair of lists with coordinates
     in X and Y is returned.
@@ -14,6 +15,10 @@ def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0)):
         be terminated automatically if the streamline reaches the edge
         of the vector field.
     *res* is the resolution of *U*, *V*, in the same units as *x0*, *y0*.
+    *tol* is the tolerance threshold, below which a streamline is
+        considered stationary and aborted.
+    *momentum* allows a streamline to continue moving across a plateau.
+        (not implemented)
     """
 
     def interpolate1(x, y, a, b, c, d):
@@ -94,6 +99,11 @@ def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0)):
 
         X.append(x0*res[0])
         Y.append(y0*res[1])
+
+        # Check that rate of change is greater than the tolerance limit
+        if tol is not None:
+            if (abs(X[-2] - X[-1]) < tol) or (abs(Y[-2] - Y[-1]) < tol):
+                break
 
         i += 1
 
