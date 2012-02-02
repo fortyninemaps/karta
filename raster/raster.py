@@ -19,6 +19,13 @@ def witch_of_agnesi(nx=100, ny=100, a=4.0):
     return (8.0 * a**3) / (D**2 + 4 * a**2)
 
 
+def peaks(n=49):
+    X, Y = np.meshgrid(np.linspace(-3, 3, n), np.linspace(-3, 3, n))
+    return 3.0 * (1-X)**2 * np.exp(-X**2 - (Y+1)**2) \
+            - 10.0 * (X/5.0 - X**3 - Y**5) * np.exp(-X**2 - Y**2) \
+            - 1.0/3.0 * np.exp(-(X+1)**2 - Y**2)
+
+
 def pad(A, width=1, edges="all", value=0.0):
     """ Apply padding to a 2D array.
             *A*         :   array to pad
