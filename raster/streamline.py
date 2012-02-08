@@ -108,7 +108,7 @@ def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
 
         # Check that rate of change is greater than the tolerance limit
         if tol is not None:
-            if sqrt( (X[-2]-X[-1])**2 + (Y[-2]-Y[-1])**2 ) < tol:
+            if sqrt( k4x**2 + k4y**2 ) < tol:
                 break
 
         i += 1
