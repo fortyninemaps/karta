@@ -4,7 +4,7 @@ Submodule for generating streamlines from vector field rasters.
 Written by Nat Wilson (2012)
 """
 
-from math import ceil
+from math import ceil, sqrt
 
 def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
                  xvec=None, yvec=None, tol=None, momentum=False):
@@ -17,10 +17,6 @@ def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
         be terminated automatically if the streamline reaches the edge
         of the vector field.
     *res* is the resolution of *U*, *V* in the same units as *x0*, *y0*.
-    *xvec* is a m x n array of x locations in the same units as *x* and
-        *y*. If *xvec* is defined, it takes precedence over *res*.
-    *yvec* is a m x n array of y locations in the same units as *x* and
-        *y*. If *yvec* is defined, it takes precedence over *res*.
     *tol* is the tolerance threshold, below which a streamline is
         considered stationary and aborted.
     *momentum* allows a streamline to continue moving across a plateau.
@@ -37,6 +33,10 @@ def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
     # Initialize streamline vectors
     X = [x0]
     Y = [y0]
+
+    # Adjust the input arrays to make them have resolution 1x1
+    U = U / res[0]
+    V = V / res[1]
 
     # Put x0, y0 into grid units
     x0 = x0 / res[0]
@@ -108,7 +108,7 @@ def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
 
         # Check that rate of change is greater than the tolerance limit
         if tol is not None:
-            if (abs(X[-2] - X[-1]) < tol) or (abs(Y[-2] - Y[-1]) < tol):
+            if sqrt( (X[-2]-X[-1])**2 + (Y[-2]-Y[-1])**2 ) < tol:
                 break
 
         i += 1
