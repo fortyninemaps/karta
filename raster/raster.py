@@ -1,5 +1,5 @@
 """
-Raster functions
+Raster functions, implemented by Nat Wilson (2012).
 """
 
 import numpy as np

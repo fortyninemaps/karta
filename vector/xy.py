@@ -32,9 +32,15 @@ def xyz2array_reg(X, Y, Z):
 
     return A
 
+def array2xyz(A, X, Y):
+    """ There are a few occasions when an XYZ list is the proper data
+    format. This function converts from an array *A* with coordinates
+    defined by *X* and *Y* to a list of (x,y,z) tuples.
+    """
+    xyz = []
+    m, n = A.shape
+    for j in range(n):
+        for i in range (m):
+            xyz.append( (X[i], Y[j], A[i,j]) )
+    return xyz
 
-def xyz2array_irreg(X, Y, Z):
-    """ Return an array from X,Y,Z vectors, interpolating to a regular
-    grid. """
-
-    eturn
