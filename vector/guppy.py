@@ -161,6 +161,17 @@ class Multipoint(object):
         for i,vertex in enumerate(self.vertices):
             print i,'\t',vertex
 
+    def get_vertices(self):
+        """ Return X, Y, and Z lists. If self.rank == 2, Z will be
+        zero-filled. """
+        X = [i[0] for i in self.vertices]
+        Y = [i[1] for i in self.vertices]
+        if self.rank > 2:
+            Z = [i[2] for i in self.vertices]
+        else:
+            Z = [0.0 for i in self.vertices]
+        return X, Y, Z
+
     def length(self, spherical=False):
         """ Returns the length of the line. """
         points = [point(i) for i in self.vertices]
