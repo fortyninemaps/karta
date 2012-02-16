@@ -1,10 +1,12 @@
 README
 
 geo_tools contains a collection of loosely-related Python modules for
-performing lightweight geospatial data analysis. geo_tools replicates
-the functionality of GDAL, OGR, and GSTAT in some cases, but does so in
-a minimal package with few dependencies, and attempts to solve problems
-in ways that would be considered `pythonic'.
+performing lightweight geospatial data analysis. geo_tools replicates the
+functionality of GDAL, OGR, and GSTAT in some cases, but does so in a minimal
+package with few dependencies, and attempts to solve problems in ways that
+would be considered `pythonic'. Although these other packages may have
+advantages in performance or capability, geo_tools is designed to be portable
+require as little extra software infrastructure as possible.
 
 geo_tools should be considered experimental, and no assurances are
 provided about the correctness of the code or results derived using it.
