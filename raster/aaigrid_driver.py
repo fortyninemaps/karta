@@ -91,7 +91,13 @@ class AAIGrid(object):
             else:
                 raise ValueError("cannot multiply NoneType data array")
         else:
-            raise AAIError("multiplication with other types not defined")
+            try:
+                return AAIGrid(self.data * other, self.hdr)
+            except AttributeError:
+                raise AAIError("self.data not defined")
+            except:
+                raise AAIError("multiplication with type{0} not"
+                                "defined".format(type(other)))
 
     def __div__(self, other):
         if isinstance(other, AAIGrid):
@@ -161,6 +167,13 @@ class AAIGrid(object):
         xi = int(round((x-x0) / d))
         yi = self.data.shape[0] - int(round((y-y0) / d)) - 1
         return xi, yi
+
+    def get_region(self):
+        """ Return the region characteristics as a tuple. """
+        return (self.hdr['xllcenter'], self.hdr['xllcenter']
+                + self.hdr['cellsize'] * self.hdr['ncols'],
+                self.hdr['yllcenter'], self.hdr['yllcenter']
+                + self.hdr['cellsize'] * self.hdr['nrows'])
 
     def max(self):
         """ Return the maximum non-nan in self.data. """
