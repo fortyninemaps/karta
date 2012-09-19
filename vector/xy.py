@@ -2,12 +2,20 @@
 
 import numpy as np
 
+def distance_xy(A):
+    """ Calculate the cumulative distance at each coordinate pair in *A*. """
+    d_ = np.sqrt(np.sum((A[1:,:] - flowline[:-1,:])**2, axis=1))
+    d = [0]
+    for a in d_:
+        d.append(d[-1]+a)
+    return np.array(d)
+
+
 def load_xy(fnm, delimiter=","):
     """ Load a flowline file and return a size-2 array of coordinates. """
     with open(fnm) as f:
         coords = [[float(j) for j in i.split(delimiter)] for i in f.readlines()]
     return np.array(coords)
-
 
 
 def xyz2array_reg(X, Y, Z):
@@ -31,6 +39,7 @@ def xyz2array_reg(X, Y, Z):
         A[i,:] = Zs[i*nx:(i+1)*nx]
 
     return A
+
 
 def array2xyz(A, X, Y):
     """ There are a few occasions when an XYZ list is the proper data
