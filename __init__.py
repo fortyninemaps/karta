@@ -7,6 +7,7 @@ import vector
 import vector.stats
 import vector.guppy as guppy
 import vector.shapefile as shapefile
+import vector.xy as xy
 
 import raster
 import raster.raster
