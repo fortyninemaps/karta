@@ -110,50 +110,53 @@ def vector_field(D):
     return pad(U), pad(V)
 
 
+def neighbours_of(a):
+    z, i, j = a
+    return ((i-1, j-1), (i, j-1), (i+1, j-1),
+            (i-1, j), (i+1, j),
+            (i-1, j+1), (i, j+1), (i+1, j+1))
+
+
 def fill_sinks(Z):
     """ Fill sinks in a DEM following the algorithm of Wang and Liu
     (2006).
+
+        *Z*    :    2d array of elevation or potential data
+                    (must not contain NaN!)
 
     Wang, L. and Liu, H. An efficient method for identifying and filling
     surface depressions in digital elevation models for hydrologic
     analysis and modelling. International Journal of Geographical
     Information Science, 20:2 (2006).
     """
-
-    def neighbours_of(a):
-        i, j, z = a
-        return ((i-1, j-1), (i, j-1), (i+1, j-1),
-                (i-1, j), (i+1, j),
-                (i-1, j+1), (i, j+1), (i+1, j+1))
-
+    
     # Initialize SPILL and CLOSED
     SPILL = Z.copy()
     CLOSED = np.zeros_like(Z)
     OPEN = []
 
     # Get the boundary cells
-    ny, nx = Z.shape
+    ny, nx = (Z.shape[0], Z.shape[1])
     B = [(i, j) for i in range(ny) for j in (0, nx-1)]
     B.extend([(i, j) for i in (0, ny-1) for j in range(nx)])
 
     # Get z along the boundary
     for b in B:
         SPILL[b] = Z[b]
-        OPEN.append((b[0], b[1], Z[b]))
+        OPEN.append((Z[b], b[0], b[1]))
 
     while len(OPEN) > 0:
 
-        OPEN.sort(key=lambda a: a[2], reverse=True)
-        c = OPEN.pop()
-        CLOSED[c[:2]] = 1
+        OPEN.sort()
+        c = OPEN.pop(0)
+        CLOSED[c[1:]] = 1
 
-        N = neighbours_of(c)
-        for n in N:
-            if (n[0]>=ny or n[0]<0 or n[1]>=nx or n[1]<0) is False:
+        for n in neighbours_of(c):
+            if (n[0]<ny) and (n[0]>=0) and (n[1]<nx) and (n[1]>=0):
                 Zn = Z[n]
-                if CLOSED[n] == 0 and (n[0], n[1], Zn) not in OPEN:
-                    SPILL[n] = max(Zn, SPILL[c[0], c[1]])
-                    OPEN.append((n[0], n[1], Zn))
+                if CLOSED[n] == 0 and (Zn, n[0], n[1]) not in OPEN:
+                    SPILL[n] = max(Zn, SPILL[c[1], c[2]])
+                    OPEN.append((Zn, n[0], n[1]))
 
     return SPILL
 
