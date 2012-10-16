@@ -1,5 +1,5 @@
 """
-Raster functions, implemented by Nat Wilson (2012).
+2D raster functions
 """
 
 import numpy as np
@@ -66,7 +66,7 @@ def pad(A, width=1, edges="all", value=0.0):
     return B
 
 
-def slope(D, res=[30.0, 30.0]):
+def slope(D, res=(30.0, 30.0)):
     """ Return the scalar slope at each pixel. Use the neighbourhood
     method.
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works
@@ -81,7 +81,7 @@ def slope(D, res=[30.0, 30.0]):
     return pad(np.sqrt(Ddx*Ddx + Ddy*Ddy))
 
 
-def aspect(D, res=[30.0, 30.0]):
+def aspect(D, res=(30.0, 30.0)):
     """ Return the slope aspect for each pixel.
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Aspect%20works
     """
@@ -95,6 +95,18 @@ def aspect(D, res=[30.0, 30.0]):
     return pad(np.arctan2(Ddy, -Ddx))
 
 
+def grad(D, res=(30.0, 30.0)):
+    """ Computes the gradient of potential D. Return a tuple (dx, dy).
+    """
+    dx = res[0]
+    dy = res[1]
+    Ddx = ((2 * D[1:-1,2:] + D[:-2,2:] + D[2:,2:]) -
+           (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * dx)
+    Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
+           (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
+    return pad(Ddx), pad(Ddy)
+
+
 def vector_field(D):
     """ Computes a U,V vector field of potential D. Scalar components of
     U,V are normalized to max(|U, V|).
@@ -106,7 +118,6 @@ def vector_field(D):
     M = np.sqrt(Ddx**2 + Ddy**2)
     U = Ddx / M[np.isnan(M)==False].max()
     V = Ddy / M[np.isnan(M)==False].max()
-
     return pad(U), pad(V)
 
 
@@ -129,7 +140,7 @@ def fill_sinks(Z):
     analysis and modelling. International Journal of Geographical
     Information Science, 20:2 (2006).
     """
-    
+
     # Initialize SPILL and CLOSED
     SPILL = Z.copy()
     CLOSED = np.zeros_like(Z)

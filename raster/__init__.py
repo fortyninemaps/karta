@@ -3,6 +3,7 @@ Classes for handling raster data.
 """
 
 import aaigrid_driver
-import raster
+from raster import *
 import flow
-import streamline
+from streamline import streamline2d
+
