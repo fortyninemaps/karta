@@ -4,6 +4,6 @@ from Cython.Distutils import build_ext
 
 setup(
     cmdclass = {'build_ext': build_ext},
-    ext_modules = [Extension("fill_sinks", ["raster/fill_sinks.pyx"]),
-                   Extension("cfuncs", ["raster/cfuncs.pyx"])]
+    ext_modules = [Extension("raster.fill_sinks", ["raster/fill_sinks.pyx"]),
+                   Extension("raster.cfuncs", ["raster/cfuncs.pyx"])]
 )

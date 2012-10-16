@@ -12,6 +12,17 @@ geo_tools should be considered experimental, and no assurances are
 provided about the correctness of the code or results derived using it.
 
 
+CYTHON
+
+Cython is an optional dependency than can make select functions faster. To
+compile the Cython-enabled sub-modules, run:
+
+    setup.py build_ext
+
+In general, enhanced-performance functions will then be called automatically
+where available.
+
+
 CONTENTS
 
     vector
@@ -27,6 +38,7 @@ CONTENTS
         flow            Stream flow functions
         raster          General purpose raster math
         streamline      Streamline calculation
+        cfuncs          Cython-module for performance, not intended to be user-facing
 
     tests
         miscellaneous test scripts
