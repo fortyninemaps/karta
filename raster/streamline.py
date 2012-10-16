@@ -4,13 +4,19 @@ Submodule for generating streamlines from rasters.
 
 from math import ceil, sqrt
 
-try:
-    from cfuncs import interpolate1
-except ImportError:
-    def interpolate1(x, y, a, b, c, d):
-        left = (c-a)*y + a
-        right = (d-b)*y + b
-        return (right - left) * x + left
+def interpolate1(x, y, a, b, c, d):
+    """ Return a value *v(x,y)* in the regular structured stencil
+
+            a --- b
+            |  v  |
+            c --- d
+
+    using linear interpolation. The coordinates (x, y) must be normalized by
+    the horizontal and vertical grid spacings, respectively.
+    """
+    left = (c-a)*y + a
+    right = (d-b)*y + b
+    return (right - left) * x + left
 
 
 def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
