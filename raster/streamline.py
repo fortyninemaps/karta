@@ -1,32 +1,38 @@
 """
-Submodule for generating streamlines from vector field rasters.
-
-Written by Nat Wilson (2012)
+Submodule for generating streamlines from rasters.
 """
 
 from math import ceil, sqrt
 
-def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
-                 xvec=None, yvec=None, tol=None, momentum=False):
-    """ Integrate velocity field (*U*, *V*) using a 4th-order Runge-Kutte
-    scheme, starting from *x0*, *y0*. A pair of lists with coordinates
-    in X and Y is returned.
-
-    *ds* is the step size
-    *max_nodes* is the maximum number of steps to take. Iteration will
-        be terminated automatically if the streamline reaches the edge
-        of the vector field.
-    *res* is the resolution of *U*, *V* in the same units as *x0*, *y0*.
-    *tol* is the tolerance threshold, below which a streamline is
-        considered stationary and aborted.
-    *momentum* allows a streamline to continue moving across a plateau.
-        (not implemented)
-    """
-
+try:
+    from cfuncs import interpolate1
+except ImportError:
     def interpolate1(x, y, a, b, c, d):
         left = (c-a)*y + a
         right = (d-b)*y + b
         return (right - left) * x + left
+
+
+def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
+                 xvec=None, yvec=None, tol=None, momentum=False):
+    """ Integrate velocity field (*U*, *V*) using a 4th-order Runge-Kutta
+    scheme, starting from *x0*, *y0*. A pair of lists with coordinates
+    in X and Y is returned.
+
+    *ds* is the step size
+
+    *max_nodes* is the maximum number of steps to take. Iteration will be
+    terminated automatically if the streamline reaches the edge of the vector
+    field.
+
+    *res* is the resolution of *U*, *V* in the same units as *x0*, *y0*.
+
+    *tol* is the tolerance threshold, below which a streamline is considered
+    stationary and aborted.
+
+    *momentum* allows a streamline to continue moving across a plateau. (not
+    implemented)
+    """
 
     m, n = U.shape
 
