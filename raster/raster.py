@@ -104,10 +104,19 @@ def grad(D, res=(30.0, 30.0)):
            (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * dx)
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
-    return pad(Ddx), pad(Ddy)
+    return pad(Ddx, width=1, edges='all'), pad(Ddy, width=1, edges='all')
 
 
-def vector_field(D):
+def div(U, V, res=(30.0, 30.0)):
+    """ Calculate the divergence of a vector field. """
+    dUdx = (U[:,2:] - U[:,:-2]) / (2.0*res[0])
+    dVdy = (V[2:,:] - V[:-2,:]) / (2.0*res[1])
+    divergence = pad(dUdx, width=1, edges=('left', 'right')) \
+               + pad(dVdy, width=1, edges=('top', 'bottom'))
+    return divergence
+
+
+def normed_vector_field(D):
     """ Computes a U,V vector field of potential D. Scalar components of
     U,V are normalized to max(|U, V|).
     """
