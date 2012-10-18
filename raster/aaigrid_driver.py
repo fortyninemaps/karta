@@ -175,6 +175,15 @@ class AAIGrid(object):
                 self.hdr['yllcenter'], self.hdr['yllcenter']
                 + self.hdr['cellsize'] * self.hdr['nrows'])
 
+    def coordmesh(self):
+        """ Return a pair of arrays containing the *X* and *Y* coordinates of
+        the grid. """
+        X = (self.hdr['xllcenter'] + np.arange(self.data.shape[1])
+            * self.hdr['cellsize'])
+        Y = (self.hdr['yllcenter'] + np.arange(self.data.shape[0])
+            * self.hdr['cellsize'])
+        return np.meshgrid(X, Y)
+
     def max(self):
         """ Return the maximum non-nan in self.data. """
         return self.data[np.isnan(self.data)==False].max()
