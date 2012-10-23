@@ -192,15 +192,7 @@ class AAIGrid(object):
         """ Return the minimum non-nan in self.data. """
         return self.data[np.isnan(self.data)==False].min()
 
-    def Read(self, fnm):
-        """ Read an existing ASCII grid file. """
-        return self.fromfile(fnm)
-
     def read(self, fnm):
-        """ Read an existing ASCII grid file. """
-        return self.fromfile(fnm)
-
-    def FromFile(self, fnm):
         """ Read an existing ASCII grid file. """
         return self.fromfile(fnm)
 
@@ -272,9 +264,6 @@ class AAIGrid(object):
 
         return
 
-    def FromArray(self, A, hdr):
-        return self.fromarray(A, hdr)
-
     def fromarray(self, A, hdr):
         """ Read data from a 2d numpy array. The hdr argument is a dictionary
         of header information, including:
@@ -290,9 +279,6 @@ class AAIGrid(object):
         #A[np.isnan(A)] = hdr['nodata_value']
         self.data = A.copy()[:,:]
         pass
-
-    def ToFile(self, f, reference='center'):
-        return self.tofile(f, reference='center')
 
     def tofile(self, f, reference='center'):
         """ Save internal data to f, either a file-like object or a
@@ -336,9 +322,6 @@ class AAIGrid(object):
             f.close()
         return
 
-    def ToArray(self):
-        return self.toarray()
-
     def toarray(self):
         """ Return a 2d array with internal data. Header information can be
         obtained with AAIGrid.hdr.
@@ -346,16 +329,10 @@ class AAIGrid(object):
         """
         return self.data.copy()[::-1,:]
 
-    def MinMax(self):
-        return self.minmax()
-
     def minmax(self):
         """ Return the minimum and maximum value of data array. """
         A = self.data[np.isnan(self.data)==False]
         return (A.min(), A.max())
-
-    def Sample(self, x, y):
-        return self.sample(x, y)
 
     def sample(self, x, y):
         """ Return the value nearest to x, y, as well as center coordinates of
@@ -373,9 +350,6 @@ class AAIGrid(object):
             ys = yi * self.hdr['cellsize'] + self.hdr['yllcenter']
             xs = xi * self.hdr['cellsize'] + self.hdr['xllcenter']
             return z, (xs, ys)
-
-    def GetProfile(self, x0, y0, xf, yf, resolution=10.0):
-        return self.get_profile(x0, y0, xf, yf, resolution=10.0)
 
     def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as *segments*.
@@ -411,17 +385,10 @@ class AAIGrid(object):
 
         return np.array(z)
 
-    def Clip(self, bounds):
-        return self.clip(bounds)
-
     def clip(self, bounds):
         """ Clip the z-range in place to bounds = [min, max]. """
         self.data = self.data.clip(bounds[0], bounds[1])
         return
-
-    def Resize(self, te):
-        return self.resize(te)
-
 
     def resize(self, te):
         """ Resize array to fit within extents given by te. If the new
