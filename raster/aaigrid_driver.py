@@ -178,10 +178,10 @@ class AAIGrid(object):
     def coordmesh(self):
         """ Return a pair of arrays containing the *X* and *Y* coordinates of
         the grid. """
-        X = (self.hdr['xllcenter'] + np.arange(self.data.shape[1])
-            * self.hdr['cellsize'])
-        Y = (self.hdr['yllcenter'] + np.arange(self.data.shape[0])
-            * self.hdr['cellsize'])
+        X = (self.hdr['xllcenter']
+            + np.arange(self.data.shape[1]) * self.hdr['cellsize'])
+        Y = (self.hdr['yllcenter']
+            + np.arange(self.data.shape[0])[::-1] * self.hdr['cellsize'])
         return np.meshgrid(X, Y)
 
     def max(self):
@@ -422,12 +422,13 @@ class AAIGrid(object):
     def Resize(self, te):
         return self.resize(te)
 
+
     def resize(self, te):
         """ Resize array to fit within extents given by te. If the new
         dimensions are smaller, the data is clipped. If they are larger,
         nan padding is added.
 
-        *te*        : tuple in the form (xmin, xmamx, ymin, ymax).
+        *te*        : tuple in the form (xmin, xmax, ymin, ymax).
 
         Returns None.
         """
@@ -445,50 +446,38 @@ class AAIGrid(object):
             data_a = self.data.copy()
             ny, nx = data_a.shape
 
-            if xmin2 < xmin1:
-                dx = int(np.ceil((xmin2-xmin1) / float(self.hdr['cellsize'])))
-                print dx
-                data_a = np.hstack([np.nan*np.ones([ny, -dx]), data_a])
-            elif xmin2 > xmin1:
-                dx = int(np.ceil((xmin2-xmin1) / float(self.hdr['cellsize'])))
+            # The left side
+            dx = int(np.floor((xmin2-xmin1) / float(self.hdr['cellsize'])))
+            if dx < 0:
+                data_a = np.hstack([np.nan*np.ones([ny, dx]), data_a])
+            elif dx > 0:
                 data_a = data_a[:,dx:]
-            else:
-                dx = 0
             self.hdr['xllcenter'] = xmin1 + self.hdr['cellsize'] * dx
 
-            if xmax2 > xmax1:
-                dx = int(np.floor((xmax2-xmax1) / float(self.hdr['cellsize'])))
-                print dx
+            # The right side
+            dx = int(np.floor((xmax2-xmax1) / float(self.hdr['cellsize'])))
+            if dx > 0:
                 data_a = np.hstack([data_a, np.nan*np.ones([ny, dx])])
-            elif xmax2 < xmax1:
-                dx = int(np.floor((xmin2-xmin1) / float(self.hdr['cellsize'])))
+            elif dx < 0:
                 data_a = data_a[:,:dx]
-            else:
-                dx = 0
             self.hdr['ncols'] = data_a.shape[1]
 
             ny, nx = data_a.shape
 
-            if ymin2 < ymin1:
-                dy = int(np.ceil((ymin2-ymin1) / float(self.hdr['cellsize'])))
-                print dy
-                data_a = np.vstack([data_a, np.nan*np.ones([-dy, nx])])
-            elif ymin2 > ymin1:
-                dy = int(np.ceil((ymin2-ymin1) / float(self.hdr['cellsize'])))
+            # The bottom
+            dy = int(np.ceil((ymin2-ymin1) / float(self.hdr['cellsize'])))
+            if dy < 0:
+                data_a = np.vstack([data_a, np.nan*np.ones([dy, nx])])
+            elif dy > 0:
                 data_a = data_a[dy:,:]
-            else:
-                d = 0
             self.hdr['yllcenter'] = ymin1 + self.hdr['cellsize'] * dy
 
-            if ymax2 > ymax1:
-                dy = int(np.floor((ymax2-ymax1) / float(self.hdr['cellsize'])))
-                print dy
+            # The top
+            dy = int(np.floor((ymax2-ymax1) / float(self.hdr['cellsize'])))
+            if dy > 0:
                 data_a = np.vstack([np.nan*np.ones([dy, nx]), data_a])
-            elif ymax2 < ymax1:
-                dy = int(np.floor((ymin2-ymin1) / float(self.hdr['cellsize'])))
+            elif dy < 0:
                 data_a = data_a[:dy,:]
-            else:
-                dy = 0
             self.hdr['nrows'] = data_a.shape[0]
 
             self.data = data_a
