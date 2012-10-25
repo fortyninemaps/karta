@@ -10,11 +10,20 @@ def distance_xy(A):
         d.append(d[-1]+a)
     return np.array(d)
 
+contains = lambda s, S: s in S
 
-def load_xy(fnm, delimiter=","):
+def load_xy(fnm, delimiter=''):
     """ Load a flowline file and return a size-2 array of coordinates. """
     with open(fnm) as f:
-        coords = [[float(j) for j in i.split(delimiter)] for i in f.readlines()]
+        lines = f.readlines()
+
+    if delimiter == '':
+        for delimiter in (',', '\t', ' '):
+            if contains(delimiter, lines[-1]):
+                break
+            delimiter = None
+
+    coords = [[float(num) for num in line.split(delimiter)] for line in lines]
     return np.array(coords)
 
 
