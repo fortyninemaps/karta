@@ -4,7 +4,7 @@ import numpy as np
 
 def distance_xy(A):
     """ Calculate the cumulative distance at each coordinate pair in *A*. """
-    d_ = np.sqrt(np.sum((A[1:,:] - flowline[:-1,:])**2, axis=1))
+    d_ = np.sqrt(np.sum((A[1:,:] - A[:-1,:])**2, axis=1))
     d = [0]
     for a in d_:
         d.append(d[-1]+a)
