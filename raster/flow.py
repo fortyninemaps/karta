@@ -3,7 +3,7 @@ Flow-routing algorithms
 
 
 The following license applies to:
-    pixel_flow, facet_flow, upslope_area
+    pixel_flow, facet_flow
 
     Copyright (c) 2009, The MathWorks, Inc.
     All rights reserved.
@@ -162,115 +162,102 @@ def dem_flow(D):
     return R, S
 
 
-def build_contribution_matrix(R):
-    """ Constructs an (n x n) sparse matrix P, where n is the number of
-    elements in flow direction matrix R.
+def diffrad(a, b):
+    return (a + pi - b) % (2*pi) - pi
+
+
+def prop_dinfty(position, alpha):
+    """ Return proportion flowing to the center from *position* given flow
+    angle *alpha*. The argument *position* is
+                    0   1   2
+                    3   *   4
+                    5   6   7
+
+    and *alpha* is measured in radians counter-clockwise from a vector pointing
+    at position 4.
     """
-    n = R.size
-    nrow, ncol = R.shape
     pi = math.pi
-    Rf = R.flat
 
-    P = sparse.lil_matrix((n,n))
+    # beta is the direction to the centre node
+    BETA = [1.75, 1.5, 1.25, 0.0, 1.0, 0.25, 0.5, 0.75]
+    beta = BETA[position] * pi
 
-    # The primary diagonal
-    P.setdiag(np.ones(n), k=0)
-
-    for i in range(1,nrow-1):
-        for j in range(1,ncol-1):
-            m = i*nrow + j
-            alpha = R[i,j]
-            try:
-                if alpha > 1.75*pi or alpha < 0.25*pi:
-                    # Northward
-                    P[m-ncol, m-2*ncol] = abs(0.25*pi - alpha) / 0.25*pi
-                elif alpha > 0.25*pi and alpha < 0.75*pi:
-                    # Eastward
-                    P[m+1, m+2] = abs(0.25*pi - alpha + 0.5*pi) / 0.25*pi
-                elif alpha > 0.75*pi and alpha < 1.25*pi:
-                    # Southward
-                    P[m+ncol, m+2*ncol] = abs(0.25*pi - alpha + pi) / 0.25*pi
-                elif alpha > 1.25*pi and alpha < 1.75*pi:
-                    # Westward
-                    P[m-1, m-2] = abs(0.25*pi - alpha + 1.5*pi) / 0.25*pi
-            except:
-                print i, j, m, n
-    return P.tocsr()
+    theta = abs(diffrad(alpha, beta))
+    P = np.where(theta <= 0.25*pi, (0.25*pi-theta) / (0.25*pi), 0.0)
+    P = np.where(np.isnan(alpha), 0.0, P)
+    return P
 
 
-def get_upslope_area(R, res=[20.0, 20.0]):
+def prop_d8(position, alpha):
+    """ Return proportion flowing to the center from *position* given flow
+    angle *alpha*. The argument *position* is
+                    0   1   2
+                    3   *   4
+                    5   6   7
+    and *alpha* is measured in radians counter-clockwise from a vector pointing
+    at position 4.
+    """
+    pi = math.pi
 
-    # Upstream calculation
-    def upstream(R, area, i, j):
-        """ Recursive function for computing upstream area at (i,j),
-        given an array to write to and a flow field.
-        """
-        def proportion(alpha, position):
-            """ Return proportion flowing to center from position given
-            flow angle alpha, and where position is
-                            0   1   2
-                            3   *   4
-                            5   6   7
-            """
-            pi = math.pi
+    # beta is the direction to the centre node
+    BETA = [1.75, 1.5, 1.25, 0.0, 1.0, 0.25, 0.5, 0.75]
+    beta = BETA[position] * pi
 
-            # Beta is the direction to the centre node
-            BETA = [0.75, 1.0, 1.25, 0.5, 1.5, 0.25, 0.0, 1.75]
-            beta = BETA[position] * pi
-
-            theta = abs(beta-alpha)
-            return theta <= 0.25*pi and (0.25*pi-theta) / (0.25*pi) or 0.0
-
-        if not np.isnan(UA[i,j]):
-
-            return UA[i,j]
-
-        else:
-
-            cumarea = area
-
-            I = [i-1, i-1, i-1,
-                 i,        i,
-                 i+1, i+1, i+1]
-            J = [j-1, j, j+1,
-                 j-1,    j+1,
-                 j-1, j, j+1]
-
-            try:
-                Rij = [R[i-1, j-1],   R[i-1, j],     R[i-1, j+1],
-                       R[i, j-1],                     R[i, j+1],
-                       R[i+1, j-1],   R[i+1, j],     R[i+1, j+1]]
-            except IndexError:
-                return 0.0
-
-            iRij = enumerate(Rij)
-
-            # Retains cells where p > 0.0
-            contributors = filter(
-                    lambda a: proportion(a[1], a[0]) > 0.0, iRij)
-
-            # For each contributor, add the upslope area
-            for a in contributors:
-                try:
-                    cumarea += proportion(a[1], a[0]) * upstream(R, area, I[a[0]], J[a[0]])
-                except IndexError:
-                    pass
-
-            UA[i,j] = cumarea
-
-            return cumarea
+    theta = abs(diffrad(alpha, beta))
+    P = np.where(theta <= 0.125*pi, 1.0, 0.0)
+    P = np.where(np.isnan(alpha), 0.0, P)
+    return P
 
 
-    # Calculate upstream areas
-    print "Calculating upstream areas..."
-    global UA
+def upslope_area(F, A, proportion=prop_dinfty):
+    """ Calculate upslope area with a sparse matrix formulation, inspired by
+    the blog posts by Steve Eddins of Mathworks (TM). *F* is a flow direction
+    array, and *A* is the area of each grid cell. The function *proportion*
+    defines how flow should be partitioned (e.g. D8, D-infinity algorithms).
+    """
 
-    UA = np.nan * np.zeros_like(R)
-    area = res[0] * res[1]
+    assert F.shape == A.shape
 
-    for i in range(1, R.shape[0]):
-        for j in range(1, R.shape[1]):
-            if np.isnan(UA[i,j]):
-                upstream(R, area, i, j)
+    m, n = F.shape
+    pi = np.pi
+    ii = np.reshape(np.arange(F.size), F.shape)
+    I = ii.diagonal()
 
-    return UA
+    # Assemble a flow contribution matrix
+    C = sparse.lil_matrix((F.size, F.size))
+    for i in xrange(m):
+        for j in xrange(n):
+
+            i_ = i*n + j
+            i0 = i_ - n - 1
+            i1 = i_ - n
+            i2 = i_ - n + 1
+            i3 = i_ - 1
+            i4 = i_ + 1
+            i5 = i_ + n - 1
+            i6 = i_ + n
+            i7 = i_ + n + 1
+
+            C[i_,i_] = A[i,j]
+            if i > 0:
+                if j > 0:
+                    C[i_,i0] = -A[i-1,j-1] * proportion(0, F[i-1,j-1])
+                C[i_,i1]     = -A[i-1,j]   * proportion(1, F[i-1,j])
+                if j < n-1:
+                    C[i_,i2] = -A[i-1,j+1] * proportion(2, F[i-1,j+1])
+            if j > 0:
+                C[i_,i3]     = -A[i,j-1]   * proportion(3, F[i,j-1])
+            if j < n-1:
+                C[i_,i4]     = -A[i,j+1]   * proportion(4, F[i,j+1])
+            if i < m-1:
+                if j > 0:
+                    C[i_,i5] = -A[i+1,j-1] * proportion(5, F[i+1,j-1])
+                C[i_,i6]     = -A[i+1,j]   * proportion(6, F[i+1,j])
+                if j < n-1:
+                    C[i_,i7] = -A[i+1,j+1] * proportion(7, F[i+1,j+1])
+
+    # Next, solve the linear problem: C * U_a = \summation{A}
+    U = sparse.linalg.spsolve(C, A.flatten() * np.ones(m*n))
+    return U.reshape(F.shape)
+
+
