@@ -175,13 +175,20 @@ class AAIGrid(object):
                 self.hdr['yllcenter'], self.hdr['yllcenter']
                 + self.hdr['cellsize'] * self.hdr['nrows'])
 
-    def coordmesh(self):
+    def coordmesh(self, grid_registration='center'):
         """ Return a pair of arrays containing the *X* and *Y* coordinates of
         the grid. """
-        X = (self.hdr['xllcenter']
-            + np.arange(self.data.shape[1]) * self.hdr['cellsize'])
-        Y = (self.hdr['yllcenter']
-            + np.arange(self.data.shape[0])[::-1] * self.hdr['cellsize'])
+        if grid_registration == 'center':
+            xll = self.hdr['xllcenter']
+            yll = self.hdr['yllcenter']
+        elif grid_registration == 'corner':
+            xll = self.hdr['xllcorner']
+            yll = self.hdr['yllcorner']
+        else:
+            raise AAIError("grid_registration must be 'center' or 'corner'\n")
+
+        X = (xll + np.arange(self.data.shape[1]) * self.hdr['cellsize'])
+        Y = (yll + np.arange(self.data.shape[0])[::-1] * self.hdr['cellsize'])
         return np.meshgrid(X, Y)
 
     def max(self):
