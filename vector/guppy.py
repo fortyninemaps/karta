@@ -174,6 +174,8 @@ class Multipoint(object):
 
     def length(self, spherical=False):
         """ Returns the length of the line. """
+        if spherical is True:
+            raise Exception("Spherical metrics not implemented")
         points = [point(i) for i in self.vertices]
         distances = [a.distance(b) for a,b in zip(points[:-1], points[1:])]
         return sum(distances)
@@ -190,6 +192,30 @@ class Multipoint(object):
             f = lambda pt: (pt[0]+shift_vector[0], pt[1]+shift_vector[1],
                             pt[2]+shift_vector[2])
         self.vertices = map(f, self.vertices)
+        return
+
+    def _matmult(self, A, x):
+        """ Return Ax=b """
+        b = []
+        for a in A:
+            b.append(sum([ai*xi for ai,xi in zip(a, x)]))
+        return b
+
+    def rotate2d(self, thetad, origin=(0,0)):
+        """ Rotate rank 2 Multipoint around *origin* counter-clockwise by
+        *thetad* degrees. """
+        # First, shift by the origin
+        self.shift([-a for a in origin])
+
+        # Multiply by a rotation matrix
+        theta = thetad / 180.0 * math.pi
+        R = ((math.cos(theta), -math.sin(theta)),
+             (math.sin(theta), math.cos(theta)))
+        rvertices = [self._matmult(R, x) for x in self.vertices]
+        self.vertices = rvertices
+
+        # Shift back
+        self.shift(origin)
         return
 
     def nearest_to(self, pt):
