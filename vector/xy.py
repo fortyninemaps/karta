@@ -15,7 +15,7 @@ contains = lambda s, S: s in S
 def load_xy(fnm, delimiter=''):
     """ Load a flowline file and return a size-2 array of coordinates. """
     with open(fnm) as f:
-        lines = f.readlines()
+        lines = filter(lambda s: len(s.strip()) > 0, f.readlines())
 
     if delimiter == '':
         for delimiter in (',', '\t', ' '):
@@ -23,9 +23,10 @@ def load_xy(fnm, delimiter=''):
                 break
             delimiter = None
 
-    coords = [[float(num) for num in line.split(delimiter)] for line in lines]
+    coords = [[float(num) for num in line.strip().split(delimiter)] for line in lines]
     return np.array(coords)
 
+loadxy = load_xy
 
 def xyz2array_reg(X, Y, Z):
     """ Return an array from X,Y,Z vectors, assuming gridding is
