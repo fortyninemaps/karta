@@ -1,30 +1,25 @@
-#! /usr/bin/env python
-#
-#   guppy.py
-#
-# Geographical measurement and simple analysis module for Python
-# 2.X.X. Provide point, polyline, and polygon classes, with methods
-# for simple measurements such as distance, area, and bearing.
+# Geographical measurement and simple analysis module for Python 2.X.X.
+# Provides Point, Multipoint, Polyline, and Polygon classes, with methods for
+# simple measurements such as distance, area, and bearing.
 #
 # Written by Nat Wilson (njwilson23@gmail.com)
-#
-#   Need to fill in Multipoint.closest_to() methods
 #
 
 import math
 import sys
 from collections import deque
 import traceback
+
 try:
     import shapely.geometry as geometry
 except ImportError:
     pass
 
+
 class Point(object):
     """ This defines the point class, from which x,y[,z] points can be
     constructed.
     """
-
     def __init__(self, coords):
         self.x = float(coords[0])
         self.y = float(coords[1])
@@ -76,7 +71,7 @@ class Point(object):
                 return math.atan(dy / dx) + math.pi
 
         elif spherical is True:
-            sys.stderr.write('Not implemented')
+            raise NotImplementedError
         else:
             raise Exception("Value for 'spherical' kwarg not understood")
         return
@@ -86,11 +81,11 @@ class Point(object):
         if points are coincident. """
 
         if self.z is None:
-            raise GGeoError("point.azimuth() cannot be called from a rank 2 coordinate.")
-            sys.exit(1)
+            raise GGeoError("Point.azimuth() cannot be called from a rank 2 "
+                            "coordinate.")
         elif other.z is None:
-            raise GGeoError("point.azimuth() cannot be called on a rank 2 coordinate.")
-            sys.exit(1)
+            raise GGeoError("Point.azimuth() cannot be called on a rank 2 "
+                            "coordinate.")
 
         distxy = math.sqrt((self.x-other.x)**2. + (self.y-other.y)**2.)
         dz = self.z - other.z
@@ -168,15 +163,16 @@ class Multipoint(object):
                 # Dictionary of attributes
                 for data_list in data.values:
                     if len(data) != len(vertices):
-                        raise GTInitError('Point data length must match point vertices')
+                        raise GTInitError("Point data length must match point "
+                                          "vertices")
                     if False in (isinstance(a, type(data[0])) for a in data):
-                        raise GTInitError('Data must have uniform type')
+                        raise GTInitError("Data must have uniform type")
             else:
                 # Single attribute
                 if len(data) != len(vertices):
-                    raise GTInitError('Point data must match point vertices')
+                    raise GTInitError("Point data must match point vertices")
                 if False in (isinstance(a, type(data[0])) for a in data):
-                    raise GTInitError('Data must have uniform type')
+                    raise GTInitError("Data must have uniform type")
             self.data = data
         else:
             self.data = [None for a in vertices]
@@ -285,7 +281,8 @@ class Multipoint(object):
     def max_dimension(self):
         """ Return the two points in the Multipoint that are furthest
         from each other. """
-        dist = lambda xy0, xy1: math.sqrt((xy1[0]-xy0[0])**2 + (xy1[1]-xy0[1])**2)
+        dist = lambda xy0, xy1: math.sqrt((xy1[0]-xy0[0])**2 +
+                                          (xy1[1]-xy0[1])**2)
 
         P = [(p0, p1) for p0 in self.vertices for p1 in self.vertices]
         D = map(dist, (p[0] for p in P), (p[1] for p in P))
@@ -460,7 +457,8 @@ def ray_intersection(pt, endpt1, endpt2, direction=0.0):
             return
 
     else:       # Line segment is vertical
-        if direction % math.pi/2. == 0.0 and direction != 0.0:  # Lines are parallel
+        if direction % math.pi/2. == 0.0 and direction != 0.0:
+            # Lines are parallel
             return
         x_int = float(endpt1[0])
         y_int = (x_int - pt[0]) * m_ray + pt[1]
@@ -514,8 +512,7 @@ def pt_nearest(pt, endpt1, endpt2):
             return (u_int, dist(u_int, pt))
 
 
-def distance(pntlist, angular_unit = "deg", space_unit = "km",
-        method = "vicenty"):
+def distance(pntlist, angular_unit="deg", space_unit="km", method="vicenty"):
     """ Computes the great circle distance between n point pairs on a
     sphere. Returns a list of length (n-1)
 
@@ -616,7 +613,8 @@ def walk(start_pt, distance, bearing, azimuth=0.0, spherical=False):
         return point((start_pt.x+dx, start_pt.y+dy, start_pt.z+dz))
     elif start_pt.rank == 2:
         if azimuth != 0:
-            sys.stderr.write("Warning: start_pt has rank 2 but azimuth is nonzero\n")
+            sys.stderr.write("Warning: start_pt has rank 2 but azimuth is "
+                             "nonzero\n")
         return point((start_pt.x+dx, start_pt.y+dy))
 
 
