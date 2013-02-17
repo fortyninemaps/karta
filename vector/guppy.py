@@ -147,14 +147,50 @@ class Point(object):
 class Multipoint(object):
     """ This is a base class for the polyline and polygon classes. """
 
-    def __init__(self, vertices):
+    def __init__(self, vertices, data=None):
+        """ *vertices* is a list of tuples containing point coordinates.
+
+            *data* is either `None` a list of point attributes, or a dictionary
+            of point attributes. If *data* is not `None`, then it (or its
+            values) must match *vertices* in length.
+        """
         self.rank = len(vertices[0])
+
         if self.rank > 3 or self.rank < 2:
             raise Exception('Input must be doubles or triples\n')
         elif False in [self.rank==len(i) for i in vertices]:
             raise Exception('Input must have consistent rank\n')
         else:
             self.vertices = [tuple(i) for i in vertices]
+
+        if data is not None:
+            if len(data) != len(vertices):
+                raise Exception('Point data must match point vertices')
+            if False in (isinstance(a, type(data[0])) for a in data):
+                raise Exception('Data must have uniform type')
+        else:
+            data = [None for a in vertices]
+        self.data = data
+        return
+
+    def __len__(self):
+        return len(self.vertices)
+
+    def __getitem__(self, key):
+        if not isinstance(key, int):
+            raise Exception('Indices must be integers')
+        return self.vertices[key]
+
+    def __setitem__(self, key, value):
+        if not isinstance(key, int):
+            raise Exception('Indices must be integers')
+        if len(value) != self.rank:
+            raise Exception('Cannot insert values with'
+                            'rank != {0}'.format(self.rank))
+        self.vertices[key] = value
+
+    def __iter__(self):
+        return (pt for pt in self.vertices)
 
     def print_vertices(self):
         """ Prints an enumerated list of indices. """
