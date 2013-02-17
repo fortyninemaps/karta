@@ -86,10 +86,10 @@ class Point(object):
         if points are coincident. """
 
         if self.z is None:
-            raise Exception("point.azimuth() cannot be called from a rank 2 coordinate.")
+            raise GGeoError("point.azimuth() cannot be called from a rank 2 coordinate.")
             sys.exit(1)
         elif other.z is None:
-            raise Exception("point.azimuth() cannot be called on a rank 2 coordinate.")
+            raise GGeoError("point.azimuth() cannot be called on a rank 2 coordinate.")
             sys.exit(1)
 
         distxy = math.sqrt((self.x-other.x)**2. + (self.y-other.y)**2.)
@@ -107,7 +107,7 @@ class Point(object):
                 return math.atan(dz / distxy)
 
         elif spherical is True:
-            raise Exception("Not implemented")
+            raise NotImplementedError("Not implemented")
         else:
             raise Exception("Value for 'spherical' kwarg not understood")
         return
@@ -128,7 +128,7 @@ class Point(object):
         """ Shift point by the amount given by a vector. Operation occurs
         in-place """
         if len(shift_vector) != self.rank:
-            raise Exception('Shift vector length must equal geometry rank.')
+            raise GGeoError('Shift vector length must equal geometry rank.')
 
         self.x += shift_vector[0]
         self.y += shift_vector[1]
@@ -141,7 +141,7 @@ class Point(object):
         try:
             return geometry.Point(self.x, self.y, self.z)
         except NameError:
-            raise Exception('Shapely module did not import\n')
+            raise ImportError('Shapely module did not import\n')
 
 
 class Multipoint(object):
@@ -157,20 +157,29 @@ class Multipoint(object):
         self.rank = len(vertices[0])
 
         if self.rank > 3 or self.rank < 2:
-            raise Exception('Input must be doubles or triples\n')
+            raise GTInitError('Input must be doubles or triples\n')
         elif False in [self.rank==len(i) for i in vertices]:
-            raise Exception('Input must have consistent rank\n')
+            raise GTInitError('Input must have consistent rank\n')
         else:
             self.vertices = [tuple(i) for i in vertices]
 
         if data is not None:
-            if len(data) != len(vertices):
-                raise Exception('Point data must match point vertices')
-            if False in (isinstance(a, type(data[0])) for a in data):
-                raise Exception('Data must have uniform type')
+            if hasattr(data, 'values'):
+                # Dictionary of attributes
+                for data_list in data.values:
+                    if len(data) != len(vertices):
+                        raise GTInitError('Point data length must match point vertices')
+                    if False in (isinstance(a, type(data[0])) for a in data):
+                        raise GTInitError('Data must have uniform type')
+            else:
+                # Single attribute
+                if len(data) != len(vertices):
+                    raise GTInitError('Point data must match point vertices')
+                if False in (isinstance(a, type(data[0])) for a in data):
+                    raise GTInitError('Data must have uniform type')
+            self.data = data
         else:
-            data = [None for a in vertices]
-        self.data = data
+            self.data = [None for a in vertices]
         return
 
     def __len__(self):
@@ -178,14 +187,14 @@ class Multipoint(object):
 
     def __getitem__(self, key):
         if not isinstance(key, int):
-            raise Exception('Indices must be integers')
+            raise GGeoError('Indices must be integers')
         return self.vertices[key]
 
     def __setitem__(self, key, value):
         if not isinstance(key, int):
-            raise Exception('Indices must be integers')
+            raise GGeoError('Indices must be integers')
         if len(value) != self.rank:
-            raise Exception('Cannot insert values with'
+            raise GGeoError('Cannot insert values with'
                             'rank != {0}'.format(self.rank))
         self.vertices[key] = value
 
@@ -211,7 +220,7 @@ class Multipoint(object):
     def length(self, spherical=False):
         """ Returns the length of the line. """
         if spherical is True:
-            raise Exception("Spherical metrics not implemented")
+            raise NotImplementedError("Spherical metrics not implemented")
         points = [point(i) for i in self.vertices]
         distances = [a.distance(b) for a,b in zip(points[:-1], points[1:])]
         return sum(distances)
@@ -220,7 +229,7 @@ class Multipoint(object):
         """ Shift feature by the amount given by a vector. Operation
         occurs in-place """
         if len(shift_vector) != self.rank:
-            raise Exception('Shift vector length must equal geometry rank.')
+            raise GGeoError('Shift vector length must equal geometry rank.')
 
         if self.rank == 2:
             f = lambda pt: (pt[0]+shift_vector[0], pt[1]+shift_vector[1])
@@ -330,7 +339,7 @@ class Polyline(Multipoint):
             elif self.rank == 3:
                 return geometry.LineString([(v[0], v[1], v[2]) for v in self.vertices])
         except NameError:
-            raise Exception('Shapely module did not import\n')
+            raise ImportError('Shapely module did not import\n')
 
 
 class Polygon(Multipoint):
@@ -398,7 +407,32 @@ class Polygon(Multipoint):
             elif self.rank == 3:
                 return geometry.Polygon([(v[0], v[1], v[2]) for v in self.vertices])
         except NameError:
-            raise Exception('Shapely module did not import\n')
+            raise ImportError('Shapely module did not import\n')
+
+class GuppyError(Exception):
+    """ Base class for guppy module errors. """
+    def __init__(self, message=''):
+        self.message = message
+    def __str__(self):
+        return self.message
+
+
+class GInitError(GuppyError):
+    """ Exception to raise when a guppy object fails to initialize. """
+    def __init__(self, message=''):
+        self.message = message
+
+
+class GUnitError(GuppyError):
+    """ Exception to raise there is a projected unit problem. """
+    def __init__(self, message=''):
+        self.message = message
+
+
+class GGeoError(GuppyError):
+    """ Exception to raise when a guppy object attempts an invalid transform. """
+    def __init__(self, message=''):
+        self.message = message
 
 
 def ray_intersection(pt, endpt1, endpt2, direction=0.0):
@@ -506,7 +540,7 @@ def distance(pntlist, angular_unit = "deg", space_unit = "km",
         xpts = [i.x for i in pntlist]
         ypts = [i.y for i in pntlist]
     else:
-        raise Exception("Angular unit unrecognized")
+        raise GUnitError("Angular unit unrecognized")
         return None
 
     distances = []
@@ -524,7 +558,7 @@ def distance(pntlist, angular_unit = "deg", space_unit = "km",
                 distance = 2 * radius * math.asin(math.sqrt((math.sin(dy /
                     2.))**2 + math.cos(y1) * math.cos(y2) *
                     (math.sin(dx / 2.))**2))
-            except Exception:
+            except GGeoError:
                 traceback.print_exc()
         elif method == "vicenty":
             try:
@@ -535,9 +569,9 @@ def distance(pntlist, angular_unit = "deg", space_unit = "km",
                     math.cos(y2) * math.cos(dx))
                 distance = radius * math.atan2(a, b)
             except ZeroDivisionError:
-                raise Exception("Zero in denominator")
+                raise GGeoError("Zero in denominator")
                 return None
-            except Exception:
+            except:
                 traceback.print_exc()
         else:
             raise Exception("Distance method unrecognized")
@@ -588,8 +622,8 @@ def walk(start_pt, distance, bearing, azimuth=0.0, spherical=False):
 
 def sortby(A, B):
     """ Sort a list A by the values in an ordered list B. """
-    if len(A) == len(B): pass
-    else: raise Exception("A and B must be of the same length")
+    if len(A) != len(B):
+        raise GGeoError("A and B must be of the same length")
     comb = zip(B,A)
     comb.sort()
     return [i[1] for i in comb]
@@ -605,7 +639,7 @@ def tighten(X, Z):
     between same-height endpoints.
     """
     if len(X) != len(Z):
-        raise Exception('Observation vectors must have equal length')
+        raise GGeoError('Observation vectors must have equal length')
 
     DZ = [z2-z1 for z2,z1 in zip(Z[1:], Z[:-1])]
     DX = [x2-x1 for x2,x1 in zip(X[1:], X[:-1])]
@@ -615,3 +649,4 @@ def tighten(X, Z):
     Xt = map(lambda i: sum(DXt[:i]) + X[0], range(len(DX)))
 
     return zip(Xt, Z)
+
