@@ -402,7 +402,8 @@ class AAIGrid(object):
         dimensions are smaller, the data is clipped. If they are larger,
         nan padding is added.
 
-        *te*        : tuple in the form (xmin, xmax, ymin, ymax).
+        *te*        :   tuple of center coordinates in the form
+                        (xmin, xmax, ymin, ymax).
 
         Returns None.
         """
