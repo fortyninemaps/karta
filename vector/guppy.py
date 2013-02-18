@@ -1,5 +1,5 @@
 # Geographical measurement and simple analysis module for Python 2.X.X.
-# Provides Point, Multipoint, Polyline, and Polygon classes, with methods for
+# Provides Point, Multipoint, Line, and Polygon classes, with methods for
 # simple measurements such as distance, area, and bearing.
 #
 # Written by Nat Wilson (njwilson23@gmail.com)
@@ -9,6 +9,8 @@ import math
 import sys
 from collections import deque
 import traceback
+import _vtk
+import _geojson
 
 try:
     import shapely.geometry as geometry
@@ -38,12 +40,19 @@ class Point(object):
         elif self.rank == 3:
             return 'point(' + str(self.xyz) + ')'
 
-    def coords(self, convert_to=False):
+    def get_vertex(self):
+        if self.rank == 2:
+            vert = (self.x, self.y)
+        elif self.rank == 3:
+            vert = (self.x, self.y, self.z)
+        return vert
+
+    def coordsxy(self, convert_to=False):
         """ Returns the x,y coordinates. Convert_to may be set to 'deg'
         or 'rad' for convenience.  """
-        if angle == 'rad':
+        if convert_to == 'rad':
             return (self.x*3.14159/180., self.y*3.14159/180.)
-        elif angle == 'deg':
+        elif convert_to == 'deg':
             return (self.x/3.14159*180., self.y/3.14159*180.)
         else:
             return (self.x, self.y)
@@ -140,7 +149,8 @@ class Point(object):
 
 
 class Multipoint(object):
-    """ This is a base class for the polyline and polygon classes. """
+    """ Point cloud with associated attributes. This is a base class for the
+    polyline and polygon classes. """
 
     def __init__(self, vertices, data=None):
         """ *vertices* is a list of tuples containing point coordinates.
@@ -161,18 +171,18 @@ class Multipoint(object):
         if data is not None:
             if hasattr(data, 'values'):
                 # Dictionary of attributes
-                for data_list in data.values:
-                    if len(data) != len(vertices):
-                        raise GTInitError("Point data length must match point "
+                for dlist in data.values():
+                    if len(dlist) != len(vertices):
+                        raise GInitError("Point data length must match point "
                                           "vertices")
-                    if False in (isinstance(a, type(data[0])) for a in data):
-                        raise GTInitError("Data must have uniform type")
+                    if False in (isinstance(a, type(dlist[0])) for a in dlist):
+                        raise GInitError("Data must have uniform type")
             else:
                 # Single attribute
                 if len(data) != len(vertices):
-                    raise GTInitError("Point data must match point vertices")
+                    raise GInitError("Point data must match point vertices")
                 if False in (isinstance(a, type(data[0])) for a in data):
-                    raise GTInitError("Data must have uniform type")
+                    raise GInitError("Data must have uniform type")
             self.data = data
         else:
             self.data = [None for a in vertices]
@@ -203,6 +213,10 @@ class Multipoint(object):
             print i,'\t',vertex
 
     def get_vertices(self):
+        """ Return vertices as a list of tuples. """
+        return self.vertices
+
+    def get_coordinate_lists(self):
         """ Return X, Y, and Z lists. If self.rank == 2, Z will be
         zero-filled. """
         X = [i[0] for i in self.vertices]
@@ -278,6 +292,20 @@ class Multipoint(object):
 
         return point(point_dist[distances.index(min(distances))][0])
 
+    def get_extents(self):
+        """ Calculate a bounding box. """
+        def gen_minmax(G):
+            """ Get the min/max from a single pass through a generator. """
+            mn = mx = G.next()
+            for x in G:
+                mn = min(mn, x)
+                mx = max(mx, x)
+            return mn, mx
+        # Get the min/max for a generator defined for each dimension
+        return map(gen_minmax,
+                    map(lambda i: (c[i] for c in self.vertices),
+                        range(self.rank)))
+
     def max_dimension(self):
         """ Return the two points in the Multipoint that are furthest
         from each other. """
@@ -288,16 +316,27 @@ class Multipoint(object):
         D = map(dist, (p[0] for p in P), (p[1] for p in P))
         return P[D.index(max(D))]
 
+    def to_xyfile(self, fnm, **kwargs):
+        """ Write data to a delimited ASCII table. """
+        raise NotImplementedError
+        return
+
+    def to_geojson(self, fnm, **kwargs):
+        """ Write data to a GeoJSON file. """
+        writer = _geojson.GeoJSONWriter(self, fnm, **kwargs)
+        return writer
+
+    def to_vtp(self, fnm, **kwargs):
+        """ Write data to an ASCII VTK .vtp file. """
+        _vtk.mp2vtp(self, fnm, **kwargs)
+        return
 
 
-class Polyline(Multipoint):
+class Line(Multipoint):
     """ This defines the polyline class, from which geographic line
     objects can be constructed. Line objects consist of joined,
     georeferenced line segments.
     """
-
-    def __init__(self, vertices):
-        Multipoint.__init__(self, vertices)
 
     def __repr__(self):
         return 'polyline(' + reduce(lambda a,b: str(a) + ' ' + str(b),
@@ -344,8 +383,8 @@ class Polygon(Multipoint):
     polygons objects can be created. Polygon objects consist of
     point nodes enclosing an area.
     """
-    def __init__(self, vertices):
-        Multipoint.__init__(self, vertices)
+    def __init__(self, vertices, **kwargs):
+        Multipoint.__init__(self, vertices, **kwargs)
         if vertices[0] != vertices[-1]:
             vertices.append(vertices[0])
 
