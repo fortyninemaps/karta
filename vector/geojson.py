@@ -8,12 +8,8 @@ import traceback
 
 class GeoJSONWriter:
     """ Object for converting guppy objects to GeoJSON strings.
-    Subclasses must implement:
-        - a data writer
-        - calc_bbox()
-    as well as add an attribute 'strtype'
-
-    DOES NOT HANDLE FEATURE COLLECTIONS
+    Multipoint-based opbjects are written as 'Features'. This does not handle
+    'FeatureCollection' types.
     """
     supobj = {}
 
