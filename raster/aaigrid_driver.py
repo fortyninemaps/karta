@@ -12,6 +12,17 @@ import numpy as np
 import traceback
 
 class AAIGrid(object):
+
+    hdr = {}
+    hdr['ncols'] = None
+    hdr['nrows'] = None
+    hdr['yllcenter'] = None
+    hdr['xllcenter'] = None
+    hdr['yllcorner'] = None
+    hdr['xllcorner'] = None
+    hdr['cellsize'] = None
+    hdr['nodata_value'] = None
+
     def __init__(self, incoming=None, hdr=None):
         """ Contains the table of data from an ESRI ASCII raster file.
 
@@ -35,16 +46,6 @@ class AAIGrid(object):
             nodata_value    (int)
         """
 
-        self.data = None
-        self.hdr = {}
-        self.hdr['ncols'] = None
-        self.hdr['nrows'] = None
-        self.hdr['yllcenter'] = None
-        self.hdr['xllcenter'] = None
-        self.hdr['yllcorner'] = None
-        self.hdr['xllcorner'] = None
-        self.hdr['cellsize'] = None
-        self.hdr['nodata_value'] = None
         if incoming is not None:
             try:
                 # assume incoming is a file
@@ -52,6 +53,11 @@ class AAIGrid(object):
             except (TypeError, UnicodeDecodeError):
                 # isn't a file, so hopefully an ndarray
                 self.fromarray(incoming, hdr)
+
+        if hdr is not None:
+            self.hdr = hdr
+        self._check_header()
+        return
 
     def __str__(self):
         if self.data is None:
@@ -108,34 +114,32 @@ class AAIGrid(object):
         else:
             raise AAIError("division with other types not defined")
 
-    def _check_header(self, hdr):
+    def _check_header(self, hdr=None):
         """ Make sure that all required header records are present. """
-        if hdr['ncols'] is None:
-            raise AAIError('NCOLS not defined')
-        else:
-            hdr['ncols'] = int(hdr['ncols'])
 
-        if hdr['nrows'] is None:
-            raise AAIError('NROWS not defined')
-        else:
-            hdr['nrows'] = int(hdr['nrows'])
+        if hdr is None:
+            hdr = self.hdr
 
-        if hdr['cellsize'] is None:
-            raise AAIError('CELLSIZE not defined')
+        for field in ('ncols', 'nrows', 'cellsize'):
+            if hdr.get(field) is None:
+                raise AAIError("{0} not defined".format(field.upper()))
 
-        if hdr['nodata_value'] is None:
+        for field in ('ncols', 'nrows'):
+            hdr[field] = int(hdr[field])
+
+        if hdr.get('nodata_value') is None:
             hdr['nodata_value'] = -9999
 
-        if (hdr['yllcenter'] is None):
-            if (hdr['yllcorner'] is None):
+        if hdr.get('yllcenter') is None:
+            if hdr.get('yllcorner') is None:
                 raise AAIError('y reference not defined')
             else:
                 hdr['yllcenter'] = hdr['yllcorner'] + hdr['cellsize'] / 2.0
         else:
             hdr['yllcorner'] = hdr['yllcenter'] - hdr['cellsize'] / 2.0
 
-        if (hdr['xllcenter'] is None):
-            if (hdr['xllcorner'] is None):
+        if hdr.get('xllcenter') is None:
+            if hdr.get('xllcorner') is None:
                 raise AAIError('x reference not defined')
             else:
                 hdr['xllcenter'] = hdr['xllcorner'] + hdr['cellsize'] / 2.0
@@ -456,7 +460,7 @@ class AAIGrid(object):
             self.hdr['nrows'] = data_a.shape[0]
 
             self.data = data_a
-            self.hdr = self._check_header(self.hdr)
+            self._check_header()
 
         else:
             raise AAIError("no data to resize")
