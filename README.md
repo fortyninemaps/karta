@@ -9,8 +9,8 @@ would be considered 'pythonic'. Although these other packages may have
 advantages in performance or capability, *geo_tools* is designed to be portable
 require as little extra software infrastructure as possible.
 
-*geo_tools* should be considered experimental, and no assurances are
-provided about the correctness of the code or results derived using it.
+*geo_tools* should be considered a work in progress. No assurances are provided
+about results derived using it.
 
 ##CONTENTS
 
@@ -32,6 +32,19 @@ provided about the correctness of the code or results derived using it.
 
 - tests
     - miscellaneous test scripts
+
+
+##FORMATS
+
+*geo_tools* attempts to provide a basic working interface to several of common
+file formats. Currently supported are:
+
+- vector
+    - ASCII tables
+    - GeoJSON
+    - VTK
+- raster
+    - ESRI ASCII Grids
 
 
 ##CYTHON
