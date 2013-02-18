@@ -8,7 +8,8 @@ import vector.stats
 import vector.guppy as guppy
 import vector.shapefile as shapefile
 import vector.xy as xy
-import vector.geojson
+import vector._geojson
+import vector._vtk
 
 import raster
 import raster.raster
