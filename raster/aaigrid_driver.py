@@ -147,7 +147,7 @@ class AAIGrid(object):
             hdr['xllcorner'] = hdr['xllcenter'] - hdr['cellsize'] / 2.0
         return hdr
 
-    def _get_indices(self, x, y):
+    def get_indices(self, x, y):
         """ Return the column and row indices for the point nearest
         geographical coordinates (x, y). """
         if self.data is None:
@@ -348,7 +348,7 @@ class AAIGrid(object):
     def sample(self, x, y):
         """ Return the value nearest to x, y, as well as center coordinates of
         the grid cell actually sampled. """
-        xi, yi = self._get_indices(x, y)
+        xi, yi = self.get_indices(x, y)
         d = self.hdr['cellsize']
         ncols = self.hdr['ncols']
         nrows = self.hdr['nrows']
@@ -389,7 +389,7 @@ class AAIGrid(object):
                 fd = p / d
                 fx = fd*xlen
                 fy = fd*ylen
-                xi, yi = self._get_indices(x0+fx, y0+fy)
+                xi, yi = self.get_indices(x0+fx, y0+fy)
                 z.append(self.data[yi, xi])
                 p += resolution
             p -= d
