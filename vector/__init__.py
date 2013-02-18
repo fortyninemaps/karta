@@ -6,6 +6,7 @@ import guppy
 import shapefile
 import stats
 import xy
-import geojson
+import _geojson
+import _vtk
 from gpxparser import GPXParser
 
