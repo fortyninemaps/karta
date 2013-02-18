@@ -6,8 +6,6 @@ import guppy
 import json
 import traceback
 
-__status__ = 'incomplete'
-
 class GeoJSONWriter:
     """ Object for converting guppy objects to GeoJSON strings.
     Subclasses must implement:

@@ -9,8 +9,8 @@ import math
 import sys
 from collections import deque
 import traceback
-import _vtk
-import _geojson
+import vtk
+import geojson
 
 try:
     import shapely.geometry as geometry
@@ -33,6 +33,7 @@ class Point(object):
             self.rank = 2
         self.xy = (self.x, self.y)
         self.xyz = (self.x, self.y, self.z)
+        return
 
     def __repr__(self):
         if self.rank == 2:
@@ -231,7 +232,7 @@ class Multipoint(object):
         """ Returns the length of the line. """
         if spherical is True:
             raise NotImplementedError("Spherical metrics not implemented")
-        points = [point(i) for i in self.vertices]
+        points = [Point(i) for i in self.vertices]
         distances = [a.distance(b) for a,b in zip(points[:-1], points[1:])]
         return sum(distances)
 
@@ -323,12 +324,12 @@ class Multipoint(object):
 
     def to_geojson(self, fnm, **kwargs):
         """ Write data to a GeoJSON file. """
-        writer = _geojson.GeoJSONWriter(self, fnm, **kwargs)
+        writer = geojson.GeoJSONWriter(self, fnm, **kwargs)
         return writer
 
-    def to_vtp(self, fnm, **kwargs):
+    def to_vtk(self, fnm, **kwargs):
         """ Write data to an ASCII VTK .vtp file. """
-        _vtk.mp2vtp(self, fnm, **kwargs)
+        vtk.mp2vtp(self, fnm, **kwargs)
         return
 
 
