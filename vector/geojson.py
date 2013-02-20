@@ -2,6 +2,7 @@
 dealing with GeoJSON data. The `GeoJSON` class uses the builtin json module and
 enforces GeoJSON standards. """
 
+import sys
 import guppy
 import json
 import traceback
@@ -13,20 +14,24 @@ class GeoJSONWriter:
     """
     supobj = {}
 
-    def __init__(self, gpobj, fnm, crs_urn=None, bbox=None):
-        type_equiv = {guppy.Point:'Point',
-                      guppy.Multipoint:'MultiPoint',
-                      guppy.Line:'LineString',
-                      guppy.Polygon:'Polygon'}
+    def __init__(self, gpobj, fout, **kwargs):
+        type_equiv = {guppy.Point       :   'Point',
+                      guppy.Multipoint  :   'MultiPoint',
+                      guppy.Line        :   'LineString',
+                      guppy.Polygon     :   'Polygon'}
 
-        if type(gpobj) in type_equiv:
+        if type(gpobj) in type_equiv.keys():
             self.typestr = type_equiv[type(gpobj)]
         else:
             raise NotImplementedError('input object not a recognizes guppy '
                                       'type')
+        crs = kwargs.get('crs', None)
+        crs_fmt = kwargs.get('crs_fmt', None)
+        bbox = kwargs.get('bbox', None)
+
         self.gpobj = gpobj
-        if crs_urn is not None:
-            self.add_named_crs(crs_urn)
+        if crs is not None:
+            self.add_named_crs(crs, crs_fmt)
         if self.typestr != 'Point':
             self.supobj['type'] = 'Feature'
             self.add_bbox(bbox)
@@ -34,15 +39,30 @@ class GeoJSONWriter:
         else:
             self.supobj['type'] = 'Point'
             self.add_coordinates()
-        self.write_json(fnm)
+        self.write_json(fout)
         return
 
-    def add_named_crs(self, crs_urn):
+    def add_named_crs(self, crs, fmt='epsg'):
         """ Tag the JSON object with coordinate reference system metadata using
-        a named CRS. The crs_urn should be a valid OGC CRS URN identifier. """
-        # Validate the crs_urn?
-        supobj['crs'] = {'type'         :   'name',
-                         'properties'   :   {'name' :   crs_urn}}
+        a named CRS. `fmt` indicates the format of the named CRS argument, and
+        may be one of ('epsg', 'ogc_crs_urn').
+        """
+        if fmt == 'epsg':
+            href = ('http://spatialreference.org/ref/epsg/{0}/'
+                    'proj4/'.format(crs))
+            islinked = True
+        elif fmt == 'ogc_crs_urn':
+            crs_str = crs
+            islinked = False
+        else:
+            raise NotImplementedError('CRS fmt {0} not recognized'.format(fmt))
+
+        if islinked:
+            self.supobj['crs'] = {'type': 'link',
+                                  'properties': {'href': href, 'type': 'proj4'}}
+        else:
+            self.supobj['crs'] = {'type': 'name',
+                                  'properties': {'name': crs_str}}
         return
 
     def add_bbox(self, bbox=None):
@@ -105,10 +125,10 @@ class GeoJSONWriter:
         target['id'] = range(len(self.gpobj.get_vertices()))
         return
 
-    def write_json(self, fnm):
-        """ Dump internal dict-object to JSON using the builtin `json` module. """
-        with open(fnm, 'w') as f:
-            json.dump(self.supobj, f, indent=2)
+    def write_json(self, fout):
+        """ Dump internal dict-object to JSON using the builtin `json` module.
+        """
+        json.dump(self.supobj, fout, indent=2)
         return
 
 #class GeoJSONReader:
