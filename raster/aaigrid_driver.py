@@ -7,11 +7,12 @@ argument to open a grid, or can read data from a numpy array.
 Written by Nat Wilson
 """
 
-from math import sin, cos, sqrt
+from math import sin, sqrt
 import numpy as np
 import traceback
 
 class AAIGrid(object):
+    """ Grid object built around the ESRI ASCII Grid format. """
 
     hdr = {}
     hdr['ncols'] = None

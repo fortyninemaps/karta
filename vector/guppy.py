@@ -1,9 +1,10 @@
-# Geographical measurement and simple analysis module for Python 2.X.X.
-# Provides Point, Multipoint, Line, and Polygon classes, with methods for
-# simple measurements such as distance, area, and bearing.
-#
-# Written by Nat Wilson (njwilson23@gmail.com)
-#
+"""
+Geographical measurement and simple analysis module for Python 2.X.X. Provides
+Point, Multipoint, Line, and Polygon classes, with methods for simple
+measurements such as distance, area, and bearing.
+
+Written by Nat Wilson (njwilson23@gmail.com)
+"""
 
 import math
 import sys
@@ -42,6 +43,7 @@ class Point(object):
             return 'point(' + str(self.xyz) + ')'
 
     def get_vertex(self):
+        """ Return the Point vertex as a tuple. """
         if self.rank == 2:
             vert = (self.x, self.y)
         elif self.rank == 3:
@@ -114,7 +116,7 @@ class Point(object):
         elif spherical is True:
             raise NotImplementedError("Not implemented")
         else:
-            raise Exception("Value for 'spherical' kwarg not understood")
+            raise GuppyError("Value for 'spherical' kwarg not understood")
         return
 
     def walk(self, distance, bearing, azimuth=0.0, spherical=False):
@@ -154,18 +156,20 @@ class Multipoint(object):
     polyline and polygon classes. """
 
     def __init__(self, vertices, data=None):
-        """ *vertices* is a list of tuples containing point coordinates.
+        """ Create a feature with multiple vertices.
 
-            *data* is either `None` a list of point attributes, or a dictionary
-            of point attributes. If *data* is not `None`, then it (or its
-            values) must match *vertices* in length.
+        vertices : a list of tuples containing point coordinates.
+
+        data : is either `None` a list of point attributes, or a dictionary of
+        point attributes. If `data` is not `None`, then it (or its values) must
+        match `vertices` in length.
         """
         self.rank = len(vertices[0])
 
         if self.rank > 3 or self.rank < 2:
-            raise GTInitError('Input must be doubles or triples\n')
-        elif False in [self.rank==len(i) for i in vertices]:
-            raise GTInitError('Input must have consistent rank\n')
+            raise GInitError('Input must be doubles or triples\n')
+        elif False in [self.rank == len(i) for i in vertices]:
+            raise GInitError('Input must have consistent rank\n')
         else:
             self.vertices = [tuple(i) for i in vertices]
 
@@ -210,8 +214,8 @@ class Multipoint(object):
 
     def print_vertices(self):
         """ Prints an enumerated list of indices. """
-        for i,vertex in enumerate(self.vertices):
-            print i,'\t',vertex
+        for i, vertex in enumerate(self.vertices):
+            print i, '\t', vertex
 
     def get_vertices(self):
         """ Return vertices as a list of tuples. """
@@ -233,7 +237,7 @@ class Multipoint(object):
         if spherical is True:
             raise NotImplementedError("Spherical metrics not implemented")
         points = [Point(i) for i in self.vertices]
-        distances = [a.distance(b) for a,b in zip(points[:-1], points[1:])]
+        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
         return sum(distances)
 
     def shift(self, shift_vector):
@@ -243,10 +247,10 @@ class Multipoint(object):
             raise GGeoError('Shift vector length must equal geometry rank.')
 
         if self.rank == 2:
-            f = lambda pt: (pt[0]+shift_vector[0], pt[1]+shift_vector[1])
+            f = lambda pt: (pt[0] + shift_vector[0], pt[1] + shift_vector[1])
         elif self.rank == 3:
-            f = lambda pt: (pt[0]+shift_vector[0], pt[1]+shift_vector[1],
-                            pt[2]+shift_vector[2])
+            f = lambda pt: (pt[0] + shift_vector[0], pt[1] + shift_vector[1],
+                            pt[2] + shift_vector[2])
         self.vertices = map(f, self.vertices)
         return
 
@@ -254,10 +258,10 @@ class Multipoint(object):
         """ Return Ax=b """
         b = []
         for a in A:
-            b.append(sum([ai*xi for ai,xi in zip(a, x)]))
+            b.append(sum([ai * xi for ai, xi in zip(a, x)]))
         return b
 
-    def rotate2d(self, thetad, origin=(0,0)):
+    def rotate2d(self, thetad, origin=(0, 0)):
         """ Rotate rank 2 Multipoint around *origin* counter-clockwise by
         *thetad* degrees. """
         # First, shift by the origin
@@ -291,7 +295,7 @@ class Multipoint(object):
             [seg[0] for seg in segments], [seg[1] for seg in segments])
         distances = [i[1] for i in point_dist]
 
-        return point(point_dist[distances.index(min(distances))][0])
+        return Point(point_dist[distances.index(min(distances))][0])
 
     def get_extents(self):
         """ Calculate a bounding box. """
@@ -320,11 +324,20 @@ class Multipoint(object):
     def to_xyfile(self, fnm, **kwargs):
         """ Write data to a delimited ASCII table. """
         raise NotImplementedError
-        return
 
-    def to_geojson(self, fnm, **kwargs):
-        """ Write data to a GeoJSON file. """
-        writer = geojson.GeoJSONWriter(self, fnm, **kwargs)
+    def to_geojson(self, f, **kwargs):
+        """ Write data as a GeoJSON string to a file-like object `f`.
+
+        Parameters
+        ----------
+        f : file-like object to recieve the GeoJSON string
+
+        *kwargs* include:
+        crs : coordinate reference system
+        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
+        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        """
+        writer = geojson.GeoJSONWriter(self, f, **kwargs)
         return writer
 
     def to_vtk(self, fnm, **kwargs):
@@ -345,7 +358,7 @@ class Line(Multipoint):
 
     def add_vertex(self, vertex):
         """ Add a vertex to self.vertices. """
-        if isinstance(vertex, point):
+        if isinstance(vertex, Point):
             if self.rank == 2:
                 self.vertices.append((vertex.x, vertex.y))
             elif self.rank == 3:
@@ -362,11 +375,11 @@ class Line(Multipoint):
 
     def displacement(self, spherical=False):
         """ Returns the distance between the first and last vertex. """
-        return point(self.vertices[0]).distance(point(self.vertices[-1]))
+        return Point(self.vertices[0]).distance(Point(self.vertices[-1]))
 
     def to_polygon(self):
         """ Returns a polygon. """
-        return polygon(self.vertices)
+        return Polygon(self.vertices)
 
     def to_shapely(self):
         """ Returns a Shapely LineString instance. """
@@ -434,7 +447,7 @@ class Polygon(Multipoint):
 
     def to_polyline(self):
         """ Returns a self-closing polyline. """
-        return polyline(self.vertices)
+        return Line(self.vertices)
 
     def to_shapely(self):
         """ Returns a Shapely Polygon instance. """
@@ -642,7 +655,7 @@ def walk(start_pt, distance, bearing, azimuth=0.0, spherical=False):
     """
     if azimuth != 0.0:
         distxy = distance * math.sin(azimuth)
-        dz = distance * math.cos(aximuth)
+        dz = distance * math.cos(azimuth)
     else:
         distxy = distance
         dz = 0.0
@@ -650,12 +663,12 @@ def walk(start_pt, distance, bearing, azimuth=0.0, spherical=False):
     dy = distxy * math.cos(bearing)
 
     if start_pt.rank == 3:
-        return point((start_pt.x+dx, start_pt.y+dy, start_pt.z+dz))
+        return Point((start_pt.x+dx, start_pt.y+dy, start_pt.z+dz))
     elif start_pt.rank == 2:
         if azimuth != 0:
             sys.stderr.write("Warning: start_pt has rank 2 but azimuth is "
                              "nonzero\n")
-        return point((start_pt.x+dx, start_pt.y+dy))
+        return Point((start_pt.x+dx, start_pt.y+dy))
 
 
 def sortby(A, B):
