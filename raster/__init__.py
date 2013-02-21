@@ -2,7 +2,7 @@
 Classes for handling raster data.
 """
 
-import aaigrid_driver
+import aaigrid
 from raster import *
 import flow
 

@@ -14,7 +14,7 @@ import vector.vtk
 import raster
 import raster.raster
 import raster.streamline
-import raster.aaigrid_driver as aaigrid_driver
+import raster.aaigrid as aaigrid
 
 try:
     import raster.fill_sinks    # Cython
@@ -25,5 +25,5 @@ try:
 except ImportError:
     print("Warning: raster.flow not loaded - perhaps scipy is missing")
 
-#__all__ = ["vector", "vector.guppy", "raster.aaigrid_driver"]
+__all__ = ["vector", "raster"]
 

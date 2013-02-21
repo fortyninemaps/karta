@@ -15,34 +15,36 @@ about results derived using it.
 ##CONTENTS
 
 - vector
-    - gpx_parser      Parser for GPX files exported from GPS devices
-    - geojson         Classes and functions for handling GeoJSON files
-    - guppy           Vector geometry classes
-    - shapefile       Snapshot of pyshp module for reading and writing
-    - shapefiles
-    - stats           Geostatistical functions
-    - xy              XY(Z) table functions
+    - gpx_parser    Parser for GPX files exported from GPS devices
+    - geojson       Classes and functions for handling GeoJSON files
+    - vtk           XML-based VTK interface
+    - guppy         Vector geometry classes
+    - shapefile     Snapshot of pyshp module for reading and writing shapefiles
+    - shp_funcs     Shapefile-to-guppy conversions
+    - stats         Geostatistical functions
+    - xy            ASCII table functions
 
 - raster
-    - aaigrid_driver  Class for reading and writing ESRI ASCII Grids
-    - flow            Stream flow functions
-    - raster          General purpose raster math
-    - streamline      Streamline calculation
-    - cfuncs          Cython-module for performance, not intended to be user-facing
+    - aaigrid       Class for reading, writing, and manipulating ESRI ASCII Grids
+    - flow          Stream flow functions
+    - raster        General purpose raster math
+    - streamline    Streamline calculation
+    - cfuncs        Non-user-facing Cython module for performance
 
 - tests
-    - miscellaneous test scripts
+    - testing built on unittest
 
 
 ##FORMATS
 
 *geo_tools* attempts to provide a basic working interface to several of common
-file formats. Currently supported are:
+file formats. Currently partially supported are:
 
 - vector
-    - ASCII tables
+    - ASCII tables (XYZ)
     - GeoJSON
     - VTK
+    - ESRI Shapefiles
 - raster
     - ESRI ASCII Grids
 
