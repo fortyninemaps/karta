@@ -349,8 +349,8 @@ class Multipoint(object):
         crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
-        writer = geojson.GeoJSONWriter(self, f, **kwargs)
-        writer.to_json()
+        writer = geojson.GeoJSONWriter(self, **kwargs)
+        writer.write_json(f)
         return writer
 
     def to_vtk(self, fnm, **kwargs):

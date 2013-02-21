@@ -114,7 +114,8 @@ class TestGuppyIO(unittest.TestCase):
 
     def test_geojson(self):
         # Test GeoJSON output for a Multipoint
-        self.mp.to_geojson('data/testgeojson.json')
+        with open('data/testgeojson.json', 'w') as f:
+            self.mp.to_geojson(f)
         self.assertEqual(md5sum('data/testgeojson.json'),
                          md5sum('reference_data/testgeojson.json'))
         return
