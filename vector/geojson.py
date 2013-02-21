@@ -14,7 +14,7 @@ class GeoJSONWriter:
     """
     supobj = {}
 
-    def __init__(self, gpobj, fout, **kwargs):
+    def __init__(self, gpobj, **kwargs):
         type_equiv = {guppy.Point       :   'Point',
                       guppy.Multipoint  :   'MultiPoint',
                       guppy.Line        :   'LineString',
@@ -39,7 +39,6 @@ class GeoJSONWriter:
         else:
             self.supobj['type'] = 'Point'
             self.add_coordinates()
-        self.write_json(fout)
         return
 
     def add_named_crs(self, crs, fmt='epsg'):
@@ -85,9 +84,7 @@ class GeoJSONWriter:
         self.supobj['geometry'] = {'type' : self.typestr}
         self.add_coordinates(self.supobj['geometry'])
         self.add_id()
-        if hasattr(self.gpobj.data, 'keys') or \
-                (False in (a is None for a in self.gpobj.data)):
-            self.add_properties()
+        self.add_properties()
         return
 
     def add_coordinates(self, target=None):
@@ -109,13 +106,14 @@ class GeoJSONWriter:
         """ Add the data from the geometry object's data attribute. """
         if target is None:
             target = self.supobj
-        if hasattr(self.gpobj.data, 'keys'):
-            data = self.gpobj.data
-        else:
-            data = {'point_data': self.gpobj.data}
         target['properties'] = {}
-        for key in data.keys():
-            target['properties'][key] = data[key]
+        if (False in (a is None for a in self.gpobj.data)):
+            if hasattr(self.gpobj.data, 'keys'):
+                data = self.gpobj.data
+            else:
+                data = {'point_data': self.gpobj.data}
+            for key in data.keys():
+                target['properties'][key] = data[key]
         return
 
     def add_id(self, target=None):
@@ -125,6 +123,10 @@ class GeoJSONWriter:
         target['id'] = range(len(self.gpobj.get_vertices()))
         return
 
+    def print_json(self):
+        """ Print GeoJSON representation. """
+        return json.dumps(self.supobj, indent=2)
+
     def write_json(self, fout):
         """ Dump internal dict-object to JSON using the builtin `json` module.
         """
@@ -132,6 +134,20 @@ class GeoJSONWriter:
         return
 
 #class GeoJSONReader:
+
+
+def print_FeatureCollection(gpobj_list, **kwargs):
+    """ Given an iterable that returns guppy objects, construct a GeoJSON
+    FeatureCollection string.
+    """
+    featurelist = []
+    for gp in gpobj_list:
+        writer = GeoJSONWriter(gp)
+        featurelist.append(writer.supobj)
+    feature_coll = {'type' : 'FeatureCollection',
+                    'features' : featurelist}
+    return json.dumps(feature_coll, indent=2)
+
 
 
 def geojson2csv(fin, fout):

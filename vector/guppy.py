@@ -325,6 +325,18 @@ class Multipoint(object):
         """ Write data to a delimited ASCII table. """
         raise NotImplementedError
 
+    def as_geojson(self, **kwargs):
+        """ Print representation of internal data as a GeoJSON string.
+
+        Parameters
+        ----------
+        crs : coordinate reference system
+        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
+        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        """
+        writer = geojson.GeoJSONWriter(self, **kwargs)
+        return writer.print_json()
+
     def to_geojson(self, f, **kwargs):
         """ Write data as a GeoJSON string to a file-like object `f`.
 
@@ -338,6 +350,7 @@ class Multipoint(object):
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
         writer = geojson.GeoJSONWriter(self, f, **kwargs)
+        writer.to_json()
         return writer
 
     def to_vtk(self, fnm, **kwargs):
@@ -353,7 +366,7 @@ class Line(Multipoint):
     """
 
     def __repr__(self):
-        return 'polyline(' + reduce(lambda a,b: str(a) + ' ' + str(b),
+        return 'Line(' + reduce(lambda a,b: str(a) + ' ' + str(b),
                 self.vertices) + ')'
 
     def add_vertex(self, vertex):
@@ -403,7 +416,7 @@ class Polygon(Multipoint):
             vertices.append(vertices[0])
 
     def __repr__(self):
-        return 'polygon(' + reduce(lambda a,b: str(a) + ' ' + str(b),
+        return 'Polygon(' + reduce(lambda a,b: str(a) + ' ' + str(b),
                 self.vertices) + ')'
 
     perimeter = Multipoint.length
