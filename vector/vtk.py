@@ -7,7 +7,7 @@ from xml.etree import ElementTree as ET
 from xml.dom import minidom
 import geo_tools.vector.guppy
 
-def mp2vtp(mp_list, fnm, **kwargs):
+def mp2vtp(mp_list, f, **kwargs):
     """ Write a list of Multipoint instances to a serial VTK PolyData (.vtp)
     file.
 
@@ -108,7 +108,6 @@ def mp2vtp(mp_list, fnm, **kwargs):
 
     pretty_xml = minidom.parseString(ET.tostring(xdoc)).toprettyxml()
 
-    with open(fnm, 'w') as f:
-        f.write(pretty_xml)
+    f.write(pretty_xml)
     return
 

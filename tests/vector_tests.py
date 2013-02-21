@@ -107,7 +107,8 @@ class TestGuppyIO(unittest.TestCase):
 
     def test_mp2vtp(self):
         # Test VTK output for a Multipoint
-        self.mp.to_vtk('data/testmp2vtp.vtp')
+        with open('data/testmp2vtp.vtp', 'w') as f:
+            self.mp.to_vtk(f)
         self.assertEqual(md5sum('data/testmp2vtp.vtp'),
                          md5sum('reference_data/testmp2vtp.vtp'))
         return

@@ -353,9 +353,9 @@ class Multipoint(object):
         writer.write_json(f)
         return writer
 
-    def to_vtk(self, fnm, **kwargs):
+    def to_vtk(self, f, **kwargs):
         """ Write data to an ASCII VTK .vtp file. """
-        vtk.mp2vtp(self, fnm, **kwargs)
+        vtk.mp2vtp(self, f, **kwargs)
         return
 
 
