@@ -171,16 +171,17 @@ class AAIGrid(object):
         yi = max(min(self.data.shape[0] - int(round((y-y0) / d)) - 1, ny-1), 0)
         return xi, yi
 
-    def get_region(self, grid_registration='center'):
-        """ Return the region characteristics as a tuple. """
-        if grid_registration == 'center':
+    def get_region(self, reference='center'):
+        """ Return the region characteristics as a tuple, relative to either
+        cell centers or the grid edges. """
+        if reference == 'center':
             x0, y0  = self.hdr['xllcenter'], self.hdr['yllcenter']
             n = 0
-        elif grid_registration == 'edge':
+        elif reference == 'edge':
             x0, y0  = self.hdr['xllcenter'], self.hdr['yllcenter']
             n = 1
         else:
-            raise AAIError("`grid_registration` must be 'center' or 'edge'")
+            raise AAIError("`reference` must be 'center' or 'edge'")
         return (x0, x0 + (self.hdr['cellsize'] + n) * self.hdr['ncols'],
                 y0, y0 + (self.hdr['cellsize'] + n) * self.hdr['nrows'])
 
