@@ -23,7 +23,8 @@ def load_xy(fnm, delimiter=''):
                 break
             delimiter = None
 
-    coords = [[float(num) for num in line.strip().split(delimiter)] for line in lines]
+    coords = [[float(num) for num in line.strip().split(delimiter)] for line
+              in lines]
     return np.array(coords)
 
 loadxy = load_xy
@@ -32,9 +33,7 @@ def xyz2array_reg(X, Y, Z):
     """ Return an array from X,Y,Z vectors, assuming gridding is
     regular. """
     xmin = min(X)
-    xmax = max(X)
     ymin = min(Y)
-    ymax = max(Y)
 
     nx = sum([y==ymin for y in Y])
     ny = sum([x==xmin for x in X])

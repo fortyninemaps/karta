@@ -7,7 +7,7 @@ import vector
 import vector.stats
 import vector.guppy as guppy
 import vector.shapefile as shapefile
-import vector.xy as xy
+import vector.xyfile as xyfile
 import vector.geojson
 import vector.vtk
 
