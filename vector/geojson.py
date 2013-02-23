@@ -187,7 +187,9 @@ def geojson2csv(fin, fout):
 
 
     # Output
-    outstr = 'x,y' + reduce(lambda a,b: a+','+b, common_props) + '\n'   # Construct header
+    outstr = 'x,y' + \
+             reduce(lambda a,b: a+','+b, common_props) + \
+             '\n'   # Construct header
 
     outstr += reduce(lambda a, b: a+'\n'+b,                         # Combine lines
                 map(lambda x, y, p: str(x) + ',' + str(y) + ',' +   # Construct lines

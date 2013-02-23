@@ -20,6 +20,7 @@ def witch_of_agnesi(nx=100, ny=100, a=4.0):
 
 
 def peaks(n=49):
+    """ 2d peaks function of MATLAB logo fame. """
     X, Y = np.meshgrid(np.linspace(-3, 3, n), np.linspace(-3, 3, n))
     return 3.0 * (1-X)**2 * np.exp(-X**2 - (Y+1)**2) \
             - 10.0 * (X/5.0 - X**3 - Y**5) * np.exp(-X**2 - Y**2) \
@@ -131,7 +132,8 @@ def normed_vector_field(D):
 
 
 def neighbours_of(a):
-    z, i, j = a
+    """ For a (z,i,j) point `a`, return the neighbouring indices. """
+    _, i, j = a
     return ((i-1, j-1), (i, j-1), (i+1, j-1),
             (i-1, j), (i+1, j),
             (i-1, j+1), (i, j+1), (i+1, j+1))
@@ -184,3 +186,4 @@ def fill_sinks(Z):
 def viewshed(D, i, j, r=-1):
     """ Return the viewshed on *D* at (i,j).
     """
+    raise NotImplementedError

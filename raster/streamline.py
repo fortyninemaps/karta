@@ -20,7 +20,7 @@ def interpolate1(x, y, a, b, c, d):
 
 
 def streamline2d(U, V, x0, y0, ds=0.5, max_nodes=5000, res=(1.0, 1.0),
-                 xvec=None, yvec=None, tol=None, momentum=False):
+                 tol=None, momentum=False):
     """ Integrate velocity field (*U*, *V*) using a 4th-order Runge-Kutta
     scheme, starting from *x0*, *y0*. A pair of lists with coordinates
     in X and Y is returned.
