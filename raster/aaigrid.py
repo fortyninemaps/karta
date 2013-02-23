@@ -153,7 +153,6 @@ class AAIGrid(object):
         geographical coordinates (x, y). """
         if self.data is None:
             raise AAIError('no raster to query')
-            return None
         d = self.hdr['cellsize']
         if self.hdr['xllcenter'] is None:
             if self.hdr['xllcorner'] is not None:
@@ -167,18 +166,23 @@ class AAIGrid(object):
                 raise AAIError('y reference not defined')
         x0 = self.hdr['xllcenter']
         y0 = self.hdr['yllcenter']
-        xmax = x0 + d * self.hdr['ncols']
-        ymax = y0 + d * self.hdr['nrows']
-        xi = int(round((x-x0) / d))
-        yi = self.data.shape[0] - int(round((y-y0) / d)) - 1
+        nx, ny = self.data.shape
+        xi = max(min(int(round((x - x0) / d)), nx-1), 0)
+        yi = max(min(self.data.shape[0] - int(round((y-y0) / d)) - 1, ny-1), 0)
         return xi, yi
 
-    def get_region(self):
+    def get_region(self, grid_registration='center'):
         """ Return the region characteristics as a tuple. """
-        return (self.hdr['xllcenter'], self.hdr['xllcenter']
-                + self.hdr['cellsize'] * self.hdr['ncols'],
-                self.hdr['yllcenter'], self.hdr['yllcenter']
-                + self.hdr['cellsize'] * self.hdr['nrows'])
+        if grid_registration == 'center':
+            x0, y0  = self.hdr['xllcenter'], self.hdr['yllcenter']
+            n = 0
+        elif grid_registration == 'edge':
+            x0, y0  = self.hdr['xllcenter'], self.hdr['yllcenter']
+            n = 1
+        else:
+            raise AAIError("`grid_registration` must be 'center' or 'edge'")
+        return (x0, x0 + (self.hdr['cellsize'] + n) * self.hdr['ncols'],
+                y0, y0 + (self.hdr['cellsize'] + n) * self.hdr['nrows'])
 
     def coordmesh(self, grid_registration='center'):
         """ Return a pair of arrays containing the *X* and *Y* coordinates of
@@ -226,17 +230,16 @@ class AAIGrid(object):
 
                 # Read the header, then the array data
                 f.seek(0)
-                for i in range(cnt):
+                for _ in range(cnt):
                     h.append(f.readline())
                 data = f.readlines()
 
         except IOError:
             raise AAIError('error while trying to open {0}'.format(fnm))
-            return
 
         # Store data internally
         try:
-            hs = [rec.split(None,1) for rec in h]
+            hs = [rec.split(None, 1) for rec in h]
             hdr = dict([(rec[0].lower(), float(rec[1])) for rec in hs])
             if 'yllcenter' not in hdr.keys():
                 hdr['yllcenter'] = None
@@ -290,7 +293,6 @@ class AAIGrid(object):
         self.hdr = hdr
         #A[np.isnan(A)] = hdr['nodata_value']
         self.data = A.copy()[:,:]
-        pass
 
     def tofile(self, f, reference='center'):
         """ Save internal data to f, either a file-like object or a
@@ -302,7 +304,8 @@ class AAIGrid(object):
             raise AAIError("no data to write!")
 
         if reference not in ('center', 'corner'):
-            raise AAIError("reference in AAIGrid.tofile() must be 'center' or 'corner'")
+            raise AAIError("reference in AAIGrid.tofile() must be 'center' or "
+                           "'corner'")
 
         try:
             f.read()
@@ -350,13 +353,11 @@ class AAIGrid(object):
         """ Return the value nearest to x, y, as well as center coordinates of
         the grid cell actually sampled. """
         xi, yi = self.get_indices(x, y)
-        d = self.hdr['cellsize']
         ncols = self.hdr['ncols']
         nrows = self.hdr['nrows']
         if (xi < 0) or (xi >= ncols) or (yi < 0) or (yi >= nrows):
             raise AAIError("coordinates are outside grid region",
                 detail="({0}, {1}), ({2}, {3})".format(xi, yi, ncols, nrows))
-            return
         else:
             z = self.data[yi, xi]
             ys = yi * self.hdr['cellsize'] + self.hdr['yllcenter']
@@ -470,6 +471,7 @@ class AAIGrid(object):
 Grid = AAIGrid      # For backwards compatibility
 
 class AAIError(Exception):
+    """ Exceptions related to ESRI ASCII grid driver. """
     def __init__(self, value, detail=None):
         self.value = value
         self.detail = detail
@@ -479,3 +481,4 @@ class AAIError(Exception):
         else:
             s = self.value
         return repr(s)
+
