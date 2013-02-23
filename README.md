@@ -1,16 +1,20 @@
 README
 ------
 
-*geo_tools* contains a collection of loosely-related Python modules for
-performing lightweight geospatial data analysis. *geo_tools* replicates the
-functionality of GDAL, OGR, and GSTAT in some cases, but does so in a minimal
-package with few dependencies, and attempts to solve problems in ways that
-would be considered 'pythonic'. Although these other packages may have
-advantages in performance or capability, *geo_tools* is designed to be portable
-require as little extra software infrastructure as possible.
+*Karta* contains a collection of loosely-related Python modules for performing
+lightweight geospatial data analysis. *Karta* replicates the functionality of
+GDAL, OGR, and GSTAT in some cases, but does so in a minimal package with few
+dependencies, and attempts to solve problems in ways that would be considered
+'pythonic'. Although these other packages may have advantages in performance or
+capability, *Karta* is designed to be portable require as little extra software
+infrastructure as possible.
 
-*geo_tools* should be considered a work in progress. No assurances are provided
+*Karta* should be considered a work in progress. No assurances are provided
 about results derived using it.
+
+**Curently working on:**
+- better projection support
+- refactoring raster class hierarchy
 
 ##CONTENTS
 
@@ -37,8 +41,8 @@ about results derived using it.
 
 ##FORMATS
 
-*geo_tools* attempts to provide a basic working interface to several of common
-file formats. Currently partially supported are:
+*Karta* attempts to provide a basic working interface to several of common file
+formats. Currently partially supported are:
 
 - vector
     - ASCII tables (XYZ)
