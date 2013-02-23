@@ -1,5 +1,5 @@
 """
-geo_tools is a collection of python modules for handling vector and raster
+Karta is a collection of python modules for handling vector and raster
 geospatial data.
 """
 

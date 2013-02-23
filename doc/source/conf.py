@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# geo_tools documentation build configuration file, created by
+# karta documentation build configuration file, created by
 # sphinx-quickstart on Sat Feb 16 10:13:48 2013.
 #
 # This file is execfile()d with the current directory set to its containing dir.
@@ -37,10 +37,10 @@ source_suffix = '.rst'
 #source_encoding = 'utf-8-sig'
 
 # The master toctree document.
-master_doc = 'geo_tools-manual'
+master_doc = 'karta-manual'
 
 # General information about the project.
-project = u'geo_tools'
+project = u'karta'
 copyright = u'2013, Nat Wilson'
 
 # The version info for the project you're documenting, acts as replacement for
@@ -164,7 +164,7 @@ html_static_path = ['_static']
 #html_file_suffix = None
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'geo_toolsdoc'
+htmlhelp_basename = 'kartadoc'
 
 
 # -- Options for LaTeX output --------------------------------------------------
@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('geo_tools-manual', 'geo_tools.tex', u'geo\\_tools Documentation',
+  ('karta-manual', 'karta.tex', u'geo\\_tools Documentation',
    u'Nat Wilson', 'manual'),
 ]
 
@@ -213,7 +213,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('geo_tools-manual', 'geo_tools', u'geo_tools Documentation',
+    ('karta-manual', 'karta', u'Karta Documentation',
      [u'Nat Wilson'], 1)
 ]
 
@@ -227,8 +227,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-  ('geo_tools-manual', 'geo_tools', u'geo_tools Documentation',
-   u'Nat Wilson', 'geo_tools', 'One line description of project.',
+  ('karta-manual', 'karta', u'Karta Documentation',
+   u'Nat Wilson', 'karta', 'One line description of project.',
    'Miscellaneous'),
 ]
 

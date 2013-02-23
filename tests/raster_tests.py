@@ -4,7 +4,7 @@ import unittest
 import os
 import numpy as np
 from test_helper import md5sum
-import geo_tools.raster as raster
+import karta.raster as raster
 
 class TestAAIGrid(unittest.TestCase):
 

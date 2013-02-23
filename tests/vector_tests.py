@@ -3,7 +3,7 @@
 import unittest
 import os
 from test_helper import md5sum
-import geo_tools.vector as vector
+import karta.vector as vector
 
 class TestGuppy(unittest.TestCase):
 
