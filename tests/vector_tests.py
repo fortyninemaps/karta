@@ -2,7 +2,7 @@
 
 import unittest
 import os
-import hashlib
+from test_helper import md5sum
 import geo_tools.vector as vector
 
 class TestGuppy(unittest.TestCase):
@@ -120,18 +120,6 @@ class TestGuppyIO(unittest.TestCase):
         self.assertEqual(md5sum('data/testgeojson.json'),
                          md5sum('reference_data/testgeojson.json'))
         return
-
-
-def md5sum(fnm, block=32768):
-    """ Generate an MD5 hash from a file given by filename *fnm*. """
-    md5 = hashlib.md5()
-    with open(fnm, 'r') as f:
-        while True:
-            data = f.read(block)
-            if not data:
-                break
-            md5.update(data)
-    return md5.digest()
 
 
 if __name__ == "__main__":
