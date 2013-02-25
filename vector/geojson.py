@@ -7,10 +7,14 @@ import guppy
 import json
 import traceback
 
-class GeoJSONWriter:
-    """ Object for converting guppy objects to GeoJSON strings.
-    Multipoint-based opbjects are written as 'Features'. This does not handle
-    'FeatureCollection' types.
+class GeoJSONWriter(object):
+    """ Class for converting guppy objects to GeoJSON strings. Multipoint-based
+    opbjects are written as 'Features'.
+
+    Notes:
+    ------
+    Does not handle 'FeatureCollection' types (see printFeatureCollection()
+    function).
     """
     supobj = {}
 
@@ -133,7 +137,105 @@ class GeoJSONWriter:
         json.dump(self.supobj, fout, indent=2)
         return
 
-#class GeoJSONReader:
+
+class GeoJSONReader(object):
+    """ Class for reading general GeoJSON strings and converting to appropriate
+    guppy types. Initialize with a file- or StreamIO-like object, and then use
+    the pull* methods to extract geometry types. The equivalency table looks
+    like:
+
+    -----------------------------------------------------
+    | Guppy class       | GeoJSON geometry object       |
+    --------------------+--------------------------------
+    | Point             | Point                         |
+    |                   |                               |
+    | Multipoint        | MultiPoint                    |
+    |                   |                               |
+    | Line              | Linestring, MultiLineString   |
+    |                   |                               |
+    | Polygon           | Polygon, MultiPolygon         |
+    |                   |                               |
+    -----------------------------------------------------
+     """
+
+    def __init__(self, finput):
+        """ Create a reader-object for a GeoJSON-containing file or StreamIO
+        object. Use as::
+
+            with open(`fnm`, 'r') as f:
+                reader = GeoJSONReader(f)
+        """
+        self.jsondict = json.load(finput)
+        return
+
+    def _walk(self, dic, geotype):
+        """ Find all instances of `key` using recursion. """
+        if geotype == dic['type']:
+            yield dic
+        for k in dic:
+            if hasattr(dic[k], 'keys'):
+                for val in self._walk(dic[k], geotype):
+                    yield val
+        return
+
+    def pull_points(self):
+        """ Return a list of all geometries that can be coerced into a single
+        Point. """
+        jsonpoints = []
+        jsonpoints.extend(self._walk(self.jsondict, 'Point'))
+        points = []
+        for jsonpoint in jsonpoints:
+            points.append(guppy.Point(jsonpoint['coordinates']))
+        return points
+
+    def pull_multipoints(self):
+        """ Return a list of all geometries that can be coerced into a single
+        Multipoint. """
+        jsonmultipoints = []
+        jsonmultipoints.extend(self._walk(self.jsondict, 'MultiPoint'))
+        multipoints = []
+        for jsonmultipoint in jsonmultipoints:
+            multipoints.append(guppy.Multipoint(jsonmultipoint['coordinates']))
+        return multipoints
+
+    def pull_lines(self):
+        """ Return a list of all geometries that can be coerced into a single
+        Line. """
+        jsonlines = self._walk(self.jsondict, 'LineString')
+        jsonmultilines = self._walk(self.jsondict, 'MultiLineString')
+        lines = []
+        for jsonline in jsonlines:
+            lines.append(guppy.Line(jsonline['coordinates']))
+        for jsonmultiline in jsonmultilines:
+            for vertices in jsonmultiline['coordinates']:
+                lines.append(guppy.Line(vertices))
+        return lines
+
+    def pull_polygons(self):
+        """ Return a list of all geometries that can be coerced into a single
+        Polygon. """
+
+        def add_polygon(L, parts):
+            """ Convert a list of polygon parts to a guppy.Polygon and append
+            to a list `L`. """
+            if len(parts) > 1:
+                raise NotImplementedError('polygon holes')
+            L.append(guppy.Polygon(parts[0]))
+            return
+
+        jsonpolygons = self._walk(self.jsondict, 'Polygon')
+        jsonmultipolygons = self._walk(self.jsondict, 'MultiPolygon')
+        polygons = []
+        for jsonpolygon in jsonpolygons:
+            add_polygon(polygons, jsonpolygon['coordinates'])
+        for jsonmultipolygon in jsonmultipolygons:
+            for parts in jsonmultipolygon['coordinates']:
+                add_polygon(polygons, parts)
+        return polygons
+
+    def list_features(self):
+        """ List the features present. """
+        raise NotImplementedError
 
 
 def print_FeatureCollection(gpobj_list, **kwargs):
