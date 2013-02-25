@@ -1,5 +1,5 @@
-README
-------
+Karta - simple geospatial analysis in Python
+--------------------------------------------
 
 *Karta* contains a collection of loosely-related Python modules for performing
 lightweight geospatial data analysis. *Karta* replicates the functionality of
@@ -16,6 +16,10 @@ about results derived using it.
 - better projection support
 - refactoring raster class hierarchy
 
+**Thinking about:**
+- polygon holes
+- memory boundedness
+
 ##CONTENTS
 
 - vector
@@ -26,7 +30,7 @@ about results derived using it.
     - shapefile     Snapshot of pyshp module for reading and writing shapefiles
     - shp_funcs     Shapefile-to-guppy conversions
     - stats         Geostatistical functions
-    - xy            ASCII table functions
+    - xyfile        ASCII table functions
 
 - raster
     - aaigrid       Class for reading, writing, and manipulating ESRI ASCII Grids
