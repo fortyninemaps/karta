@@ -181,8 +181,7 @@ class GeoJSONReader(object):
     def pull_points(self):
         """ Return a list of all geometries that can be coerced into a single
         Point. """
-        jsonpoints = []
-        jsonpoints.extend(self._walk(self.jsondict, 'Point'))
+        jsonpoints = self._walk(self.jsondict, 'Point')
         points = []
         for jsonpoint in jsonpoints:
             points.append(guppy.Point(jsonpoint['coordinates']))
@@ -191,8 +190,7 @@ class GeoJSONReader(object):
     def pull_multipoints(self):
         """ Return a list of all geometries that can be coerced into a single
         Multipoint. """
-        jsonmultipoints = []
-        jsonmultipoints.extend(self._walk(self.jsondict, 'MultiPoint'))
+        jsonmultipoints = self._walk(self.jsondict, 'MultiPoint')
         multipoints = []
         for jsonmultipoint in jsonmultipoints:
             multipoints.append(guppy.Multipoint(jsonmultipoint['coordinates']))
