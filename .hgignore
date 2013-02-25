@@ -1,7 +1,0 @@
-syntax: glob
-*.pyc
-*.swp
-*.so
-*.o
-doc/build/
-tests/data/
