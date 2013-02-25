@@ -193,6 +193,10 @@ class Multipoint(object):
             self.data = [None for a in vertices]
         return
 
+    def __repr__(self):
+        return 'Multipoint(' + reduce(lambda a,b: str(a) + ' ' + str(b),
+                self.vertices) + ')'
+
     def __len__(self):
         return len(self.vertices)
 
