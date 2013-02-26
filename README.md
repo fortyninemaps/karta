@@ -13,7 +13,7 @@ infrastructure as possible.
 about results derived using it.
 
 **Curently working on:**
-- better projection support
+- better projection handling
 - refactoring raster class hierarchy
 
 **Thinking about:**
@@ -23,24 +23,23 @@ about results derived using it.
 ##CONTENTS
 
 - vector
-    - gpx_parser    Parser for GPX files exported from GPS devices
-    - geojson       Classes and functions for handling GeoJSON files
-    - vtk           XML-based VTK interface
-    - guppy         Vector geometry classes
-    - shapefile     Snapshot of pyshp module for reading and writing shapefiles
-    - shp_funcs     Shapefile-to-guppy conversions
-    - stats         Geostatistical functions
-    - xyfile        ASCII table functions
+    - gpx_parser :  Parser for GPX files exported from GPS devices
+    - geojson :     Classes and functions for handling GeoJSON files
+    - vtk :         XML-based VTK interface
+    - guppy :       Vector geometry classes
+    - shapefile :   Snapshot of pyshp module for reading and writing shapefiles
+    - shp_funcs :   Shapefile-to-guppy conversions
+    - stats :       Geostatistical functions
+    - xyfile :      ASCII table functions
 
 - raster
-    - aaigrid       Class for reading, writing, and manipulating ESRI ASCII Grids
-    - flow          Stream flow functions
-    - raster        General purpose raster math
-    - streamline    Streamline calculation
-    - cfuncs        Non-user-facing Cython module for performance
+    - aaigrid :     Class for reading, writing, and manipulating ESRI ASCII Grids
+    - flow :        Stream flow functions
+    - raster :      General purpose raster math
+    - streamline :  Streamline calculation
+    - cfuncs :      Non-user-facing Cython module for performance
 
-- tests
-    - testing built on unittest
+- tests : unit tests
 
 
 ##FORMATS
@@ -49,13 +48,12 @@ about results derived using it.
 formats. Currently partially supported are:
 
 - vector
-    - ASCII tables (XYZ)
-    - GeoJSON
-    - VTK
-    - ESRI Shapefiles
+    - ASCII tables (XYZ) (r,w)
+    - GeoJSON (r,w)
+    - VTK (w)
+    - ESRI Shapefiles (r,w)
 - raster
-    - ESRI ASCII Grids
-
+    - ESRI ASCII Grids (r,w)
 
 ##CYTHON
 
