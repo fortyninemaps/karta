@@ -131,21 +131,29 @@ class AAIGrid(object):
         if hdr.get('nodata_value') is None:
             hdr['nodata_value'] = -9999
 
+        hdr = self._check_header_references(hdr)
+
+        return hdr
+
+    def _check_header_references(self, hdr):
+        """ Make sure that both corner and center reference coordinates are
+        present. """
+        d = hdr['cellsize']
         if hdr.get('yllcenter') is None:
             if hdr.get('yllcorner') is None:
                 raise AAIError('y reference not defined')
             else:
-                hdr['yllcenter'] = hdr['yllcorner'] + hdr['cellsize'] / 2.0
+                hdr['yllcenter'] = hdr['yllcorner'] + d / 2.0
         else:
-            hdr['yllcorner'] = hdr['yllcenter'] - hdr['cellsize'] / 2.0
+            hdr['yllcorner'] = hdr['yllcenter'] - d / 2.0
 
         if hdr.get('xllcenter') is None:
             if hdr.get('xllcorner') is None:
                 raise AAIError('x reference not defined')
             else:
-                hdr['xllcenter'] = hdr['xllcorner'] + hdr['cellsize'] / 2.0
+                hdr['xllcenter'] = hdr['xllcorner'] + d / 2.0
         else:
-            hdr['xllcorner'] = hdr['xllcenter'] - hdr['cellsize'] / 2.0
+            hdr['xllcorner'] = hdr['xllcenter'] - d / 2.0
         return hdr
 
     def get_indices(self, x, y):
@@ -153,20 +161,14 @@ class AAIGrid(object):
         geographical coordinates (x, y). """
         if self.data is None:
             raise AAIError('no raster to query')
-        d = self.hdr['cellsize']
-        if self.hdr['xllcenter'] is None:
-            if self.hdr['xllcorner'] is not None:
-                self.hdr['xllcenter'] = self.hdr['xllcorner'] + d/2.0
-            else:
-                raise AAIError('x reference not defined')
-        if self.hdr['yllcenter'] is None:
-            if self.hdr['yllcorner'] is not None:
-                self.hdr['yllcenter'] = self.hdr['yllcorner'] + d/2.0
-            else:
-                raise AAIError('y reference not defined')
+
+        self.hdr = self._check_header_references(self.hdr)
+
         x0 = self.hdr['xllcenter']
         y0 = self.hdr['yllcenter']
+        d = self.hdr['cellsize']
         nx, ny = self.data.shape
+
         xi = max(min(int(round((x - x0) / d)), nx-1), 0)
         yi = max(min(self.data.shape[0] - int(round((y-y0) / d)) - 1, ny-1), 0)
         return xi, yi
