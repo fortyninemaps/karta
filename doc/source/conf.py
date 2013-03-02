@@ -183,7 +183,7 @@ latex_elements = {
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('karta-manual', 'karta.tex', u'geo\\_tools Documentation',
+  ('karta-manual', 'karta.tex', u'Karta Manual and API Reference',
    u'Nat Wilson', 'manual'),
 ]
 
