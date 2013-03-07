@@ -169,8 +169,13 @@ class AAIGrid(object):
         d = self.hdr['cellsize']
         nx, ny = self.data.shape
 
-        xi = max(min(int(round((x - x0) / d)), nx-1), 0)
-        yi = max(min(self.data.shape[0] - int(round((y-y0) / d)) - 1, ny-1), 0)
+        xi = np.clip(
+                (np.around((np.array(x) - x0) / d)).astype(int),
+                0, nx-1)
+        yi = np.clip(
+                self.data.shape[0] -
+                    (np.around((np.array(y)-y0) / d)).astype(int) - 1,
+                0, ny-1)
         return xi, yi
 
     def get_region(self, reference='center'):
@@ -358,14 +363,15 @@ class AAIGrid(object):
         xi, yi = self.get_indices(x, y)
         ncols = self.hdr['ncols']
         nrows = self.hdr['nrows']
-        if (xi < 0) or (xi >= ncols) or (yi < 0) or (yi >= nrows):
+        if (np.any(xi < 0) or np.any(xi >= ncols) or
+            np.any(yi < 0) or np.any(yi >= nrows)):
             raise AAIError("coordinates are outside grid region",
                 detail="({0}, {1}), ({2}, {3})".format(xi, yi, ncols, nrows))
         else:
             z = self.data[yi, xi]
             ys = yi * self.hdr['cellsize'] + self.hdr['yllcenter']
             xs = xi * self.hdr['cellsize'] + self.hdr['xllcenter']
-            return z, (xs, ys)
+        return z, (xs, ys)
 
     def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as *segments*.
