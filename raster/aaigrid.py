@@ -47,6 +47,9 @@ class AAIGrid(object):
             nodata_value    (int)
         """
 
+        if hdr is not None:
+            self.hdr = hdr
+
         if incoming is not None:
             try:
                 # assume incoming is a file
@@ -54,9 +57,11 @@ class AAIGrid(object):
             except (TypeError, UnicodeDecodeError):
                 # isn't a file, so hopefully an ndarray
                 self.fromarray(incoming, hdr)
+        elif hdr is not None:
+            self.data = np.empty((hdr['nrows'], hdr['ncols']))
+        else:
+            self.data = None
 
-        if hdr is not None:
-            self.hdr = hdr
         self._check_header()
         return
 
@@ -410,6 +415,42 @@ class AAIGrid(object):
     def clip(self, bounds):
         """ Clip the z-range in place to bounds = [min, max]. """
         self.data = self.data.clip(bounds[0], bounds[1])
+        return
+
+    def resample(self, cellsize, method='nearest'):
+        """ Resample array to have `cellsize`. Modify header in-place.
+
+        Parameters
+        ----------
+
+        cellsize : cell dimension, float
+
+        method : interpolation method, string ('nearest', 'linear')
+        """
+        xllcenter = self.hdr['xllcenter']
+        yllcenter = self.hdr['yllcenter']
+        xurcenter = xllcenter + self.hdr['cellsize'] * self.hdr['ncols']
+        yurcenter = yllcenter + self.hdr['cellsize'] * self.hdr['nrows']
+        nx = int((xurcenter - xllcenter) // cellsize)
+        ny = int((yurcenter - yllcenter) // cellsize)
+        dimratio = cellsize / self.hdr['cellsize']
+
+        if method == 'nearest':
+            JJ, II = np.meshgrid(np.arange(nx), np.arange(ny))
+            srcII = np.around(II * dimratio) \
+                            .astype(int) \
+                            .clip(0, self.hdr['nrows'] - 1)
+            srcJJ = np.around(JJ * dimratio) \
+                            .astype(int).\
+                            clip(0, self.hdr['ncols'] - 1)
+            self.data = self.data[srcII, srcJJ]
+        else:
+            raise NotImplementedError('method "{0}" not '
+                                      'implemented'.format(method))
+
+        self.hdr['cellsize'] = float(cellsize)
+        self.hdr['nrows'] = ny
+        self.hdr['ncols'] = nx
         return
 
     def resize(self, te):
