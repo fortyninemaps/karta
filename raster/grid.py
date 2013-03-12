@@ -84,7 +84,9 @@ class RegularGrid(Grid):
             if key not in hdr:
                 raise GridError('Header missing {0}'.format(key))
 
-    coordmesh = center_coords
+    def coordmesh(self, *args, **kwargs):
+        """ Alias for center_coords() """
+        return self.center_coords(*args, **kwargs)
 
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
