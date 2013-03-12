@@ -521,8 +521,6 @@ class AAIGrid(object):
             raise AAIError("no data to resize")
         return
 
-Grid = AAIGrid      # For backwards compatibility
-
 class AAIError(Exception):
     """ Exceptions related to ESRI ASCII grid driver. """
     def __init__(self, value, detail=None):
