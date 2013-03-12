@@ -312,7 +312,7 @@ class StructuredGrid(Grid):
     spacing is not necessarily regular.
     """
 
-    def __init__(self, hdr, X=None, Y=None, Z=None):
+    def __init__(self, hdr=None, X=None, Y=None, Z=None):
         """
         Parameters:
         -----------

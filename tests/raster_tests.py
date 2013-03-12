@@ -72,6 +72,22 @@ class RegularGrid(unittest.TestCase):
         return
 
 
+class TestStructuredGrid(unittest.TestCase):
+
+    def setUp(self):
+        ii = np.arange(50.0)
+        jj = np.arange(50.0)
+        X, Y = np.meshgrid(np.sin(ii/25.0 * 2*np.pi),
+                           np.sin(jj/50.0 * 2*np.pi))
+        Z = raster.raster.witch_of_agnesi(50, 50)
+        self.rast = raster.grid.StructuredGrid(X=X, Y=Y, Z=Z)
+
+    def test_hdr(self):
+        hdr = self.rast.get_hdr()
+        self.assertEqual(hdr, {'xllcorner': 0.0,
+                               'yllcorner': -0.12533323356430465})
+        return
+
 class TestAAIGrid(unittest.TestCase):
 
     def setUp(self):
