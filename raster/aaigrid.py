@@ -194,8 +194,8 @@ class AAIGrid(object):
             n = 1
         else:
             raise AAIError("`reference` must be 'center' or 'edge'")
-        return (x0, x0 + (self.hdr['cellsize'] + n) * self.hdr['ncols'],
-                y0, y0 + (self.hdr['cellsize'] + n) * self.hdr['nrows'])
+        return (x0, x0 + (self.hdr['ncols'] + n) * self.hdr['cellsize'],
+                y0, y0 + (self.hdr['nrows'] + n) * self.hdr['cellsize'])
 
     def coordmesh(self, grid_registration='center'):
         """ Return a pair of arrays containing the *X* and *Y* coordinates of
@@ -379,13 +379,16 @@ class AAIGrid(object):
         return z, (xs, ys)
 
     def get_profile(self, segments, resolution=10.0):
-        """ Sample along a line defined as *segments*.
+        """ Sample along a line defined as `segments`. Does not interpolate.
 
-        *segments*      :   iterable containing (x,y) pairs
-        *resolution*    :   sample spacing
+        Parameters:
+        -----------
+        segments : iterable containing (x,y) pairs
+        resolution : sample spacing
 
-        Returns an ndarray.
-        Does not interpolate.
+        Returns:
+        --------
+        profile : ndarray
         """
 
         z = []
