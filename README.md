@@ -2,15 +2,13 @@ Karta - simple geospatial analysis in Python
 --------------------------------------------
 
 *Karta* contains a collection of loosely-related Python modules for performing
-lightweight geospatial data analysis. *Karta* replicates the functionality of
-GDAL, OGR, and GSTAT in some cases, but does so in a minimal package with few
-dependencies, and attempts to solve problems in ways that would be considered
-'pythonic'. Although these other packages may have advantages in performance or
-capability, *Karta* is designed to be portable require as little extra software
-infrastructure as possible.
+geospatial data analysis. *Karta* attempts to solve problems in ways that might
+be considered 'pythonic'. To this end, it provides a simple and clean API and
+close interoperability with numpy. The *Karta* package is a simple ecosystem of
+modules for dealing with vector and raster data.
 
-*Karta* should be considered a work in progress. No assurances are provided
-about results derived using it.
+Goals of *Karta* include providing a simple, lightweight, and fast set of
+spatially-inclined tools. *Karta* should be considered a work in progress.
 
 **Curently working on:**
 - better projection handling
@@ -33,7 +31,8 @@ about results derived using it.
     - xyfile :      ASCII table functions
 
 - raster
-    - aaigrid :     Class for reading, writing, and manipulating ESRI ASCII Grids
+    - grid :        Basic Grid types, including StructuredGrid and RegularGrid
+    - aaigrid :     Class for reading, writing, and manipulating ESRI ASCII grids
     - flow :        Stream flow functions
     - raster :      General purpose raster math
     - streamline :  Streamline calculation
