@@ -34,7 +34,7 @@ def shape2line(shape):
 def shape2poly(shape):
     """ Converts a shapefile._Shape `shape` to a guppy.Polygon. """
     verts = shape.points
-    return guppy.Line(verts)
+    return guppy.Polygon(verts)
 
 def shape2multipoint(shape):
     """ Converts a shapefile._Shape `shape` to a guppy.Polygon. """
