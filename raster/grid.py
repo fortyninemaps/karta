@@ -320,11 +320,11 @@ class StructuredGrid(Grid):
         Parameters:
         -----------
         hdr : dictionary of header fields, which must contain
-            - ncols
-            - nrows
             - xllcenter (float)
             - yllcenter (float)
             - nbands (int)
+        X : first-dimension coordinates of grid nodes
+        Y : second-dimension coordinates of grid nodes
         Z : dependent m-dimensional quantity (nrows x ncols x m)
         """
         if True not in (a is None for a in (X,Y,Z)):
@@ -334,6 +334,12 @@ class StructuredGrid(Grid):
             else:
                 if hdr is None:
                     hdr = {'xllcorner' : X[-1,0], 'yllcorner' : Y[-1,0]}
+                    if Z.ndim == 2:
+                        hdr['nbands'] = 1
+                    elif Z.ndim == 3:
+                        hdr['nbands'] = Z.shape[2]
+                    else:
+                        raise GridError('`Z` must be of dimension 2 or 3')
                     X -= X[-1,0]
                     Y -= Y[-1,0]
                 self.X = X
@@ -348,7 +354,7 @@ class StructuredGrid(Grid):
 
     def _check_hdr(self, hdr):
         """ Check that the header contains the required fields. """
-        for key in ('ncols', 'nrows', 'xllcorner', 'yllcorner', 'nbands'):
+        for key in ('xllcorner', 'yllcorner', 'nbands'):
             if key not in hdr:
                 raise GridError('Header missing {0}'.format(key))
 

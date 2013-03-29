@@ -14,7 +14,8 @@ class RegularGrid(unittest.TestCase):
                                                  'xllcorner':0.0,
                                                  'yllcorner':0.0,
                                                  'dx':30.0,
-                                                 'dy':30.0}, Z=pe)
+                                                 'dy':30.0,
+                                                 'nbands':1}, Z=pe)
         return
 
     def test_region_centered(self):
@@ -85,7 +86,8 @@ class TestStructuredGrid(unittest.TestCase):
     def test_hdr(self):
         hdr = self.rast.get_hdr()
         self.assertEqual(hdr, {'xllcorner': 0.0,
-                               'yllcorner': -0.12533323356430465})
+                               'yllcorner': -0.12533323356430465,
+                               'nbands':1})
         return
 
 class TestAAIGrid(unittest.TestCase):
