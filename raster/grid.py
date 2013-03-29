@@ -65,6 +65,7 @@ class RegularGrid(Grid):
             - ny (int)
             - dx (float)
             - dy (float)
+            - nbands (int)
         Z : dependent m-dimensional quantity (nrows x ncols x m)
         """
         self.set_hdr(hdr)
@@ -80,7 +81,9 @@ class RegularGrid(Grid):
 
     def _check_hdr(self, hdr):
         """ Check that the header contains the required fields. """
-        for key in ('xllcorner', 'yllcorner', 'nx', 'ny', 'dx', 'dy'):
+        required_fields = ('xllcorner', 'yllcorner', 'nx', 'ny', 'dx', 'dy',
+                           'nbands')
+        for key in required_fields:
             if key not in hdr:
                 raise GridError('Header missing {0}'.format(key))
 
@@ -187,7 +190,7 @@ class RegularGrid(Grid):
             ymax2 = te[3]
 
             data_a = self.data.copy()
-            ny, _ = data_a.shape
+            ny = data_a.shape[0]
 
             # The left side
             Dx = int(np.floor((xmin2-xmin1) / float(self._hdr['dx'])))
@@ -321,6 +324,7 @@ class StructuredGrid(Grid):
             - nrows
             - xllcenter (float)
             - yllcenter (float)
+            - nbands (int)
         Z : dependent m-dimensional quantity (nrows x ncols x m)
         """
         if True not in (a is None for a in (X,Y,Z)):
@@ -344,7 +348,7 @@ class StructuredGrid(Grid):
 
     def _check_hdr(self, hdr):
         """ Check that the header contains the required fields. """
-        for key in ('xllcorner', 'yllcorner'):
+        for key in ('ncols', 'nrows', 'xllcorner', 'yllcorner', 'nbands'):
             if key not in hdr:
                 raise GridError('Header missing {0}'.format(key))
 
