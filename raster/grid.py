@@ -2,7 +2,7 @@
 
 from math import sqrt
 import numpy as np
-
+import tiffile
 
 class Grid(object):
     """ Grid baseclass. Don't use this directly except to implement subclasses.
@@ -319,13 +319,13 @@ class StructuredGrid(Grid):
         """
         Parameters:
         -----------
-        hdr : dictionary of header fields, which must contain
-            - xllcenter (float)
-            - yllcenter (float)
-            - nbands (int)
         X : first-dimension coordinates of grid nodes
         Y : second-dimension coordinates of grid nodes
         Z : dependent m-dimensional quantity (nrows x ncols x m)
+        hdr : (optional) dictionary of header fields, which must contain
+            - xllcenter (float)
+            - yllcenter (float)
+            - nbands (int)
         """
         if True not in (a is None for a in (X,Y,Z)):
             if not (X.shape == Y.shape == Z.shape[:2]):
@@ -370,4 +370,32 @@ class StructuredGrid(Grid):
 
 class GridError(Exception):
     pass
+
+
+def dummy_hdr(arr):
+    if len(arr.shape) > 2:
+        nbands = arr.shape[2]
+    else:
+        nbands = 1
+    hdr = {'xllcorner': 0.0, 'yllcorner': 0.0,
+           'nx': arr.shape[1], 'ny': arr.shape[0],
+           'dx': 1.0, 'dy': 1.0,
+           'nbands': nbands}
+    return hdr
+
+
+def readtif(incoming, band=0):
+    """ Read a TIF image. If the image is contains bands, return band 0. """
+    with tiffile.TiffFile(incoming) as tif:
+        imdata = tif[0].asarray()
+    rgrid = RegularGrid(dummy_hdr(imdata), Z=imdata)
+    return rgrid
+
+
+def readtifbands(incoming):
+    """ Read a TIF image, returning a tuple of image data. """
+    with tiffile.TiffFile(incoming) as tif:
+        imdata = [page.asarray() for page in tif]
+    rgridlist = [RegularGrid(dummy_hdr(a), Z=a) for a in imdata]
+    return tuple(rgridlist)
 
