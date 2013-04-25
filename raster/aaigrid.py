@@ -454,6 +454,8 @@ class AAIGrid(object):
         self.hdr['cellsize'] = float(cellsize)
         self.hdr['nrows'] = ny
         self.hdr['ncols'] = nx
+        self.hdr['xllcorner'] = self.hdr['xllcenter'] - (0.5 * cellsize)
+        self.hdr['yllcorner'] = self.hdr['yllcenter'] - (0.5 * cellsize)
         return
 
     def resize(self, te):
