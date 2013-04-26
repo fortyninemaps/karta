@@ -363,8 +363,7 @@ class AAIGrid(object):
         return (A.min(), A.max())
 
     def sample(self, x, y):
-        """ Return the value nearest to x, y, as well as center coordinates of
-        the grid cell actually sampled. """
+        """ Return the value nearest to x, y. """
         xi, yi = self.get_indices(x, y)
         ncols = self.hdr['ncols']
         nrows = self.hdr['nrows']
@@ -376,7 +375,7 @@ class AAIGrid(object):
             z = self.data[yi, xi]
             ys = yi * self.hdr['cellsize'] + self.hdr['yllcenter']
             xs = xi * self.hdr['cellsize'] + self.hdr['xllcenter']
-        return z, (xs, ys)
+        return z
 
     def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as `segments`. Does not interpolate.
