@@ -143,6 +143,37 @@ class Point(object):
             self.z += shift_vector[2]
         return
 
+    def as_geojson(self, **kwargs):
+        """ Write data as a GeoJSON string to a file-like object `f`.
+
+        Parameters
+        ----------
+        f : file-like object to recieve the GeoJSON string
+
+        *kwargs* include:
+        crs : coordinate reference system
+        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
+        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        """
+        writer = geojson.GeoJSONWriter(self, **kwargs)
+        return writer.print_json()
+
+    def to_geojson(self, f, **kwargs):
+        """ Write data as a GeoJSON string to a file-like object `f`.
+
+        Parameters
+        ----------
+        f : file-like object to recieve the GeoJSON string
+
+        *kwargs* include:
+        crs : coordinate reference system
+        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
+        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        """
+        writer = geojson.GeoJSONWriter(self, **kwargs)
+        writer.write_json(f)
+        return writer
+
     def to_shapely(self):
         """ Returns a Shapely Point instance. """
         try:
