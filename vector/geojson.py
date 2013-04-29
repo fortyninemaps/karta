@@ -3,6 +3,7 @@ dealing with GeoJSON data. The `GeoJSON` class uses the builtin json module and
 enforces GeoJSON standards. """
 
 import sys
+import copy
 import guppy
 import json
 import traceback
@@ -98,7 +99,12 @@ class GeoJSONWriter(object):
         if target is None:
             target = self.supobj
 
-        if hasattr(self.gpobj, 'get_vertices'):
+        if isinstance(self.gpobj, guppy.Polygon):
+            target['coordinates'] = [self.gpobj.get_vertices()]
+            if hasattr(self.gpobj, "subpolys"):
+                for poly in self.gpobj.subpolys:
+                    target['coordinates'].append(poly.get_vertices())
+        elif hasattr(self.gpobj, 'get_vertices'):
             target['coordinates'] = self.gpobj.get_vertices()
         elif hasattr(self.gpobj, 'get_vertex'):
             target['coordinates'] = self.gpobj.get_vertex()
@@ -243,7 +249,7 @@ def print_FeatureCollection(gpobj_list, **kwargs):
     featurelist = []
     for gp in gpobj_list:
         writer = GeoJSONWriter(gp)
-        featurelist.append(writer.supobj)
+        featurelist.append(copy.copy(writer.supobj))
     feature_coll = {'type' : 'FeatureCollection',
                     'features' : featurelist}
     return json.dumps(feature_coll, indent=2)
