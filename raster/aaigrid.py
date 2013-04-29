@@ -85,7 +85,13 @@ class AAIGrid(object):
             else:
                 raise ValueError("cannot add NoneType data array")
         else:
-            raise AAIError("addition with other types not defined")
+            try:
+                return AAIGrid(self.data + other, self.hdr)
+            except AttributeError:
+                raise AAIError("self.data not defined")
+            except Exception:
+                raise AAIError("addition with type {0} not "
+                               "defined".format(type(other)))
 
     def __sub__(self, other):
         if isinstance(other, AAIGrid):
@@ -94,7 +100,13 @@ class AAIGrid(object):
             else:
                 raise ValueError("cannot subtract NoneType data array")
         else:
-            raise AAIError("subtraction with other types not defined")
+            try:
+                return AAIGrid(self.data - other, self.hdr)
+            except AttributeError:
+                raise AAIError("self.data not defined")
+            except Exception:
+                raise AAIError("subtraction with type {0} not "
+                               "defined".format(type(other)))
 
     def __mul__(self, other):
         if isinstance(other, AAIGrid):
@@ -108,7 +120,7 @@ class AAIGrid(object):
             except AttributeError:
                 raise AAIError("self.data not defined")
             except:
-                raise AAIError("multiplication with type{0} not"
+                raise AAIError("multiplication with type{0} not "
                                 "defined".format(type(other)))
 
     def __div__(self, other):
@@ -118,7 +130,13 @@ class AAIGrid(object):
             else:
                 raise ValueError("cannot divide NoneType data array")
         else:
-            raise AAIError("division with other types not defined")
+            try:
+                return AAIGrid(self.data * other, self.hdr)
+            except AttributeError:
+                raise AAIError("self.data not defined")
+            except:
+                raise AAIError("division with type{0} not "
+                                "defined".format(type(other)))
 
     def _check_header(self, hdr=None):
         """ Make sure that all required header records are present. """
