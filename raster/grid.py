@@ -1,9 +1,16 @@
 """ Classes for basic grid types """
 
+import copy
 from math import sqrt
 import numpy as np
 import tiffile          # Temporarily used for TIF IO
 import _aai             # Contains the ascread driver
+try:
+    from fill_sinks import fill_sinks
+except ImportError:
+    sys.stderr.write("Compiled fill_sinks not available. Falling back to "
+                     "Python version\n")
+    from raster import fill_sinks
 
 class Grid(object):
     """ Grid baseclass. Don't use this directly except to implement subclasses.
@@ -47,7 +54,9 @@ class Grid(object):
         A = self.data[np.isnan(self.data)==False]
         return (A.min(), A.max())
 
-
+    def copy(self):
+        """ Return a copy. """
+        return copy.deepcopy(self)
 
 
 class RegularGrid(Grid):
@@ -69,6 +78,11 @@ class RegularGrid(Grid):
             - nbands (int)
         Z : dependent m-dimensional quantity (nrows x ncols x m)
         """
+        if ('nbands' not in hdr) and (Z is not None):
+            if Z.ndim >= 3:
+                hdr['nbands'] = Z.ndim[2]
+            else:
+                hdr['nbands'] = 1
         self.set_hdr(hdr)
 
         shape = (self._hdr['ny'], self._hdr['nx'])
@@ -302,6 +316,10 @@ class RegularGrid(Grid):
 
         return np.array(z)
 
+    def fill_sinks(self):
+        """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
+        return RegularGrid(copy.copy(self._hdr), Z=fill_sinks(self.data))
+
     def as_structured(self):
         """ Return a copy as a StructuredGrid instance. This is a more general
         grid class that had a larger memory footprint but can represent more
@@ -309,11 +327,11 @@ class RegularGrid(Grid):
         Xv, Yv = self.vertex_coords()
         return StructuredGrid(Xv, Yv, self.data.copy())
 
-    def aaiwrite(self, f, nodata_value=-9999):
+    def aaiwrite(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
         only isometric grids (i.e. `hdr['dx'] == hdr['dy']` can be saved,
         otherwise `GridIOError` is thrown.
-        
+
         Parameters:
         -----------
         f : either a file-like object or a filename
@@ -327,7 +345,7 @@ class RegularGrid(Grid):
             raise GridIOError("reference in AAIGrid.tofile() must be 'center' or "
                            "'corner'")
 
-        if self.hdr['dx'] != self.hdr['dy']:
+        if self._hdr['dx'] != self._hdr['dy']:
             raise GridIOError("ASCII grids require isometric grid cells")
 
         try:
@@ -341,16 +359,16 @@ class RegularGrid(Grid):
             data_a = self.data.copy()
             data_a[np.isnan(data_a)] = nodata_value
 
-            f.write("NCOLS {0}\n".format(self.hdr['nx']))
-            f.write("NROWS {0}\n".format(self.hdr['ny']))
+            f.write("NCOLS {0}\n".format(self._hdr['nx']))
+            f.write("NROWS {0}\n".format(self._hdr['ny']))
             if reference == 'center':
-                d = self.hdr['dx']
-                f.write("XLLCENTER {0}\n".format(self.hdr['xllcorner']+0.5*d))
-                f.write("YLLCENTER {0}\n".format(self.hdr['yllcorner']+0.5*d))
+                d = self._hdr['dx']
+                f.write("XLLCENTER {0}\n".format(self._hdr['xllcorner']+0.5*d))
+                f.write("YLLCENTER {0}\n".format(self._hdr['yllcorner']+0.5*d))
             elif reference == 'corner':
-                f.write("XLLCORNER {0}\n".format(self.hdr['xllcorner']))
-                f.write("YLLCORNER {0}\n".format(self.hdr['yllcorner']))
-            f.write("CELLSIZE {0}\n".format(self.hdr['dx']))
+                f.write("XLLCORNER {0}\n".format(self._hdr['xllcorner']))
+                f.write("YLLCORNER {0}\n".format(self._hdr['yllcorner']))
+            f.write("CELLSIZE {0}\n".format(self._hdr['dx']))
             f.write("NODATA_VALUE {0}\n".format(nodata_value))
             f.writelines([str(row).replace(',','')[1:-1] +
                             '\n' for row in data_a.tolist()])
@@ -417,6 +435,12 @@ class StructuredGrid(Grid):
     def resample(self, X, Y):
         """ Resample internal grid to the points defined by `X`, `Y`. """
         raise NotImplementedError
+
+    def fill_sinks(self):
+        """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
+        return StructuredGrid(copy.copy(self._hdr),
+                              X=self.X.copy(), Y=self.Y.copy(),
+                              Z=fill_sinks(self.data))
 
 
 class GridError(Exception):

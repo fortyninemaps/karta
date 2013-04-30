@@ -15,7 +15,7 @@ import traceback
 class AAIGrid(grid.RegularGrid):
     """ Grid object built around the ESRI ASCII Grid format. """
 
-    hdr = {}
+    _hdr = {'nbands': 1}
     aschdr = {}
     aschdr['ncols'] = None
     aschdr['nrows'] = None
@@ -185,12 +185,12 @@ class AAIGrid(grid.RegularGrid):
     def _enforce_hdr_consistency(self):
         """ Make sure that base `hdr` remains consistent with AAIGrid-specific
         `aschdr`. """
-        self.hdr['dx'] = self.aschdr['cellsize']
-        self.hdr['dy'] = self.aschdr['cellsize']
-        self.hdr['nx'] = self.aschdr['ncols']
-        self.hdr['ny'] = self.aschdr['nrows']
-        self.hdr['xllcorner'] = self.aschdr['xllcorner']
-        self.hdr['yllcorner'] = self.aschdr['yllcorner']
+        self._hdr['dx'] = self.aschdr['cellsize']
+        self._hdr['dy'] = self.aschdr['cellsize']
+        self._hdr['nx'] = self.aschdr['ncols']
+        self._hdr['ny'] = self.aschdr['nrows']
+        self._hdr['xllcorner'] = self.aschdr['xllcorner']
+        self._hdr['yllcorner'] = self.aschdr['yllcorner']
         return
 
     def get_indices(self, x, y):
