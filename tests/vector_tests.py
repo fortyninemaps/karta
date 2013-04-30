@@ -10,6 +10,10 @@ class TestGuppy(unittest.TestCase):
 
     def setUp(self):
         self.poly = vector.guppy.Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
+        self.ring = vector.guppy.Polygon([(2.0, 2.0), (4.0, 2.0), (3.0, 6.0)])
+        self.ringed_poly = vector.guppy.Polygon([(0.0, 0.0), (10, 0.0),
+                                                 (10.0, 10.0), (0.0, 10.0)],
+                                                subs=[self.ring])
 
 
     def test_point_creation(self):
@@ -53,12 +57,13 @@ class TestGuppy(unittest.TestCase):
 
     def test_poly_vertices(self):
         self.assertEqual(self.poly.get_vertices(),
-                         [(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
+                         [(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (0.0, 8.0)])
         return
 
     def test_poly_coordinates(self):
         self.assertEqual(self.poly.get_coordinate_lists(),
-                         ([0.0, 0.0, 6.0], [8.0, 5.0, 1.0], [0.0, 0.0, 0.0]))
+                         ([0.0, 0.0, 6.0, 0.0], [8.0, 5.0, 1.0, 8.0],
+                          [0.0, 0.0, 0.0, 0.0]))
         return
 
     def test_poly_extents(self):
@@ -66,7 +71,15 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_poly_length(self):
-        self.assertEqual(self.poly.length(), 10.21110255092798)
+        self.assertEqual(self.poly.length(), 19.430647008220866)
+        return
+
+    def test_ringedpoly_perimeter(self):
+        self.assertEqual(round(self.ringed_poly.perimeter(), 3), 50.246)
+        return
+
+    def test_ringedpoly_area(self):
+        self.assertEqual(self.ringed_poly.area(), 100 - self.ring.area())
         return
 
 

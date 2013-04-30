@@ -186,7 +186,7 @@ class Multipoint(object):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes. """
 
-    def __init__(self, vertices, data=None):
+    def __init__(self, vertices, data=None, **kwargs):
         """ Create a feature with multiple vertices.
 
         vertices : a list of tuples containing point coordinates.
@@ -445,24 +445,32 @@ class Polygon(Multipoint):
     polygons objects can be created. Polygon objects consist of
     point nodes enclosing an area.
     """
+    subs = []
+
     def __init__(self, vertices, **kwargs):
         Multipoint.__init__(self, vertices, **kwargs)
         if vertices[0] != vertices[-1]:
-            vertices.append(vertices[0])
+            self.vertices.append(vertices[0])
+        self.subs = kwargs.get('subs', [])
+        return
 
     def __repr__(self):
         return 'Polygon(' + reduce(lambda a,b: str(a) + ' ' + str(b),
                 self.vertices) + ')'
 
-    perimeter = Multipoint.length
+    def perimeter(self):
+        """ Return the perimeter of the polygon. If there are sub-polygons,
+        their perimeters are added recursively. """
+        return self.length() + sum([p.perimeter() for p in self.subs])
 
     def area(self):
-        """ Return the area of the polygon. Only 2D at the moment. """
+        """ Return the two-dimensional area of the polygon. If there are
+        sub-polygons, their areas are subtracted. """
         a = 0.0
         for i in range(len(self.vertices)-1):
-            a += (self.vertices[i][0] + self.vertices[i+1][0]) \
-                * (self.vertices[i][1] - self.vertices[i+1][1])
-        return abs(0.5 * a)
+            a += 0.5 * abs((self.vertices[i][0] + self.vertices[i+1][0])
+                         * (self.vertices[i][1] - self.vertices[i+1][1]))
+        return a - sum(map(lambda p: p.area(), self.subs))
 
     def contains(self, pt):
         """ Returns True if pt is inside or on the boundary of the
