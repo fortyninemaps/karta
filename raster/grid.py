@@ -2,7 +2,8 @@
 
 from math import sqrt
 import numpy as np
-import tiffile
+import tiffile          # Temporarily used for TIF IO
+import aaigrid          # Contains the ascread driver
 
 class Grid(object):
     """ Grid baseclass. Don't use this directly except to implement subclasses.
@@ -398,4 +399,16 @@ def readtifbands(incoming):
         imdata = [page.asarray() for page in tif]
     rgridlist = [RegularGrid(dummy_hdr(a), Z=a) for a in imdata]
     return tuple(rgridlist)
+
+def ascread(fnm):
+    Z, aschdr = aaigrid.aairead(fnm)
+    hdr = {'xllcorner'  : aschdr['xllcorner'],
+           'yllcorner'  : aschdr['yllcorner'],
+           'nx'         : aschdr['ncols'],
+           'ny'         : aschdr['nrows'],
+           'dx'         : aschdr['cellsize'],
+           'dy'         : aschdr['cellsize'],
+           'nbands'     : 1}
+    Z[Z==aschdr['nodata_value']] = np.nan
+    return RegularGrid(hdr, Z=Z)
 

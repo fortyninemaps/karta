@@ -72,6 +72,11 @@ class RegularGrid(unittest.TestCase):
         self.assertTrue(False not in (self.rast.data == orig[:25,:25]))
         return
 
+    def test_ascread(self):
+        grid = raster.grid.ascread('data/peaks49.asc')
+        self.assertTrue(False not in (grid.data == self.rast.data))
+        return
+
 
 class TestStructuredGrid(unittest.TestCase):
 
