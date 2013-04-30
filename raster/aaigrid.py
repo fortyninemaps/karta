@@ -134,7 +134,7 @@ class AAIGrid(grid.RegularGrid):
                 raise ValueError("cannot divide NoneType data array")
         else:
             try:
-                return AAIGrid(self.data * other, self.aschdr)
+                return AAIGrid(self.data / other, self.aschdr)
             except AttributeError:
                 raise AAIError("self.data not defined")
             except:
