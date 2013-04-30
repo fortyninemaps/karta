@@ -3,7 +3,7 @@
 from math import sqrt
 import numpy as np
 import tiffile          # Temporarily used for TIF IO
-import aaigrid          # Contains the ascread driver
+import _aai             # Contains the ascread driver
 
 class Grid(object):
     """ Grid baseclass. Don't use this directly except to implement subclasses.
@@ -453,7 +453,7 @@ def readtifbands(incoming):
     return tuple(rgridlist)
 
 def aairead(fnm):
-    Z, aschdr = aaigrid.aairead(fnm)
+    Z, aschdr = _aai.aairead(fnm)
     hdr = {'xllcorner'  : aschdr['xllcorner'],
            'yllcorner'  : aschdr['yllcorner'],
            'nx'         : aschdr['ncols'],
