@@ -1,10 +1,10 @@
 Karta - simple geospatial analysis in Python
 --------------------------------------------
 
-*Karta* is a Leatherman for geographic analyses in Python. *Karta* attempts to provide an
-API for solve problems in ways that might be considered '*Pythonic*'. To this end, it
-provides a simple and clean interface to both vector and raster classes, as well as close
-interoperability with *numpy*.
+*Karta* is a Leatherman for geographic analyses in Python. *Karta* provides an API for
+solving problems in Python. To this end, it provides a simple and clean interface to both
+vector and raster data types, the ability to read and write a useful subset of formats,
+and close interoperability with *numpy*.
 
 Goals of *Karta* include providing a simple, lightweight, and fast set of tools useful for
 everyday spatial analysis. *Karta* should be considered a work in progress.
@@ -20,22 +20,20 @@ everyday spatial analysis. *Karta* should be considered a work in progress.
 ##CONTENTS
 
 - vector
+    - guppy :       Basic vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`)
     - gpx_parser :  Parser for GPX files exported from GPS devices
     - geojson :     Classes and functions for handling GeoJSON files
     - vtk :         XML-based VTK interface
-    - guppy :       Vector geometry classes
-    - shapefile :   Snapshot of pyshp module for reading and writing shapefiles
     - shp_funcs :   Shapefile-to-guppy conversions
     - stats :       Geostatistical functions
     - xyfile :      ASCII table functions
 
 - raster
-    - grid :        Basic Grid types, including StructuredGrid and RegularGrid
-    - aaigrid :     Class for reading, writing, and manipulating ESRI ASCII grids
+    - grid :        Basic Grid types, including `StructuredGrid` and `RegularGrid`
+    - aaigrid :     Grid subclass specifically for reading, writing, and manipulating ESRI ASCII grids
     - flow :        Stream flow functions
-    - raster :      General purpose raster math
+    - raster :      General purpose raster functions
     - streamline :  Streamline calculation
-    - cfuncs :      Non-user-facing Cython module for performance
 
 - tests : unit tests
 
