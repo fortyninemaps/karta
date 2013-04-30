@@ -496,24 +496,23 @@ class Polygon(Multipoint):
             isinstance(ray_intersection(pt.xy, seg[0], seg[1]), tuple))
             for seg in segments])
 
-        if n_intersect % 2 == 1:    # If odd, then point is inside
-            return True
-        else:                   # If even, then point is outside
-            return False
+        if n_intersect % 2 == 1:    # If odd, point is inside so check subpolys
+            if True not in (p.contains(pt) for p in self.rings):
+                return True
+        return False                # Point was outside or was in a subpoly
 
     def to_polyline(self):
-        """ Returns a self-closing polyline. """
+        """ Returns a self-closing polyline. Discards sub-polygons. """
         return Line(self.vertices)
 
     def to_shapely(self):
         """ Returns a Shapely Polygon instance. """
         try:
-            if self.rank == 2:
-                return geometry.Polygon([(v[0], v[1]) for v in self.vertices])
-            elif self.rank == 3:
-                return geometry.Polygon([(v[0], v[1], v[2]) for v in self.vertices])
+            shp = geometry.Polygon(self.vertices,
+                                   interiors=[p.vertices for p in self.subs])
         except NameError:
             raise ImportError('Shapely module did not import\n')
+        return shp
 
 class GuppyError(Exception):
     """ Base class for guppy module errors. """

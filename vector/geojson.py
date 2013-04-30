@@ -101,8 +101,8 @@ class GeoJSONWriter(object):
 
         if isinstance(self.gpobj, guppy.Polygon):
             target['coordinates'] = [self.gpobj.get_vertices()]
-            if hasattr(self.gpobj, "subpolys"):
-                for poly in self.gpobj.subpolys:
+            if hasattr(self.gpobj, "subs"):
+                for poly in self.gpobj.subs:
                     target['coordinates'].append(poly.get_vertices())
         elif hasattr(self.gpobj, 'get_vertices'):
             target['coordinates'] = self.gpobj.get_vertices()
