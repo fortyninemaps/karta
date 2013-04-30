@@ -73,7 +73,7 @@ class RegularGrid(unittest.TestCase):
         return
 
     def test_aairead(self):
-        grid = raster.grid.aairead('data/peaks49.asc')
+        grid = raster.grid.aairead('reference_data/peaks49.asc')
         self.assertTrue(False not in (grid.data == self.rast.data))
         return
 
