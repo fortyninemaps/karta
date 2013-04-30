@@ -1,22 +1,21 @@
 Karta - simple geospatial analysis in Python
 --------------------------------------------
 
-*Karta* contains a collection of loosely-related Python modules for performing
-geospatial data analysis. *Karta* attempts to solve problems in ways that might
-be considered 'pythonic'. To this end, it provides a simple and clean API and
-close interoperability with numpy. The *Karta* package is a simple ecosystem of
-modules for dealing with vector and raster data.
+*Karta* is a Leatherman for geographic analyses in Python. *Karta* attempts to provide an
+API for solve problems in ways that might be considered '*Pythonic*'. To this end, it
+provides a simple and clean interface to both vector and raster classes, as well as close
+interoperability with *numpy*.
 
-Goals of *Karta* include providing a simple, lightweight, and fast set of
-spatially-inclined tools. *Karta* should be considered a work in progress.
+Goals of *Karta* include providing a simple, lightweight, and fast set of tools useful for
+everyday spatial analysis. *Karta* should be considered a work in progress.
 
 **Curently working on:**
-- better projection handling
+- projection handling
 - refactoring raster class hierarchy
+- native GeoTiff support
 
 **Thinking about:**
-- polygon holes
-- memory boundedness
+- memory efficiency
 
 ##CONTENTS
 
@@ -43,8 +42,8 @@ spatially-inclined tools. *Karta* should be considered a work in progress.
 
 ##FORMATS
 
-*Karta* attempts to provide a basic working interface to several of common file
-formats. Currently partially supported are:
+*Karta* attempts to provide a basic working interface to several of common file formats.
+Currently partially supported are:
 
 - vector
     - ASCII tables (XYZ) (r,w)
@@ -53,6 +52,7 @@ formats. Currently partially supported are:
     - ESRI Shapefiles (r,w)
 - raster
     - ESRI ASCII Grids (r,w)
+    - GeoTiff (WIP)
 
 ##CYTHON
 
