@@ -309,6 +309,56 @@ class RegularGrid(Grid):
         Xv, Yv = self.vertex_coords()
         return StructuredGrid(Xv, Yv, self.data.copy())
 
+    def aaiwrite(self, f, nodata_value=-9999):
+        """ Save internal data as an ASCII grid. Based on the ESRI standard,
+        only isometric grids (i.e. `hdr['dx'] == hdr['dy']` can be saved,
+        otherwise `GridIOError` is thrown.
+        
+        Parameters:
+        -----------
+        f : either a file-like object or a filename
+        reference : specify a header reference ("center" | "corner")
+        nodata_value : specify how nans should be represented (int or float)
+        """
+        if self.data is None:
+            raise GridError("no data to write!")
+
+        if reference not in ('center', 'corner'):
+            raise GridIOError("reference in AAIGrid.tofile() must be 'center' or "
+                           "'corner'")
+
+        if self.hdr['dx'] != self.hdr['dy']:
+            raise GridIOError("ASCII grids require isometric grid cells")
+
+        try:
+            f.read()
+        except AttributeError:
+            f = open(f, "w")
+        #except IOError:
+        #    pass
+
+        try:
+            data_a = self.data.copy()
+            data_a[np.isnan(data_a)] = nodata_value
+
+            f.write("NCOLS {0}\n".format(self.hdr['nx']))
+            f.write("NROWS {0}\n".format(self.hdr['ny']))
+            if reference == 'center':
+                d = self.hdr['dx']
+                f.write("XLLCENTER {0}\n".format(self.hdr['xllcorner']+0.5*d))
+                f.write("YLLCENTER {0}\n".format(self.hdr['yllcorner']+0.5*d))
+            elif reference == 'corner':
+                f.write("XLLCORNER {0}\n".format(self.hdr['xllcorner']))
+                f.write("YLLCORNER {0}\n".format(self.hdr['yllcorner']))
+            f.write("CELLSIZE {0}\n".format(self.hdr['dx']))
+            f.write("NODATA_VALUE {0}\n".format(nodata_value))
+            f.writelines([str(row).replace(',','')[1:-1] +
+                            '\n' for row in data_a.tolist()])
+        except Exception as e:
+            raise e
+        finally:
+            f.close()
+        return
 
 class StructuredGrid(Grid):
     """ Structured Grid class. A StructuredGrid contains a fixed number of rows
@@ -372,6 +422,8 @@ class StructuredGrid(Grid):
 class GridError(Exception):
     pass
 
+class GridIOError(GridError):
+    pass
 
 def dummy_hdr(arr):
     if len(arr.shape) > 2:
@@ -400,7 +452,7 @@ def readtifbands(incoming):
     rgridlist = [RegularGrid(dummy_hdr(a), Z=a) for a in imdata]
     return tuple(rgridlist)
 
-def ascread(fnm):
+def aairead(fnm):
     Z, aschdr = aaigrid.aairead(fnm)
     hdr = {'xllcorner'  : aschdr['xllcorner'],
            'yllcorner'  : aschdr['yllcorner'],
