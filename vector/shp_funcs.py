@@ -90,6 +90,11 @@ def read_shapefile(stem):
 
     return features
 
+def list_parts(feature):
+    """ Return a list of polygon parts. """
+    return [features.vertices()].extend(
+            [list_parts(p) for p in features.subs])
+
 def write_shapefile(features, stem):
     """ Write a list of features to a shapefile. The features must be of the
     same type. """
@@ -99,20 +104,26 @@ def write_shapefile(features, stem):
     if not hasattr(features[0], '__iter__'):
         # Must be a Point type
         for feature in features:
+            writer.shapeType = 1
             writer.point(*feature.get_vertex())
     else:
-        if isinstance(feature, guppy.Line):
+        if isinstance(features[0], guppy.Line):
             shape_type = 3
-        elif isinstance(feature, guppy.Polygon):
+        elif isinstance(features[0], guppy.Polygon):
             shape_type = 5
-        elif isinstance(feature, guppy.Multipoint):
+        elif isinstance(features[0], guppy.Multipoint):
             shape_type = 8
         else:
             raise NotImplementedError("cannot save type "
                                       "{0}".format(type(feature)))
 
+        writer.shapeType = shape_type
         for feature in features:
-            writer.poly([feature.get_vertices()], shape_type)
+            if shape_type == 5:
+                parts = list_parts(feature)
+            else:
+                parts = [feature.get_vertices()]
+            writer.poly(parts)
 
     try:
         files = open_file_dict(fnms)
