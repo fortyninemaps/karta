@@ -7,7 +7,7 @@ import aaigrid
 import raster
 import flow
 
-from grid import RegularGrid, StructuredGrid
+from grid import RegularGrid, StructuredGrid, aairead
 from aaigrid import AAIGrid
 from raster import witch_of_agnesi, peaks, pad, slope, aspect, grad, div
 from raster import normed_vector_field, fill_sinks
