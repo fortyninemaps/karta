@@ -2,8 +2,8 @@
 shapefile.py
 Provides read and write support for ESRI Shapefiles.
 author: jlawhead<at>geospatialpython.com
-date: 20110927
-version: 1.1.4
+date: 20120501
+version: 1.1.6-beta
 Compatible with Python versions 2.4-3.x
 """
 
@@ -145,17 +145,10 @@ class Reader:
                 self.dbf = kwargs["dbf"]
                 if hasattr(self.dbf, "seek"):
                     self.dbf.seek(0)
-        if self.shp or self.dbf:
+        if self.shp or self.dbf:        
             self.load()
         else:
             raise ShapefileException("Shapefile Reader requires a shapefile or file-like object.")
-
-    def __repr__(self):
-        try:
-            shp = self.shapeName
-        except AttributeError:
-            shp = "None"
-        return "shapefile.Reader instance for " + shp
 
     def load(self, shapefile=None):
         """Opens a shapefile from a filename or file-like
@@ -254,12 +247,12 @@ class Reader:
         if shapeType in (13,15,18,31):
             (zmin, zmax) = unpack("<2d", f.read(16))
             record.z = _Array('d', unpack("<%sd" % nPoints, f.read(nPoints * 8)))
-        # Read m extremes and values
-        if shapeType in (13,15,18,23,25,28,31):
+        # Read m extremes and values if header m values do not equal 0.0
+        if shapeType in (13,15,18,23,25,28,31) and not 0.0 in self.measure:
             (mmin, mmax) = unpack("<2d", f.read(16))
             # Measure values less than -10e38 are nodata values according to the spec
             record.m = []
-            for m in _Array('d', unpack("%sd" % nPoints, f.read(nPoints * 8))):
+            for m in _Array('d', unpack("<%sd" % nPoints, f.read(nPoints * 8))):
                 if m > -10e38:
                     record.m.append(m)
                 else:
@@ -681,7 +674,8 @@ class Writer:
                 except error:
                     raise ShapefileException("Failed to write elevation extremes for record %s. Expected floats." % recNum)
                 try:
-                    [f.write(pack("<d", p[2])) for p in s.points]
+                    #[f.write(pack("<d", p[2])) for p in s.points]
+                    f.write(pack("<%sd" % len(s.z), *s.z))
                 except error:
                     raise ShapefileException("Failed to write elevation values for record %s. Expected floats." % recNum)
             # Write m extremes and values
@@ -744,11 +738,7 @@ class Writer:
                     value = str(value)[0].upper()
                 else:
                     value = str(value)[:size].ljust(size)
-                try:
-                    assert len(value) == size
-                except:
-                    import pdb
-                    pdb.set_trace()
+                assert len(value) == size
                 value = b(value)
                 f.write(value)
 
@@ -808,9 +798,6 @@ class Writer:
         will be added."""
         record = []
         fieldCount = len(self.fields)
-        # Allow records to be passed as a list
-        if len(recordList) == 1:
-            recordList = [i for i in recordList[0]]
         # Compensate for deletion flag
         if self.fields[0][0].startswith("Deletion"): fieldCount -= 1
         if recordList:
