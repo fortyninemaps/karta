@@ -101,6 +101,8 @@ class RegularGrid(Grid):
         for key in required_fields:
             if key not in hdr:
                 raise GridError('Header missing {0}'.format(key))
+        assert isinstance(hdr['nx'], int)
+        assert isinstance(hdr['ny'], int)
 
     def coordmesh(self, *args, **kwargs):
         """ Alias for center_coords() """

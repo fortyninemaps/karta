@@ -31,6 +31,8 @@ def aairead(fnm):
     # Store data internally
     hs = [rec.split(None, 1) for rec in h]
     hdr = dict([(rec[0].lower(), float(rec[1])) for rec in hs])
+    hdr['ncols'] = int(hdr['ncols'])
+    hdr['nrows'] = int(hdr['nrows'])
     if 'yllcenter' not in hdr.keys():
         hdr['yllcenter'] = None
 
