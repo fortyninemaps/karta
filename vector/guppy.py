@@ -10,6 +10,7 @@ import math
 import sys
 from collections import deque
 import traceback
+import numpy as np
 import vtk
 import geojson
 
@@ -458,14 +459,20 @@ class Line(Multipoint):
 
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
-        intersections = (_vecgeo.intersects(a[0][0], a[1][0], b[0][0], b[1][0],
-                                            a[0][1], a[1][1], b[1][0], b[1][1])
-                                           for a in self.segments()
-                                           for b in other.segments())
-        if self._bbox_overlap(other) and (True in intersections):
+        interxbool = (_vecgeo.intersects(a[0][0], a[1][0], b[0][0], b[1][0],
+                                         a[0][1], a[1][1], b[0][1], b[1][1])
+                    for a in self.segments() for b in other.segments())
+        if self._bbox_overlap(other) and (True in interxbool):
             return True
         else:
             return False
+
+    def intersections(self, other):
+        """ Return the intersections with another geometry. """
+        interx = [_vecgeo.intersections(a[0][0], a[1][0], b[0][0], b[1][0],
+                                        a[0][1], a[1][1], b[0][1], b[1][1])
+                    for a in self.segments() for b in other.segments()]
+        return filter(lambda a: np.nan not in a, interx)
 
     def to_polygon(self):
         """ Returns a polygon. """

@@ -405,8 +405,6 @@ class AAIGrid(grid.RegularGrid):
                 detail="({0}, {1}), ({2}, {3})".format(xi, yi, ncols, nrows))
         else:
             z = self.data[yi, xi]
-            ys = yi * self.aschdr['cellsize'] + self.aschdr['yllcenter']
-            xs = xi * self.aschdr['cellsize'] + self.aschdr['xllcenter']
         return z
 
     def get_profile(self, segments, resolution=10.0):
