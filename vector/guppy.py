@@ -38,9 +38,9 @@ class Point(object):
 
     def __repr__(self):
         if self.rank == 2:
-            return 'point(' + str(self.xy) + ')'
+            return 'Point(' + str(self.xy) + ')'
         elif self.rank == 3:
-            return 'point(' + str(self.xyz) + ')'
+            return 'Point(' + str(self.xyz) + ')'
 
     def get_vertex(self):
         """ Return the Point vertex as a tuple. """
@@ -224,9 +224,9 @@ class Multipoint(object):
             self.data = [None for a in vertices]
         return
 
-    def __repr__(self):
-        return 'Multipoint(' + reduce(lambda a,b: str(a) + ' ' + str(b),
-                self.vertices) + ')'
+    #def __repr__(self):
+    #    return 'Multipoint(' + reduce(lambda a,b: str(a) + ' ' + str(b),
+    #            self.vertices) + ')'
 
     def __len__(self):
         return len(self.vertices)
@@ -246,6 +246,26 @@ class Multipoint(object):
 
     def __iter__(self):
         return (pt for pt in self.vertices)
+
+    def _bbox_overlap(self, other):
+        """ Return whether bounding boxes between self and another geometry
+        overlap.
+        """
+        reg0 = self.get_bbox()
+        reg1 = other.get_bbox()
+        return (reg0[0] < reg1[1] and reg0[1] > reg1[0] and
+                reg0[2] < reg1[3] and reg0[3] > reg1[2])
+
+    def get_bbox(self):
+        """ Return the extents of a bounding box as
+            (xmin, ymax, ymin, ymax, [zmin, zmin]).
+        """
+        x, y, z = self.get_coordinate_lists()
+        if self.rank == 2:
+            bbox = (min(x), max(x), min(y), max(y))
+        elif self.rank == 3:
+            bbox = (min(x), max(x), min(y), max(y), min(z), max(z))
+        return bbox
 
     def print_vertices(self):
         """ Prints an enumerated list of indices. """
@@ -400,9 +420,9 @@ class Line(Multipoint):
     georeferenced line segments.
     """
 
-    def __repr__(self):
-        return 'Line(' + reduce(lambda a,b: str(a) + ' ' + str(b),
-                self.vertices) + ')'
+    #def __repr__(self):
+    #    return 'Line(' + reduce(lambda a,b: str(a) + ' ' + str(b),
+    #            self.vertices) + ')'
 
     def add_vertex(self, vertex):
         """ Add a vertex to self.vertices. """
@@ -424,6 +444,20 @@ class Line(Multipoint):
     def displacement(self, spherical=False):
         """ Returns the distance between the first and last vertex. """
         return Point(self.vertices[0]).distance(Point(self.vertices[-1]))
+
+    def segments(self):
+        """ Returns an iterator of adjacent line segments. """
+        return ((self.vertices[i], self.vertices[i+1])
+                for i in range(len(self.vertices)-1))
+
+    def intersects(self, other):
+        """ Return whether an intersection exists with another geometry. """
+        intersecterator = (intersects(a,b) for a in self.segments()
+                                           for b in other.segments())
+        if self._bbox_overlap(other) and (True in intersecterator):
+            return True
+        else:
+            return False
 
     def to_polygon(self):
         """ Returns a polygon. """
@@ -454,9 +488,9 @@ class Polygon(Multipoint):
         self.subs = kwargs.get('subs', [])
         return
 
-    def __repr__(self):
-        return 'Polygon(' + reduce(lambda a,b: str(a) + ' ' + str(b),
-                self.vertices) + ')'
+    #def __repr__(self):
+    #    return 'Polygon(' + reduce(lambda a,b: str(a) + ' ' + str(b),
+    #            self.vertices) + ')'
 
     def perimeter(self):
         """ Return the perimeter of the polygon. If there are sub-polygons,
@@ -538,6 +572,25 @@ class GGeoError(GuppyError):
     """ Exception to raise when a guppy object attempts an invalid transform. """
     def __init__(self, message=''):
         self.message = message
+
+
+def intersects(ln0, ln1):
+    """ Determines whether two line segments intersect on a plane. """
+    x0, y0 = ln0[0][:2]
+    x1, y1 = ln0[1][:2]
+    x2, y2 = ln1[0][:2]
+    x3, y3 = ln1[1][:2]
+
+    m0 = float(y1-y0) / float(x1-x0)
+    m1 = float(y3-y2) / float(x3-x2)
+    if m0 == m1:
+        return False
+    x = float(y1 - y3 + m1*x3 - m0*x1) / float(m1 - m0)
+    if (x < max([x0, x1]) and x < max([x2, x3]) and
+        x > min([x0, y1]) and x > min([x2, x3])):
+        return True
+    else:
+        return False
 
 
 def ray_intersection(pt, endpt1, endpt2, direction=0.0):
