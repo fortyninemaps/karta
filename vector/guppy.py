@@ -376,6 +376,24 @@ class Multipoint(object):
         idx = distances.index(min(distances))
         return self._subset(list(idx))
 
+    def nearest_on_boundary(self, pt):
+        """ Returns the point on the Multipoint boundary that is
+        nearest to pt (point class).
+
+        Warning: If two points are equidistant, only one will be
+        returned.
+        """
+        point_dist = []
+
+        rvertices = deque(self.vertices)
+        rvertices.rotate(1)
+        segments = [(v1, v2) for v1, v2 in zip(self.vertices, rvertices)]
+        point_dist = map(pt_nearest, [pt.xy for seg in segments],
+            [seg[0] for seg in segments], [seg[1] for seg in segments])
+        distances = [i[1] for i in point_dist]
+
+        return Point(point_dist[distances.index(min(distances))][0])
+
     def get_extents(self):
         """ Calculate a bounding box. """
         def gen_minmax(G):
