@@ -195,33 +195,39 @@ class Multipoint(object):
         point attributes. If `data` is not `None`, then it (or its values) must
         match `vertices` in length.
         """
-        self.rank = len(vertices[0])
+        if len(vertices) > 0:
+            self.rank = len(vertices[0])
 
-        if self.rank > 3 or self.rank < 2:
-            raise GInitError('Input must be doubles or triples\n')
-        elif False in [self.rank == len(i) for i in vertices]:
-            raise GInitError('Input must have consistent rank\n')
-        else:
-            self.vertices = [tuple(i) for i in vertices]
-
-        if data is not None:
-            if hasattr(data, 'values'):
-                # Dictionary of attributes
-                for dlist in data.values():
-                    if len(dlist) != len(vertices):
-                        raise GInitError("Point data length must match point "
-                                          "vertices")
-                    if False in (isinstance(a, type(dlist[0])) for a in dlist):
-                        raise GInitError("Data must have uniform type")
+            if self.rank > 3 or self.rank < 2:
+                raise GInitError('Input must be doubles or triples\n')
+            elif False in [self.rank == len(i) for i in vertices]:
+                raise GInitError('Input must have consistent rank\n')
             else:
-                # Single attribute
-                if len(data) != len(vertices):
-                    raise GInitError("Point data must match point vertices")
-                if False in (isinstance(a, type(data[0])) for a in data):
-                    raise GInitError("Data must have uniform type")
-            self.data = data
+                self.vertices = [tuple(i) for i in vertices]
+
+            if data is not None:
+                if hasattr(data, 'values'):
+                    # Dictionary of attributes
+                    for dlist in data.values():
+                        if len(dlist) != len(vertices):
+                            raise GInitError("Point data length must match "
+                                              "point vertices")
+                        dtype = type(dlist[0])
+                        if False in (isinstance(a, dtype) for a in dlist):
+                            raise GInitError("Data must have uniform type")
+                else:
+                    # Single attribute
+                    if len(data) != len(vertices):
+                        raise GInitError("Point data must match point vertices")
+                    if False in (isinstance(a, type(data[0])) for a in data):
+                        raise GInitError("Data must have uniform type")
+                self.data = data
+            else:
+                self.data = [None for a in vertices]
         else:
-            self.data = [None for a in vertices]
+            self.rank = None
+            self.vertices = []
+            self.data = []
         return
 
     #def __repr__(self):
