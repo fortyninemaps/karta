@@ -36,26 +36,19 @@ class Point(object):
         try:
             self.z = float(coords[2])
             self.rank = 3
+            self.vertex = (self.x, self.y, self.z)
         except IndexError:
             self.z = None
             self.rank = 2
-        self.xy = (self.x, self.y)
-        self.xyz = (self.x, self.y, self.z)
+            self.vertex = (self.x, self.y)
         return
 
     def __repr__(self):
-        if self.rank == 2:
-            return 'Point(' + str(self.xy) + ')'
-        elif self.rank == 3:
-            return 'Point(' + str(self.xyz) + ')'
+        return 'Point(' + str(self.vertex) + ')'
 
     def get_vertex(self):
         """ Return the Point vertex as a tuple. """
-        if self.rank == 2:
-            vert = (self.x, self.y)
-        elif self.rank == 3:
-            vert = (self.x, self.y, self.z)
-        return vert
+        return self.vertex
 
     def coordsxy(self, convert_to=False):
         """ Returns the x,y coordinates. Convert_to may be set to 'deg'
