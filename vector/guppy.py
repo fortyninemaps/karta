@@ -373,15 +373,19 @@ class Multipoint(object):
                     map(lambda i: (c[i] for c in self.vertices),
                         range(self.rank)))
 
-    def max_dimension(self):
-        """ Return the two points in the Multipoint that are furthest
-        from each other. """
-        dist = lambda xy0, xy1: math.sqrt((xy1[0]-xy0[0])**2 +
-                                          (xy1[1]-xy0[1])**2)
+    # This code should compute the convex hull of the points and then test the
+    # hull's combination space
+    # Alternatively, calculate the eigenvectors, rotate, and cherrypick the
+    # points
+    #def max_dimension(self):
+    #    """ Return the two points in the Multipoint that are furthest
+    #    from each other. """
+    #    dist = lambda xy0, xy1: math.sqrt((xy1[0]-xy0[0])**2 +
+    #                                      (xy1[1]-xy0[1])**2)
 
-        P = [(p0, p1) for p0 in self.vertices for p1 in self.vertices]
-        D = map(dist, (p[0] for p in P), (p[1] for p in P))
-        return P[D.index(max(D))]
+    #    P = [(p0, p1) for p0 in self.vertices for p1 in self.vertices]
+    #    D = map(dist, (p[0] for p in P), (p[1] for p in P))
+    #    return P[D.index(max(D))]
 
     def to_xyfile(self, fnm, **kwargs):
         """ Write data to a delimited ASCII table. """
@@ -469,9 +473,9 @@ class Line(Multipoint):
 
     def intersections(self, other):
         """ Return the intersections with another geometry. """
-        interx = [_vecgeo.intersections(a[0][0], a[1][0], b[0][0], b[1][0],
+        interx = (_vecgeo.intersections(a[0][0], a[1][0], b[0][0], b[1][0],
                                         a[0][1], a[1][1], b[0][1], b[1][1])
-                    for a in self.segments() for b in other.segments()]
+                    for a in self.segments() for b in other.segments())
         return filter(lambda a: np.nan not in a, interx)
 
     def to_polygon(self):
@@ -486,7 +490,7 @@ class Line(Multipoint):
             elif self.rank == 3:
                 return geometry.LineString([(v[0], v[1], v[2]) for v in self.vertices])
         except NameError:
-            raise ImportError('Shapely module did not import\n')
+            raise GuppyError('Shapely module not available\n')
 
 
 class Polygon(Multipoint):
