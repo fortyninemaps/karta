@@ -339,6 +339,33 @@ class Multipoint(object):
         self.shift(origin)
         return
 
+    def _distance_to(self, pt):
+        """ Calculate distance of each member point to an external point. """
+        dist = lambda pts: np.sqrt((pts[0] - pts[1])**2)
+        pta = np.array(pt.vertex)
+        return map(dist, ((np.array(v) - pta) for v in self.vertices))
+
+    def _subset(self, idxs):
+        """ Return a subset defined by index in *idxs*. """
+        subset = Multipoint([self.vertices[i] for i in idxs])
+        if hasattr(self.data, 'keys'):
+            ddict = {}
+            for k in self.data:
+                ddict[k] = [self.data[k][i] for i in idxs]
+            subset.data = ddict
+        else:
+            subset.data = [self.data[i] for i in idxs]
+        return subset
+
+    def near(self, pt, radius):
+        """ Return Multipoint of subset of member vertices that are within
+        *radius* of *pt*.
+        """
+        distances = self._distance_to(pt)
+        nearidx = [i for i,d in enumerate(distances) if d < radius]
+        subset = self._subset(nearidx)
+        return subset
+
     def nearest_to(self, pt):
         """ Returns the point on the Multipoint boundary that is
         nearest to pt (point class).
@@ -351,7 +378,6 @@ class Multipoint(object):
         rvertices = deque(self.vertices)
         rvertices.rotate(1)
         segments = [(v1, v2) for v1, v2 in zip(self.vertices, rvertices)]
-
         point_dist = map(pt_nearest, [pt.xy for seg in segments],
             [seg[0] for seg in segments], [seg[1] for seg in segments])
         distances = [i[1] for i in point_dist]
