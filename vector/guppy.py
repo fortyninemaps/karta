@@ -266,10 +266,11 @@ class Multipoint(object):
         """ Return the extents of a bounding box as
             (xmin, ymax, ymin, ymax, [zmin, zmin]).
         """
-        x, y, z = self.get_coordinate_lists()
         if self.rank == 2:
+            x, y = self.get_coordinate_lists()
             bbox = (min(x), max(x), min(y), max(y))
         elif self.rank == 3:
+            x, y, z = self.get_coordinate_lists()
             bbox = (min(x), max(x), min(y), max(y), min(z), max(z))
         return bbox
 
