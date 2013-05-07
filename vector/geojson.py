@@ -123,7 +123,7 @@ class GeoJSONWriter(object):
             else:
                 data = {'point_data': self.gpobj.data}
             for key in data.keys():
-                target['properties'][key] = data[key]
+                target['properties'][key] = list(data[key])
         return
 
     def add_id(self, target=None):
@@ -171,17 +171,25 @@ class GeoJSONReader(object):
             with open(`fnm`, 'r') as f:
                 reader = GeoJSONReader(f)
         """
-        self.jsondict = json.load(finput)
+        if not hasattr(finput, 'read'):
+            with open(finput) as f:
+                self.jsondict = json.load(f)
+        else:
+            self.jsondict = json.load(finput)
         return
 
     def _walk(self, dic, geotype):
         """ Find all instances of `key` using recursion. """
-        if geotype == dic['type']:
+        if 'type' in dic and geotype == dic['type']:
             yield dic
         for k in dic:
             if hasattr(dic[k], 'keys'):
                 for val in self._walk(dic[k], geotype):
                     yield val
+            elif k == 'features':
+                for feature in dic[k]:
+                    for val in self._walk(feature, geotype):
+                        yield val
         return
 
     def pull_points(self):
@@ -203,8 +211,8 @@ class GeoJSONReader(object):
         return multipoints
 
     def pull_lines(self):
-        """ Return a list of all geometries that can be coerced into a single
-        Line. """
+        """ Return a list of all geometries that can be coerced into a Line.
+        """
         jsonlines = self._walk(self.jsondict, 'LineString')
         jsonmultilines = self._walk(self.jsondict, 'MultiLineString')
         lines = []
@@ -216,8 +224,8 @@ class GeoJSONReader(object):
         return lines
 
     def pull_polygons(self):
-        """ Return a list of all geometries that can be coerced into a single
-        Polygon. """
+        """ Return a list of all geometries that can be coerced into a Polygon.
+        """
 
         def add_polygon(L, parts):
             """ Convert a list of polygon parts to a guppy.Polygon and append
