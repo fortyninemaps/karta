@@ -287,11 +287,11 @@ class Multipoint(object):
         zero-filled. """
         X = [i[0] for i in self.vertices]
         Y = [i[1] for i in self.vertices]
-        if self.rank > 2:
+        if self.rank == 3:
             Z = [i[2] for i in self.vertices]
+            return X, Y, Z
         else:
-            Z = [0.0 for i in self.vertices]
-        return X, Y, Z
+            return X, Y
 
     def length(self, spherical=False):
         """ Returns the length of the line. """
