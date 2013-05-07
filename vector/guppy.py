@@ -30,6 +30,8 @@ class Point(object):
     """ This defines the point class, from which x,y[,z] points can be
     constructed.
     """
+    _geotype = "Point"
+
     def __init__(self, coords):
         self.x = float(coords[0])
         self.y = float(coords[1])
@@ -185,6 +187,7 @@ class Point(object):
 class Multipoint(object):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes. """
+    _geotype = "Multipoint"
 
     def __init__(self, vertices, data=None, **kwargs):
         """ Create a feature with multiple vertices.
@@ -466,6 +469,7 @@ class Line(Multipoint):
     objects can be constructed. Line objects consist of joined,
     georeferenced line segments.
     """
+    _geotype = "Line"
 
     #def __repr__(self):
     #    return 'Line(' + reduce(lambda a,b: str(a) + ' ' + str(b),
@@ -534,6 +538,7 @@ class Polygon(Multipoint):
     polygons objects can be created. Polygon objects consist of
     point nodes enclosing an area.
     """
+    _geotype = "Polygon"
     subs = []
 
     def __init__(self, vertices, **kwargs):
@@ -604,6 +609,7 @@ class Polygon(Multipoint):
         except NameError:
             raise ImportError('Shapely module did not import\n')
         return shp
+
 
 class GuppyError(Exception):
     """ Base class for guppy module errors. """
