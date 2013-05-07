@@ -389,7 +389,7 @@ class Multipoint(object):
         rvertices = deque(self.vertices)
         rvertices.rotate(1)
         segments = [(v1, v2) for v1, v2 in zip(self.vertices, rvertices)]
-        point_dist = map(pt_nearest, [pt.xy for seg in segments],
+        point_dist = map(pt_nearest, [pt.vertex for seg in segments],
             [seg[0] for seg in segments], [seg[1] for seg in segments])
         distances = [i[1] for i in point_dist]
 
@@ -568,8 +568,10 @@ class Polygon(Multipoint):
         def possible(pt, v1, v2):
             """ Quickly assess potential for an intersection with an x+
             pointing ray based on Easy Cases. """
-            if ( ((pt.y > v1[1]) is not (pt.y > v2[1]))
-            and ((pt.x < v1[0]) or (pt.x < v2[0])) ):
+            x = pt.vertex[0]
+            y = pt.vertex[1]
+            if ( ((y > v1[1]) is not (y > v2[1]))
+            and ((x < v1[0]) or (x < v2[0])) ):
                 return True
             else:
                 return False
@@ -582,11 +584,11 @@ class Polygon(Multipoint):
                     if possible(pt, v1, v2)]
 
         n_intersect = sum([bool2int(
-            isinstance(ray_intersection(pt.xy, seg[0], seg[1]), tuple))
+            isinstance(ray_intersection(pt.vertex, seg[0], seg[1]), tuple))
             for seg in segments])
 
         if n_intersect % 2 == 1:    # If odd, point is inside so check subpolys
-            if True not in (p.contains(pt) for p in self.rings):
+            if True not in (p.contains(pt) for p in self.subs):
                 return True
         return False                # Point was outside or was in a subpoly
 
