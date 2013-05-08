@@ -689,7 +689,7 @@ def pt_nearest(pt, endpt1, endpt2):
     v = (endpt2[0] - endpt1[0], endpt2[1] - endpt1[1])
     u_on_v = proj2(u,v)
     u_int = (u_on_v[0] + endpt1[0], u_on_v[1] + endpt1[1])
-    dist_u_int = dist(u_int, pt)
+    #dist_u_int = dist(u_int, pt)
 
     # Determine whether u_int is inside the segment
     # Otherwise return the nearest endpoint
