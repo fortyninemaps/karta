@@ -21,9 +21,8 @@ cdef float interpolate1(float x, float y, float a, float b, float c, float d):
     return res
     
 def streamline2d(np.ndarray U, np.ndarray V, float x0, float y0,
-    float ds=0.5, int max_nodes=5000, tuple res=(1.0, 1.0),
-    float tol=0.0, bool momentum=False):
-
+                 float ds=0.5, int max_nodes=5000, tuple res=(1.0, 1.0),
+                 float tol=0.0, int momentum=False):
     cdef int m, n, i
     cdef list X, Y
     cdef float dxds, dyds
