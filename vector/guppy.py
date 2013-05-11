@@ -209,14 +209,14 @@ class Multipoint(object):
                 self.vertices = [tuple(i) for i in vertices]
 
             if data is not None:
-                if hasattr(data, 'values'):
+                if hasattr(data, 'keys'):
                     # Dictionary of attributes
-                    for dlist in data.values():
-                        if len(dlist) != len(vertices):
+                    for k in data:
+                        if len(data[k]) != len(vertices):
                             raise GInitError("Point data length must match "
                                               "point vertices")
-                        dtype = type(dlist[0])
-                        if False in (isinstance(a, dtype) for a in dlist):
+                        dtype = type(data[k][0])
+                        if False in (isinstance(a, dtype) for a in data[k]):
                             raise GInitError("Data must have uniform type")
                 else:
                     # Single attribute
