@@ -1,5 +1,6 @@
 """ Classes for basic grid types """
 
+import sys
 import copy
 from math import sqrt
 import numpy as np

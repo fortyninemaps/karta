@@ -209,14 +209,14 @@ class Multipoint(object):
                 self.vertices = [tuple(i) for i in vertices]
 
             if data is not None:
-                if hasattr(data, 'values'):
+                if hasattr(data, 'keys'):
                     # Dictionary of attributes
-                    for dlist in data.values():
-                        if len(dlist) != len(vertices):
+                    for k in data:
+                        if len(data[k]) != len(vertices):
                             raise GInitError("Point data length must match "
                                               "point vertices")
-                        dtype = type(dlist[0])
-                        if False in (isinstance(a, dtype) for a in dlist):
+                        dtype = type(data[k][0])
+                        if False in (isinstance(a, dtype) for a in data[k]):
                             raise GInitError("Data must have uniform type")
                 else:
                     # Single attribute
@@ -689,7 +689,7 @@ def pt_nearest(pt, endpt1, endpt2):
     v = (endpt2[0] - endpt1[0], endpt2[1] - endpt1[1])
     u_on_v = proj2(u,v)
     u_int = (u_on_v[0] + endpt1[0], u_on_v[1] + endpt1[1])
-    dist_u_int = dist(u_int, pt)
+    #dist_u_int = dist(u_int, pt)
 
     # Determine whether u_int is inside the segment
     # Otherwise return the nearest endpoint
