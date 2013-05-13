@@ -20,13 +20,13 @@ class GeoJSONWriter(object):
     supobj = {}
 
     def __init__(self, gpobj, **kwargs):
-        type_equiv = {guppy.Point       :   'Point',
-                      guppy.Multipoint  :   'MultiPoint',
-                      guppy.Line        :   'LineString',
-                      guppy.Polygon     :   'Polygon'}
+        type_equiv = {'Point'       : 'Point',
+                      'Multipoint'  : 'MultiPoint',
+                      'Line'        : 'LineString',
+                      'Polygon'     : 'Polygon'}
 
-        if type(gpobj) in type_equiv.keys():
-            self.typestr = type_equiv[type(gpobj)]
+        if gpobj._geotype in type_equiv:
+            self.typestr = type_equiv[gpobj._geotype]
         else:
             raise NotImplementedError('input object not a recognizes guppy '
                                       'type')
@@ -99,7 +99,7 @@ class GeoJSONWriter(object):
         if target is None:
             target = self.supobj
 
-        if isinstance(self.gpobj, guppy.Polygon):
+        if self.gpobj._geotype == 'Polygon':
             target['coordinates'] = [self.gpobj.get_vertices()]
             if hasattr(self.gpobj, "subs"):
                 for poly in self.gpobj.subs:
@@ -109,7 +109,7 @@ class GeoJSONWriter(object):
         elif hasattr(self.gpobj, 'get_vertex'):
             target['coordinates'] = self.gpobj.get_vertex()
         else:
-            raise guppy.GGeoError('Geometry object has no vertex method')
+            raise AttributeError('Geometry object has no vertex method')
         return
 
     def add_properties(self, target=None):
