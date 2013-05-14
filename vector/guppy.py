@@ -188,8 +188,9 @@ class Multipoint(object):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes. """
     _geotype = "Multipoint"
+    properties = {}
 
-    def __init__(self, vertices, data=None, **kwargs):
+    def __init__(self, vertices, data=None, properties=None, **kwargs):
         """ Create a feature with multiple vertices.
 
         vertices : a list of tuples containing point coordinates.
@@ -227,6 +228,10 @@ class Multipoint(object):
                 self.data = data
             else:
                 self.data = [None for a in vertices]
+
+            if hasattr(properties, 'keys'):
+                self.properties = properties
+
         else:
             self.rank = None
             self.vertices = []
@@ -572,7 +577,7 @@ class Polygon(Multipoint):
         """
         def possible(pt, v1, v2):
             """ Quickly assess potential for an intersection with an x+
-            pointing ray based on Easy Cases. """
+            pointing ray. """
             x = pt.vertex[0]
             y = pt.vertex[1]
             if ( ((y > v1[1]) is not (y > v2[1]))
