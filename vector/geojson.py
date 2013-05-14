@@ -6,6 +6,7 @@ import sys
 import copy
 import json
 from collections import namedtuple
+import itertools
 import traceback
 
 
@@ -289,6 +290,14 @@ class GeoJSONReader(object):
         for jsonmultipolygon in jsonmultipolygons:
             polygons.append(Polygon(jsonmultipolygon['coordinates']))
         return polygons
+
+    def iter_geometries(self):
+        """ Return an iterator through all geometries. """
+        itergeo = itertools.chain(self.pull_points(),
+                                  self.pull_multipoints(),
+                                  self.pull_lines(),
+                                  self.pull_polygons())
+        return itergeo
 
     def list_features(self):
         """ List the features present. """
