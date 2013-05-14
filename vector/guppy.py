@@ -302,14 +302,6 @@ class Multipoint(object):
         else:
             return X, Y
 
-    def length(self, spherical=False):
-        """ Returns the length of the line. """
-        if spherical is True:
-            raise NotImplementedError("Spherical metrics not implemented")
-        points = [Point(i) for i in self.vertices]
-        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
-        return sum(distances)
-
     def shift(self, shift_vector):
         """ Shift feature by the amount given by a vector. Operation
         occurs in-place """
@@ -378,30 +370,11 @@ class Multipoint(object):
     def nearest_to(self, pt):
         """ Returns the internal point that is nearest to pt (Point class).
 
-        Warning: If two points are equidistant, only one will be
-        returned.
+        Warning: If two points are equidistant, only one will be returned.
         """
         distances = self._distance_to(pt)
         idx = distances.index(min(distances))
         return self._subset(list(idx))
-
-    def nearest_on_boundary(self, pt):
-        """ Returns the point on the Multipoint boundary that is
-        nearest to pt (point class).
-
-        Warning: If two points are equidistant, only one will be
-        returned.
-        """
-        point_dist = []
-
-        rvertices = deque(self.vertices)
-        rvertices.rotate(1)
-        segments = [(v1, v2) for v1, v2 in zip(self.vertices, rvertices)]
-        point_dist = map(pt_nearest, [pt.vertex for seg in segments],
-            [seg[0] for seg in segments], [seg[1] for seg in segments])
-        distances = [i[1] for i in point_dist]
-
-        return Point(point_dist[distances.index(min(distances))][0])
 
     def get_extents(self):
         """ Calculate a bounding box. """
@@ -469,7 +442,36 @@ class Multipoint(object):
         return
 
 
-class Line(Multipoint):
+class ConnectedMultipoint(Multipoint):
+    """ Class for Multipoints in which vertices are assumed to be connected. """
+
+    def length(self, spherical=False):
+        """ Returns the length of the line/boundary. """
+        if spherical is True:
+            raise NotImplementedError("Spherical metrics not implemented")
+        points = [Point(i) for i in self.vertices]
+        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
+        return sum(distances)
+
+    def segments(self):
+        """ Returns an iterator of adjacent line segments. """
+        return ((self.vertices[i], self.vertices[i+1])
+                for i in range(len(self.vertices)-1))
+
+    def nearest_on_boundary(self, pt):
+        """ Returns the point on the Multipoint boundary that is nearest to pt
+        (point class).
+
+        Warning: If two points are equidistant, only one will be returned.
+        """
+        point_dist = map(pt_nearest, [pt.vertex for seg in self.segments()],
+                                     [seg[0] for seg in self.segments()],
+                                     [seg[1] for seg in self.segments()])
+        distances = [i[1] for i in point_dist]
+        return Point(point_dist[distances.index(min(distances))][0])
+
+
+class Line(ConnectedMultipoint):
     """ This defines the polyline class, from which geographic line
     objects can be constructed. Line objects consist of joined,
     georeferenced line segments.
@@ -500,11 +502,6 @@ class Line(Multipoint):
     def displacement(self, spherical=False):
         """ Returns the distance between the first and last vertex. """
         return Point(self.vertices[0]).distance(Point(self.vertices[-1]))
-
-    def segments(self):
-        """ Returns an iterator of adjacent line segments. """
-        return ((self.vertices[i], self.vertices[i+1])
-                for i in range(len(self.vertices)-1))
 
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
@@ -538,7 +535,7 @@ class Line(Multipoint):
             raise GuppyError('Shapely module not available\n')
 
 
-class Polygon(Multipoint):
+class Polygon(ConnectedMultipoint):
     """ This defines the polygon class, from which geographic
     polygons objects can be created. Polygon objects consist of
     point nodes enclosing an area.
