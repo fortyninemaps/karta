@@ -4,9 +4,19 @@ enforces GeoJSON standards. """
 
 import sys
 import copy
-import guppy
 import json
+from collections import namedtuple
 import traceback
+
+
+Point = namedtuple('Point', ['coordinates'])
+MultiPoint = namedtuple('MultiPoint', ['coordinates'])
+LineString = namedtuple('LineString', ['coordinates'])
+MultiLineString = namedtuple('MultiLineString', ['coordinates'])
+Polygon = namedtuple('Polygon', ['coordinates'])
+MultiPolygon = namedtuple('MultiPolygon', ['coordinates'])
+GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
+
 
 class GeoJSONWriter(object):
     """ Class for converting guppy objects to GeoJSON strings. Multipoint-based
@@ -192,57 +202,92 @@ class GeoJSONReader(object):
                         yield val
         return
 
-    def pull_points(self):
+    def _contains(self, dic, key):
+        """ Return whether *key* exists within the JSON hierarchy *dic*. """
+        if key in dic:
+            return True
+        else:
+            for val in dic.values():
+                if self._contains(val, key):
+                    return True
+        return False
+
+    def pull_features(self):
+        """ Find and return all Feature objects """
+        jsonfeats = [obj for obj in self._walk(self.jsondict, 'Feature')]
+
+        featuretype = lambda a: a.get('geometry', {}).get('type', None)
+        ispoint = lambda a: featuretype(a) == 'Point'
+        ismultipoint = lambda a: featuretype(a) == 'MultiPoint'
+        isline = lambda a: featuretype(a) in ('LineString', 'MultiLineString')
+        ispolygon = lambda a: featuretype(a) in ('Polygon', 'MultiPolygon')
+
+        points = filter(ispoint, jsonfeats)
+        multipoints = filter(ismultipoint, jsonfeats)
+        lines = filter(isline, jsonfeats)
+        polygons = filter(ispolygon, jsonfeats)
+
+        features = []
+        for feat in points:
+            features.append((self.pull_points(feat), feat['properties'], feat.get('id', None)))
+        for feat in multipoints:
+            features.append((self.pull_multipoints(feat), feat['properties'], feat.get('id', None)))
+        for feat in lines:
+            features.append((self.pull_lines(feat), feat['properties'], feat.get('id', None)))
+        for feat in polygons:
+            features.append((self.pull_polygons(feat), feat['properties'], feat.get('id', None)))
+
+        return features
+
+    def pull_points(self, dic=None):
         """ Return a list of all geometries that can be coerced into a single
         Point. """
-        jsonpoints = self._walk(self.jsondict, 'Point')
+        if dic is None:
+            dic = self.jsondict
+        jsonpoints = self._walk(dic, 'Point')
         points = []
-        for jsonpoint in jsonpoints:
-            points.append(guppy.Point(jsonpoint['coordinates']))
+        for point in jsonpoints:
+            points.append(Point(point['coordinates']))
         return points
 
-    def pull_multipoints(self):
+    def pull_multipoints(self, dic=None):
         """ Return a list of all geometries that can be coerced into a single
         Multipoint. """
-        jsonmultipoints = self._walk(self.jsondict, 'MultiPoint')
+        if dic is None:
+            dic = self.jsondict
+        jsonmultipoints = self._walk(dic, 'MultiPoint')
         multipoints = []
         for jsonmultipoint in jsonmultipoints:
-            multipoints.append(guppy.Multipoint(jsonmultipoint['coordinates']))
+            multipoints.append(MultiPoint(jsonmultipoint['coordinates']))
         return multipoints
 
-    def pull_lines(self):
+    def pull_lines(self, dic=None):
         """ Return a list of all geometries that can be coerced into a Line.
         """
-        jsonlines = self._walk(self.jsondict, 'LineString')
-        jsonmultilines = self._walk(self.jsondict, 'MultiLineString')
+        if dic is None:
+            dic = self.jsondict
+        jsonlines = self._walk(dic, 'LineString')
+        jsonmultilines = self._walk(dic, 'MultiLineString')
         lines = []
         for jsonline in jsonlines:
-            lines.append(guppy.Line(jsonline['coordinates']))
+            lines.append(LineString(jsonline['coordinates']))
         for jsonmultiline in jsonmultilines:
             for vertices in jsonmultiline['coordinates']:
-                lines.append(guppy.Line(vertices))
+                lines.append(MultiLineString(vertices))
         return lines
 
-    def pull_polygons(self):
+    def pull_polygons(self, dic=None):
         """ Return a list of all geometries that can be coerced into a Polygon.
         """
-
-        def add_polygon(L, parts):
-            """ Convert a list of polygon parts to a guppy.Polygon and append
-            to a list `L`. """
-            if len(parts) > 1:
-                raise NotImplementedError('polygon holes')
-            L.append(guppy.Polygon(parts[0]))
-            return
-
-        jsonpolygons = self._walk(self.jsondict, 'Polygon')
-        jsonmultipolygons = self._walk(self.jsondict, 'MultiPolygon')
+        if dic is None:
+            dic = self.jsondict
+        jsonpolygons = self._walk(dic, 'Polygon')
+        jsonmultipolygons = self._walk(dic, 'MultiPolygon')
         polygons = []
         for jsonpolygon in jsonpolygons:
-            add_polygon(polygons, jsonpolygon['coordinates'])
+            polygons.append(Polygon(jsonpolygon['coordinates']))
         for jsonmultipolygon in jsonmultipolygons:
-            for parts in jsonmultipolygon['coordinates']:
-                add_polygon(polygons, parts)
+            polygons.append(Polygon(jsonmultipolygon['coordinates']))
         return polygons
 
     def list_features(self):
