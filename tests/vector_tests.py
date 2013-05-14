@@ -62,8 +62,7 @@ class TestGuppy(unittest.TestCase):
 
     def test_poly_coordinates(self):
         self.assertEqual(self.poly.get_coordinate_lists(),
-                         ([0.0, 0.0, 6.0, 0.0], [8.0, 5.0, 1.0, 8.0],
-                          [0.0, 0.0, 0.0, 0.0]))
+                         ([0.0, 0.0, 6.0, 0.0], [8.0, 5.0, 1.0, 8.0]))
         return
 
     def test_poly_extents(self):
