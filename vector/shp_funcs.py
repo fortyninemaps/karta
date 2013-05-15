@@ -4,7 +4,6 @@ guppy object. """
 import os
 from shapefile import Reader, Writer
 import guppy
-import traceback
 
 # # Constants for shape types
 # NULL = 0
@@ -53,12 +52,12 @@ def get_filenames(stem, check=False):
                 raise Exception('missing {0}'.format(fnm))
     return {'shp':shp, 'shx':shx, 'dbf':dbf}
 
-def open_file_dict(fdict):
+def open_file_dict(fdict, mode='r'):
     """ Open each file in a dictionary of filenames and return a matching
     dictionary of the file objects. """
     files = {}
     for ext in fdict.keys():
-        files[ext] = open(fdict[ext], 'r')
+        files[ext] = open(fdict[ext], mode)
     return files
 
 def read_shapefile(stem):
@@ -92,8 +91,8 @@ def read_shapefile(stem):
 
 def list_parts(feature):
     """ Return a list of polygon parts. """
-    return [features.vertices()].extend(
-            [list_parts(p) for p in features.subs])
+    return [feature.vertices()].extend(
+            [list_parts(p) for p in feature.subs])
 
 def write_shapefile(features, stem):
     """ Write a list of features to a shapefile. The features must be of the
@@ -126,10 +125,13 @@ def write_shapefile(features, stem):
             writer.poly(parts)
 
     try:
-        files = open_file_dict(fnms)
+        files = open_file_dict(fnms, 'w')
         writer.saveShp(files['shp'])
         writer.saveShx(files['shx'])
         writer.saveDbf(files['dbf'])
+
+    except Exception as e:
+        raise e
 
     finally:
         for f in files.values():
