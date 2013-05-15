@@ -1,5 +1,6 @@
 """ Cython versions of low-level functions for computing vector geometry. """
 
+import math
 import numpy as np
 cimport numpy as np
 
@@ -55,3 +56,55 @@ def intersections(double x0, double x1, double x2, double x3,
         return (x, y)
     else:
         return (np.nan, np.nan)
+
+cdef double cdot2(tuple v1, tuple v2):
+    return v1[0] * v2[0] + v1[1] * v2[1]
+
+cdef tuple cproj2(tuple u, tuple v):
+    cdef double uv, vv
+    uv = cdot2(u,v)
+    vv = cdot2(v,v)
+    return (uv / vv * v[0], uv / vv * v[1])
+
+def pt_nearest(tuple pt, tuple endpt1, tuple endpt2):
+    """ Determines the point on a segment defined by tuples endpt1
+    and endpt2 nearest to a point defined by tuple pt.
+    Returns the a nested tuple of (point, distance)
+    """
+    
+    cdef tuple u, v, u_int
+    cdef tuple u_on_v
+    
+    dist = lambda u,v: math.sqrt((u[0]-v[0])**2. + (u[1]-v[1])**2.)
+
+    u = (pt[0] - endpt1[0], pt[1] - endpt1[1])
+    v = (endpt2[0] - endpt1[0], endpt2[1] - endpt1[1])
+    u_on_v = cproj2(u,v)
+    u_int = (u_on_v[0] + endpt1[0], u_on_v[1] + endpt1[1])
+
+    # Determine whether u_int is inside the segment
+    # Otherwise return the nearest endpoint
+    if endpt1[0] == endpt2[0]:  # Segment is vertical
+        if u_int[1] > max(endpt1[1], endpt2[1]):
+            return (endpt1[1] > endpt2[1]
+                    and (endpt1, dist(endpt1, pt))
+                    or (endpt2, dist(endpt2, pt)))
+        elif u_int[1] < min(endpt1[1], endpt2[1]):
+            return (endpt1[1] < endpt2[1]
+                    and (endpt1, dist(endpt1, pt))
+                    or (endpt2, dist(endpt2, pt)))
+        else:
+            return (u_int, dist(u_int, pt))
+    else:
+        if u_int[0] > max(endpt1[0], endpt2[0]):
+            return (endpt1[0] > endpt2[0]
+                    and (endpt1, dist(endpt1, pt))
+                    or (endpt2, dist(endpt2, pt)))
+        elif u_int[0] < min(endpt1[0], endpt2[0]):
+            return (endpt1[0] < endpt2[0]
+                    and (endpt1, dist(endpt1, pt))
+                    or (endpt2, dist(endpt2, pt)))
+        else:
+            return (u_int, dist(u_int, pt))
+
+
