@@ -210,7 +210,7 @@ class Multipoint(object):
                 self.vertices = [tuple(i) for i in vertices]
 
             if data is not None:
-                if hasattr(data, 'keys'):
+                if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
                     # Dictionary of attributes
                     for k in data:
                         if len(data[k]) != len(vertices):
