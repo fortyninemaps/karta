@@ -12,10 +12,11 @@ def distance_xy(A):
 
 contains = lambda s, S: s in S
 
-def load_xy(fnm, delimiter=''):
+def load_xy(fnm, delimiter='', header_rows=0):
     """ Load a flowline file and return a size-2 array of coordinates. """
+    notblank = lambda s: len(s.strip()) > 0
     with open(fnm) as f:
-        lines = filter(lambda s: len(s.strip()) > 0, f.readlines())
+        lines = filter(notblank, f.readlines()[header_rows:])
 
     if delimiter == '':
         for delimiter in (',', '\t', ' '):
@@ -23,11 +24,22 @@ def load_xy(fnm, delimiter=''):
                 break
             delimiter = None
 
-    coords = [[float(num) for num in line.strip().split(delimiter)] for line
-              in lines]
-    return np.array(coords)
+    data = [[float(num) for num in line.strip().split(delimiter)]
+                for line in lines]
+    return np.array(data)
 
 loadxy = load_xy
+
+def write_xy(dat, fnm, delimiter=' ', header=None):
+    """ Write table data in array *dat* as a delimited ASCII text file. """
+    cat = lambda a,b: str(a) + delimiter + str(b)
+    with open(fnm, 'w') as f:
+        if header is not None:
+            f.write(header+'\n')
+        for line in dat:
+            s = reduce(cat, line) + '\n'
+            f.write(s)
+    return
 
 def xyz2array_reg(X, Y, Z):
     """ Return an array from X,Y,Z vectors, assuming gridding is
