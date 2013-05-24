@@ -2,9 +2,10 @@
 
 import unittest
 import os
-from test_helper import md5sum
+import numpy as np
 import karta.vector as vector
 from karta.vector.geojson import GeoJSONReader
+from test_helper import md5sum
 
 class TestGuppy(unittest.TestCase):
 
@@ -56,8 +57,8 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_poly_vertices(self):
-        self.assertEqual(self.poly.get_vertices(),
-                         [(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (0.0, 8.0)])
+        self.assertTrue((self.poly.get_vertices() ==
+                         np.array([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (0.0, 8.0)])).all())
         return
 
     def test_poly_coordinates(self):

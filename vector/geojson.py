@@ -111,14 +111,14 @@ class GeoJSONWriter(object):
             target = self.supobj
 
         if self.gpobj._geotype == 'Polygon':
-            target['coordinates'] = [self.gpobj.get_vertices()]
+            target['coordinates'] = [list_rec(self.gpobj.get_vertices())]
             if hasattr(self.gpobj, "subs"):
                 for poly in self.gpobj.subs:
-                    target['coordinates'].append(poly.get_vertices())
+                    target['coordinates'].append(list_rec(poly.get_vertices()))
         elif hasattr(self.gpobj, 'get_vertices'):
-            target['coordinates'] = self.gpobj.get_vertices()
+            target['coordinates'] = list_rec(self.gpobj.get_vertices())
         elif hasattr(self.gpobj, 'get_vertex'):
-            target['coordinates'] = self.gpobj.get_vertex()
+            target['coordinates'] = list_rec(self.gpobj.get_vertex())
         else:
             raise AttributeError('Geometry object has no vertex method')
         return
@@ -303,6 +303,12 @@ class GeoJSONReader(object):
         """ List the features present. """
         raise NotImplementedError
 
+def list_rec(A):
+    """ Recursively convert nested iterables to nexted lists """
+    if hasattr(A, '__iter__'):
+        return [list_rec(el) for el in A]
+    else:
+        return A
 
 def print_FeatureCollection(gpobj_list, **kwargs):
     """ Given an iterable that returns guppy objects, construct a GeoJSON
