@@ -131,6 +131,9 @@ def write_shapefile(features, stem):
         writer.saveShx(files['shx'])
         writer.saveDbf(files['dbf'])
 
+    except Exception as e:
+        raise e
+
     finally:
         for f in files.values():
             f.close()
