@@ -4,7 +4,7 @@ Variogram estimation and modelling functions
 
 import numpy as np
 from scipy.spatial.distance import pdist
-from scipy.optimize import fmin
+from scipy.optimize import minimize
 import random
 
 def pvariance(A):
@@ -26,10 +26,9 @@ def fit_model(model, p, lags, variance):
     *model* should return an estimator function that takes *lags* as an
     argument
     """
-    obj = lambda p: model(p)(lags)
-    res = fmin(obj, p)
-    pbest = res[0]
-    return
+    obj = lambda p: sum((model(p)(lags) - variance)**2)
+    res = minimize(obj, p)
+    return res.x
 
 def estimate_vario(mp, npoints=150, max_dist=None, interval=None):
     """ Given a Multipoint input, estimate a spatial variogram. By default, a
@@ -64,18 +63,16 @@ def estimate_vario(mp, npoints=150, max_dist=None, interval=None):
     if interval is None:
         interval = max_dist / 10.0
 
-    lags = np.arange(0, max_dist+interval, interval)
+    lags = np.arange(interval, max_dist+interval, interval)
     sigma_variance = np.empty_like(lags)
-
-    sigma_variance = [np.mean(vari[dist<=lag]) for lag in lags]
+    for i, lag in enumerate(lags):
+        band = dist <= lag
+        sigma_variance[i] = np.mean(vari[band])
     return lags, sigma_variance
 
 def sph_func(a, h):
     """ Spherical model function for range *a* and lag *h*. """
-    if h < a:
-        val = 1.5*h/a - 0.5 * (h/a)**3
-    else:
-        val = 1
+    val = np.where(h < a, 1.5*h/a - 0.5 * (h/a)**3, 1.0)
     return val
 
 def gau_func(a, h):
