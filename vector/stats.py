@@ -64,7 +64,7 @@ def fit_model(model, p, lags, variance):
     res = minimize(obj, p)
     return res.x
 
-def estimate_vario(mp, npoints=150, max_dist=None, interval=None):
+def estimate_vario(mp, npoints=2000, max_dist=None, interval=None):
     """ Given a Multipoint input, estimate a spatial variogram. By default, a
     variogram is quickly estimated. If npoints is None, then the full variogram
     is calculated.
@@ -82,8 +82,8 @@ def estimate_vario(mp, npoints=150, max_dist=None, interval=None):
     lags : ndarray
     variogram : ndarray
     """
-    if npoints is None:
-        npoints = len(mp)
+    if npoints > len(mp):
+        npoint = len(mp)
 
     irand = random.sample(np.arange(len(mp)), npoints)
     verts = mp.get_vertices()[irand]
