@@ -4,6 +4,7 @@ Variogram estimation and modelling functions
 
 import numpy as np
 from scipy.spatial.distance import pdist
+from scipy.optimize import fmin
 import random
 
 def pvariance(A):
@@ -17,6 +18,18 @@ def pvariance(A):
             V[ind] = (A[i] - A[j])**2
             ind += 1
     return V
+
+def fit_model(model, p, lags, variance):
+    """ Fit callable *model* with guess *p* to an experimental variogram
+    given by *lags*, *variance*.
+
+    *model* should return an estimator function that takes *lags* as an
+    argument
+    """
+    obj = lambda p: model(p)(lags)
+    res = fmin(obj, p)
+    pbest = res[0]
+    return
 
 def estimate_vario(mp, npoints=150, max_dist=None, interval=None):
     """ Given a Multipoint input, estimate a spatial variogram. By default, a
