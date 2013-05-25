@@ -89,7 +89,8 @@ def estimate_vario(mp, npoints=150, max_dist=None, interval=None):
     verts = mp.get_vertices()[irand]
     z = mp.get_data()[irand]
     dist = pdist(verts)
-    vari = pvariance(z)
+    I, J = ppairs(z)
+    diff = z[I] - z[J]
 
     if max_dist is None:
         max_dist = dist.max()
@@ -97,22 +98,18 @@ def estimate_vario(mp, npoints=150, max_dist=None, interval=None):
     if interval is None:
         interval = max_dist / 10.0
 
-    lags = np.arange(interval, max_dist+interval, interval)
+    lags = np.arange(0, max_dist, interval)
     sigma_variance = np.empty_like(lags)
     for i, lag in enumerate(lags):
-        band = dist <= lag
-        sigma_variance[i] = np.mean(vari[band])
+        band = (lag <= dist) * (dist < lag + interval)
+        sigma_variance[i] = 0.5 * np.std(diff[band])**2
     return lags, sigma_variance
 
-def pvariance(A):
-    """ For data `A`, return the pairwise variance (squared differences). This
-    will need to be Cythonized. """
+def ppairs(A):
+    """ For data *A*, return the pairwise differences.
+    """
     n = len(A)
-    V = np.empty(sum(range(n)))
-    ind = 0
-    for i in range(len(A)):
-        for j in range(i+1, n):
-            V[ind] = (A[i] - A[j])**2
-            ind += 1
-    return V
+    fst = [i for i in range(n) for j in range(i+1,n)]
+    scd = [j for i in range(n) for j in range(i+1,n)]
+    return fst, scd
 
