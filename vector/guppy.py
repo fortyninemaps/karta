@@ -10,8 +10,16 @@ import math
 import sys
 from collections import deque
 import traceback
+import numpy as np
 import vtk
 import geojson
+import xyfile
+
+try:
+    import _cvectorgeo as _vecgeo
+except ImportError:
+    sys.stderr.write("falling back on slow _vectorgeo")
+    import _vectorgeo as _vecgeo
 
 try:
     import shapely.geometry as geometry
@@ -23,32 +31,27 @@ class Point(object):
     """ This defines the point class, from which x,y[,z] points can be
     constructed.
     """
+    _geotype = "Point"
+
     def __init__(self, coords):
         self.x = float(coords[0])
         self.y = float(coords[1])
         try:
             self.z = float(coords[2])
             self.rank = 3
+            self.vertex = (self.x, self.y, self.z)
         except IndexError:
             self.z = None
             self.rank = 2
-        self.xy = (self.x, self.y)
-        self.xyz = (self.x, self.y, self.z)
+            self.vertex = (self.x, self.y)
         return
 
     def __repr__(self):
-        if self.rank == 2:
-            return 'point(' + str(self.xy) + ')'
-        elif self.rank == 3:
-            return 'point(' + str(self.xyz) + ')'
+        return 'Point(' + str(self.vertex) + ')'
 
     def get_vertex(self):
         """ Return the Point vertex as a tuple. """
-        if self.rank == 2:
-            vert = (self.x, self.y)
-        elif self.rank == 3:
-            vert = (self.x, self.y, self.z)
-        return vert
+        return self.vertex
 
     def coordsxy(self, convert_to=False):
         """ Returns the x,y coordinates. Convert_to may be set to 'deg'
@@ -143,6 +146,37 @@ class Point(object):
             self.z += shift_vector[2]
         return
 
+    def as_geojson(self, **kwargs):
+        """ Write data as a GeoJSON string to a file-like object `f`.
+
+        Parameters
+        ----------
+        f : file-like object to recieve the GeoJSON string
+
+        *kwargs* include:
+        crs : coordinate reference system
+        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
+        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        """
+        writer = geojson.GeoJSONWriter(self, **kwargs)
+        return writer.print_json()
+
+    def to_geojson(self, f, **kwargs):
+        """ Write data as a GeoJSON string to a file-like object `f`.
+
+        Parameters
+        ----------
+        f : file-like object to recieve the GeoJSON string
+
+        *kwargs* include:
+        crs : coordinate reference system
+        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
+        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        """
+        writer = geojson.GeoJSONWriter(self, **kwargs)
+        writer.write_json(f)
+        return writer
+
     def to_shapely(self):
         """ Returns a Shapely Point instance. """
         try:
@@ -154,8 +188,10 @@ class Point(object):
 class Multipoint(object):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes. """
+    _geotype = "Multipoint"
+    properties = {}
 
-    def __init__(self, vertices, data=None):
+    def __init__(self, vertices, data=None, properties=None, **kwargs):
         """ Create a feature with multiple vertices.
 
         vertices : a list of tuples containing point coordinates.
@@ -164,38 +200,48 @@ class Multipoint(object):
         point attributes. If `data` is not `None`, then it (or its values) must
         match `vertices` in length.
         """
-        self.rank = len(vertices[0])
+        if len(vertices) > 0:
+            self.rank = len(vertices[0])
 
-        if self.rank > 3 or self.rank < 2:
-            raise GInitError('Input must be doubles or triples\n')
-        elif False in [self.rank == len(i) for i in vertices]:
-            raise GInitError('Input must have consistent rank\n')
-        else:
-            self.vertices = [tuple(i) for i in vertices]
-
-        if data is not None:
-            if hasattr(data, 'values'):
-                # Dictionary of attributes
-                for dlist in data.values():
-                    if len(dlist) != len(vertices):
-                        raise GInitError("Point data length must match point "
-                                          "vertices")
-                    if False in (isinstance(a, type(dlist[0])) for a in dlist):
-                        raise GInitError("Data must have uniform type")
+            if self.rank > 3 or self.rank < 2:
+                raise GInitError('Input must be doubles or triples\n')
+            elif False in [self.rank == len(i) for i in vertices]:
+                raise GInitError('Input must have consistent rank\n')
             else:
-                # Single attribute
-                if len(data) != len(vertices):
-                    raise GInitError("Point data must match point vertices")
-                if False in (isinstance(a, type(data[0])) for a in data):
-                    raise GInitError("Data must have uniform type")
-            self.data = data
+                self.vertices = [tuple(i) for i in vertices]
+
+            if data is not None:
+                if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
+                    # Dictionary of attributes
+                    for k in data:
+                        if len(data[k]) != len(vertices):
+                            raise GInitError("Point data length must match "
+                                              "point vertices")
+                        dtype = type(data[k][0])
+                        if False in (isinstance(a, dtype) for a in data[k]):
+                            raise GInitError("Data must have uniform type")
+                else:
+                    # Single attribute
+                    if len(data) != len(vertices):
+                        raise GInitError("Point data must match point vertices")
+                    if False in (isinstance(a, type(data[0])) for a in data):
+                        raise GInitError("Data must have uniform type")
+                self.data = data
+            else:
+                self.data = [None for a in vertices]
+
+            if hasattr(properties, 'keys'):
+                self.properties = properties
+
         else:
-            self.data = [None for a in vertices]
+            self.rank = None
+            self.vertices = []
+            self.data = []
         return
 
-    def __repr__(self):
-        return 'Multipoint(' + reduce(lambda a,b: str(a) + ' ' + str(b),
-                self.vertices) + ')'
+    #def __repr__(self):
+    #    return 'Multipoint(' + reduce(lambda a,b: str(a) + ' ' + str(b),
+    #            self.vertices) + ')'
 
     def __len__(self):
         return len(self.vertices)
@@ -216,6 +262,27 @@ class Multipoint(object):
     def __iter__(self):
         return (pt for pt in self.vertices)
 
+    def _bbox_overlap(self, other):
+        """ Return whether bounding boxes between self and another geometry
+        overlap.
+        """
+        reg0 = self.get_bbox()
+        reg1 = other.get_bbox()
+        return (reg0[0] < reg1[1] and reg0[1] > reg1[0] and
+                reg0[2] < reg1[3] and reg0[3] > reg1[2])
+
+    def get_bbox(self):
+        """ Return the extents of a bounding box as
+            (xmin, ymax, ymin, ymax, [zmin, zmin]).
+        """
+        if self.rank == 2:
+            x, y = self.get_coordinate_lists()
+            bbox = (min(x), max(x), min(y), max(y))
+        elif self.rank == 3:
+            x, y, z = self.get_coordinate_lists()
+            bbox = (min(x), max(x), min(y), max(y), min(z), max(z))
+        return bbox
+
     def print_vertices(self):
         """ Prints an enumerated list of indices. """
         for i, vertex in enumerate(self.vertices):
@@ -223,26 +290,31 @@ class Multipoint(object):
 
     def get_vertices(self):
         """ Return vertices as a list of tuples. """
-        return self.vertices
+        return np.array(self.vertices)
+
+    def get_data(self, fields=None):
+        """ Return data as an array, regardless of internal type. Optionally
+        takes the keyword argument *fields*, which is an iterable listing the
+        columns from the data dictionary to retrieve. """
+        if hasattr(self.data, 'keys') and hasattr(self.data.values, '__call__'):
+            if fields is not None:
+                data = np.array([self.data[key] for key in fields])
+            else:
+                data = np.array(self.data.values())
+        else:
+            data = np.array(self.data)
+        return data.T
 
     def get_coordinate_lists(self):
         """ Return X, Y, and Z lists. If self.rank == 2, Z will be
         zero-filled. """
         X = [i[0] for i in self.vertices]
         Y = [i[1] for i in self.vertices]
-        if self.rank > 2:
+        if self.rank == 3:
             Z = [i[2] for i in self.vertices]
+            return X, Y, Z
         else:
-            Z = [0.0 for i in self.vertices]
-        return X, Y, Z
-
-    def length(self, spherical=False):
-        """ Returns the length of the line. """
-        if spherical is True:
-            raise NotImplementedError("Spherical metrics not implemented")
-        points = [Point(i) for i in self.vertices]
-        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
-        return sum(distances)
+            return X, Y
 
     def shift(self, shift_vector):
         """ Shift feature by the amount given by a vector. Operation
@@ -282,24 +354,41 @@ class Multipoint(object):
         self.shift(origin)
         return
 
-    def nearest_to(self, pt):
-        """ Returns the point on the Multipoint boundary that is
-        nearest to pt (point class).
+    def _distance_to(self, pt):
+        """ Calculate distance of each member point to an external point. """
+        dist = lambda pts: np.sqrt((pts[0] - pts[1])**2)
+        pta = np.array(pt.vertex)
+        return map(dist, ((np.array(v) - pta) for v in self.vertices))
 
-        Warning: If two points are equidistant, only one will be
-        returned.
+    def _subset(self, idxs):
+        """ Return a subset defined by index in *idxs*. """
+        subset = Multipoint([self.vertices[i] for i in idxs])
+        if hasattr(self.data, 'keys'):
+            ddict = {}
+            for k in self.data:
+                ddict[k] = [self.data[k][i] for i in idxs]
+            subset.data = ddict
+        else:
+            subset.data = [self.data[i] for i in idxs]
+        return subset
+
+    def near(self, pt, radius):
+        """ Return Multipoint of subset of member vertices that are within
+        *radius* of *pt*.
         """
-        point_dist = []
+        distances = self._distance_to(pt)
+        nearidx = [i for i,d in enumerate(distances) if d < radius]
+        subset = self._subset(nearidx)
+        return subset
 
-        rvertices = deque(self.vertices)
-        rvertices.rotate(1)
-        segments = [(v1, v2) for v1, v2 in zip(self.vertices, rvertices)]
+    def nearest_to(self, pt):
+        """ Returns the internal point that is nearest to pt (Point class).
 
-        point_dist = map(pt_nearest, [pt.xy for seg in segments],
-            [seg[0] for seg in segments], [seg[1] for seg in segments])
-        distances = [i[1] for i in point_dist]
-
-        return Point(point_dist[distances.index(min(distances))][0])
+        Warning: If two points are equidistant, only one will be returned.
+        """
+        distances = self._distance_to(pt)
+        idx = distances.index(min(distances))
+        return self._subset(list(idx))
 
     def get_extents(self):
         """ Calculate a bounding box. """
@@ -315,19 +404,33 @@ class Multipoint(object):
                     map(lambda i: (c[i] for c in self.vertices),
                         range(self.rank)))
 
-    def max_dimension(self):
-        """ Return the two points in the Multipoint that are furthest
-        from each other. """
-        dist = lambda xy0, xy1: math.sqrt((xy1[0]-xy0[0])**2 +
-                                          (xy1[1]-xy0[1])**2)
+    # This code should compute the convex hull of the points and then test the
+    # hull's combination space
+    # Alternatively, calculate the eigenvectors, rotate, and cherrypick the
+    # points
+    #def max_dimension(self):
+    #    """ Return the two points in the Multipoint that are furthest
+    #    from each other. """
+    #    dist = lambda xy0, xy1: math.sqrt((xy1[0]-xy0[0])**2 +
+    #                                      (xy1[1]-xy0[1])**2)
 
-        P = [(p0, p1) for p0 in self.vertices for p1 in self.vertices]
-        D = map(dist, (p[0] for p in P), (p[1] for p in P))
-        return P[D.index(max(D))]
+    #    P = [(p0, p1) for p0 in self.vertices for p1 in self.vertices]
+    #    D = map(dist, (p[0] for p in P), (p[1] for p in P))
+    #    return P[D.index(max(D))]
 
-    def to_xyfile(self, fnm, **kwargs):
-        """ Write data to a delimited ASCII table. """
-        raise NotImplementedError
+    def to_xyfile(self, fnm, fields=None, delimiter=' ', header=None):
+        """ Write data to a delimited ASCII table.
+        
+        fnm         :   filename to write to
+
+        kwargs:
+        fields      :   specify the fields to be written (default all)
+
+        Additional kwargs are passed to `xyfile.write_xy`.
+        """
+        dat = np.hstack([self.get_vertices(), self.get_data(fields)])
+        xyfile.write_xy(dat, fnm, delimiter=delimiter, header=header)
+        return
 
     def as_geojson(self, **kwargs):
         """ Print representation of internal data as a GeoJSON string.
@@ -363,15 +466,46 @@ class Multipoint(object):
         return
 
 
-class Line(Multipoint):
+class ConnectedMultipoint(Multipoint):
+    """ Class for Multipoints in which vertices are assumed to be connected. """
+
+    def length(self, spherical=False):
+        """ Returns the length of the line/boundary. """
+        if spherical is True:
+            raise NotImplementedError("Spherical metrics not implemented")
+        points = [Point(i) for i in self.vertices]
+        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
+        return sum(distances)
+
+    def segments(self):
+        """ Returns an iterator of adjacent line segments. """
+        return ((self.vertices[i], self.vertices[i+1])
+                for i in range(len(self.vertices)-1))
+
+    def nearest_on_boundary(self, pt):
+        """ Returns the point on the Multipoint boundary that is nearest to pt
+        (point class).
+
+        Warning: If two points are equidistant, only one will be returned.
+        """
+        point_dist = map(_vecgeo.pt_nearest,
+                                [pt.vertex for seg in self.segments()],
+                                [seg[0] for seg in self.segments()],
+                                [seg[1] for seg in self.segments()])
+        distances = [i[1] for i in point_dist]
+        return Point(point_dist[distances.index(min(distances))][0])
+
+
+class Line(ConnectedMultipoint):
     """ This defines the polyline class, from which geographic line
     objects can be constructed. Line objects consist of joined,
     georeferenced line segments.
     """
+    _geotype = "Line"
 
-    def __repr__(self):
-        return 'Line(' + reduce(lambda a,b: str(a) + ' ' + str(b),
-                self.vertices) + ')'
+    #def __repr__(self):
+    #    return 'Line(' + reduce(lambda a,b: str(a) + ' ' + str(b),
+    #            self.vertices) + ')'
 
     def add_vertex(self, vertex):
         """ Add a vertex to self.vertices. """
@@ -394,6 +528,23 @@ class Line(Multipoint):
         """ Returns the distance between the first and last vertex. """
         return Point(self.vertices[0]).distance(Point(self.vertices[-1]))
 
+    def intersects(self, other):
+        """ Return whether an intersection exists with another geometry. """
+        interxbool = (_vecgeo.intersects(a[0][0], a[1][0], b[0][0], b[1][0],
+                                         a[0][1], a[1][1], b[0][1], b[1][1])
+                    for a in self.segments() for b in other.segments())
+        if self._bbox_overlap(other) and (True in interxbool):
+            return True
+        else:
+            return False
+
+    def intersections(self, other):
+        """ Return the intersections with another geometry. """
+        interx = (_vecgeo.intersections(a[0][0], a[1][0], b[0][0], b[1][0],
+                                        a[0][1], a[1][1], b[0][1], b[1][1])
+                    for a in self.segments() for b in other.segments())
+        return filter(lambda a: np.nan not in a, interx)
+
     def to_polygon(self):
         """ Returns a polygon. """
         return Polygon(self.vertices)
@@ -406,32 +557,41 @@ class Line(Multipoint):
             elif self.rank == 3:
                 return geometry.LineString([(v[0], v[1], v[2]) for v in self.vertices])
         except NameError:
-            raise ImportError('Shapely module did not import\n')
+            raise GuppyError('Shapely module not available\n')
 
 
-class Polygon(Multipoint):
+class Polygon(ConnectedMultipoint):
     """ This defines the polygon class, from which geographic
     polygons objects can be created. Polygon objects consist of
     point nodes enclosing an area.
     """
+    _geotype = "Polygon"
+    subs = []
+
     def __init__(self, vertices, **kwargs):
         Multipoint.__init__(self, vertices, **kwargs)
         if vertices[0] != vertices[-1]:
-            vertices.append(vertices[0])
+            self.vertices.append(vertices[0])
+        self.subs = kwargs.get('subs', [])
+        return
 
-    def __repr__(self):
-        return 'Polygon(' + reduce(lambda a,b: str(a) + ' ' + str(b),
-                self.vertices) + ')'
+    #def __repr__(self):
+    #    return 'Polygon(' + reduce(lambda a,b: str(a) + ' ' + str(b),
+    #            self.vertices) + ')'
 
-    perimeter = Multipoint.length
+    def perimeter(self):
+        """ Return the perimeter of the polygon. If there are sub-polygons,
+        their perimeters are added recursively. """
+        return self.length() + sum([p.perimeter() for p in self.subs])
 
     def area(self):
-        """ Return the area of the polygon. Only 2D at the moment. """
+        """ Return the two-dimensional area of the polygon. If there are
+        sub-polygons, their areas are subtracted. """
         a = 0.0
         for i in range(len(self.vertices)-1):
-            a += (self.vertices[i][0] + self.vertices[i+1][0]) \
-                * (self.vertices[i][1] - self.vertices[i+1][1])
-        return abs(0.5 * a)
+            a += 0.5 * abs((self.vertices[i][0] + self.vertices[i+1][0])
+                         * (self.vertices[i][1] - self.vertices[i+1][1]))
+        return a - sum(map(lambda p: p.area(), self.subs))
 
     def contains(self, pt):
         """ Returns True if pt is inside or on the boundary of the
@@ -439,9 +599,11 @@ class Polygon(Multipoint):
         """
         def possible(pt, v1, v2):
             """ Quickly assess potential for an intersection with an x+
-            pointing ray based on Easy Cases. """
-            if ( ((pt.y > v1[1]) is not (pt.y > v2[1]))
-            and ((pt.x < v1[0]) or (pt.x < v2[0])) ):
+            pointing ray. """
+            x = pt.vertex[0]
+            y = pt.vertex[1]
+            if ( ((y > v1[1]) is not (y > v2[1]))
+            and ((x < v1[0]) or (x < v2[0])) ):
                 return True
             else:
                 return False
@@ -454,27 +616,27 @@ class Polygon(Multipoint):
                     if possible(pt, v1, v2)]
 
         n_intersect = sum([bool2int(
-            isinstance(ray_intersection(pt.xy, seg[0], seg[1]), tuple))
+            isinstance(ray_intersection(pt.vertex, seg[0], seg[1]), tuple))
             for seg in segments])
 
-        if n_intersect % 2 == 1:    # If odd, then point is inside
-            return True
-        else:                   # If even, then point is outside
-            return False
+        if n_intersect % 2 == 1:    # If odd, point is inside so check subpolys
+            if True not in (p.contains(pt) for p in self.subs):
+                return True
+        return False                # Point was outside or was in a subpoly
 
     def to_polyline(self):
-        """ Returns a self-closing polyline. """
+        """ Returns a self-closing polyline. Discards sub-polygons. """
         return Line(self.vertices)
 
     def to_shapely(self):
         """ Returns a Shapely Polygon instance. """
         try:
-            if self.rank == 2:
-                return geometry.Polygon([(v[0], v[1]) for v in self.vertices])
-            elif self.rank == 3:
-                return geometry.Polygon([(v[0], v[1], v[2]) for v in self.vertices])
+            shp = geometry.Polygon(self.vertices,
+                                   interiors=[p.vertices for p in self.subs])
         except NameError:
             raise ImportError('Shapely module did not import\n')
+        return shp
+
 
 class GuppyError(Exception):
     """ Base class for guppy module errors. """
@@ -538,48 +700,6 @@ def ray_intersection(pt, endpt1, endpt2, direction=0.0):
             return (x_int, y_int)
         else:
             return
-
-
-
-def pt_nearest(pt, endpt1, endpt2):
-    """ Determines the point on a segment defined by tuples endpt1
-    and endpt2 nearest to a point defined by tuple pt.
-    Returns the a nested tuple of (point, distance)
-    """
-    dot2 = lambda v1,v2: float(v1[0]*v2[0] + v1[1]*v2[1])
-    proj2 = lambda u,v: [dot2(u,v) / dot2(v,v) * e for e in v]
-    dist = lambda u,v: math.sqrt((u[0]-v[0])**2. + (u[1]-v[1])**2.)
-
-    u = (pt[0] - endpt1[0], pt[1] - endpt1[1])
-    v = (endpt2[0] - endpt1[0], endpt2[1] - endpt1[1])
-    u_on_v = proj2(u,v)
-    u_int = (u_on_v[0] + endpt1[0], u_on_v[1] + endpt1[1])
-    dist_u_int = dist(u_int, pt)
-
-    # Determine whether u_int is inside the segment
-    # Otherwise return the nearest endpoint
-    if endpt1[0] == endpt2[0]:  # Segment is vertical
-        if u_int[1] > max(endpt1[1], endpt2[1]):
-            return (endpt1[1] > endpt2[1]
-                    and (endpt1, dist(endpt1, pt))
-                    or (endpt2, dist(endpt2, pt)))
-        elif u_int[1] < min(endpt1[1], endpt2[1]):
-            return (endpt1[1] < endpt2[1]
-                    and (endpt1, dist(endpt1, pt))
-                    or (endpt2, dist(endpt2, pt)))
-        else:
-            return (u_int, dist(u_int, pt))
-    else:
-        if u_int[0] > max(endpt1[0], endpt2[0]):
-            return (endpt1[0] > endpt2[0]
-                    and (endpt1, dist(endpt1, pt))
-                    or (endpt2, dist(endpt2, pt)))
-        elif u_int[0] < min(endpt1[0], endpt2[0]):
-            return (endpt1[0] < endpt2[0]
-                    and (endpt1, dist(endpt1, pt))
-                    or (endpt2, dist(endpt2, pt)))
-        else:
-            return (u_int, dist(u_int, pt))
 
 
 def distance(pntlist, angular_unit="deg", space_unit="km", method="vicenty"):

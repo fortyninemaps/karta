@@ -131,6 +131,21 @@ def normed_vector_field(D):
     return pad(U), pad(V)
 
 
+def hillshade(D, res=(30.0, 30.0), bearing=330.0, azimuth=60.0):
+    """ Return a hillshade raster for field D. Testing version. """
+    dx, dy = grad(D, res=res)
+    u = np.array((res[0] * np.ones_like(dx), np.zeros_like(dx), dx))
+    v = np.array((np.zeros_like(dy), res[1] * np.ones_like(dy), dy))
+    w = np.cross(u, v, axisa=0, axisb=0)
+    wunit = w / np.atleast_3d(np.sqrt(np.sum(w**2, axis=-1)))
+    s = np.array((np.cos(bearing*pi/180.0),
+                  np.sin(bearing*pi/180.0),
+                  np.sin(azimuth*pi/180.0)))
+    smat = s*np.ones([wunit.shape[0], wunit.shape[1], 3])
+    dprod = (wunit*smat).sum(axis=-1)
+    return dprod.T
+
+
 def neighbours_of(a):
     """ For a (z,i,j) point `a`, return the neighbouring indices. """
     _, i, j = a

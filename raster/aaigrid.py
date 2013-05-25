@@ -9,20 +9,22 @@ Written by Nat Wilson
 
 from math import sin, sqrt
 import numpy as np
+import grid
 import traceback
 
-class AAIGrid(object):
+class AAIGrid(grid.RegularGrid):
     """ Grid object built around the ESRI ASCII Grid format. """
 
-    hdr = {}
-    hdr['ncols'] = None
-    hdr['nrows'] = None
-    hdr['yllcenter'] = None
-    hdr['xllcenter'] = None
-    hdr['yllcorner'] = None
-    hdr['xllcorner'] = None
-    hdr['cellsize'] = None
-    hdr['nodata_value'] = None
+    _hdr = {'nbands': 1}
+    aschdr = {}
+    aschdr['ncols'] = None
+    aschdr['nrows'] = None
+    aschdr['yllcenter'] = None
+    aschdr['xllcenter'] = None
+    aschdr['yllcorner'] = None
+    aschdr['xllcorner'] = None
+    aschdr['cellsize'] = None
+    aschdr['nodata_value'] = None
 
     def __init__(self, incoming=None, hdr=None):
         """ Contains the table of data from an ESRI ASCII raster file.
@@ -48,7 +50,7 @@ class AAIGrid(object):
         """
 
         if hdr is not None:
-            self.hdr = hdr
+            self.aschdr = hdr
 
         if incoming is not None:
             try:
@@ -63,6 +65,7 @@ class AAIGrid(object):
             self.data = None
 
         self._check_header()
+        self._enforce_hdr_consistency()
         return
 
     def __str__(self):
@@ -81,50 +84,68 @@ class AAIGrid(object):
     def __add__(self, other):
         if isinstance(other, AAIGrid):
             if (self.data is not None) and (other.data is not None):
-                return AAIGrid(self.data + other.data, self.hdr)
+                return AAIGrid(self.data + other.data, self.aschdr)
             else:
                 raise ValueError("cannot add NoneType data array")
         else:
-            raise AAIError("addition with other types not defined")
+            try:
+                return AAIGrid(self.data + other, self.aschdr)
+            except AttributeError:
+                raise AAIError("self.data not defined")
+            except Exception:
+                raise AAIError("addition with type {0} not "
+                               "defined".format(type(other)))
 
     def __sub__(self, other):
         if isinstance(other, AAIGrid):
             if (self.data is not None) and (other.data is not None):
-                return AAIGrid(self.data - other.data, self.hdr)
+                return AAIGrid(self.data - other.data, self.aschdr)
             else:
                 raise ValueError("cannot subtract NoneType data array")
         else:
-            raise AAIError("subtraction with other types not defined")
+            try:
+                return AAIGrid(self.data - other, self.aschdr)
+            except AttributeError:
+                raise AAIError("self.data not defined")
+            except Exception:
+                raise AAIError("subtraction with type {0} not "
+                               "defined".format(type(other)))
 
     def __mul__(self, other):
         if isinstance(other, AAIGrid):
             if (self.data is not None) and (other.data is not None):
-                return AAIGrid(self.data * other.data, self.hdr)
+                return AAIGrid(self.data * other.data, self.aschdr)
             else:
                 raise ValueError("cannot multiply NoneType data array")
         else:
             try:
-                return AAIGrid(self.data * other, self.hdr)
+                return AAIGrid(self.data * other, self.aschdr)
             except AttributeError:
                 raise AAIError("self.data not defined")
             except:
-                raise AAIError("multiplication with type{0} not"
+                raise AAIError("multiplication with type{0} not "
                                 "defined".format(type(other)))
 
     def __div__(self, other):
         if isinstance(other, AAIGrid):
             if (self.data is not None) and (other.data is not None):
-                return AAIGrid(self.data / other.data, self.hdr)
+                return AAIGrid(self.data / other.data, self.aschdr)
             else:
                 raise ValueError("cannot divide NoneType data array")
         else:
-            raise AAIError("division with other types not defined")
+            try:
+                return AAIGrid(self.data / other, self.aschdr)
+            except AttributeError:
+                raise AAIError("self.data not defined")
+            except:
+                raise AAIError("division with type{0} not "
+                                "defined".format(type(other)))
 
     def _check_header(self, hdr=None):
         """ Make sure that all required header records are present. """
 
         if hdr is None:
-            hdr = self.hdr
+            hdr = self.aschdr
 
         for field in ('ncols', 'nrows', 'cellsize'):
             if hdr.get(field) is None:
@@ -161,17 +182,28 @@ class AAIGrid(object):
             hdr['xllcorner'] = hdr['xllcenter'] - d / 2.0
         return hdr
 
+    def _enforce_hdr_consistency(self):
+        """ Make sure that base `hdr` remains consistent with AAIGrid-specific
+        `aschdr`. """
+        self._hdr['dx'] = self.aschdr['cellsize']
+        self._hdr['dy'] = self.aschdr['cellsize']
+        self._hdr['nx'] = self.aschdr['ncols']
+        self._hdr['ny'] = self.aschdr['nrows']
+        self._hdr['xllcorner'] = self.aschdr['xllcorner']
+        self._hdr['yllcorner'] = self.aschdr['yllcorner']
+        return
+
     def get_indices(self, x, y):
         """ Return the column and row indices for the point nearest
         geographical coordinates (x, y). """
         if self.data is None:
             raise AAIError('no raster to query')
 
-        self.hdr = self._check_header_references(self.hdr)
+        self.aschdr = self._check_header_references(self.aschdr)
 
-        x0 = self.hdr['xllcenter']
-        y0 = self.hdr['yllcenter']
-        d = self.hdr['cellsize']
+        x0 = self.aschdr['xllcenter']
+        y0 = self.aschdr['yllcenter']
+        d = self.aschdr['cellsize']
         nx, ny = self.data.shape
 
         xi = np.clip(
@@ -187,30 +219,30 @@ class AAIGrid(object):
         """ Return the region characteristics as a tuple, relative to either
         cell centers or the grid edges. """
         if reference == 'center':
-            x0, y0  = self.hdr['xllcenter'], self.hdr['yllcenter']
+            x0, y0  = self.aschdr['xllcenter'], self.aschdr['yllcenter']
             n = 0
         elif reference == 'edge':
-            x0, y0  = self.hdr['xllcenter'], self.hdr['yllcenter']
+            x0, y0  = self.aschdr['xllcenter'], self.aschdr['yllcenter']
             n = 1
         else:
             raise AAIError("`reference` must be 'center' or 'edge'")
-        return (x0, x0 + (self.hdr['ncols'] + n) * self.hdr['cellsize'],
-                y0, y0 + (self.hdr['nrows'] + n) * self.hdr['cellsize'])
+        return (x0, x0 + (self.aschdr['ncols'] + n) * self.aschdr['cellsize'],
+                y0, y0 + (self.aschdr['nrows'] + n) * self.aschdr['cellsize'])
 
     def coordmesh(self, grid_registration='center'):
         """ Return a pair of arrays containing the *X* and *Y* coordinates of
         the grid. """
         if grid_registration == 'center':
-            xll = self.hdr['xllcenter']
-            yll = self.hdr['yllcenter']
+            xll = self.aschdr['xllcenter']
+            yll = self.aschdr['yllcenter']
         elif grid_registration == 'corner':
-            xll = self.hdr['xllcorner']
-            yll = self.hdr['yllcorner']
+            xll = self.aschdr['xllcorner']
+            yll = self.aschdr['yllcorner']
         else:
             raise AAIError("grid_registration must be 'center' or 'corner'\n")
 
-        X = (xll + np.arange(self.data.shape[1]) * self.hdr['cellsize'])
-        Y = (yll + np.arange(self.data.shape[0])[::-1] * self.hdr['cellsize'])
+        X = (xll + np.arange(self.data.shape[1]) * self.aschdr['cellsize'])
+        Y = (yll + np.arange(self.data.shape[0])[::-1] * self.aschdr['cellsize'])
         return np.meshgrid(X, Y)
 
     def max(self):
@@ -279,7 +311,7 @@ class AAIGrid(object):
             print s
             return
 
-        self.hdr = hdr
+        self.aschdr = hdr
 
         try:
             f = lambda l: [float(i) for i in l.split()]
@@ -303,7 +335,7 @@ class AAIGrid(object):
             yllcenter OR yllcorner: [float]
         """
         # Should add sanity checks
-        self.hdr = hdr
+        self.aschdr = hdr
         #A[np.isnan(A)] = hdr['nodata_value']
         self.data = A.copy()[:,:]
 
@@ -329,18 +361,18 @@ class AAIGrid(object):
 
         try:
             data_a = self.data.copy()
-            data_a[np.isnan(data_a)] = self.hdr['nodata_value']
+            data_a[np.isnan(data_a)] = self.aschdr['nodata_value']
 
-            f.write("NCOLS {0}\n".format(self.hdr['ncols']))
-            f.write("NROWS {0}\n".format(self.hdr['nrows']))
+            f.write("NCOLS {0}\n".format(self.aschdr['ncols']))
+            f.write("NROWS {0}\n".format(self.aschdr['nrows']))
             if reference == 'center':
-                f.write("XLLCENTER {0}\n".format(self.hdr['xllcenter']))
-                f.write("YLLCENTER {0}\n".format(self.hdr['yllcenter']))
+                f.write("XLLCENTER {0}\n".format(self.aschdr['xllcenter']))
+                f.write("YLLCENTER {0}\n".format(self.aschdr['yllcenter']))
             elif reference == 'corner':
-                f.write("XLLCORNER {0}\n".format(self.hdr['xllcorner']))
-                f.write("YLLCORNER {0}\n".format(self.hdr['yllcorner']))
-            f.write("CELLSIZE {0}\n".format(self.hdr['cellsize']))
-            f.write("NODATA_VALUE {0}\n".format(self.hdr['nodata_value']))
+                f.write("XLLCORNER {0}\n".format(self.aschdr['xllcorner']))
+                f.write("YLLCORNER {0}\n".format(self.aschdr['yllcorner']))
+            f.write("CELLSIZE {0}\n".format(self.aschdr['cellsize']))
+            f.write("NODATA_VALUE {0}\n".format(self.aschdr['nodata_value']))
             f.writelines([str(row).replace(',','')[1:-1] +
                             '\n' for row in data_a.tolist()])
 
@@ -363,20 +395,17 @@ class AAIGrid(object):
         return (A.min(), A.max())
 
     def sample(self, x, y):
-        """ Return the value nearest to x, y, as well as center coordinates of
-        the grid cell actually sampled. """
+        """ Return the value nearest to x, y. """
         xi, yi = self.get_indices(x, y)
-        ncols = self.hdr['ncols']
-        nrows = self.hdr['nrows']
+        ncols = self.aschdr['ncols']
+        nrows = self.aschdr['nrows']
         if (np.any(xi < 0) or np.any(xi >= ncols) or
             np.any(yi < 0) or np.any(yi >= nrows)):
             raise AAIError("coordinates are outside grid region",
                 detail="({0}, {1}), ({2}, {3})".format(xi, yi, ncols, nrows))
         else:
             z = self.data[yi, xi]
-            ys = yi * self.hdr['cellsize'] + self.hdr['yllcenter']
-            xs = xi * self.hdr['cellsize'] + self.hdr['xllcenter']
-        return z, (xs, ys)
+        return z
 
     def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as `segments`. Does not interpolate.
@@ -430,30 +459,33 @@ class AAIGrid(object):
 
         method : interpolation method, string ('nearest', 'linear')
         """
-        xllcenter = self.hdr['xllcenter']
-        yllcenter = self.hdr['yllcenter']
-        xurcenter = xllcenter + self.hdr['cellsize'] * self.hdr['ncols']
-        yurcenter = yllcenter + self.hdr['cellsize'] * self.hdr['nrows']
+        xllcenter = self.aschdr['xllcenter']
+        yllcenter = self.aschdr['yllcenter']
+        xurcenter = xllcenter + self.aschdr['cellsize'] * self.aschdr['ncols']
+        yurcenter = yllcenter + self.aschdr['cellsize'] * self.aschdr['nrows']
         nx = int((xurcenter - xllcenter) // cellsize)
         ny = int((yurcenter - yllcenter) // cellsize)
-        dimratio = cellsize / self.hdr['cellsize']
+        dimratio = cellsize / self.aschdr['cellsize']
 
         if method == 'nearest':
             JJ, II = np.meshgrid(np.arange(nx), np.arange(ny))
             srcII = np.around(II * dimratio) \
                             .astype(int) \
-                            .clip(0, self.hdr['nrows'] - 1)
+                            .clip(0, self.aschdr['nrows'] - 1)
             srcJJ = np.around(JJ * dimratio) \
                             .astype(int).\
-                            clip(0, self.hdr['ncols'] - 1)
+                            clip(0, self.aschdr['ncols'] - 1)
             self.data = self.data[srcII, srcJJ]
         else:
             raise NotImplementedError('method "{0}" not '
                                       'implemented'.format(method))
 
-        self.hdr['cellsize'] = float(cellsize)
-        self.hdr['nrows'] = ny
-        self.hdr['ncols'] = nx
+        self.aschdr['cellsize'] = float(cellsize)
+        self.aschdr['nrows'] = ny
+        self.aschdr['ncols'] = nx
+        self.aschdr['xllcorner'] = self.aschdr['xllcenter'] - (0.5 * cellsize)
+        self.aschdr['yllcorner'] = self.aschdr['yllcenter'] - (0.5 * cellsize)
+        self._enforce_hdr_consistency()
         return
 
     def resize(self, te):
@@ -467,10 +499,10 @@ class AAIGrid(object):
         Returns None.
         """
         if self.data is not None:
-            xmin1 = self.hdr['xllcenter']
-            xmax1 = xmin1 + self.hdr['cellsize'] * (self.hdr['ncols'] - 1)
-            ymin1 = self.hdr['yllcenter']
-            ymax1 = ymin1 + self.hdr['cellsize'] * (self.hdr['nrows'] - 1)
+            xmin1 = self.aschdr['xllcenter']
+            xmax1 = xmin1 + self.aschdr['cellsize'] * (self.aschdr['ncols'] - 1)
+            ymin1 = self.aschdr['yllcenter']
+            ymax1 = ymin1 + self.aschdr['cellsize'] * (self.aschdr['nrows'] - 1)
 
             xmin2 = te[0]
             xmax2 = te[1]
@@ -481,41 +513,42 @@ class AAIGrid(object):
             ny, nx = data_a.shape
 
             # The left side
-            dx = int(np.floor((xmin2-xmin1) / float(self.hdr['cellsize'])))
+            dx = int(np.floor((xmin2-xmin1) / float(self.aschdr['cellsize'])))
             if dx < 0:
                 data_a = np.hstack([np.nan*np.ones([ny, dx]), data_a])
             elif dx > 0:
                 data_a = data_a[:,dx:]
-            self.hdr['xllcenter'] = xmin1 + self.hdr['cellsize'] * dx
+            self.aschdr['xllcenter'] = xmin1 + self.aschdr['cellsize'] * dx
 
             # The right side
-            dx = int(np.floor((xmax2-xmax1) / float(self.hdr['cellsize'])))
+            dx = int(np.floor((xmax2-xmax1) / float(self.aschdr['cellsize'])))
             if dx > 0:
                 data_a = np.hstack([data_a, np.nan*np.ones([ny, dx])])
             elif dx < 0:
                 data_a = data_a[:,:dx]
-            self.hdr['ncols'] = data_a.shape[1]
+            self.aschdr['ncols'] = data_a.shape[1]
 
             ny, nx = data_a.shape
 
             # The bottom
-            dy = int(np.ceil((ymin2-ymin1) / float(self.hdr['cellsize'])))
+            dy = int(np.ceil((ymin2-ymin1) / float(self.aschdr['cellsize'])))
             if dy < 0:
                 data_a = np.vstack([data_a, np.nan*np.ones([dy, nx])])
             elif dy > 0:
                 data_a = data_a[dy:,:]
-            self.hdr['yllcenter'] = ymin1 + self.hdr['cellsize'] * dy
+            self.aschdr['yllcenter'] = ymin1 + self.aschdr['cellsize'] * dy
 
             # The top
-            dy = int(np.floor((ymax2-ymax1) / float(self.hdr['cellsize'])))
+            dy = int(np.floor((ymax2-ymax1) / float(self.aschdr['cellsize'])))
             if dy > 0:
                 data_a = np.vstack([np.nan*np.ones([dy, nx]), data_a])
             elif dy < 0:
                 data_a = data_a[:dy,:]
-            self.hdr['nrows'] = data_a.shape[0]
+            self.aschdr['nrows'] = data_a.shape[0]
 
             self.data = data_a
             self._check_header()
+            self._enforce_hdr_consistency()
 
         else:
             raise AAIError("no data to resize")

@@ -14,7 +14,8 @@ class RegularGrid(unittest.TestCase):
                                                  'xllcorner':0.0,
                                                  'yllcorner':0.0,
                                                  'dx':30.0,
-                                                 'dy':30.0}, Z=pe)
+                                                 'dy':30.0,
+                                                 'nbands':1}, Z=pe)
         return
 
     def test_region_centered(self):
@@ -71,6 +72,11 @@ class RegularGrid(unittest.TestCase):
         self.assertTrue(False not in (self.rast.data == orig[:25,:25]))
         return
 
+    def test_aairead(self):
+        grid = raster.grid.aairead('reference_data/peaks49.asc')
+        self.assertTrue(False not in (grid.data == self.rast.data))
+        return
+
 
 class TestStructuredGrid(unittest.TestCase):
 
@@ -85,7 +91,8 @@ class TestStructuredGrid(unittest.TestCase):
     def test_hdr(self):
         hdr = self.rast.get_hdr()
         self.assertEqual(hdr, {'xllcorner': 0.0,
-                               'yllcorner': -0.12533323356430465})
+                               'yllcorner': -0.12533323356430465,
+                               'nbands':1})
         return
 
 class TestAAIGrid(unittest.TestCase):

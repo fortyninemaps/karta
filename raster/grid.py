@@ -1,8 +1,17 @@
 """ Classes for basic grid types """
 
+import sys
+import copy
 from math import sqrt
 import numpy as np
-
+import tiffile          # Temporarily used for TIF IO
+import _aai             # Contains the ascread driver
+try:
+    from fill_sinks import fill_sinks
+except ImportError:
+    sys.stderr.write("Compiled fill_sinks not available. Falling back to "
+                     "Python version\n")
+    from raster import fill_sinks
 
 class Grid(object):
     """ Grid baseclass. Don't use this directly except to implement subclasses.
@@ -46,7 +55,9 @@ class Grid(object):
         A = self.data[np.isnan(self.data)==False]
         return (A.min(), A.max())
 
-
+    def copy(self):
+        """ Return a copy. """
+        return copy.deepcopy(self)
 
 
 class RegularGrid(Grid):
@@ -65,8 +76,14 @@ class RegularGrid(Grid):
             - ny (int)
             - dx (float)
             - dy (float)
+            - nbands (int)
         Z : dependent m-dimensional quantity (nrows x ncols x m)
         """
+        if ('nbands' not in hdr) and (Z is not None):
+            if Z.ndim >= 3:
+                hdr['nbands'] = Z.ndim[2]
+            else:
+                hdr['nbands'] = 1
         self.set_hdr(hdr)
 
         shape = (self._hdr['ny'], self._hdr['nx'])
@@ -80,9 +97,13 @@ class RegularGrid(Grid):
 
     def _check_hdr(self, hdr):
         """ Check that the header contains the required fields. """
-        for key in ('xllcorner', 'yllcorner', 'nx', 'ny', 'dx', 'dy'):
+        required_fields = ('xllcorner', 'yllcorner', 'nx', 'ny', 'dx', 'dy',
+                           'nbands')
+        for key in required_fields:
             if key not in hdr:
                 raise GridError('Header missing {0}'.format(key))
+        assert isinstance(hdr['nx'], int)
+        assert isinstance(hdr['ny'], int)
 
     def coordmesh(self, *args, **kwargs):
         """ Alias for center_coords() """
@@ -187,7 +208,7 @@ class RegularGrid(Grid):
             ymax2 = te[3]
 
             data_a = self.data.copy()
-            ny, _ = data_a.shape
+            ny = data_a.shape[0]
 
             # The left side
             Dx = int(np.floor((xmin2-xmin1) / float(self._hdr['dx'])))
@@ -298,6 +319,10 @@ class RegularGrid(Grid):
 
         return np.array(z)
 
+    def fill_sinks(self):
+        """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
+        return RegularGrid(copy.copy(self._hdr), Z=fill_sinks(self.data))
+
     def as_structured(self):
         """ Return a copy as a StructuredGrid instance. This is a more general
         grid class that had a larger memory footprint but can represent more
@@ -305,6 +330,56 @@ class RegularGrid(Grid):
         Xv, Yv = self.vertex_coords()
         return StructuredGrid(Xv, Yv, self.data.copy())
 
+    def aaiwrite(self, f, reference='corner', nodata_value=-9999):
+        """ Save internal data as an ASCII grid. Based on the ESRI standard,
+        only isometric grids (i.e. `hdr['dx'] == hdr['dy']` can be saved,
+        otherwise `GridIOError` is thrown.
+
+        Parameters:
+        -----------
+        f : either a file-like object or a filename
+        reference : specify a header reference ("center" | "corner")
+        nodata_value : specify how nans should be represented (int or float)
+        """
+        if self.data is None:
+            raise GridError("no data to write!")
+
+        if reference not in ('center', 'corner'):
+            raise GridIOError("reference in AAIGrid.tofile() must be 'center' or "
+                           "'corner'")
+
+        if self._hdr['dx'] != self._hdr['dy']:
+            raise GridIOError("ASCII grids require isometric grid cells")
+
+        try:
+            f.read()
+        except AttributeError:
+            f = open(f, "w")
+        #except IOError:
+        #    pass
+
+        try:
+            data_a = self.data.copy()
+            data_a[np.isnan(data_a)] = nodata_value
+
+            f.write("NCOLS {0}\n".format(self._hdr['nx']))
+            f.write("NROWS {0}\n".format(self._hdr['ny']))
+            if reference == 'center':
+                d = self._hdr['dx']
+                f.write("XLLCENTER {0}\n".format(self._hdr['xllcorner']+0.5*d))
+                f.write("YLLCENTER {0}\n".format(self._hdr['yllcorner']+0.5*d))
+            elif reference == 'corner':
+                f.write("XLLCORNER {0}\n".format(self._hdr['xllcorner']))
+                f.write("YLLCORNER {0}\n".format(self._hdr['yllcorner']))
+            f.write("CELLSIZE {0}\n".format(self._hdr['dx']))
+            f.write("NODATA_VALUE {0}\n".format(nodata_value))
+            f.writelines([str(row).replace(',','')[1:-1] +
+                            '\n' for row in data_a.tolist()])
+        except Exception as e:
+            raise e
+        finally:
+            f.close()
+        return
 
 class StructuredGrid(Grid):
     """ Structured Grid class. A StructuredGrid contains a fixed number of rows
@@ -316,12 +391,13 @@ class StructuredGrid(Grid):
         """
         Parameters:
         -----------
-        hdr : dictionary of header fields, which must contain
-            - ncols
-            - nrows
+        X : first-dimension coordinates of grid nodes
+        Y : second-dimension coordinates of grid nodes
+        Z : dependent m-dimensional quantity (nrows x ncols x m)
+        hdr : (optional) dictionary of header fields, which must contain
             - xllcenter (float)
             - yllcenter (float)
-        Z : dependent m-dimensional quantity (nrows x ncols x m)
+            - nbands (int)
         """
         if True not in (a is None for a in (X,Y,Z)):
             if not (X.shape == Y.shape == Z.shape[:2]):
@@ -330,6 +406,12 @@ class StructuredGrid(Grid):
             else:
                 if hdr is None:
                     hdr = {'xllcorner' : X[-1,0], 'yllcorner' : Y[-1,0]}
+                    if Z.ndim == 2:
+                        hdr['nbands'] = 1
+                    elif Z.ndim == 3:
+                        hdr['nbands'] = Z.shape[2]
+                    else:
+                        raise GridError('`Z` must be of dimension 2 or 3')
                     X -= X[-1,0]
                     Y -= Y[-1,0]
                 self.X = X
@@ -344,7 +426,7 @@ class StructuredGrid(Grid):
 
     def _check_hdr(self, hdr):
         """ Check that the header contains the required fields. """
-        for key in ('xllcorner', 'yllcorner'):
+        for key in ('xllcorner', 'yllcorner', 'nbands'):
             if key not in hdr:
                 raise GridError('Header missing {0}'.format(key))
 
@@ -357,7 +439,55 @@ class StructuredGrid(Grid):
         """ Resample internal grid to the points defined by `X`, `Y`. """
         raise NotImplementedError
 
+    def fill_sinks(self):
+        """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
+        return StructuredGrid(copy.copy(self._hdr),
+                              X=self.X.copy(), Y=self.Y.copy(),
+                              Z=fill_sinks(self.data))
+
 
 class GridError(Exception):
     pass
+
+class GridIOError(GridError):
+    pass
+
+def dummy_hdr(arr):
+    if len(arr.shape) > 2:
+        nbands = arr.shape[2]
+    else:
+        nbands = 1
+    hdr = {'xllcorner': 0.0, 'yllcorner': 0.0,
+           'nx': arr.shape[1], 'ny': arr.shape[0],
+           'dx': 1.0, 'dy': 1.0,
+           'nbands': nbands}
+    return hdr
+
+
+def readtif(incoming, band=0):
+    """ Read a TIF image. If the image is contains bands, return band 0. """
+    with tiffile.TiffFile(incoming) as tif:
+        imdata = tif[0].asarray()
+    rgrid = RegularGrid(dummy_hdr(imdata), Z=imdata)
+    return rgrid
+
+
+def readtifbands(incoming):
+    """ Read a TIF image, returning a tuple of image data. """
+    with tiffile.TiffFile(incoming) as tif:
+        imdata = [page.asarray() for page in tif]
+    rgridlist = [RegularGrid(dummy_hdr(a), Z=a) for a in imdata]
+    return tuple(rgridlist)
+
+def aairead(fnm):
+    Z, aschdr = _aai.aairead(fnm)
+    hdr = {'xllcorner'  : aschdr['xllcorner'],
+           'yllcorner'  : aschdr['yllcorner'],
+           'nx'         : aschdr['ncols'],
+           'ny'         : aschdr['nrows'],
+           'dx'         : aschdr['cellsize'],
+           'dy'         : aschdr['cellsize'],
+           'nbands'     : 1}
+    Z[Z==aschdr['nodata_value']] = np.nan
+    return RegularGrid(hdr, Z=Z)
 

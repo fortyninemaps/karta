@@ -1,25 +1,40 @@
-""" Provides functions for reading and writing ESRI shapefiles and returning a
-guppy object. """
+""" Convenience reader functions """
 
 import os
-from shapefile import Reader, Writer
 import guppy
+import geojson
+import xyfile
+import shapefile
 
-# # Constants for shape types
-# NULL = 0
-# POINT = 1
-# POLYLINE = 3
-# POLYGON = 5
-# MULTIPOINT = 8
-# POINTZ = 11
-# POLYLINEZ = 13
-# POLYGONZ = 15
-# MULTIPOINTZ = 18
-# POINTM = 21
-# POLYLINEM = 23
-# POLYGONM = 25
-# MULTIPOINTM = 28
-# MULTIPATCH = 31
+def read_geojson(f):
+    """ Read a GeoJSON object file and return a list of geometries """
+    R = geojson.GeoJSONReader(f)
+    geoms = R.iter_geometries()
+    gplist = []
+    for geom in geoms:
+        if isinstance(geom, geojson.Point):
+            gplist.append(guppy.Point(geom.coordinates))
+        elif isinstance(geom, geojson.MultiPoint):
+            gplist.append(guppy.Multipoint(geom.coordinates))
+        elif isinstance(geom, geojson.LineString):
+            gplist.append(guppy.Line(geom.coordinates))
+        elif isinstance(geom, geojson.Polygon):
+            gplist.append(guppy.Polygon(geom.coordinates[0],
+                                        subs=geom.coordinates[1:]))
+    return gplist
+
+def read_geojson_features(f):
+    """ Read a GeoJSON object file and return a list of features """
+    R = geojson.GeoJSONReader(f)
+    feats = R.pull_features()
+    gplist = []
+    for feat in feats:
+
+        # [...]
+        pass
+
+    return gplist
+
 
 def shape2point(shape):
     """ Convert a shapefile._Shape `shape` to a guppy.Point. """
@@ -52,12 +67,12 @@ def get_filenames(stem, check=False):
                 raise Exception('missing {0}'.format(fnm))
     return {'shp':shp, 'shx':shx, 'dbf':dbf}
 
-def open_file_dict(fdict, mode='r'):
+def open_file_dict(fdict):
     """ Open each file in a dictionary of filenames and return a matching
     dictionary of the file objects. """
     files = {}
     for ext in fdict.keys():
-        files[ext] = open(fdict[ext], mode)
+        files[ext] = open(fdict[ext], 'r')
     return files
 
 def read_shapefile(stem):
@@ -68,7 +83,8 @@ def read_shapefile(stem):
     try:
         files = open_file_dict(fnms)
 
-        reader = Reader(shp=files['shp'], shx=files['shx'], dbf=files['dbf'])
+        reader = shapefile.Reader(shp=files['shp'], shx=files['shx'],
+                                  dbf=files['dbf'])
         features = []
         for shape in reader.shapes():
             if shape.shapeType == 1:
@@ -89,51 +105,18 @@ def read_shapefile(stem):
 
     return features
 
-def list_parts(feature):
-    """ Return a list of polygon parts. """
-    return [feature.vertices()].extend(
-            [list_parts(p) for p in feature.subs])
-
-def write_shapefile(features, stem):
-    """ Write a list of features to a shapefile. The features must be of the
-    same type. """
-    fnms = get_filenames(stem, check=False)
-
-    writer = Writer()
-    if not hasattr(features[0], '__iter__'):
-        # Must be a Point type
-        for feature in features:
-            writer.shapeType = 1
-            writer.point(*feature.get_vertex())
-    else:
-        if isinstance(features[0], guppy.Line):
-            shape_type = 3
-        elif isinstance(features[0], guppy.Polygon):
-            shape_type = 5
-        elif isinstance(features[0], guppy.Multipoint):
-            shape_type = 8
+def read_xyfile(f, delimiter='', header_rows=0, astype=guppy.Multipoint, coordrank=2):
+    """ Read an ASCII delimited table and return a guppy object given by *astype*.
+    """
+    dat = xyfile.load_xy(f, delimiter=delimiter, header_rows=header_rows)
+    ncols = dat.shape[1]
+    if ncols >= coordrank:
+        coords = dat[:,:coordrank]
+        if ncols > coordrank:
+            data = dat[:,coordrank:]
         else:
-            raise NotImplementedError("cannot save type "
-                                      "{0}".format(type(feature)))
-
-        writer.shapeType = shape_type
-        for feature in features:
-            if shape_type == 5:
-                parts = list_parts(feature)
-            else:
-                parts = [feature.get_vertices()]
-            writer.poly(parts)
-
-    try:
-        files = open_file_dict(fnms, 'w')
-        writer.saveShp(files['shp'])
-        writer.saveShx(files['shx'])
-        writer.saveDbf(files['dbf'])
-
-    except Exception as e:
-        raise e
-
-    finally:
-        for f in files.values():
-            f.close()
+            data = None
+        return astype(coords, data=data)
+    else:
+        raise IOError('data table has insufficient number of columns')
 
