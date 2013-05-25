@@ -11,12 +11,14 @@ def pvariance(A):
     will need to be Cythonized. """
     n = len(A)
     V = np.empty(sum(range(n)))
+    ind = 0
     for i in range(len(A)):
-        for j in range(i):
-            V[i+j] = (A[i] - A[j])**2
+        for j in range(i+1, n):
+            V[ind] = (A[i] - A[j])**2
+            ind += 1
     return V
 
-def estimate_vario(points, npoints=150, max_dist=None, interval=None):
+def estimate_vario(mp, npoints=150, max_dist=None, interval=None):
     """ Given a Multipoint input, estimate a spatial variogram. By default, a
     variogram is quickly estimated. If npoints is None, then the full variogram
     is calculated.
@@ -35,11 +37,13 @@ def estimate_vario(points, npoints=150, max_dist=None, interval=None):
     variogram : ndarray
     """
     if npoints is None:
-        npoints = len(points.vertices)
+        npoints = len(mp)
 
-    verts = random.sample(points.vertices, npoints)
+    irand = random.sample(np.arange(len(mp)), npoints)
+    verts = mp.get_vertices()[irand]
+    z = mp.get_data()[irand]
     dist = pdist(verts)
-    vari = pvariance(verts)     # Is this in the right order?
+    vari = pvariance(z)
 
     if max_dist is None:
         max_dist = dist.max()
@@ -50,8 +54,7 @@ def estimate_vario(points, npoints=150, max_dist=None, interval=None):
     lags = np.arange(0, max_dist+interval, interval)
     sigma_variance = np.empty_like(lags)
 
-    for lag in lags:
-        sigma_variance = np.mean(vari[dist<=lag])
+    sigma_variance = [np.mean(vari[dist<=lag]) for lag in lags]
     return lags, sigma_variance
 
 def sph_func(a, h):
