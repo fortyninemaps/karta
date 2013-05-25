@@ -13,6 +13,7 @@ import traceback
 import numpy as np
 import vtk
 import geojson
+import xyfile
 
 try:
     import _cvectorgeo as _vecgeo
@@ -210,7 +211,7 @@ class Multipoint(object):
                 self.vertices = [tuple(i) for i in vertices]
 
             if data is not None:
-                if hasattr(data, 'keys'):
+                if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
                     # Dictionary of attributes
                     for k in data:
                         if len(data[k]) != len(vertices):
@@ -289,7 +290,20 @@ class Multipoint(object):
 
     def get_vertices(self):
         """ Return vertices as a list of tuples. """
-        return self.vertices
+        return np.array(self.vertices)
+
+    def get_data(self, fields=None):
+        """ Return data as an array, regardless of internal type. Optionally
+        takes the keyword argument *fields*, which is an iterable listing the
+        columns from the data dictionary to retrieve. """
+        if hasattr(self.data, 'keys') and hasattr(self.data.values, '__call__'):
+            if fields is not None:
+                data = np.array([self.data[key] for key in fields])
+            else:
+                data = np.array(self.data.values())
+        else:
+            data = np.array(self.data)
+        return data.T
 
     def get_coordinate_lists(self):
         """ Return X, Y, and Z lists. If self.rank == 2, Z will be
@@ -404,9 +418,19 @@ class Multipoint(object):
     #    D = map(dist, (p[0] for p in P), (p[1] for p in P))
     #    return P[D.index(max(D))]
 
-    def to_xyfile(self, fnm, **kwargs):
-        """ Write data to a delimited ASCII table. """
-        raise NotImplementedError
+    def to_xyfile(self, fnm, fields=None, delimiter=' ', header=None):
+        """ Write data to a delimited ASCII table.
+        
+        fnm         :   filename to write to
+
+        kwargs:
+        fields      :   specify the fields to be written (default all)
+
+        Additional kwargs are passed to `xyfile.write_xy`.
+        """
+        dat = np.hstack([self.get_vertices(), self.get_data(fields)])
+        xyfile.write_xy(dat, fnm, delimiter=delimiter, header=header)
+        return
 
     def as_geojson(self, **kwargs):
         """ Print representation of internal data as a GeoJSON string.

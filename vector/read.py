@@ -3,6 +3,7 @@
 import os
 import guppy
 import geojson
+import xyfile
 import shapefile
 
 def read_geojson(f):
@@ -103,4 +104,19 @@ def read_shapefile(stem):
             f.close()
 
     return features
+
+def read_xyfile(f, delimiter='', header_rows=0, astype=guppy.Multipoint, coordrank=2):
+    """ Read an ASCII delimited table and return a guppy object given by *astype*.
+    """
+    dat = xyfile.load_xy(f, delimiter=delimiter, header_rows=header_rows)
+    ncols = dat.shape[1]
+    if ncols >= coordrank:
+        coords = dat[:,:coordrank]
+        if ncols > coordrank:
+            data = dat[:,coordrank:]
+        else:
+            data = None
+        return astype(coords, data=data)
+    else:
+        raise IOError('data table has insufficient number of columns')
 
