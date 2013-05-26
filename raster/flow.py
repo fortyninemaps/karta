@@ -46,12 +46,11 @@ import raster
 import math
 import numpy as np
 from scipy import sparse
-import pdb, time
 
 
-def facet_flow(e0, e1, e2, d1=30.0, d2=30.0):
+def facet_flow(e0, e1, e2, d1=1.0, d2=1.0):
     """ Return flow direction and slope for an east-northeast grid
-    facet.
+    facet using the method of Tarboton (1997).
 
                         e2
                         |
@@ -62,8 +61,7 @@ def facet_flow(e0, e1, e2, d1=30.0, d2=30.0):
             e0 -------- e1
                   d1
 
-    Using method of Tarboton (1997)
-    Based on code implemented by Steven L. Eddins (2007)
+    Inspired by blog post by Steven L. Eddins (2007)
     """
 
     s1 = (e0 - e1) / d1             # Equation (1)
@@ -82,17 +80,29 @@ def facet_flow(e0, e1, e2, d1=30.0, d2=30.0):
     return r, s
 
 
-def pixel_flow(E, i, j, d1=30.0, d2=30.0):
-    """ Downslope flow direction for DEM pixels.
+def pixel_flow(E, i, j, d1=1.0, d2=1.0):
+    """ Downslope flow direction for DEM pixels using method of Tarboton (1997).
 
-    Using method of Tarboton (1997)
-    Based on code implemented by Steven L. Eddins (2007)
+    Parameters
+    ----------
+
+    E : elevation array
+
+    i : pixel row
+
+    j : pixel column
+
+    d1 : row spacing (default 1.0)
+
+    d2 : column spacing (default 1.0)
+
+    Inspired by blog post by Steven L. Eddins (2007)
     """
 
     def border_nans(A):
         """ Return indices of nans that touch the border. """
+        #nans = np.isnan(A)
         raise Exception("border_nans not implemented")
-        nans = np.isnan(A)
 
     m, n = E.shape
 
@@ -147,7 +157,8 @@ def pixel_flow(E, i, j, d1=30.0, d2=30.0):
 
 
 def dem_flow(D):
-    """ Calculate a flow field (aspect and slope) for an array.
+    """ Calculate a flow field (aspect and slope) for an array *D*. Return
+    aspect (*R*) and slope (*S*).
 
     Uses the D-infinity method of Tarboton (1997)
     Based on code implemented by Steven L. Eddins (2007)
@@ -161,20 +172,42 @@ def dem_flow(D):
 
     return R, S
 
+def dem_flow2(D):
+    """ Calculate aspect and slope using karta.raster functions """
+    pi = np.pi
+    asp = raster.aspect(D)
+    asp[0,:] = 0.5*pi
+    asp[-1,:] = 1.5*pi
+    asp[:,0] = pi
+    asp[:,-1] = 0.0
+    asp[0,0] = 0.75*pi
+    asp[0,-1] = 0.25*pi
+    asp[-1,0] = 1.25*pi
+    asp[-1,-1] = 1.75*pi
+    slope = raster.slope(D)
+    return asp, slope
 
 def diffrad(a, b):
+    """ Return the difference in radians between two angles """
+    pi = np.pi
     return (a + pi - b) % (2*pi) - pi
 
 
 def prop_dinfty(position, alpha):
-    """ Return proportion flowing to the center from *position* given flow
-    angle *alpha*. The argument *position* is
+    """ Use the D-oo algorithm to return proportion of flow to the center of a
+    3x3 grid.
+
+    Parameters:
+    -----------
+
+    position : cell location assigned based on the map
+
                     0   1   2
                     3   *   4
                     5   6   7
 
-    and *alpha* is measured in radians counter-clockwise from a vector pointing
-    at position 4.
+    alpha : angle measured counter-clockwise from a vector pointing toward
+    position 4
     """
     pi = math.pi
 
@@ -189,13 +222,20 @@ def prop_dinfty(position, alpha):
 
 
 def prop_d8(position, alpha):
-    """ Return proportion flowing to the center from *position* given flow
-    angle *alpha*. The argument *position* is
+    """ Use the D8 algorthm to return proportion of flow to the center of a 3x3
+    grid.
+
+    Parameters:
+    -----------
+
+    position : cell location assigned based on the map
+
                     0   1   2
                     3   *   4
                     5   6   7
-    and *alpha* is measured in radians counter-clockwise from a vector pointing
-    at position 4.
+
+    alpha : angle measured counter-clockwise from a vector pointing toward
+    position 4
     """
     pi = math.pi
 
@@ -211,17 +251,25 @@ def prop_d8(position, alpha):
 
 def upslope_area(F, A, proportion=prop_dinfty):
     """ Calculate upslope area with a sparse matrix formulation, inspired by
-    the blog posts by Steve Eddins of Mathworks (TM). *F* is a flow direction
-    array, and *A* is the area of each grid cell. The function *proportion*
-    defines how flow should be partitioned (e.g. D8, D-infinity algorithms).
+    the blog posts by Steve Eddins of Mathworks (TM).
+
+    Parameters:
+    -----------
+
+    F : flow direction array (e.g. from dem_flow())
+
+    A : array providing the area of each grid cell
+
+    proportion : function that defines how flow should be partitioned (e.g. D8,
+        D-infinity algorithms).
     """
 
     assert F.shape == A.shape
 
     m, n = F.shape
-    pi = np.pi
-    ii = np.reshape(np.arange(F.size), F.shape)
-    I = ii.diagonal()
+    #pi = np.pi
+    #ii = np.reshape(np.arange(F.size), F.shape)
+    #I = ii.diagonal()
 
     # Assemble a flow contribution matrix
     C = sparse.lil_matrix((F.size, F.size))
@@ -257,7 +305,7 @@ def upslope_area(F, A, proportion=prop_dinfty):
                     C[i_,i7] = -A[i+1,j+1] * proportion(7, F[i+1,j+1])
 
     # Next, solve the linear problem: C * U_a = \summation{A}
-    U = sparse.linalg.spsolve(C, A.flatten() * np.ones(m*n))
+    U = sparse.linalg.spsolve(C.tocsc(), A.flatten() * np.ones(m*n))
     return U.reshape(F.shape)
 
 
