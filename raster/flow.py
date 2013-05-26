@@ -75,7 +75,8 @@ def facet_flow(e0, e1, e2, d1=1.0, d2=1.0):
 
     diagonal_angle = math.atan2(d2, d1)
     diagonal_distance = math.sqrt(d1*d1 + d2*d2)
-    r, s = r < diagonal_angle and (r, s) or (diagonal_angle, (e0 - e2) / diagonal_distance)
+    r, s = r < diagonal_angle and \
+            (r, s) or (diagonal_angle, (e0 - e2) / diagonal_distance)
 
     return r, s
 
@@ -164,7 +165,6 @@ def dem_flow(D):
     ff = map(lambda a: pixel_flow(Dp, a[0], a[1], d1=1.0, d2=1.0), c)
     R = np.array([i[0] for i in ff]).reshape(D.shape)
     S = np.array([i[1] for i in ff]).reshape(D.shape)
-
     return R, S
 
 def dem_flow2(D):
@@ -186,7 +186,6 @@ def diffrad(a, b):
     """ Return the difference in radians between two angles """
     pi = np.pi
     return (a + pi - b) % (2*pi) - pi
-
 
 def prop_dinfty(position, alpha):
     """ Use the D-oo algorithm to return proportion of flow to the center of a
@@ -211,8 +210,10 @@ def prop_dinfty(position, alpha):
     beta = BETA[position] * pi
 
     theta = abs(diffrad(alpha, beta))
-    P = np.where(theta <= 0.25*pi, (0.25*pi-theta) / (0.25*pi), 0.0)
-    P = np.where(np.isnan(alpha), 0.0, P)
+    if theta <= 0.25*pi and np.isnan(alpha) == False:
+        P = (0.25*pi-theta) / (0.25*pi)
+    else:
+        P = 0.0
     return P
 
 
@@ -239,14 +240,15 @@ def prop_d8(position, alpha):
     beta = BETA[position] * pi
 
     theta = abs(diffrad(alpha, beta))
-    P = np.where(theta <= 0.125*pi, 1.0, 0.0)
-    P = np.where(np.isnan(alpha), 0.0, P)
+    if theta <= 0.125*pi and np.isnan(alpha) == False:
+        P = 1.0
+    else:
+        P = 0.0
     return P
 
 
 def upslope_area(F, A, proportion=prop_dinfty):
-    """ Calculate upslope area with a sparse matrix formulation, inspired by
-    the blog posts by Steve Eddins of Mathworks (TM).
+    """ Calculate upslope area with a sparse matrix formulation.
 
     Parameters:
     -----------
@@ -258,16 +260,18 @@ def upslope_area(F, A, proportion=prop_dinfty):
     proportion : function that defines how flow should be partitioned (e.g. D8,
         D-infinity algorithms).
     """
-
-    assert F.shape == A.shape
-
     m, n = F.shape
+    if not hasattr(A, 'shape'):
+        A = np.ones_like(F) * A
 
     # Assemble a flow contribution matrix
-    C = sparse.lil_matrix((F.size, F.size))
+    rows = np.zeros(F.size*9)
+    cols = np.zeros(F.size*9)
+    data = np.zeros(F.size*9)
+
+    cnt = 0
     for i in xrange(m):
         for j in xrange(n):
-
             i_ = i*n + j
             i0 = i_ - n - 1
             i1 = i_ - n
