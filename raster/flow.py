@@ -47,6 +47,10 @@ import math
 import numpy as np
 from scipy import sparse
 
+try:
+    import crfuncs as rfuncs
+except ImportError:
+    import rfuncs as rfuncs
 
 def facet_flow(e0, e1, e2, d1=1.0, d2=1.0):
     """ Return flow direction and slope for an east-northeast grid
@@ -182,11 +186,6 @@ def dem_flow2(D):
     slope = raster.slope(D)
     return asp, slope
 
-def diffrad(a, b):
-    """ Return the difference in radians between two angles """
-    pi = np.pi
-    return (a + pi - b) % (2*pi) - pi
-
 def prop_dinfty(position, alpha):
     """ Use the D-oo algorithm to return proportion of flow to the center of a
     3x3 grid.
@@ -209,7 +208,7 @@ def prop_dinfty(position, alpha):
     BETA = [1.75, 1.5, 1.25, 0.0, 1.0, 0.25, 0.5, 0.75]
     beta = BETA[position] * pi
 
-    theta = abs(diffrad(alpha, beta))
+    theta = abs(rfuncs.diffrad(alpha, beta))
     if theta <= 0.25*pi and np.isnan(alpha) == False:
         P = (0.25*pi-theta) / (0.25*pi)
     else:
@@ -239,7 +238,7 @@ def prop_d8(position, alpha):
     BETA = [1.75, 1.5, 1.25, 0.0, 1.0, 0.25, 0.5, 0.75]
     beta = BETA[position] * pi
 
-    theta = abs(diffrad(alpha, beta))
+    theta = abs(rfuncs.diffrad(alpha, beta))
     if theta <= 0.125*pi and np.isnan(alpha) == False:
         P = 1.0
     else:
@@ -282,26 +281,162 @@ def upslope_area(F, A, proportion=prop_dinfty):
             i6 = i_ + n
             i7 = i_ + n + 1
 
-            C[i_,i_] = A[i,j]
+            rows[cnt] = i_
+            cols[cnt] = i_
+            data[cnt] = A[i,j]
+            cnt += 1
+
             if i > 0:
                 if j > 0:
-                    C[i_,i0] = -A[i-1,j-1] * proportion(0, F[i-1,j-1])
-                C[i_,i1]     = -A[i-1,j]   * proportion(1, F[i-1,j])
+                    rows[cnt] = i_
+                    cols[cnt] = i0
+                    data[cnt] = -A[i-1,j-1] * proportion(0, F[i-1,j-1])
+                    cnt += 1
+
+                rows[cnt] = i_
+                cols[cnt] = i1
+                data[cnt] = -A[i-1,j]   * proportion(1, F[i-1,j])
+                cnt += 1
+
                 if j < n-1:
-                    C[i_,i2] = -A[i-1,j+1] * proportion(2, F[i-1,j+1])
+                    rows[cnt] = i_
+                    cols[cnt] = i2
+                    data[cnt] = -A[i-1,j+1] * proportion(2, F[i-1,j+1])
+                    cnt += 1
+
             if j > 0:
-                C[i_,i3]     = -A[i,j-1]   * proportion(3, F[i,j-1])
+                rows[cnt] = i_
+                cols[cnt] = i3
+                data[cnt] = -A[i,j-1]   * proportion(3, F[i,j-1])
+                cnt += 1
+
             if j < n-1:
-                C[i_,i4]     = -A[i,j+1]   * proportion(4, F[i,j+1])
+                rows[cnt] = i_
+                cols[cnt] = i4
+                data[cnt] = -A[i,j+1]   * proportion(4, F[i,j+1])
+                cnt += 1
+
             if i < m-1:
                 if j > 0:
-                    C[i_,i5] = -A[i+1,j-1] * proportion(5, F[i+1,j-1])
-                C[i_,i6]     = -A[i+1,j]   * proportion(6, F[i+1,j])
+                    rows[cnt] = i_
+                    cols[cnt] = i5
+                    data[cnt] = -A[i+1,j-1] * proportion(5, F[i+1,j-1])
+                    cnt += 1
+
+                rows[cnt] = i_
+                cols[cnt] = i6
+                data[cnt] = -A[i+1,j]   * proportion(6, F[i+1,j])
+                cnt += 1
+
                 if j < n-1:
-                    C[i_,i7] = -A[i+1,j+1] * proportion(7, F[i+1,j+1])
+                    rows[cnt] = i_
+                    cols[cnt] = i7
+                    data[cnt] = -A[i+1,j+1] * proportion(7, F[i+1,j+1])
+                    cnt += 1
+
+    C = sparse.coo_matrix((data, (rows, cols)), shape=(F.size, F.size))
+
+    # Assemble a flow contribution matrix
+    #C = sparse.lil_matrix((F.size, F.size))
+    #for i in xrange(m):
+    #    for j in xrange(n):
+
+    #        i_ = i*n + j
+    #        i0 = i_ - n - 1
+    #        i1 = i_ - n
+    #        i2 = i_ - n + 1
+    #        i3 = i_ - 1
+    #        i4 = i_ + 1
+    #        i5 = i_ + n - 1
+    #        i6 = i_ + n
+    #        i7 = i_ + n + 1
+
+    #        C[i_,i_] = A[i,j]
+    #        if i > 0:
+    #            if j > 0:
+    #                C[i_,i0] = -A[i-1,j-1] * proportion(0, F[i-1,j-1])
+    #            C[i_,i1]     = -A[i-1,j]   * proportion(1, F[i-1,j])
+    #            if j < n-1:
+    #                C[i_,i2] = -A[i-1,j+1] * proportion(2, F[i-1,j+1])
+    #        if j > 0:
+    #            C[i_,i3]     = -A[i,j-1]   * proportion(3, F[i,j-1])
+    #        if j < n-1:
+    #            C[i_,i4]     = -A[i,j+1]   * proportion(4, F[i,j+1])
+    #        if i < m-1:
+    #            if j > 0:
+    #                C[i_,i5] = -A[i+1,j-1] * proportion(5, F[i+1,j-1])
+    #            C[i_,i6]     = -A[i+1,j]   * proportion(6, F[i+1,j])
+    #            if j < n-1:
+    #                C[i_,i7] = -A[i+1,j+1] * proportion(7, F[i+1,j+1])
 
     # Next, solve the linear problem: C * U_a = \summation{A}
     U = sparse.linalg.spsolve(C.tocsc(), A.flatten() * np.ones(m*n))
     return U.reshape(F.shape)
 
+#def upslope_area_nn(F, A, proportion=prop_dinfty):
+#    """ Calculate upslope area with a sparse matrix formulation.
+#
+#    Parameters:
+#    -----------
+#
+#    F : flow direction array (e.g. from dem_flow())
+#
+#    A : array providing the area of each grid cell
+#
+#    proportion : function that defines how flow should be partitioned (e.g. D8,
+#        D-infinity algorithms).
+#    """
+#    m, n = F.shape
+#    if not hasattr(A, 'shape'):
+#        A = np.ones_like(F) * A
+#
+#    nnmap = np.nonzero(np.isnan(F) == False)
+#    nnsize = len(nnmap[0])
+#
+#    # Assemble a flow contribution matrix
+#    C = sparse.lil_matrix((nnsize+2, nnsize+2))
+#    for cell in range(nnsize):
+#        i = nnmap[0][cell] + 1
+#        j = nnmap[1][cell] + 1
+#
+#        i_ = i*n + j
+#        i0 = i_ - n - 1
+#        i1 = i_ - n
+#        i2 = i_ - n + 1
+#        i3 = i_ - 1
+#        i4 = i_ + 1
+#        i5 = i_ + n - 1
+#        i6 = i_ + n
+#        i7 = i_ + n + 1
+#
+#        C[i_,i_] = A[i,j]
+#        if i > 0:
+#            if j > 0:
+#                C[i_,i0] = -A[i-1,j-1] * proportion(0, F[i-1,j-1])
+#            C[i_,i1]     = -A[i-1,j]   * proportion(1, F[i-1,j])
+#            if j < n-1:
+#                C[i_,i2] = -A[i-1,j+1] * proportion(2, F[i-1,j+1])
+#        if j > 0:
+#            C[i_,i3]     = -A[i,j-1]   * proportion(3, F[i,j-1])
+#        if j < n-1:
+#            C[i_,i4]     = -A[i,j+1]   * proportion(4, F[i,j+1])
+#        if i < m-1:
+#            if j > 0:
+#                C[i_,i5] = -A[i+1,j-1] * proportion(5, F[i+1,j-1])
+#            C[i_,i6]     = -A[i+1,j]   * proportion(6, F[i+1,j])
+#            if j < n-1:
+#                C[i_,i7] = -A[i+1,j+1] * proportion(7, F[i+1,j+1])
+#
+#    # Next, solve the linear problem: C * U_a = \summation{A}
+#    Unn = sparse.linalg.spsolve(C.tocsc(), A.flatten())
+#
+#    # Reconstruct the full array
+#    U = np.zeros_like(F)
+#    Unndiag = Unn.diagonal()
+#    for cell in range(nnsize):
+#        i = nnmap[0][cell] + 1
+#        j = nnmap[1][cell] + 1
+#        U[i,j] = Unnfull[cell]
+#
+#    return U
 

@@ -13,7 +13,7 @@ from raster import witch_of_agnesi, peaks, pad, slope, aspect, grad, div
 from raster import normed_vector_field, fill_sinks
 
 try:
-    from cfuncs import streamline2d
+    from crfuncs import streamline2d
 except ImportError:
     from streamline import streamline2d
 
