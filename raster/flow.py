@@ -106,13 +106,8 @@ def pixel_flow(E, i, j, d1=1.0, d2=1.0):
 
     m, n = E.shape
 
-    # Preprocess NaNs connected to the border.
-    #highest_value = E[np.isnan(E)==False].max()
-    #bump = 1.0
-    #E[border_nans(E)] = highest_value + bump
-
     # Compute linear indices at desired locations
-    e0_idx = j * m + i
+    e0_idx = i*(n-0) + j
 
     # Table 1, page 311
     # Row and column offsets corresponding to e1 and e2 for each entry
@@ -123,11 +118,11 @@ def pixel_flow(E, i, j, d1=1.0, d2=1.0):
     e2_col_offsets = np.array([ 1,  1, -1, -1, -1, -1,  1,  1])
 
     # Linear e1 and e2 offsets
-    e1_linear_offsets = e1_col_offsets * m + e1_row_offsets
-    e2_linear_offsets = e2_col_offsets * m + e2_row_offsets
+    e1_linear_offsets = e1_row_offsets * (n-0) + e1_col_offsets
+    e2_linear_offsets = e2_row_offsets * (n-0) + e2_col_offsets
 
     # Initialize R and S based on the first facet
-    Eflat = E.flat
+    Eflat = E.flatten()
     E0 = Eflat[e0_idx]
 
     E1 = Eflat[e0_idx + e1_linear_offsets[0]]
@@ -166,7 +161,7 @@ def dem_flow(D):
     Dp = raster.pad(D)
     c = [(i,j) for i in range(1, Dp.shape[0]-1) for j in range(1, Dp.shape[1]-1)]
 
-    ff = map(lambda a: pixel_flow(Dp, a[0], a[1], d1=20.0, d2=20.0), c)
+    ff = map(lambda a: pixel_flow(Dp, a[0], a[1], d1=1.0, d2=1.0), c)
     R = np.array([i[0] for i in ff]).reshape(D.shape)
     S = np.array([i[1] for i in ff]).reshape(D.shape)
 
@@ -267,9 +262,6 @@ def upslope_area(F, A, proportion=prop_dinfty):
     assert F.shape == A.shape
 
     m, n = F.shape
-    #pi = np.pi
-    #ii = np.reshape(np.arange(F.size), F.shape)
-    #I = ii.diagonal()
 
     # Assemble a flow contribution matrix
     C = sparse.lil_matrix((F.size, F.size))
