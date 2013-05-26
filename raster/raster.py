@@ -11,8 +11,8 @@ def witch_of_agnesi(nx=100, ny=100, a=4.0):
                  d^2 + 4 a*2
     where d is the distance from the center.
     """
-    xc = int(np.ceil(nx / 2.0))
-    yc = int(np.ceil(ny / 2.0))
+    xc = int(np.floor(nx / 2.0))
+    yc = int(np.floor(ny / 2.0))
     X, Y = np.meshgrid(range(nx), range(ny))
     D = np.sqrt( (X-xc)**2 + (Y-yc)**2 )
 
