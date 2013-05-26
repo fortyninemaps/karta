@@ -16,4 +16,9 @@ from shp_funcs import write_shapefile
 from gpxparser import GPXParser
 from xyfile import load_xy, xyz2array_reg, array2xyz
 
+try:
+    import stats
+except ImportError:
+    # Probably missing scipy dependency
+    pass
 
