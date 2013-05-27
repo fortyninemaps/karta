@@ -1,15 +1,31 @@
 import numpy as np
-from itertools import count, izip
 cimport numpy as np
+cimport cython
 
-def neighbours_of(tuple a not None):
-    cdef int i, j, k
-    i, j, z = a
-    return ((i-1, j-1), (i, j-1), (i+1, j-1),
-            (i-1, j), (i+1, j),
-            (i-1, j+1), (i, j+1), (i+1, j+1))
+cdef inline int find_min(double[:] Z, int[:] FLAG):
+    """ Return index of smallest item in Z where FLAG == 1 """
+    cdef int itr, idx
+    cdef double mn
+    mn = 1e16
+    for itr in range(len(Z)):
+        if FLAG[itr] == 1:
+            if Z[itr] < mn:
+                idx = itr
+                mn = Z[itr]
+    return idx
+       
+cdef inline double[:] flatten(double[:,:] A):
+    cdef double[:] Aflat
+    cdef int i, j, idx
+    Aflat = np.empty(A.size)
+    for i in range(A.shape[0]):
+        for j in range(A.shape[1]):
+            idx = i * A.shape[0] + j
+            Aflat[idx] = A[i,j]
+    return Aflat
 
-def fill_sinks(np.ndarray Z not None):
+@cython.profile(False)
+def fill_sinks_cy2(double[:,:] Z):
     """ Fill sinks in a DEM following the algorithm of Wang and Liu
     (2006).
 
@@ -22,43 +38,74 @@ def fill_sinks(np.ndarray Z not None):
     Information Science, 20:2 (2006).
     """
 
-    cdef np.ndarray SPILL, CLOSED
-    cdef list OPEN, B
-    cdef int nx, ny, i, j, a
-    cdef tuple b, c
-    cdef tuple N, n
-    cdef float Zn, lowest
-    
+    cdef int[:] OPENROW, OPENCOL, OPENIND, BROW, BCOL, CLOSED
+    cdef double[:] ZFLAT, OPENZ, SPILL
+    cdef int n, nx, ny, nopen, i, j      # counters and row/column indices
+    cdef int bidx, oidx, nidx     # boundary, open, and neighbour indices
+    cdef double Zn
+    cdef tuple neighbours
     
     # Initialize SPILL and CLOSED
-    SPILL = Z.copy()
-    CLOSED = np.zeros_like(Z)
-    OPEN = []
+    n = Z.shape[0] * Z.shape[1]
+    ZFLAT = flatten(Z)
+    SPILL = np.zeros(n, dtype=np.double)
+    CLOSED = np.zeros(n, dtype=np.int32)
+    OPENZ = np.zeros(n, dtype=np.double)
+    OPENIND = np.zeros(n, dtype=np.int32)
+    BROW = np.zeros(n, dtype=np.int32)
+    BCOL = np.zeros(n, dtype=np.int32)
 
     # Get the boundary cells
     ny, nx = (Z.shape[0], Z.shape[1])
-    B = [(i, j) for i in range(ny) for j in (0, nx-1)]
-    B.extend([(i, j) for i in (0, ny-1) for j in range(nx)])
+    bidx = 0
+    for i in range(ny):
+        BROW[bidx] = i
+        BCOL[bidx] = 0
+        bidx += 1
+        BROW[bidx] = i
+        BCOL[bidx] = nx-1
+        bidx += 1
+
+    for j in range(nx):
+        BROW[bidx] = 0
+        BCOL[bidx] = j
+        bidx += 1
+        BROW[bidx] = ny-1
+        BCOL[bidx] = j
+        bidx += 1
 
     # Get z along the boundary
-    for b in B:
-        SPILL[b] = Z[b]
-        OPEN.append((b[0], b[1], Z[b]))
+    nopen = 0
+    for i in range(bidx):
+        oidx = BROW[i]*nx + BCOL[i]
+        OPENZ[oidx] = ZFLAT[oidx]
+        OPENIND[oidx] = 1
+        nopen += 1
+        SPILL[oidx] = ZFLAT[oidx]
+    
+    # Iteratively fill sinks
+    while nopen > 0:
 
-    while len(OPEN) > 0:
+        oidx = find_min(OPENZ, OPENIND)
+        OPENIND[oidx] = 0
+        nopen -= 1
+        CLOSED[oidx] = 1
 
-        #OPEN.sort(key=lambda a: a[2], reverse=True)
-        #c = OPEN.pop()
-        # This fancy version uses iterators and generators
-        c = OPEN.pop(min(izip((c[2] for c in OPEN), count()))[1])
-        CLOSED[c[:2]] = 1
+        neighbours = (oidx-nx-1, oidx-nx, oidx-nx+1,
+                      oidx-1,             oidx+1,
+                      oidx+nx-1, oidx+nx, oidx+nx+1)
 
-        for n in neighbours_of(c):
-            #if (n[0]>=ny or n[0]<0 or n[1]>=nx or n[1]<0) is False:
-            if (n[0]<ny) and (n[0]>=0) and (n[1]<nx) and (n[1]>=0):
-                Zn = Z[n]
-                if CLOSED[n] == 0 and (n[0], n[1], Zn) not in OPEN:
-                    SPILL[n] = max(Zn, SPILL[c[0], c[1]])
-                    OPEN.append((n[0], n[1], Zn))
+        for nidx in neighbours:
 
-    return SPILL
+            if 0 <= nidx < n:
+                if CLOSED[nidx] == 0 and OPENIND[nidx] == 0:
+    
+                    Zn = ZFLAT[nidx]
+                    SPILL[nidx] = max(Zn, SPILL[oidx])
+    
+                    OPENZ[nidx] = Zn
+                    OPENIND[nidx] = 1
+                    nopen += 1
+
+    return np.reshape(SPILL, (ny, nx))
+
