@@ -1,8 +1,13 @@
+""" Function to iteratively fill depressions in a raster surface. """
+
 import numpy as np
 cimport numpy as np
 cimport cython
 
-cdef inline int find_min(double[:] Z, int[:] FLAG):
+#@cython.profile(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef int find_min(double[:] Z, int[:] FLAG):
     """ Return index of smallest item in Z where FLAG == 1 """
     cdef int itr, idx
     cdef double mn
@@ -13,18 +18,24 @@ cdef inline int find_min(double[:] Z, int[:] FLAG):
                 idx = itr
                 mn = Z[itr]
     return idx
-       
-cdef inline double[:] flatten(double[:,:] A):
+
+#@cython.profile(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.always_allow_keywords(False)
+cdef double[:] flatten(double[:,:] A):
     cdef double[:] Aflat
     cdef int i, j, idx
     Aflat = np.empty(A.size)
     for i in range(A.shape[0]):
         for j in range(A.shape[1]):
-            idx = i * A.shape[0] + j
+            idx = i * A.shape[1] + j
             Aflat[idx] = A[i,j]
     return Aflat
 
-@cython.profile(False)
+#@cython.profile(True)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 def fill_sinks_cy2(double[:,:] Z):
     """ Fill sinks in a DEM following the algorithm of Wang and Liu
     (2006).
@@ -45,7 +56,7 @@ def fill_sinks_cy2(double[:,:] Z):
     cdef double Zn
     cdef tuple neighbours
     
-    # Initialize SPILL and CLOSED
+    # Initialize SPILL, OPEN and CLOSED
     n = Z.shape[0] * Z.shape[1]
     ZFLAT = flatten(Z)
     SPILL = np.zeros(n, dtype=np.double)
@@ -74,7 +85,7 @@ def fill_sinks_cy2(double[:,:] Z):
         BCOL[bidx] = j
         bidx += 1
 
-    # Get z along the boundary
+    # Add boundary to OPEN
     nopen = 0
     for i in range(bidx):
         oidx = BROW[i]*nx + BCOL[i]
@@ -108,4 +119,3 @@ def fill_sinks_cy2(double[:,:] Z):
                     nopen += 1
 
     return np.reshape(SPILL, (ny, nx))
-
