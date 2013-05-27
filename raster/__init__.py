@@ -10,7 +10,7 @@ import flow
 from grid import RegularGrid, StructuredGrid, aairead
 from aaigrid import AAIGrid
 from raster import witch_of_agnesi, peaks, pad, slope, aspect, grad, div
-from raster import normed_vector_field, fill_sinks
+from raster import normed_vector_field
 
 try:
     from crfuncs import streamline2d
@@ -18,12 +18,12 @@ except ImportError:
     from streamline import streamline2d
 
 try:
-    import fill_sinks    # Cython
+    import cfill_sinks as fill_sinks
 except ImportError:
-    print("Warning: experimental Cython fill_sinks not loaded")
+    import fill_sinks
 
 try:
     import flow          # Has a Scipy dependency
 except ImportError:
-    print("Warning: raster.flow not loaded - perhaps scipy is missing")
+    print("Warning: raster.flow not loaded")
 
