@@ -18,9 +18,32 @@ class RegularGrid(unittest.TestCase):
                                                  'nbands':1}, Z=pe)
         return
 
-    def test_region_centered(self):
-        reg = self.rast.get_region()
-        self.assertEqual(reg, (15.0, 1485.0, 15.0, 1485.0))
+    def test_center_coords(self):
+        ans = np.meshgrid(np.arange(15.0, 1471.0, 30.0),
+                          np.arange(15.0, 1471.0, 30.0))
+        self.assertEqual(0.0, np.sum(self.rast.center_coords()[0] - ans[0]))
+        self.assertEqual(0.0, np.sum(self.rast.center_coords()[1] - ans[1]))
+        return
+
+    def test_resample(self):
+        small = raster.raster.peaks(n=7)
+        rast = self.rast.copy()
+        rast.resample(210.0, 210.0)
+        self.assertEqual(0.0, np.sum(rast.data - small))
+        return
+
+    def test_vertex_coords(self):
+        ans = np.meshgrid(np.arange(0.0, 1471.0, 30.0),
+                          np.arange(0.0, 1471.0, 30.0))
+        self.assertEqual(0.0, np.sum(self.rast.vertex_coords()[0] - ans[0]))
+        self.assertEqual(0.0, np.sum(self.rast.vertex_coords()[1] - ans[1]))
+        return
+
+    def test_get_region(self):
+        creg = (15.0, 1485.0, 15.0, 1485.0)
+        ereg = (0.0, 1500.0, 0.0, 1500.0)
+        self.assertEqual(self.rast.get_region(reference='center'), creg)
+        self.assertEqual(self.rast.get_region(reference='edge'), ereg)
         return
 
     def test_minmax(self):

@@ -1,21 +1,20 @@
 Karta - simple geospatial analysis in Python
 --------------------------------------------
 
-*Karta* is a Leatherman for geographic analyses in Python. *Karta* provides an API for
-solving problems in Python. To this end, it provides a simple and clean interface to both
-vector and raster data types, the ability to read and write a useful subset of formats,
-and close interoperability with *numpy*.
+*Karta* is a Leatherman for geographic analyses in Python. *Karta* provides an interface
+for solving problems in Python. To this end, it provides a simple and clean vector and
+raster data types, a selection of analysis functions, the ability to read and write a
+useful subset of formats, and close interoperability with *numpy*.
 
 Goals of *Karta* include providing a simple, lightweight, and fast set of tools useful for
 everyday spatial analysis. *Karta* should be considered a work in progress.
 
 **Curently working on:**
 - projection handling
-- refactoring raster class hierarchy
 - native GeoTiff support
 
 **Thinking about:**
-- memory efficiency
+- shapefile support through OGR rather than pyshp
 
 ##CONTENTS
 
@@ -52,15 +51,21 @@ Currently partially supported are:
     - ESRI ASCII Grids (r,w)
     - GeoTiff (WIP)
 
-##CYTHON
+## DEPENDENCIES
 
-Cython is an optional dependency than can make select functions faster. To compile the
+- Python 2.x
+- numpy
+- scipy (optional)
+
+###CYTHON
+
+Cython is an optional dependency used to speed up select functions. To compile the
 Cython-enabled sub-modules, run:
 
     setup.py build_ext --inplace
 
-In general, enhanced-performance functions will then be called automatically where
-available.
+In general, enhanced-performance functions will then be called automatically when
+available, otherwise *Karta* will fall back to numpy and pure-Python versions.
 
 
 

@@ -20,7 +20,8 @@ class Grid(object):
     data = np.empty((0,0))
 
     def __len__(self):
-        return self.data.shape[0] + self.data.shape[1]
+        # Number of bands
+        return np.atleast_3d(self.data).shape[2]
 
     def _check_hdr(self, hdr):
         """ Check that hdr contains required fields. Intended to be overloaded.
@@ -141,7 +142,7 @@ class RegularGrid(Grid):
             x0, y0  = self.center_llref()
             n = 0
         elif reference == 'edge':
-            x0, y0  = self._hdr['xllcenter'], self._hdr['yllcenter']
+            x0, y0  = self._hdr['xllcorner'], self._hdr['yllcorner']
             n = 1
         else:
             raise GridError("`reference` must be 'center' or 'edge'")
