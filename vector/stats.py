@@ -82,6 +82,9 @@ def estimate_vario(mp, npoints=2000, max_dist=None, interval=None):
     lags : ndarray
     variogram : ndarray
     """
+    if len(mp.data) != len(mp.vertices):
+        raise Exception('estimate_variogram() requires a Multipoint with '
+                        'scalar data')
     if npoints > len(mp):
         npoint = len(mp)
 
@@ -94,9 +97,13 @@ def estimate_vario(mp, npoints=2000, max_dist=None, interval=None):
 
     if max_dist is None:
         max_dist = dist.max()
+    else:
+        max_dist = float(max_dist)
 
     if interval is None:
         interval = max_dist / 10.0
+    else:
+        interval = float(interval)
 
     lags = np.arange(0, max_dist, interval)
     sigma_variance = np.empty_like(lags)
