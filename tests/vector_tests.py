@@ -10,19 +10,64 @@ from test_helper import md5sum
 class TestGuppy(unittest.TestCase):
 
     def setUp(self):
+        self.point = vector.guppy.Point((1.0, 2.0, 3.0))
+
+        self.vertices = [(2.0, 9.0, 9.0), (4.0, 1.0, 9.0), (4.0, 1.0, 5.0),
+                         (2.0, 8.0, 0.0), (9.0, 8.0, 4.0), (1.0, 4.0, 6.0),
+                         (7.0, 3.0, 4.0), (2.0, 5.0, 3.0), (1.0, 6.0, 6.0),
+                         (8.0, 1.0, 0.0), (5.0, 5.0, 1.0), (4.0, 5.0, 7.0),
+                         (3.0, 3.0, 5.0), (9.0, 0.0, 9.0), (6.0, 3.0, 8.0),
+                         (4.0, 5.0, 7.0), (9.0, 9.0, 4.0), (1.0, 4.0, 7.0),
+                         (1.0, 7.0, 8.0), (9.0, 1.0, 6.0)]
+
+        self.data = [99.0, 2.0, 60.0, 75.0, 71.0, 34.0, 1.0, 49.0, 4.0, 36.0,
+                     47.0, 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]
+
+        self.mp = vector.guppy.Multipoint(self.vertices, data=self.data)
         self.poly = vector.guppy.Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
         self.ring = vector.guppy.Polygon([(2.0, 2.0), (4.0, 2.0), (3.0, 6.0)])
         self.ringed_poly = vector.guppy.Polygon([(0.0, 0.0), (10, 0.0),
                                                  (10.0, 10.0), (0.0, 10.0)],
                                                 subs=[self.ring])
-
-
-    def test_point_creation(self):
-        # Create a point
-        P = vector.guppy.Point((1.0, 2.0, 3.0))
+        self.unitsquare = vector.guppy.Polygon([(0.0,0.0), (1.0,0.0), (1.0,1.0),
+                                                (0.0,1.0)])
         return
 
-    def test_multipoint_create(self):
+
+    def test_point_coordsxy(self):
+        self.assertEqual(self.point.coordsxy(), (1.0, 2.0))
+        return
+
+    def test_point_bearing(self):
+        other = vector.guppy.Point((7.0, 8.0))
+        self.assertEqual(self.point.bearing(other), 225.0 / 180.0 * np.pi)
+        return
+
+    def test_point_azimuth(self):
+        other = vector.guppy.Point((2.0, 1.0, 1.0))
+        self.assertEqual(self.point.azimuth(other), -np.arctan(2./np.sqrt(2.0)))
+        return
+
+    def test_point_shift(self):
+        point = vector.guppy.Point((-3.0, 5.0, 2.5))
+        point.shift((4.0, -3.0, 0.5))
+        self.assertEqual(self.point, point)
+        return
+
+    def test_multipoint_getset(self):
+        self.assertEqual(self.mp[0], self.vertices[0])
+        return
+
+    def test_multipoint_bbox(self):
+        bbox = (1.0, 9.0, 0.0, 9.0, 0.0, 9.0)
+        self.assertEqual(self.mp.get_bbox(), bbox)
+        return
+
+    def test_multipoint_bbox_overlap(self):
+        self.assertTrue(self.mp._bbox_overlap(self.poly))
+        return
+
+    def test_multipoint_datadict(self):
         # create a line
         vertices = [(2.0, 9.0, 9.0),
                     (4.0, 1.0, 9.0),
@@ -51,9 +96,14 @@ class TestGuppy(unittest.TestCase):
         data1 = [54.0, 40.0, 77.0, 18.0, 84.0, 91.0, 61.0, 92.0, 19.0, 42.0,
                  50.0, 25.0, 11.0, 80.0, 59.0, 56.0, 32.0, 8.0, 88.0, 76.0]
 
-        L0 = vector.guppy.Multipoint(vertices)
-        L1 = vector.guppy.Multipoint(vertices, data=data0)
         L2 = vector.guppy.Multipoint(vertices, data={'d0':data0, 'd1':data1})
+        return
+
+    def test_line_intersection(self):
+        line0 = vector.guppy.Line([(0.0, 0.0), (3.0, 3.0)])
+        line1 = vector.guppy.Line([(0.0, 3.0), (3.0, 0.0)])
+        self.assertTrue(line0.intersects(line1))
+        self.assertEqual(line0.intersections(line1), [(1.5, 1.5)])
         return
 
     def test_poly_vertices(self):
@@ -72,6 +122,13 @@ class TestGuppy(unittest.TestCase):
 
     def test_poly_length(self):
         self.assertEqual(self.poly.length(), 19.430647008220866)
+        return
+
+    def test_poly_contains(self):
+        pt0 = vector.guppy.Point((-0.5, 0.92))
+        pt1 = vector.guppy.Point((0.125, 0.875))
+        self.assertFalse(self.unitsquare.contains(pt0))
+        self.assertTrue(self.unitsquare.contains(pt1))
         return
 
     def test_ringedpoly_perimeter(self):

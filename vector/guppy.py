@@ -34,20 +34,29 @@ class Point(object):
     _geotype = "Point"
 
     def __init__(self, coords):
-        self.x = float(coords[0])
-        self.y = float(coords[1])
+        self.vertex = coords
+        self._setxyz()
+        return
+
+    def _setxyz(self):
+        self.x = self.vertex[0]
+        self.y = self.vertex[1]
         try:
-            self.z = float(coords[2])
+            self.z = self.vertex[2]
             self.rank = 3
-            self.vertex = (self.x, self.y, self.z)
         except IndexError:
             self.z = None
             self.rank = 2
-            self.vertex = (self.x, self.y)
         return
 
     def __repr__(self):
         return 'Point(' + str(self.vertex) + ')'
+
+    def __eq__(self, other):
+        if hasattr(other, "vertex"):
+            return self.vertex == other.vertex
+        else:
+            return False
 
     def get_vertex(self):
         """ Return the Point vertex as a tuple. """
@@ -103,16 +112,16 @@ class Point(object):
                             "coordinate.")
 
         distxy = math.sqrt((self.x-other.x)**2. + (self.y-other.y)**2.)
-        dz = self.z - other.z
+        dz = other.z - self.z
 
         if spherical is False:
             if distxy == 0.0:
                 if dz > 0.0:
-                    return 0.5 * math.pi
+                    return 0.5 * np.pi
                 elif dz < 0.0:
-                    return -0.5 * math.pi
+                    return -0.5 * np.pi
                 elif dz == 0.0:
-                    return None
+                    return np.nan
             else:
                 return math.atan(dz / distxy)
 
@@ -140,10 +149,8 @@ class Point(object):
         if len(shift_vector) != self.rank:
             raise GGeoError('Shift vector length must equal geometry rank.')
 
-        self.x += shift_vector[0]
-        self.y += shift_vector[1]
-        if self.rank == 3:
-            self.z += shift_vector[2]
+        self.vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
+        self._setxyz()
         return
 
     def as_geojson(self, **kwargs):
