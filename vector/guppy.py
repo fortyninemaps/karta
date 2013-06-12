@@ -531,7 +531,15 @@ class Line(ConnectedMultipoint):
         """ Removes a vertex from the register by index. """
         self.vertices.pop(index)
 
-    def displacement(self, spherical=False):
+    def distances(self):
+        """ Returns the cumulative length of each segment, prefixed by zero. """
+        d = [0.0]
+        for i, vert in enumerate(self.vertices[1:]):
+            d_ = math.sqrt(sum([(a-b)**2 for a,b in zip(self.vertices[i], vert)]))
+            d.append(d_ + d[i])
+        return d
+
+    def displacement(self):
         """ Returns the distance between the first and last vertex. """
         return Point(self.vertices[0]).distance(Point(self.vertices[-1]))
 
