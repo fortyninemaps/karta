@@ -352,12 +352,8 @@ class RegularGrid(Grid):
         if self._hdr['dx'] != self._hdr['dy']:
             raise GridIOError("ASCII grids require isometric grid cells")
 
-        try:
-            f.read()
-        except AttributeError:
+        if not hasattr(f, 'read'):
             f = open(f, "w")
-        #except IOError:
-        #    pass
 
         try:
             data_a = self.data.copy()
