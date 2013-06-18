@@ -12,6 +12,11 @@ except ImportError:
     sys.stderr.write("Compiled fill_sinks not available. Falling back to "
                      "Python version\n")
     from raster import fill_sinks
+try:
+    from scipy.interpolate import griddata
+    HAS_SCIPY = True
+except ImportError:
+    HAS_SCIPY = False
 
 class Grid(object):
     """ Grid baseclass. Don't use this directly except to implement subclasses.
@@ -150,13 +155,14 @@ class RegularGrid(Grid):
                 y0, y0 + self._hdr['dy'] * (self._hdr['ny'] + n))
 
     def resample(self, dx, dy, method='nearest'):
-        """ Resample array to have spacing (`dx`, `dy'). Modify header
-        in-place.
+        """ Resample array in-place to have spacing `dx`, `dy'.
 
         Parameters
         ----------
 
-        cellsize : cell dimension, float
+        dx : cell dimension, float
+
+        dy : cell dimension, float
 
         method : interpolation method, string ('nearest', 'linear')
         """
@@ -165,20 +171,31 @@ class RegularGrid(Grid):
         yurcenter = yllcenter + self._hdr['dy'] * self._hdr['ny']
         nx = int((xurcenter - xllcenter) // dx)
         ny = int((yurcenter - yllcenter) // dy)
-        dimratio = (dx / self._hdr['dx'], dy / self._hdr['dy'])
 
-        if method == 'nearest':
-            JJ, II = np.meshgrid(np.arange(nx), np.arange(ny))
-            srcII = np.around(II * dimratio[1]) \
-                            .astype(int) \
-                            .clip(0, self._hdr['ny'] - 1)
-            srcJJ = np.around(JJ * dimratio[0]) \
-                            .astype(int).\
-                            clip(0, self._hdr['nx'] - 1)
-            self.data = self.data[srcII, srcJJ]
+        if HAS_SCIPY:
+
+            xx, yy = self.coordmesh()
+            xxi, yyi = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
+                                   np.linspace(yllcenter, yurcenter, ny))
+            idata = griddata((xx.flatten(), yy.flatten()), self.data.flatten(),
+                             (xxi.flatten(), yyi.flatten()), method=method)
+            self.data = idata.reshape(ny, nx)[::-1]
+
         else:
-            raise NotImplementedError('method "{0}" not '
-                                      'implemented'.format(method))
+            dimratio = (dx / self._hdr['dx'], dy / self._hdr['dy'])
+
+            if method == 'nearest':
+                JJ, II = np.meshgrid(np.arange(nx), np.arange(ny))
+                srcII = np.around(II * dimratio[1]) \
+                                .astype(int) \
+                                .clip(0, self._hdr['ny'] - 1)
+                srcJJ = np.around(JJ * dimratio[0]) \
+                                .astype(int).\
+                                clip(0, self._hdr['nx'] - 1)
+                self.data = self.data[srcII, srcJJ]
+            else:
+                raise NotImplementedError('method "{0}" not '
+                                          'implemented'.format(method))
 
         hdr = self.get_hdr()
         hdr['dx'] = dx
