@@ -427,7 +427,7 @@ class Multipoint(object):
 
     def to_xyfile(self, fnm, fields=None, delimiter=' ', header=None):
         """ Write data to a delimited ASCII table.
-        
+
         fnm         :   filename to write to
 
         kwargs:
@@ -435,7 +435,10 @@ class Multipoint(object):
 
         Additional kwargs are passed to `xyfile.write_xy`.
         """
-        dat = np.hstack([self.get_vertices(), self.get_data(fields)])
+        if False in (a is None for a in self.data):
+            dat = np.hstack([self.get_vertices(), self.get_data(fields)])
+        else:
+            dat = self.get_vertices()
         xyfile.write_xy(dat, fnm, delimiter=delimiter, header=header)
         return
 
