@@ -28,6 +28,7 @@ def read_geojson_features(f):
     R = geojson.GeoJSONReader(f)
     feats = R.pull_features()
     gplist = []
+    raise NotImplementedError
     for feat in feats:
 
         # [...]
@@ -87,17 +88,18 @@ def read_shapefile(stem):
                                   dbf=files['dbf'])
         features = []
         for shape in reader.shapes():
-            if shape.shapeType == 1:
-                features.append(shape2point(shape))
-            elif shape.shapeType == 3:
-                features.append(shape2line(shape))
-            elif shape.shapeType == 5:
-                features.append(shape2poly(shape))
-            elif shape.shapeType == 8:
-                features.append(shape2multipoint(shape))
-            else:
-                raise NotImplementedError("cannot read shape type "
-                                          "{0}".format(shape.shapeType))
+            if len(shape.points) > 0:
+                if shape.shapeType == 1:
+                    features.append(shape2point(shape))
+                elif shape.shapeType == 3:
+                    features.append(shape2line(shape))
+                elif shape.shapeType == 5:
+                    features.append(shape2poly(shape))
+                elif shape.shapeType == 8:
+                    features.append(shape2multipoint(shape))
+                else:
+                    raise NotImplementedError("cannot read shape type "
+                                              "{0}".format(shape.shapeType))
 
     finally:
         for f in files.values():
