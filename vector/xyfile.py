@@ -12,7 +12,7 @@ def distance_xy(A):
 
 contains = lambda s, S: s in S
 
-def load_xy(fnm, delimiter='', header_rows=0):
+def read_xy(fnm, delimiter='', header_rows=0):
     """ Load a flowline file and return a size-2 array of coordinates. """
     notblank = lambda s: len(s.strip()) > 0
     with open(fnm) as f:
@@ -28,7 +28,8 @@ def load_xy(fnm, delimiter='', header_rows=0):
                 for line in lines]
     return np.array(data)
 
-loadxy = load_xy
+loadxy = read_xy
+load_xy = read_xy
 
 def write_xy(dat, fnm, delimiter=' ', header=None):
     """ Write table data in array *dat* as a delimited ASCII text file. """
