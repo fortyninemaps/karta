@@ -266,6 +266,18 @@ class Multipoint(object):
                             'rank != {0}'.format(self.rank))
         self.vertices[key] = value
 
+    def __delitem__(self, key):
+        if len(self) > key:
+            del self.vertices[key]
+            if hasattr(self.data, 'keys') and hasattr(data.values, '__call__'):
+                for k in self.data:
+                    del self.data[k][key]
+            else:
+                del self.data[key]
+        else:
+            raise GGeoError('Index ({0}) exceeds length'
+                            '({1})'.format(key, len(self)))
+
     def __iter__(self):
         return (pt for pt in self.vertices)
 
