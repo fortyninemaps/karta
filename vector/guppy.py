@@ -196,6 +196,7 @@ class Multipoint(object):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes. """
     _geotype = "Multipoint"
+    _datatype = None
     properties = {}
 
     def __init__(self, vertices, data=None, properties=None, **kwargs):
@@ -220,6 +221,7 @@ class Multipoint(object):
             if data is not None:
                 if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
                     # Dictionary of attributes
+                    self._datatype = "dict-like"
                     for k in data:
                         if len(data[k]) != len(vertices):
                             raise GInitError("Point data length must match "
@@ -229,12 +231,14 @@ class Multipoint(object):
                             raise GInitError("Data must have uniform type")
                 else:
                     # Single attribute
+                    self._datatype = "list-like"
                     if len(data) != len(vertices):
                         raise GInitError("Point data must match point vertices")
                     if False in (isinstance(a, type(data[0])) for a in data):
                         raise GInitError("Data must have uniform type")
                 self.data = data
             else:
+                self._datatype = "list-like"
                 self.data = [None for a in vertices]
 
             if hasattr(properties, 'keys'):
@@ -280,6 +284,26 @@ class Multipoint(object):
 
     def __iter__(self):
         return (pt for pt in self.vertices)
+
+    def __add__(self, other):
+        if self.rank == other.rank:
+            if self._geotype == other._geotype:
+                vertices = self.vertices + other.vertices
+                if self._datatype == other._datatype:
+                    if self._datatype == "dict-like":
+                        data = {}
+                        for k in set(self.data.keys()).intersection(set(other.data.keys())):
+                            data[k] = self.data[k] + other.data[k]
+                    elif self._datatype == "list-like":
+                        data = self.data + other.data
+                else:
+                    raise GGeoError('Cannot add inconsistent data types')
+            else:
+                GGeoError('Cannot add inconsistent geometry types')
+        else:
+            GGeoError('Cannot add geometries with inconsistent rank')
+        geotype = type(self)
+        return geotype(vertices, data=data)
 
     def _bbox_overlap(self, other):
         """ Return whether bounding boxes between self and another geometry
