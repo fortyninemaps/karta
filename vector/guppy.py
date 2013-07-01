@@ -285,26 +285,6 @@ class Multipoint(object):
     def __iter__(self):
         return (pt for pt in self.vertices)
 
-    def __add__(self, other):
-        if self.rank == other.rank:
-            if self._geotype == other._geotype:
-                vertices = self.vertices + other.vertices
-                if self._datatype == other._datatype:
-                    if self._datatype == "dict-like":
-                        data = {}
-                        for k in set(self.data.keys()).intersection(set(other.data.keys())):
-                            data[k] = self.data[k] + other.data[k]
-                    elif self._datatype == "list-like":
-                        data = self.data + other.data
-                else:
-                    raise GGeoError('Cannot add inconsistent data types')
-            else:
-                GGeoError('Cannot add inconsistent geometry types')
-        else:
-            GGeoError('Cannot add geometries with inconsistent rank')
-        geotype = type(self)
-        return geotype(vertices, data=data)
-
     def _bbox_overlap(self, other):
         """ Return whether bounding boxes between self and another geometry
         overlap.
@@ -569,6 +549,27 @@ class Line(ConnectedMultipoint):
     def remove_vertex(self, index):
         """ Removes a vertex from the register by index. """
         self.vertices.pop(index)
+
+    def extend(self, other):
+        """ Combine two lines, provided that that the data formats are similar.
+        """
+        if self.rank == other.rank:
+            if self._geotype == other._geotype:
+                vertices = self.vertices + other.vertices
+                if self._datatype == other._datatype:
+                    if self._datatype == "dict-like":
+                        data = {}
+                        for k in set(self.data.keys()).intersection(set(other.data.keys())):
+                            data[k] = self.data[k] + other.data[k]
+                    elif self._datatype == "list-like":
+                        data = self.data + other.data
+                else:
+                    raise GGeoError('Cannot add inconsistent data types')
+            else:
+                GGeoError('Cannot add inconsistent geometry types')
+        else:
+            GGeoError('Cannot add geometries with inconsistent rank')
+        return Line(vertices, data=data)
 
     def distances(self):
         """ Returns the cumulative length of each segment, prefixed by zero. """
