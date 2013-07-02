@@ -8,7 +8,9 @@
 import copy
 
 class GeoMetadata(object):
-    """ Class for handling collections of metadata """
+    """ Class for handling collections of metadata. Data are organized similar
+    to a Python dict, however different values must all have the same length
+    and be of uniform type. Data are accessed by field (key). """
 
     _data = {}
     _fieldtypes = []
@@ -58,9 +60,11 @@ class GeoMetadata(object):
             del self._data[k][idx]
 
     def getfield(self, name):
+        """ Return all values from field *name*. """
         return self._data[name]
 
     def extend(self, other):
+        """ Extend collection in-place. """
         if isinstance(other, type(self)):
             for i, k in enumerate(self._data):
                 if type(self._fieldtypes[i]) == type(other._fieldtypes[i]):
@@ -71,13 +75,12 @@ class GeoMetadata(object):
         return self
 
     def keys(self):
+        """ Return internal dictionary keys. """
         return self._data.keys()
 
     def values(self):
+        """ Return internal dictionary values. """
         return self._data.values()
-
-    #keys = _data.keys
-    #values = _data.values
 
 
 class GMetadataError(Exception):
