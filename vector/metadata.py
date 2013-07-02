@@ -10,8 +10,9 @@ import copy
 class GeoMetadata(object):
     """ Class for handling collections of metadata """
 
-    _dict = {}
+    _data = {}
     _fieldtypes = []
+
     def __init__(self, data):
         """ Create a collection of metadata from *data*, which may be a list
         with uniform type or a dictionary with equally-sized fields of uniform
@@ -46,6 +47,15 @@ class GeoMetadata(object):
             res = copy.deepcopy(self)
         return res.extend(other)
 
+    def __iter__(self):
+        return self._data.__iter__()
+
+    def __getitem__(self, idx):
+        return tuple([self._data[k][idx] for k in self._data])
+
+    def getfield(self, name):
+        return self._data[name]
+
     def extend(self, other):
         if isinstance(other, type(self)):
             for i, k in enumerate(self._data):
@@ -56,11 +66,14 @@ class GeoMetadata(object):
                                          "with different type hierarchies")
         return self
 
-    def __iter__(self):
-        return self._data.__iter__()
+    def keys(self):
+        return self._data.keys()
 
-    def __getitem__(self, idx):
-        return tuple([self._data[k][idx] for k in self._data])
+    def values(self):
+        return self._data.values()
+
+    #keys = _data.keys
+    #values = _data.values
 
 
 class GMetadataError(Exception):

@@ -8,12 +8,14 @@ Written by Nat Wilson (njwilson23@gmail.com)
 
 import math
 import sys
-from collections import deque
 import traceback
 import numpy as np
 import vtk
 import geojson
 import xyfile
+
+from collections import deque
+from metadata import GeoMetadata
 
 try:
     import _cvectorgeo as _vecgeo
@@ -221,28 +223,7 @@ class Multipoint(object):
             else:
                 self.vertices = [tuple(i) for i in vertices]
 
-            if data is not None:
-                if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
-                    # Dictionary of attributes
-                    self._datatype = "dict-like"
-                    for k in data:
-                        if len(data[k]) != len(vertices):
-                            raise GInitError("Point data length must match "
-                                              "point vertices")
-                        dtype = type(data[k][0])
-                        if False in (isinstance(a, dtype) for a in data[k]):
-                            raise GInitError("Data must have uniform type")
-                else:
-                    # Single attribute
-                    self._datatype = "list-like"
-                    if len(data) != len(vertices):
-                        raise GInitError("Point data must match point vertices")
-                    if False in (isinstance(a, type(data[0])) for a in data):
-                        raise GInitError("Data must have uniform type")
-                self.data = data
-            else:
-                self._datatype = "list-like"
-                self.data = [None for a in vertices]
+            self.data = GeoMetadata(data)
 
             if hasattr(properties, 'keys'):
                 self.properties = properties

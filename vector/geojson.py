@@ -133,8 +133,8 @@ class GeoJSONWriter(object):
                 data = self.gpobj.data
             else:
                 data = {'point_data': self.gpobj.data}
-            for key in data.keys():
-                target['properties'][key] = list(data[key])
+            for key in data:
+                target['properties'][key] = data.getfield(key)
         return
 
     def add_id(self, target=None):
