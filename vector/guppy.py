@@ -32,10 +32,13 @@ class Point(object):
     constructed.
     """
     _geotype = "Point"
+    _datatype = None
+    properties = {}
 
-    def __init__(self, coords):
+    def __init__(self, coords, data=None):
         self.vertex = coords
         self._setxyz()
+        self.data = data
         return
 
     def _setxyz(self):
@@ -540,6 +543,14 @@ class Line(ConnectedMultipoint):
                 self.vertices.append((vertex.x, vertex.y))
             elif self.rank == 3:
                 self.vertices.append((vertex.x, vertex.y, vertex.z))
+            if self._datatype == vertex._datatype:
+                if self._datatype == "dict-like":
+                    for key in self.data:
+                        self.data[key] += vertex.data[key]
+                elif self._datatype == "list-like":
+                    self.data += vertex.data
+            else:
+                raise GGeoError('Cannot add inconsistent data types')
         else:
             if self.rank == 2:
                 self.vertices.append((vertex[0], vertex[1]))
