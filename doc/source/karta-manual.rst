@@ -14,17 +14,47 @@ Contents:
 Introduction
 ------------
 
-*Karta* contains a collection of loosely-related Python modules for performing
-lightweight geospatial data analysis. *Karta* replicates the functionality of
-GDAL, OGR, and GSTAT in some cases, but does so in a minimal package with few
-dependencies, and attempts to solve problems in ways that would be considered
-'pythonic'. Although these other packages may have advantages in performance or
-capability, *Karta* is designed to be portable require as little extra software
-infrastructure as possible.
+*Karta* is a Leatherman for geographic analyses in Python. *Karta* provides an
+interface for solving problems in Python. To this end, it provides a simple and
+clean vector and raster data types, a selection of analysis functions, the
+ability to read and write a useful subset of formats, and close interoperability
+with *numpy*.
 
-*Karta* should be considered experimental, and no assurances are provided about
-the correctness of the code or results derived using it.
+Goals of *Karta* include providing a simple, lightweight, and fast set of tools
+useful for everyday spatial analysis. *Karta* should be considered a work in
+progress.
 
+Formats
+~~~~~~~
+
+*Karta* attempts to provide a basic working interface to several of common file formats.
+Currently partially supported are:
+
+- vector
+    - ASCII tables (XYZ) (r,w)
+    - GeoJSON (r,w)
+    - VTK (w)
+    - ESRI Shapefiles via pyshp (r,w)
+- raster
+    - ESRI ASCII Grids (r,w)
+    - GeoTiff (WIP)
+
+Dependencies
+~~~~~~~~~~~~
+
+- Python 2.x
+- numpy
+- scipy (optional)
+
+**CYTHON**
+
+Cython is an optional dependency used to speed up select functions. To compile the
+Cython-enabled sub-modules, run:
+
+    setup.py build_ext --inplace
+
+In general, enhanced-performance functions will then be called automatically when
+available, otherwise *Karta* will fall back to numpy and pure-Python versions.
 
 Package reference
 -----------------
