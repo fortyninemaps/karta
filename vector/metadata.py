@@ -53,6 +53,10 @@ class GeoMetadata(object):
     def __getitem__(self, idx):
         return tuple([self._data[k][idx] for k in self._data])
 
+    def __delitem__(self, idx):
+        for k in self._data:
+            del self._data[k][idx]
+
     def getfield(self, name):
         return self._data[name]
 

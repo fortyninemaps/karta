@@ -40,7 +40,7 @@ class Point(object):
     def __init__(self, coords, data=None):
         self.vertex = coords
         self._setxyz()
-        self.data = data
+        self.data = GeoMetadata(data)
         return
 
     def _setxyz(self):
@@ -257,11 +257,7 @@ class Multipoint(object):
     def __delitem__(self, key):
         if len(self) > key:
             del self.vertices[key]
-            if hasattr(self.data, 'keys') and hasattr(data.values, '__call__'):
-                for k in self.data:
-                    del self.data[k][key]
-            else:
-                del self.data[key]
+            del self.data[key]
         else:
             raise GGeoError('Index ({0}) exceeds length'
                             '({1})'.format(key, len(self)))
@@ -299,18 +295,18 @@ class Multipoint(object):
         """ Return vertices as a list of tuples. """
         return np.array(self.vertices)
 
-    def get_data(self, fields=None):
-        """ Return data as an array, regardless of internal type. Optionally
-        takes the keyword argument *fields*, which is an iterable listing the
-        columns from the data dictionary to retrieve. """
-        if hasattr(self.data, 'keys') and hasattr(self.data.values, '__call__'):
-            if fields is not None:
-                data = np.array([self.data[key] for key in fields])
-            else:
-                data = np.array(self.data.values())
-        else:
-            data = np.array(self.data)
-        return data.T
+    #def get_data(self, fields=None):
+    #    """ Return data as an array, regardless of internal type. Optionally
+    #    takes the keyword argument *fields*, which is an iterable listing the
+    #    columns from the data dictionary to retrieve. """
+    #    if hasattr(self.data, 'keys') and hasattr(self.data.values, '__call__'):
+    #        if fields is not None:
+    #            data = np.array([self.data[key] for key in fields])
+    #        else:
+    #            data = np.array(self.data.values())
+    #    else:
+    #        data = np.array(self.data)
+    #    return data.T
 
     def get_coordinate_lists(self):
         """ Return X, Y, and Z lists. If self.rank == 2, Z will be
@@ -369,14 +365,9 @@ class Multipoint(object):
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
-        subset = Multipoint([self.vertices[i] for i in idxs])
-        if hasattr(self.data, 'keys'):
-            ddict = {}
-            for k in self.data:
-                ddict[k] = [self.data[k][i] for i in idxs]
-            subset.data = ddict
-        else:
-            subset.data = [self.data[i] for i in idxs]
+        vertices = [self.vertices[i] for i in idxs]
+        data = [self.data[i] for i in idxs]
+        subset = Multipoint(vertices, data=data, properties=self.properties)
         return subset
 
     def near(self, pt, radius):
@@ -435,11 +426,7 @@ class Multipoint(object):
 
         Additional kwargs are passed to `xyfile.write_xy`.
         """
-        if False in (a is None for a in self.data):
-            dat = np.hstack([self.get_vertices(), self.get_data(fields)])
-        else:
-            dat = self.get_vertices()
-        xyfile.write_xy(dat, fnm, delimiter=delimiter, header=header)
+        xyfile.write_xy(self.get_vertices(), fnm, delimiter=delimiter, header=header)
         return
 
     def as_geojson(self, **kwargs):
@@ -524,14 +511,7 @@ class Line(ConnectedMultipoint):
                 self.vertices.append((vertex.x, vertex.y))
             elif self.rank == 3:
                 self.vertices.append((vertex.x, vertex.y, vertex.z))
-            if self._datatype == vertex._datatype:
-                if self._datatype == "dict-like":
-                    for key in self.data:
-                        self.data[key] += vertex.data[key]
-                elif self._datatype == "list-like":
-                    self.data += vertex.data
-            else:
-                raise GGeoError('Cannot add inconsistent data types')
+            self.data += vertex.data
         else:
             if self.rank == 2:
                 self.vertices.append((vertex[0], vertex[1]))
@@ -548,15 +528,7 @@ class Line(ConnectedMultipoint):
         if self.rank == other.rank:
             if self._geotype == other._geotype:
                 vertices = self.vertices + other.vertices
-                if self._datatype == other._datatype:
-                    if self._datatype == "dict-like":
-                        data = {}
-                        for k in set(self.data.keys()).intersection(set(other.data.keys())):
-                            data[k] = self.data[k] + other.data[k]
-                    elif self._datatype == "list-like":
-                        data = self.data + other.data
-                else:
-                    raise GGeoError('Cannot add inconsistent data types')
+                data = self.data + other.data
             else:
                 GGeoError('Cannot add inconsistent geometry types')
         else:
@@ -884,4 +856,5 @@ def tighten(X, Z):
     Xt = map(lambda i: sum(DXt[:i]) + X[0], range(len(DX)))
 
     return zip(Xt, Z)
+
 
