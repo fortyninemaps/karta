@@ -121,7 +121,7 @@ def write_shapefile(features, stem):
             if shape_type == 5:
                 parts = list_parts(feature)
             else:
-                parts = [feature.get_vertices()]
+                parts = [feature.vertices]
             writer.poly(parts)
 
     try:
