@@ -1,0 +1,159 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <title>Karta by njwilson23</title>
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+    <div class="wrapper">
+      <header>
+        <h1>Karta</h1>
+        <p>A tidy Python package for geospatial computation</p>
+
+        <p class="view"><a href="https://github.com/njwilson23/karta">View the Project on GitHub <small>njwilson23/karta</small></a></p>
+
+
+        <ul>
+          <li><a href="https://github.com/njwilson23/karta/zipball/master">Download <strong>ZIP File</strong></a></li>
+          <li><a href="https://github.com/njwilson23/karta/tarball/master">Download <strong>TAR Ball</strong></a></li>
+          <li><a href="https://github.com/njwilson23/karta">View On <strong>GitHub</strong></a></li>
+        </ul>
+      </header>
+      <section>
+        <h1>
+<a name="karta---tidy-python-package-for-geospatial-computation" class="anchor" href="#karta---tidy-python-package-for-geospatial-computation"><span class="octicon octicon-link"></span></a>Karta - tidy Python package for geospatial computation</h1>
+
+<p><em>Karta</em> is a Leatherman for geographic analyses. <em>Karta</em> provides an interface for solving
+problems in Python that works nicely with existing packages. To this end, it provides a
+simple and clean vector and raster data types, a selection of analysis functions, the
+ability to read and write a useful subset of formats, and close interoperability with
+<em>numpy</em>.</p>
+
+<p>Goals of <em>Karta</em> include providing a simple, lightweight, and fast set of tools useful for
+"everyday" spatial analysis, as well as a flexible set of abstractions upon which to build
+more advanced routines. <em>Karta</em> should be considered a work in progress.</p>
+
+<p><strong>Future goals:</strong></p>
+
+<ul>
+<li>projection handling</li>
+<li>native GeoTiff support</li>
+<li>shapefile support through OGR rather than pyshp</li>
+</ul><h2>
+<a name="contents-at-a-glance" class="anchor" href="#contents-at-a-glance"><span class="octicon octicon-link"></span></a>CONTENTS AT A GLANCE</h2>
+
+<ul>
+<li>
+<p>vector</p>
+
+<ul>
+<li>guppy:        Vector geometry classes (e.g. <code>Point</code>, <code>Multipoint</code>, <code>Line</code>, <code>Polygon</code>)</li>
+<li>gpx_parser:  Parser for GPX files exported from GPS devices</li>
+<li>geojson:      Classes and functions for reading and writing GeoJSON</li>
+<li>vtk:          XML-based VTK interface</li>
+<li>shp_funcs:   Shapefile-to-guppy conversions based on <em>pyshp</em>
+</li>
+<li>stats:        Geostatistical functions</li>
+<li>xyfile:       ASCII table functions</li>
+</ul>
+</li>
+<li>
+<p>raster</p>
+
+<ul>
+<li>grid:         Basic Grid types, including <code>StructuredGrid</code> and <code>RegularGrid</code>
+</li>
+<li>aaigrid:      Grid subclass specifically for reading, writing, and manipulating ESRI ASCII grids</li>
+<li>flow:         Stream flow functions</li>
+<li>raster:       General purpose raster functions</li>
+<li>streamline:   Streamline calculation</li>
+</ul>
+</li>
+<li><p>tests : unit tests</p></li>
+</ul><h2>
+<a name="formats" class="anchor" href="#formats"><span class="octicon octicon-link"></span></a>FORMATS</h2>
+
+<p><em>Karta</em> provides a basic working interface to several of common file formats. Currently
+partially-supported are:</p>
+
+<ul>
+<li>vector
+
+<ul>
+<li>ASCII tables (XYZ) (r,w)</li>
+<li>GeoJSON (r,w)</li>
+<li>VTK (w)</li>
+<li>ESRI Shapefiles via pyshp (r,w)</li>
+</ul>
+</li>
+<li>raster
+
+<ul>
+<li>ESRI ASCII Grids (r,w)</li>
+<li>GeoTiff (WIP)</li>
+</ul>
+</li>
+</ul><h2>
+<a name="dependencies" class="anchor" href="#dependencies"><span class="octicon octicon-link"></span></a>DEPENDENCIES</h2>
+
+<ul>
+<li>Python 2.x</li>
+<li>numpy</li>
+<li>scipy (optional)</li>
+<li>Cython (optional)</li>
+</ul><h3>
+<a name="cython" class="anchor" href="#cython"><span class="octicon octicon-link"></span></a>CYTHON</h3>
+
+<p>Cython is an optional dependency used to speed up select functions. To compile the
+Cython-enabled sub-modules, run:</p>
+
+<pre><code>setup.py build_ext --inplace
+</code></pre>
+
+<p>In general, enhanced-performance functions will then be called automatically when
+available, otherwise <em>Karta</em> will fall back to numpy and pure-Python versions.</p>
+
+<h2>
+<a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>LICENSE</h2>
+
+<p>This software is provided under the MIT license.</p>
+
+<p>The vector module contains a snapshot of the pyshp shapefile module, available at
+(<a href="http://code.google.com/p/pyshp/">http://code.google.com/p/pyshp/</a>). This module is also available under the MIT license.</p>
+
+<h3>
+<a name="mit-license" class="anchor" href="#mit-license"><span class="octicon octicon-link"></span></a>MIT License:</h3>
+
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this
+software and associated documentation files (the "Software"), to deal in the Software
+without restriction, including without limitation the rights to use, copy, modify, merge,
+publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
+to whom the Software is furnished to do so, subject to the following conditions:</p>
+
+<p>The above copyright notice and this permission notice shall be included in all copies or
+substantial portions of the Software.</p>
+
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
+PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
+FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+DEALINGS IN THE SOFTWARE.</p>
+      </section>
+      <footer>
+        <p>This project is maintained by <a href="https://github.com/njwilson23">njwilson23</a></p>
+        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
+      </footer>
+    </div>
+    <script src="javascripts/scale.fix.js"></script>
+    
+  </body>
+</html>
