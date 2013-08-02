@@ -31,10 +31,10 @@ except ImportError:
 class Geometry(object):
     """ This is the abstract base class for all geometry types, i.e. Point,
     Multipoints and subclasses thereof. """
-
     _geotype = None
-    _datatype = None
-    properties = {}
+
+    def __init__(self):
+        self.properties = {}
 
     def add_property(self, name, value):
         """ Insert a property (name -> value) into the properties dict, raising
@@ -58,13 +58,12 @@ class Geometry(object):
 
 class Point(Geometry):
     """ This defines the point class, from which x,y[,z] points can be
-    constructed.
-    """
+    constructed. """
     _geotype = "Point"
-    _datatype = None
-    properties = {}
 
     def __init__(self, coords, data=None, properties=None):
+        if properties is None: properties = {}
+        super(Point, self).__init__()
         self.vertex = coords
         self._setxyz()
         self.data = Metadata(data)
@@ -230,10 +229,8 @@ class Multipoint(Geometry):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes. """
     _geotype = "Multipoint"
-    _datatype = None
-    properties = {}
 
-    def __init__(self, vertices, data=None, properties=None, **kwargs):
+    def __init__(self, vertices, data=None, properties=None):
         """ Create a feature with multiple vertices.
 
         vertices : a list of tuples containing point coordinates.
@@ -242,6 +239,8 @@ class Multipoint(Geometry):
         point attributes. If `data` is not `None`, then it (or its values) must
         match `vertices` in length.
         """
+        super(Multipoint, self).__init__()
+        if properties is None: properties = {}
         if len(vertices) > 0:
             self.rank = len(vertices[0])
 
@@ -252,15 +251,14 @@ class Multipoint(Geometry):
             else:
                 self.vertices = [tuple(i) for i in vertices]
 
-            self.data = Metadata(data)
-
-            if hasattr(properties, 'keys'):
-                self.properties = properties
-
         else:
             self.rank = None
             self.vertices = []
-            self.data = []
+
+        if hasattr(properties, "keys"):
+            self.properties = properties
+
+        self.data = Metadata(data)
         return
 
     #def __repr__(self):
