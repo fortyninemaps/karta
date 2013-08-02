@@ -248,7 +248,21 @@ class TestGeoJSONInput(unittest.TestCase):
                                                 [100.2, 0.2]]]])
         return
 
+class TestGPX(unittest.TestCase)
 
+    def setUp(self):
+        self.tracks = [vector.gpx.Track(
+                        [vector.gpx.Trkseg(
+                            [(np.rand(1)[0], np.rand(1)[0]) for i in range(20)],
+                            {}, {})
+                        ], {})]
+        return
+
+    def test_track_init(self):
+        """ Test initiation and writing of a GPX file containing a single track. """
+        g = vector.gpx.GPX(tracks=self.tracks)
+        g.writefile("test.gpx")
+        return
 
 if __name__ == "__main__":
     unittest.main()
