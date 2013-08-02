@@ -15,7 +15,7 @@ import geojson
 import xyfile
 
 from collections import deque
-from metadata import GeoMetadata
+from metadata import Metadata
 
 try:
     import _cvectorgeo as _vecgeo
@@ -28,8 +28,35 @@ try:
 except ImportError:
     pass
 
+class Geometry(object):
+    """ This is the abstract base class for all geometry types, i.e. Point,
+    Multipoints and subclasses thereof. """
 
-class Point(object):
+    _geotype = None
+    _datatype = None
+    properties = {}
+
+    def add_property(self, name, value):
+        """ Insert a property (name -> value) into the properties dict, raising
+        a NameError if the property already exists. Compared to directly
+        manipulating the properties dict, this avoids accidents. """
+        if name not in self.properties:
+            self.properties[name] = value
+        else:
+            raise NameError("property '{0}' already exists in {1}".format(name, type(self)))
+        return
+
+    def delete_property(self, name):
+        """ Equivalent to
+
+            del self.properties[name]
+        """
+        if name in self.properties:
+            del self.properties[name]
+        return
+
+
+class Point(Geometry):
     """ This defines the point class, from which x,y[,z] points can be
     constructed.
     """
@@ -37,10 +64,12 @@ class Point(object):
     _datatype = None
     properties = {}
 
-    def __init__(self, coords, data=None):
+    def __init__(self, coords, data=None, properties=None):
         self.vertex = coords
         self._setxyz()
-        self.data = GeoMetadata(data)
+        self.data = Metadata(data)
+        if hasattr(properties, "keys"):
+            self.properties = properties
         return
 
     def _setxyz(self):
@@ -197,7 +226,7 @@ class Point(object):
             raise ImportError('Shapely module did not import\n')
 
 
-class Multipoint(object):
+class Multipoint(Geometry):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes. """
     _geotype = "Multipoint"
@@ -223,7 +252,7 @@ class Multipoint(object):
             else:
                 self.vertices = [tuple(i) for i in vertices]
 
-            self.data = GeoMetadata(data)
+            self.data = Metadata(data)
 
             if hasattr(properties, 'keys'):
                 self.properties = properties
