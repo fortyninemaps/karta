@@ -1,13 +1,9 @@
-""" Metadata management """
-
-# Metadata objects should
-#   - maintain internal consistency
-#   - be concatenable
-#   - be iterable
+""" Vector geospatial metadata management """
 
 import copy
+import numbers
 
-class GeoMetadata(object):
+class Metadata(object):
     """ Class for handling collections of metadata. Data are organized similar
     to a Python dict, however different values must all have the same length
     and be of uniform type. Data are accessed by field (key). """
@@ -31,7 +27,7 @@ class GeoMetadata(object):
             if False in (len(data[k]) == n for k in data):
                 raise GMetadataError("Data must have uniform lengths")
 
-        else:
+        elif data is not None:
             # Single attribute
             if not hasattr(data, '__iter__'):
                 data = [data]
@@ -41,6 +37,10 @@ class GeoMetadata(object):
             else:
                 data = {'values': data}
 
+        else:
+            # No metadata
+            data = {}
+
         self._data = data
         self._fieldtypes = [type(data[k][0]) for k in data]
 
@@ -49,11 +49,17 @@ class GeoMetadata(object):
             res = copy.deepcopy(self)
         return res.extend(other)
 
+    def __contains__(self, other):
+        return (other in self._data)
+
     def __iter__(self):
         return self._data.__iter__()
 
     def __getitem__(self, idx):
-        return tuple([self._data[k][idx] for k in self._data])
+        if isinstance(idx, numbers.Integral):
+            return tuple([self._data[k][idx] for k in self._data])
+        else:
+            return self.getfield(idx)
 
     def __delitem__(self, idx):
         for k in self._data:
@@ -83,7 +89,7 @@ class GeoMetadata(object):
         return self._data.values()
 
 
-class GMetadataError(Exception):
+class MetadataError(Exception):
     def __init__(self, message=''):
         self.message = message
     def __str__(self):
