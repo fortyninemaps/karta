@@ -6,17 +6,18 @@ This is a rewrite of gpxparser.py, designed to fit better with guppy types.
 To do:
     - XML namespaces aren't really handled properly
     - metadata node not addressed
-    - methods for simple addition of guppy-like types
+    - methods for simple addition of guppy-like types need work
 """
 
 import sys
-from xml.dom import minidom, Node
-from xml.etree.ElementTree import ElementTree, Element
 import collections
+import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import ElementTree, Element
+from xml.dom import minidom
 
-Point = collections.namedtuple("Point", ["vertex", "properties", "extensions"])
+Point = collections.namedtuple("Point", ["lonlat", "properties", "extensions"])
 Trkseg = collections.namedtuple("Trkseg", ["trkpts", "properties", "extensions"])
-Track = collections.namedtuple("Track", ["trksegs", "properties", "extentions"])
+Track = collections.namedtuple("Track", ["trksegs", "properties", "extensions"])
 Route = collections.namedtuple("Route", ["rtepts", "properties", "extensions"])
 
 ns = "{http://www.topografix.com/GPX/1/1}"
@@ -30,7 +31,7 @@ class GPX(object):
     Provides methods to easily add Point-like and Line-like objects as GPX
     types. """
 
-    def __init__(self, f=None, waypts=None, tracks=None, routes=None):
+    def __init__(self, f=None, waypoints=None, tracks=None, routes=None):
         """ Create a GPX object, either from a GPX file or from lists of
         waypoints, tracks, and routes. """
 
@@ -42,21 +43,15 @@ class GPX(object):
             self.fromfile(f)
 
         else:
-            self.gpx = Element("gpx", attrib={"version":"1.1",
-                                              "creator":"karta"})
-
-            raise NotImplementedError("this code is obsolete")
-
-            if waypts is not None:
-                for waypt in waypts:
-                    self.add_wpt(waypt)
+            if waypoints is not None:
+                for waypt in waypoints:
+                    self.add_waypoint(waypt)
             if tracks is not None:
                 for track in tracks:
-                    self.add_trk(track)
+                    self.add_track(track)
             if routes is not None:
                 for route in routes:
-                    self.add_rte(route)
-
+                    self.add_route(route)
         return
 
     def _readextensions(self, node):
@@ -95,7 +90,7 @@ class GPX(object):
 
     def _build_gpx_wpt(self, waypt, tag="wpt"):
         """ Build <wpt> node. """
-        wpt = Element(np + tag)
+        wpt = Element(ns + tag, lon=str(waypt.lonlat[0]), lat=str(waypt.lonlat[1]))
         wpt = self._dict2gpx(wpt, waypt.properties)
         wpt = self._extensions2gpx(wpt, waypt.extensions)
         return wpt
@@ -113,9 +108,9 @@ class GPX(object):
 
             for trackpt in segment.trkpts:
                 trkpt = self._build_gpx_wpt(trackpt, tag="trkpt")
-                segment.append(trkpt)
+                trkseg.append(trkpt)
 
-            trk.append(self._build_gpx_wpt(trkpt))
+            trk.append(trkseg)
         return trk
 
     def _build_gpx_rte(self, route):
@@ -238,22 +233,25 @@ class GPX(object):
         self.route[name] = route
         return
 
-    def writefile(self, f, waypts=True, tracks=True, routes=True):
+    def writefile(self, fnm, waypts=True, tracks=True, routes=True):
         """ Write GPX object to a GPX file. Writes all waypoints, tracks, and
         routes by default, which can be changed by changing the kwargs to
         False. """
-        gpx = Element(ns + "gpx")
+        gpx = Element(ns + "gpx", version="1.1", creator="karta")
 
         if waypts:
-            for waypt in self.waypoints:
+            for waypt in self.waypts.values():
                 gpx.append(self._build_gpx_wpt(waypt))
         if tracks:
-            for track in self.tracks:
+            for track in self.tracks.values():
                 gpx.append(self._build_gpx_trk(track))
         if routes:
-            for route in self.routes:
+            for route in self.routes.values():
                 gpx.append(self._build_gpx_rte(route))
 
-        ElementTree(element=gpx).write(f)
+        xmlstring = ET.tostring(gpx)
+        output = minidom.parseString(xmlstring).toprettyxml(indent="  ")
+        with open(fnm, "w") as f:
+            f.write(output)
         return
 
