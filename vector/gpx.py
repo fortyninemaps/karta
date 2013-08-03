@@ -12,30 +12,41 @@ import collections
 Point = collections.namedtuple("Point", ["vertex", "data", "properties"])
 Trkseg = collections.namedtuple("Trkseg", ["vertices", "data", "properties"])
 Track = collections.namedtuple("Track", ["segments", "properties"])
+Route = collections.namedtuple("Route", ["vertices", "data", "properties"])
+
+ns = "{http://www.topografix.com/GPX/1/1}"
+
+def strip_namespace(s):
+    return s[s.index("}")+1:]
 
 class GPX(object):
     """ Represents a GPX documents, with waypoints, tracks, and routes as
     attributes. """
 
-    waypts = {}
-    tracks = {}
-    routes = {}
-
     def __init__(self, f=None, waypts=None, tracks=None, routes=None):
         """ Create a GPX object, either from a GPX file or from lists of
         waypoints, tracks, and routes. """
+
+        self.waypts = {}
+        self.tracks = {}
+        self.routes = {}
+
         if f is not None:
             self.fromfile(f)
 
         else:
-            self.gpx = Element("gpx")
+            self.gpx = Element("gpx", attrib={"version":"1.1",
+                                              "creator":"karta"})
 
             if waypts is not None:
-                self.build_wpt(waypts)
+                for waypt in waypts:
+                    self.add_wpt(waypt)
             if tracks is not None:
-                self.build_trk(tracks)
+                for track in tracks:
+                    self.add_trk(track)
             if routes is not None:
-                self.build_rte(routes)
+                for route in routes:
+                    self.add_rte(route)
 
         return
 
@@ -44,97 +55,119 @@ class GPX(object):
         file-like object. """
 
         gpxtree = ElementTree(file=f)
-        self.gpx = gpxtree.find("gpx")
+        self.gpx = gpxtree.getroot()
 
-        for el in gpxtree.findall("wpt"):
-            self.parse_wpt(el)
+        #for node in self.gpx:
+        #    if node.tag == "wpt":
+        #        self.parse_wpt(node)
+        #    elif node.tag == "trk":
+        #        self.parse_trk(node)
+        #    elif node.tag == "rte":
+        #        self.parse_rte(node)
 
-        for el in gpxtree.findall("trk"):
-            self.parse_trk(el)
+        for node in self.gpx.findall(ns+"wpt"):
+            self.parse_wpt(node)
 
-        for el in gpxtree.findall("rte"):
-            self.parse_rte(el)
+        for node in self.gpx.findall(ns+"trk"):
+            self.parse_trk(node)
+
+        for node in self.gpx.findall(ns+"rte"):
+            self.parse_rte(node)
 
         return
 
-    def parse_wpt(self, node):
+    def parse_wpt(self, wpt):
         pass
 
-    def parse_trk(self, node):
+    def parse_trk(self, trk):
         """ Parse a <trk> node, updating self.tracks. """
-        name = node.getElementsByTagName('name')[0].firstChild.data
-
-        if not name in self.tracks:
-            self.tracks[name] = {}
-
+        name = trk.get("name", str(len(self.tracks)))
         segments = []
 
-        for trkseg in node.getElementsByTagName('trkseg'):
+        for trkseg in trk.findall(ns+"trkseg"):
 
-            lats = []
-            lons = []
-            eles = []
-            coords = []
-            time = []
+            vertices = []
+            data = {}
+            properties = {}
 
-            points = []
+            for node in trkseg.find(ns+"trkpt"):
+                tag = strip_namespace(node.tag)
+                data[tag] = []
 
-            for trkpt in trkseg.getElementsByTagName('trkpt'):
-                lat = float(trkpt.getAttribute('lat'))
-                lon = float(trkpt.getAttribute('lon'))
-                ele = float(trkpt.getElementsByTagName('ele')[0].firstChild.data)
-                time = trkpt.getElementsByTagName('time')[0].firstChild.data
-                points.append(Point(lon, lat, ele, time))
+            for trkpt in trkseg.findall(ns+"trkpt"):
+                vertices.append((trkpt.attrib["lon"], trkpt.attrib["lat"]))
+                for node in trkpt:
+                    tag = strip_namespace(node.tag)
+                    if tag in data:
+                        data[tag].append(node.text)
+                    else:
+                        raise InconsistentFieldError("child node {0} is not "
+                                        "used consistently".format(node.tag))
 
-            segments.append([a for a in points])
+            try:
+                for node in trkseg.find("extensions"):
+                    properties[node.tag] = node.text
+            except TypeError:
+                pass
 
-        self.tracks[name] = segments
+            segment = Trkseg(vertices, data, properties)
+            segments.append(segment)
+
+        track = Track(segments, name)
+        self.tracks[name] = track
         return
 
-    def parse_rte(self, node):
+    def parse_rte(self, rte):
         pass
 
-    def build_wpt(self, waypts):
+    def add_wpt(self, waypt):
         pass
 
-    def build_trk(self, tracks):
+    def add_trk(self, track):
         """ Build "trk" nodes. """
-        for track in tracks:
+        trk_name = track.properties.get("name", str(len(self.tracks)))
+        self.tracks[trk_name] = track
 
-            trk = Element("trk")
-            if "name" in track.properties:
-                name = Element("name", text=track.data["name"])
-                trk.append(name)
+        trk = Element(ns+"trk")
+        name = Element("name")
+        name.text = trk_name
+        trk.append(name)
 
-            for segment in track.segments:
-                trkseg = Element("trkseg")
-                trk.append(trkseg)
+        for segment in track.segments:
+            trkseg = Element(ns+"trkseg")
+            trk.append(trkseg)
 
-                for i, c in enumerate(segment.vertices):
+            for i, c in enumerate(segment.vertices):
 
-                    trkpt = Element("trkpt", attrib={"lon":str(c[0]),
-                                                     "lat":str(c[1])})
-                    if len(c) > 2:
-                        ele = Element("ele", text=str(c[2]))
-                        trkpt.append(ele)
-                    if "time" in segment.data:
-                        time = Element("time", text=str(segment.data["time"][i]))
-                        trkpt.append(time)
-                    for field in segment.data:
-                        node = Element(field, text=str(segments.data[field][i]))
-                        trkpt.append(node)
+                trkpt = Element(ns+"trkpt", attrib={"lon":str(c[0]),
+                                                 "lat":str(c[1])})
+                if len(c) > 2:
+                    ele = Element("ele")
+                    ele.text = str(c[2])
+                    trkpt.append(ele)
+                for field in segment.data:
+                    node = Element(field)
+                    node.text = str(segment.data[field][i])
+                    trkpt.append(node)
 
-                    trkseg.append(trkpt)
-            self.gpx.append(trk)
+                trkseg.append(trkpt)
+
+        self.gpx.append(trk)
         return
 
-    def build_rte(self, routes):
+    def add_rte(self, route):
         pass
 
     def writefile(self, f, waypts=True, tracks=True, routes=True):
         """ Write GPX object to a GPX file. Writes all waypoints, tracks, and
         routes by default, which can be changed by changing the kwargs to
         False. """
-        ElementTree(element=gpx).write(f)
+        ElementTree(element=self.gpx).write(f)
         return
+
+class InconsistentFieldError(Exception):
+    def __init__(self, message="No message"):
+        self.message = message
+    def __str__(self):
+        return self.message
 
