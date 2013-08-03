@@ -5,5 +5,8 @@ geospatial data.
 
 import vector
 import raster
+from vector import *
+from raster import *
+__version__ = 0.1
 __all__ = ["vector", "raster"]
 

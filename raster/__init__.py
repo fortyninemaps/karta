@@ -25,5 +25,12 @@ except ImportError:
 try:
     import flow          # Has a Scipy dependency
 except ImportError:
-    print("Warning: raster.flow not loaded")
+    pass
+
+__all__ = ["grid", "aaigrid", "raster", "flow",
+           "RegularGrid", "StructuredGrid", "aairead",
+           "AAIGrid",
+           "pad", "slope", "aspect", "grad", "div", "normed_vector_field",
+           "streamline2d",
+           "fill_sinks"]
 
