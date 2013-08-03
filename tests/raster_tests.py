@@ -4,18 +4,18 @@ import unittest
 import os
 import numpy as np
 from test_helper import md5sum
-import karta.raster as raster
+import karta
 
 class RegularGrid(unittest.TestCase):
 
     def setUp(self):
-        pe = raster.raster.peaks(n=49)
-        self.rast = raster.grid.RegularGrid(hdr={'nx':49, 'ny':49,
-                                                 'xllcorner':0.0,
-                                                 'yllcorner':0.0,
-                                                 'dx':30.0,
-                                                 'dy':30.0,
-                                                 'nbands':1}, Z=pe)
+        pe = karta.raster.peaks(n=49)
+        self.rast = karta.grid.RegularGrid(hdr={'nx':49, 'ny':49,
+                                                'xllcorner':0.0,
+                                                'yllcorner':0.0,
+                                                'dx':30.0,
+                                                'dy':30.0,
+                                                'nbands':1}, Z=pe)
         return
 
     def test_center_coords(self):
@@ -26,7 +26,7 @@ class RegularGrid(unittest.TestCase):
         return
 
     def test_resample(self):
-        small = raster.raster.peaks(n=7)
+        small = karta.raster.peaks(n=7)
         rast = self.rast.copy()
         rast.resample(210.0, 210.0)
         self.assertEqual(0.0, np.sum(rast.data - small))
@@ -96,7 +96,7 @@ class RegularGrid(unittest.TestCase):
         return
 
     def test_aairead(self):
-        grid = raster.grid.aairead('reference_data/peaks49.asc')
+        grid = karta.grid.aairead('reference_data/peaks49.asc')
         self.assertTrue(False not in (grid.data == self.rast.data))
         return
 
@@ -108,8 +108,8 @@ class TestStructuredGrid(unittest.TestCase):
         jj = np.arange(50.0)
         X, Y = np.meshgrid(np.sin(ii/25.0 * 2*np.pi),
                            np.sin(jj/50.0 * 2*np.pi))
-        Z = raster.raster.witch_of_agnesi(50, 50)
-        self.rast = raster.grid.StructuredGrid(X=X, Y=Y, Z=Z)
+        Z = karta.raster.witch_of_agnesi(50, 50)
+        self.rast = karta.grid.StructuredGrid(X=X, Y=Y, Z=Z)
 
     def test_hdr(self):
         hdr = self.rast.get_hdr()
@@ -121,12 +121,12 @@ class TestStructuredGrid(unittest.TestCase):
 class TestAAIGrid(unittest.TestCase):
 
     def setUp(self):
-        pe = raster.raster.peaks(n=49)
-        self.rast = raster.aaigrid.AAIGrid(pe, hdr={'ncols':49, 'nrows':49,
-                                                    'xllcorner':0.0,
-                                                    'yllcorner':0.0,
-                                                    'cellsize':30.0,
-                                                    'nodata_value':-9999})
+        pe = karta.raster.peaks(n=49)
+        self.rast = karta.aaigrid.AAIGrid(pe, hdr={'ncols':49, 'nrows':49,
+                                                   'xllcorner':0.0,
+                                                   'yllcorner':0.0,
+                                                   'cellsize':30.0,
+                                                   'nodata_value':-9999})
         return
 
     def test_region_centered(self):

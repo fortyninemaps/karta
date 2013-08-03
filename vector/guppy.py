@@ -614,8 +614,8 @@ class Polygon(ConnectedMultipoint):
     _geotype = "Polygon"
     subs = []
 
-    def __init__(self, vertices, **kwargs):
-        Multipoint.__init__(self, vertices, **kwargs)
+    def __init__(self, vertices, data=None, properties=None, **kwargs):
+        Multipoint.__init__(self, vertices, data=data, properties=properties)
         if vertices[0] != vertices[-1]:
             self.vertices.append(vertices[0])
         self.subs = kwargs.get('subs', [])

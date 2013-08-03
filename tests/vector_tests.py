@@ -248,19 +248,23 @@ class TestGeoJSONInput(unittest.TestCase):
                                                 [100.2, 0.2]]]])
         return
 
-class TestGPX(unittest.TestCase)
+class TestGPX(unittest.TestCase):
 
     def setUp(self):
-        self.tracks = [vector.gpx.Track(
-                        [vector.gpx.Trkseg(
-                            [(np.rand(1)[0], np.rand(1)[0]) for i in range(20)],
-                            {}, {})
-                        ], {})]
+        self.points = [vector.gpx.Point((np.random.random(), np.random.random()), {}, {}) for i in range(20)]
+        self.segments = [vector.gpx.Trkseg(self.points, {}, {})]
+        self.tracks = [vector.gpx.Track(self.segments, {}, {})]
+        self.routes = [vector.gpx.Route(self.points, {}, {})]
         return
 
     def test_track_init(self):
         """ Test initiation and writing of a GPX file containing a single track. """
-        g = vector.gpx.GPX(tracks=self.tracks)
+        #g = vector.gpx.GPX(waypoints=self.points, tracks=self.tracks, routes=self.routes)
+        g = vector.gpx.GPX()
+        for i, pt in enumerate(self.points):
+            g.waypts[i] = pt
+        g.tracks = {0:self.tracks[0]}
+        g.routes = {0:self.routes[0]}
         g.writefile("test.gpx")
         return
 

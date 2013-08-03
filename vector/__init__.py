@@ -26,6 +26,7 @@ __all__ = ["guppy", "xyfile", "geojson", "vtk", "shapefile", "shp_funcs",
            "Point", "Multipoint", "Line", "Polygon",
            "read_geojson", "read_geojson_features", "read_shapefile",
            "write_shapefile",
+           "gpx",
            "GPXParser",
            "load_xy", "xyz2array_reg", "array2xyz"]
 
