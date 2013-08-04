@@ -1,6 +1,7 @@
 """ Functions for reading the USGS DEM format. """
 
 import itertools
+import re
 
 def coerce_float(s):
     return float(s.replace("D","e",1)
@@ -52,9 +53,21 @@ BLOCKA = [("fnm",0,40,"A40"),
           ("edge_flag",900,908,"4I2"),
           ("z_shift",908,915,"F7.2")]
 
+BLOCKB = [("rc_id",0,12,"2I6"),
+          ("mn",12,24,"2I6"),
+          ("xy",24,72,"2D24.15"),
+          ("zdatum",72,96,"D24.15"),
+          ("zminmax",96,144,"2D24.15")]
+
+BLOCKC = [("filestatcode",0,6,"I6"),
+          ("file_rmse",6,24,"3I6"),
+          ("file_nsmp",24,30,"I6"),
+          ("demstatcode",30,36,"I6"),
+          ("dem_rmse",36,54,"3I6"),
+          ("dem_nsmp",54,60,"I6")]
+
 def nreps(fmt):
-    """ Return the number of characters in a single record of
-    a potentially multiple-record string. """
+    """ Return the number repetitions of a record. """
     try:
         reps = int(fmt[0])
         return reps * nreps(fmt[1:].lstrip("(").rstrip(")"))
@@ -62,6 +75,14 @@ def nreps(fmt):
     except ValueError:
         return 1
         #return fmt.count(",") + 1
+
+def nreps_re(fmt):
+    """ Return the number repetitions of a record. """
+    M = re.match(r"\A\d+", fmt)
+    if M:
+        return int(fmt[:M.end()]) * nreps_re(fmt[M.end():].lstrip("(").rstrip(")"))
+    else:
+        return 1
 
 def reclen(fmt):
     """ Return the number of characters in a single record of
@@ -109,11 +130,38 @@ def cumsum_loop(u):
 def parse(fmt, s):
     """ Based on an ASCII format string, parse the information in *s*. """
     nch = reclen(fmt)
-    reps = nreps(fmt)
+    reps = nreps_re(fmt)
     t = dtype(fmt)
     pos = [0] + cumsum(nch*reps)
     vals = [t_(s[a:b]) for a,b,t_ in zip(pos[:-1], pos[1:],
                                              itertools.cycle(t))]
     return vals if len(vals) > 1 else vals[0]
 
+def index_wrapper(sz, i):
+    """ Wraps linear indices to r,c indices. """
+    r = i % sz[0]
+    c = i // sz[0]
+    if c > sz[1] - 1:
+        raise IndexError
+    return (r,c)
+
+def slice_wrapper(sz, slc):
+    """ Wraps a slice object from linear indices to fancy nummpy indices. """
+    pass
+
+def demread(fnm):
+    """ Read a USGS (or CDED) .dem file and return dictionaries for blocks A-C. """
+    with open(fnm):
+        data = fnm.readlines()
+
+    blocka = parse(data[:1024], BLOCKA)
+
+    blockb = parse(data[1024:2048], BLOCKB)
+    dem = parse(data[1168:2024], "146I6")
+    for blocknum in range(1, blocka["size"][1]):
+        dem.extend(parse(data[1024 + 1024*blocknum : 2048 + 1024*blocknum], "170I6"))
+    blockb["data"] = dem
+
+    blockc = parse(data[-1024:], BLOCKC)
+    return blocka, blockb, blockc
 
