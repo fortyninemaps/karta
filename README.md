@@ -44,10 +44,11 @@ partially-supported are:
 - vector
     - ASCII tables (XYZ) (r,w)
     - GeoJSON (r,w)
+    - GPS eXchange (GPX) (r,w)
     - VTK (w)
     - ESRI Shapefiles via pyshp (r,w)
 - raster
-    - ESRI ASCII Grids (r,w)
+    - ESRI ASCII Grid (r,w)
     - GeoTiff (WIP)
 
 ## DEPENDENCIES
