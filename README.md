@@ -1,14 +1,15 @@
 #Karta - tidy Python package for geospatial computation
 
-*Karta* is a Leatherman for geographic analyses. *Karta* provides an interface for solving
-problems in Python that works nicely with existing packages. To this end, it provides a
-simple and clean vector and raster data types, a selection of analysis functions, the
-ability to read and write a useful subset of formats, and close interoperability with
-*numpy*.
+*Karta* is a Leatherman for geographic analyses. *Karta* provides an interface
+for solving problems in Python that works nicely with existing packages. To this
+end, it provides simple and clean vector and raster data types, a selection of
+analysis functions, the ability to read and write a useful subset of formats,
+and close interoperability with *numpy*.
 
-Goals of *Karta* include providing a simple, lightweight, and fast set of tools useful for
-"everyday" spatial analysis, as well as a flexible set of abstractions upon which to build
-more advanced routines. *Karta* should be considered a work in progress.
+Goals of *Karta* include providing a simple, lightweight, and fast set of tools
+useful for "everyday" spatial analysis, as well as a flexible set of
+abstractions upon which to build more advanced routines. *Karta* should be
+considered a work in progress.
 
 **Future goals:**
 - projection handling
@@ -19,7 +20,7 @@ more advanced routines. *Karta* should be considered a work in progress.
 
 - vector
     - guppy:        Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`)
-    - gpx\_parser:  Parser for GPX files exported from GPS devices
+    - gpx:          GPX class for parsing and constructing GPX eXchange files
     - geojson:      Classes and functions for reading and writing GeoJSON
     - vtk:          XML-based VTK interface
     - shp\_funcs:   Shapefile-to-guppy conversions based on _pyshp_

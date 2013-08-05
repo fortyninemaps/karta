@@ -255,6 +255,11 @@ class TestGPX(unittest.TestCase):
         self.segments = [vector.gpx.Trkseg(self.points, {}, {})]
         self.tracks = [vector.gpx.Track(self.segments, {}, {})]
         self.routes = [vector.gpx.Route(self.points, {}, {})]
+
+        self.Point = vector.gpx.Point
+        self.Trkseg = vector.gpx.Trkseg
+        self.Track = vector.gpx.Track
+        self.Route = vector.gpx.Route
         return
 
     def test_track_init(self):
@@ -262,11 +267,47 @@ class TestGPX(unittest.TestCase):
         #g = vector.gpx.GPX(waypoints=self.points, tracks=self.tracks, routes=self.routes)
         g = vector.gpx.GPX()
         for i, pt in enumerate(self.points):
-            g.waypts[i] = pt
-        g.tracks = {0:self.tracks[0]}
-        g.routes = {0:self.routes[0]}
+            g.waypts.append(pt)
+        g.tracks = self.tracks
+        g.routes = self.routes
         g.writefile("test.gpx")
         return
+
+    def test_add_waypoint(self):
+        waypoint = vector.guppy.Point((-80.0, 82.0), properties = {"name":
+                                                                   "ellesmere",
+                                                                   "ele":
+                                                                   100})
+        g = vector.gpx.GPX()
+        g.add_waypoint(waypoint)
+        expected = self.Point((-80.0, 82.0), {"name": "ellesmere",
+                                              "ele": "100"}, {})
+        self.assertEqual(g.waypts[0], expected)
+        return
+
+    def test_add_track(self):
+        track = [vector.guppy.Line([(np.random.random(), np.random.random())
+                           for i in range(10)], properties={"name":"segment0"})]
+        g = vector.gpx.GPX()
+        g.add_track(track)
+        expected = self.Track([self.Trkseg(
+                        [self.Point(xy, {}, {}) for xy in track[0].vertices],
+                        {"name":"segment0"}, {})], {}, {})
+        self.assertEqual(g.tracks[0], expected)
+        return
+
+    def test_add_route(self):
+        route = vector.guppy.Line([(np.random.random(), np.random.random())
+                             for i in range(10)], properties={"name":"route0"})
+        g = vector.gpx.GPX()
+        g.add_route(route)
+        expected = self.Route([self.Point(xy, {}, {}) for xy in route.vertices],
+                              {"name":"route0"}, {})
+        self.assertEqual(g.routes[0], expected)
+        return
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

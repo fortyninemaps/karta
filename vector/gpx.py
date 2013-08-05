@@ -21,6 +21,11 @@ Route = collections.namedtuple("Route", ["rtepts", "properties", "extensions"])
 
 ns = "{http://www.topografix.com/GPX/1/1}"
 
+
+VALID_PROPERTIES = ("ele", "time", "magvar", "geoidheight", "name", "cmt",
+                    "desc", "src", "link", "sym", "type", "fix", "sat", "hdop",
+                    "vdop", "pdop", "ageofdgpsdata", "dgpsid")
+
 def strip_namespace(s):
     return s[s.index("}")+1:]
 
@@ -34,9 +39,9 @@ class GPX(object):
         """ Create a GPX object, either from a GPX file or from lists of
         waypoints, tracks, and routes. """
 
-        self.waypts = {}
-        self.tracks = {}
-        self.routes = {}
+        self.waypts = []
+        self.tracks = []
+        self.routes = []
 
         if f is not None:
             self.fromfile(f)
@@ -150,7 +155,6 @@ class GPX(object):
 
     def parse_trk(self, trk):
         """ Parse a <trk> node, updating self.tracks. """
-        name = trk.get("name", "route_" + str(len(self.tracks)))
         segments = []
         trkproperties = self._readproperties(trk, exclude=("trkseg",))
         trkextensions = self._readextensions(trk)
@@ -162,26 +166,31 @@ class GPX(object):
             extensions = self._readextensions(trkseg)
             segments.append(Trkseg(points, properties, extensions))
 
-        self.tracks[name] = Track(segments, trkproperties, trkextensions)
+        self.tracks.append(Track(segments, trkproperties, trkextensions))
         return
 
     def parse_rte(self, rte):
         properties = self._readproperties(rte, exclude=("rtept",))
         extensions = self._readextensions(rte)
-        name = properties.get("name", "route_" + str(len(self.routes)))
         points = [self._readwpt(rtept) for rtept in rte.findall(ns + "rtept")]
-        self.routes[name] = Route(points, properties, extensions)
+        self.routes.append(Route(points, properties, extensions))
         return
 
     def add_waypoint(self, waypoint):
         """ Add a Point-like object as a waypoint. Properties and extension
         types are taken from waypoint.properties attribute. """
-        waypt = Point(waypoint.vertex, properties, {})
-        name = waypt.properties.get("name", "waypt_" + len(self.waypoints))
-        self.waypoints[name] = waypt
+        properties = {}
+        extensions = {}
+        for key in waypoint.properties:
+            if key in VALID_PROPERTIES:
+                properties[key] = str(waypoint.properties[key])
+            else:
+                extensions[key] = str(waypoint.properties[key])
+        waypt = Point(waypoint.vertex, properties, extensions)
+        self.waypts.append(waypt)
         return
 
-    def add_track(self, track, properties=None, extensions=None):
+    def add_track(self, track, attributes=None):
         """ Add a list of Line-like objects as a track. Dictionaries of
         properties and extension types for the track are accepted as keyword
         arguments.
@@ -199,16 +208,47 @@ class GPX(object):
 
         Needs to properly add and <ele> property for Lines of rank 3
         """
+        segments = []
+        properties = {}
+        extensions = {}
+
+        if attributes is not None:
+            for key in attributes:
+                if key in VALID_PROPERTIES:
+                    properties[key] = str(attributes[key])
+                else:
+                    properties[key] = str(attributes[key])
+
         for line in track:
             points = []
-            for i, vertex in enumerate(line.vertices):
-                prop = {}
-                for k in line.data.keys():
-                    prop[k] = line.data[k][i]
-                points.append(Point((vertex[0], vertex[1]), prop, {}))
-            segment = Trkseg(points, line.properties, {})
-        name = properties.get("name", "track_" + len(self.tracks))
-        self.track[name] = Track(segements, properties, extensions)
+            sg_properties = {}
+            sg_extensions = {}
+
+            for key in line.properties:
+                if key in VALID_PROPERTIES:
+                    sg_properties[key] = str(line.properties[key])
+                else:
+                    sg_extensions[key] = str(line.properties[key])
+
+            pt_properties = [k for k in line.data.keys() if k in VALID_PROPERTIES]
+            pt_extensions = [k for k in line.data.keys() if k not in VALID_PROPERTIES]
+
+            for i, xy in enumerate(line.vertices):
+
+                ptprop = {}
+                ptexte = {}
+                for key in pt_properties:
+                    ptprop[key] = line.data[key][i]
+                    if len(xy) == 3:
+                        ptprop["ele"] = xy[2]
+                for key in pt_extensions:
+                    ptexte[key] = line.data[key][i]
+
+                points.append(Point((xy[0], xy[1]), ptprop, ptexte))
+
+            segments.append(Trkseg(points, sg_properties, sg_extensions))
+
+        self.tracks.append(Track(segments, properties, extensions))
         return
 
     def add_route(self, route):
@@ -232,9 +272,7 @@ class GPX(object):
             for k in route.data.keys():
                 prop[k] = route.data[k][i]
             points.append(Point((vertex[0], vertex[1]), prop, {}))
-        route = Route(points, route.properties, {})
-        name = route.properties.get("name", "route_" + len(self.routes))
-        self.route[name] = route
+        self.routes.append(Route(points, route.properties, {}))
         return
 
     def writefile(self, fnm, waypts=True, tracks=True, routes=True):
@@ -244,13 +282,13 @@ class GPX(object):
         gpx = Element(ns + "gpx", version="1.1", creator="karta")
 
         if waypts:
-            for waypt in self.waypts.values():
+            for waypt in self.waypts:
                 gpx.append(self._build_gpx_wpt(waypt))
         if tracks:
-            for track in self.tracks.values():
+            for track in self.tracks:
                 gpx.append(self._build_gpx_trk(track))
         if routes:
-            for route in self.routes.values():
+            for route in self.routes:
                 gpx.append(self._build_gpx_rte(route))
 
         xmlstring = ET.tostring(gpx)
