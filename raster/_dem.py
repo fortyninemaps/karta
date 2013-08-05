@@ -73,22 +73,29 @@ def nreps(fmt):
     try:
         reps = int(fmt[0])
         return reps * nreps(fmt[1:].lstrip("(").rstrip(")"))
-        
+
     except ValueError:
         return 1
         #return fmt.count(",") + 1
-    
+
+def nreps_re(fmt):
+    M = re.match(r"\A\d+", fmt)
+    if M:
+        return int(fmt[:M.end()]) * nreps_re(fmt[M.end():].lstrip("(").rstrip(")"))
+    else:
+        return 1
+
 def reclen(fmt):
     """ Return the number of characters in a single record of
     a potentially multiple-record string. """
     try:
         reps = int(fmt[0])
         return reclen(fmt[1:].lstrip("(").rstrip(")"))
-        
+
     except ValueError:
         if "," in fmt:
             return map(lambda a: reclen(a)[0], fmt.split(","))
-        
+
         if fmt[0] in ("G", "F", "E", "D"):
             nch = int(fmt[1:].split(".")[0])
         elif fmt[0] in ("A", "I"):
@@ -120,7 +127,7 @@ def dtype(fmt):
     try:
         reps = int(fmt[0])
         return dtype(fmt[1:].lstrip("(").rstrip(")"))
-    
+
     except ValueError:
         if "," in fmt:
             return map(lambda a: dtype(a)[0], fmt.split(","))
