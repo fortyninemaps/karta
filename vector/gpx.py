@@ -6,7 +6,6 @@ This is a rewrite of gpxparser.py, designed to fit better with guppy types.
 To do:
     - XML namespaces aren't really handled properly
     - metadata node not addressed
-    - methods for simple addition of guppy-like types need work
 """
 
 import sys
@@ -56,16 +55,19 @@ class GPX(object):
 
     def _readextensions(self, node):
         extensions = {}
-        for ext in node.find("extensions"):
-            extensions[strip_namespace(ext.tag)] = ext.text
+        try:
+            for ext in node.find("extensions"):
+                extensions[strip_namespace(ext.tag)] = ext.text
+        except TypeError:
+            pass
         return extensions
 
     def _readproperties(self, node, exclude=()):
         properties = {}
-        for node in wpt:
-            tag = strip_namespace(node.tag)
+        for subnode in node:
+            tag = strip_namespace(subnode.tag)
             if tag not in exclude:
-                properties[tag] = node.text
+                properties[tag] = subnode.text
         return properties
 
     def _readwpt(self, wpt):
@@ -150,6 +152,8 @@ class GPX(object):
         """ Parse a <trk> node, updating self.tracks. """
         name = trk.get("name", "route_" + str(len(self.tracks)))
         segments = []
+        trkproperties = self._readproperties(trk, exclude=("trkseg",))
+        trkextensions = self._readextensions(trk)
 
         for trkseg in trk.findall(ns + "trkseg"):
 
@@ -158,7 +162,7 @@ class GPX(object):
             extensions = self._readextensions(trkseg)
             segments.append(Trkseg(points, properties, extensions))
 
-        self.tracks[name] = Track(segments, name)
+        self.tracks[name] = Track(segments, trkproperties, trkextensions)
         return
 
     def parse_rte(self, rte):
