@@ -49,6 +49,7 @@ partially-supported are:
     - ESRI Shapefiles via pyshp (r,w)
 - raster
     - ESRI ASCII Grid (r,w)
+    - USGS DEM (WIP)
     - GeoTiff (WIP)
 
 ## DEPENDENCIES
