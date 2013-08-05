@@ -56,7 +56,7 @@ class GPX(object):
     def _readextensions(self, node):
         extensions = {}
         try:
-            for ext in node.find("extensions"):
+            for ext in node.find(ns + "extensions"):
                 extensions[strip_namespace(ext.tag)] = ext.text
         except TypeError:
             pass
