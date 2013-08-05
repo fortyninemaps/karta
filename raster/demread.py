@@ -1,5 +1,6 @@
 """ Functions for reading the USGS DEM format. """
 
+import math
 import itertools
 import re
 
@@ -67,22 +68,35 @@ BLOCKC = [("filestatcode",0,6,"I6"),
           ("dem_nsmp",54,60,"I6")]
 
 def nreps(fmt):
-    """ Return the number repetitions of a record. """
+    """ Return the number of characters in a single record of
+    a potentially multiple-record string. """
     try:
         reps = int(fmt[0])
         return reps * nreps(fmt[1:].lstrip("(").rstrip(")"))
-
+        
     except ValueError:
         return 1
         #return fmt.count(",") + 1
-
-def nreps_re(fmt):
-    """ Return the number repetitions of a record. """
-    M = re.match(r"\A\d+", fmt)
-    if M:
-        return int(fmt[:M.end()]) * nreps_re(fmt[M.end():].lstrip("(").rstrip(")"))
-    else:
-        return 1
+    
+def reclen(fmt):
+    """ Return the number of characters in a single record of
+    a potentially multiple-record string. """
+    try:
+        reps = int(fmt[0])
+        return reclen(fmt[1:].lstrip("(").rstrip(")"))
+        
+    except ValueError:
+        if "," in fmt:
+            return map(lambda a: reclen(a)[0], fmt.split(","))
+        
+        if fmt[0] in ("G", "F", "E", "D"):
+            nch = int(fmt[1:].split(".")[0])
+        elif fmt[0] in ("A", "I"):
+            nch = int(fmt[1:])
+        else:
+            raise ValueError("Unrecognized format code {0}"
+                             .format(fmt))
+        return [nch]
 
 def reclen(fmt):
     """ Return the number of characters in a single record of
@@ -106,7 +120,7 @@ def dtype(fmt):
     try:
         reps = int(fmt[0])
         return dtype(fmt[1:].lstrip("(").rstrip(")"))
-
+    
     except ValueError:
         if "," in fmt:
             return map(lambda a: dtype(a)[0], fmt.split(","))
@@ -137,31 +151,39 @@ def parse(fmt, s):
                                              itertools.cycle(t))]
     return vals if len(vals) > 1 else vals[0]
 
-def index_wrapper(sz, i):
-    """ Wraps linear indices to r,c indices. """
-    r = i % sz[0]
-    c = i // sz[0]
-    if c > sz[1] - 1:
-        raise IndexError
-    return (r,c)
-
-def slice_wrapper(sz, slc):
-    """ Wraps a slice object from linear indices to fancy nummpy indices. """
-    pass
+def read_block(blk, KEY):
+    """ Read a block from a USGS .dem file given *KEY*, which is a list of
+    tuples in (name::str, pos::int, end::int, format::str) form. """
+    if len(blk) > 1024:
+        blk = blk[:1024]
+    blkdict = {}
+    for field,pos0,pos1,fmt in KEY[:20]:
+        blkdict[field] = parse(fmt, blk[pos0:pos1])
+    return blkdict
 
 def demread(fnm):
-    """ Read a USGS (or CDED) .dem file and return dictionaries for blocks A-C. """
-    with open(fnm):
-        data = fnm.readlines()
+    """ Read a USGS (or CDED) .dem file and return a dictionary for block A, a list of raw data values, and a dictionary for block B. """
+    with open(fnm, "r") as f:
+        data = f.read()
 
-    blocka = parse(data[:1024], BLOCKA)
+    blocka = read_block(data[:1024], BLOCKA)
 
-    blockb = parse(data[1024:2048], BLOCKB)
-    dem = parse(data[1168:2024], "146I6")
-    for blocknum in range(1, blocka["size"][1]):
-        dem.extend(parse(data[1024 + 1024*blocknum : 2048 + 1024*blocknum], "170I6"))
-    blockb["data"] = dem
+    dem = []
+    profnz = parse("2I6", data[1036:1048])[0]
+    profnch = profnz * 6
+    for profnum in range(blocka["size"][1]):
+        i = (int(math.ceil((profnch-146) / 1024.)) + 1) * profnum + 1
+        bhdr = read_block(data[i*1024:(i + 1) * 1024], BLOCKB)
+        #profdem = read_block(data[1168:2048], [("data",0,876,"146I6")])["data"]
+        profdem = read_block(data[1024*i:1024*(i+1)],
+                             [("data",144,1020,"146I6")])["data"]
+        blknz = [170 for _ in range((profnz-146)//170)] + [(profnz-146) % 170]
+        for j, nz in enumerate(blknz):
+            fmt = str(nz) + "I6"
+            profdem.extend(read_block(data[1024*(j+i+1) : 1024*(j+i+2)],
+                                      [("data",0,1020,fmt)])["data"])
+        dem.extend(profdem)
 
-    blockc = parse(data[-1024:], BLOCKC)
-    return blocka, blockb, blockc
+    blockc = read_block(data[-1024:], BLOCKC)
+    return blocka, dem, blockc
 
