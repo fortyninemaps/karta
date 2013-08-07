@@ -108,7 +108,7 @@ class TestGuppy(unittest.TestCase):
 
     def test_poly_vertices(self):
         self.assertTrue((self.poly.get_vertices() ==
-                         np.array([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (0.0, 8.0)])).all())
+            np.array([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (0.0, 8.0)])).all())
         return
 
     def test_poly_coordinates(self):
@@ -251,7 +251,8 @@ class TestGeoJSONInput(unittest.TestCase):
 class TestGPX(unittest.TestCase):
 
     def setUp(self):
-        self.points = [vector.gpx.Point((np.random.random(), np.random.random()), {}, {}) for i in range(20)]
+        self.points = [vector.gpx.Point((np.random.random(), np.random.random()),
+                                        {}, {}) for i in range(20)]
         self.segments = [vector.gpx.Trkseg(self.points, {}, {})]
         self.tracks = [vector.gpx.Track(self.segments, {}, {})]
         self.routes = [vector.gpx.Route(self.points, {}, {})]
@@ -263,8 +264,8 @@ class TestGPX(unittest.TestCase):
         return
 
     def test_track_init(self):
-        """ Test initiation and writing of a GPX file containing a single track. """
-        #g = vector.gpx.GPX(waypoints=self.points, tracks=self.tracks, routes=self.routes)
+        """ Test initiation and writing of a GPX file containing a single
+        track. """
         g = vector.gpx.GPX()
         for i, pt in enumerate(self.points):
             g.waypts.append(pt)
