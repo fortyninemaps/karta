@@ -105,23 +105,6 @@ def reclen(fmt):
                              .format(fmt))
         return [nch]
 
-def reclen(fmt):
-    """ Return the number of characters in a single record of
-    a potentially multiple-record string. """
-    try:
-        reps = int(fmt[0])
-        return reclen(fmt[1:].lstrip("(").rstrip(")"))
-
-    except ValueError:
-        if "," in fmt:
-            return map(lambda a: reclen(a)[0], fmt.split(","))
-
-        if fmt[0] in ("G", "F", "E", "D"):
-            nch = int(fmt[1:].split(".")[0])
-        elif fmt[0] in ("A", "I"):
-            nch = int(fmt[1:])
-        return [nch]
-
 def dtype(fmt):
     """ Return a constructor for the datatype encoded in *fmt*. """
     try:
