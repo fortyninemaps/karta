@@ -79,7 +79,7 @@ def slope(D, res=(30.0, 30.0)):
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
 
-    return pad(np.sqrt(Ddx*Ddx + Ddy*Ddy))
+    return pad(np.sqrt(Ddx*Ddx + Ddy*Ddy), value=np.nan)
 
 
 def aspect(D, res=(30.0, 30.0)):
@@ -93,7 +93,7 @@ def aspect(D, res=(30.0, 30.0)):
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
 
-    return pad(np.arctan2(Ddy, -Ddx))
+    return pad(np.arctan2(Ddy, -Ddx), value=np.nan)
 
 
 def grad(D, res=(30.0, 30.0)):
@@ -105,15 +105,16 @@ def grad(D, res=(30.0, 30.0)):
            (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * dx)
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
-    return pad(Ddx, width=1, edges='all'), pad(Ddy, width=1, edges='all')
+    return (pad(Ddx, width=1, edges='all', value=np.nan),
+            pad(Ddy, width=1, edges='all', value=np.nan))
 
 
 def div(U, V, res=(30.0, 30.0)):
     """ Calculate the divergence of a vector field. """
     dUdx = (U[:,2:] - U[:,:-2]) / (2.0*res[0])
     dVdy = (V[2:,:] - V[:-2,:]) / (2.0*res[1])
-    divergence = pad(dUdx, width=1, edges=('left', 'right')) \
-               + pad(dVdy, width=1, edges=('top', 'bottom'))
+    divergence = pad(dUdx, width=1, edges=('left', 'right'), value=np.nan) \
+               + pad(dVdy, width=1, edges=('top', 'bottom'), value=np.nan)
     return divergence
 
 
@@ -128,7 +129,7 @@ def normed_vector_field(D):
     M = np.sqrt(Ddx**2 + Ddy**2)
     U = Ddx / M[np.isnan(M)==False].max()
     V = Ddy / M[np.isnan(M)==False].max()
-    return pad(U), pad(V)
+    return pad(U, value=np.nan), pad(V, value=np.nan)
 
 
 def hillshade(D, res=(30.0, 30.0), bearing=330.0, azimuth=60.0):
