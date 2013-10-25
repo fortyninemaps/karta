@@ -21,11 +21,11 @@ class Metadata(object):
             for k in data:
                 dtype = type(data[k][0])
                 if False in (isinstance(a, dtype) for a in data[k]):
-                    raise GMetadataError("Data must have uniform type")
+                    raise MetadataError("Data must have uniform type")
 
             n = len(data[k])
             if False in (len(data[k]) == n for k in data):
-                raise GMetadataError("Data must have uniform lengths")
+                raise MetadataError("Data must have uniform lengths")
 
         elif data is not None:
             # Single attribute
@@ -33,7 +33,7 @@ class Metadata(object):
                 data = [data]
             dtype = type(data[0])
             if False in (isinstance(a, dtype) for a in data):
-                raise GMetadataError("Data must have uniform type")
+                raise MetadataError("Data must have uniform type")
             else:
                 data = {'values': data}
 
@@ -76,7 +76,7 @@ class Metadata(object):
                 if type(self._fieldtypes[i]) == type(other._fieldtypes[i]):
                     self._data[k] += other._data[k]
                 else:
-                    raise GMetadataError("Cannot combine metadata instances "
+                    raise MetadataError("Cannot combine metadata instances "
                                          "with different type hierarchies")
         return self
 
