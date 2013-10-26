@@ -170,6 +170,25 @@ class TestGuppy(unittest.TestCase):
         return
 
 
+class TestGuppyProj(unittest.TestCase):
+
+    def setUp(self):
+        self.vancouver = vector.guppy.Point((-123.1, 49.25), crs=vector.guppy.LONLAT)
+        self.ottawa = vector.guppy.Point((-75.69, 45.42), crs=vector.guppy.LONLAT)
+        self.whitehorse = vector.guppy.Point((-135.05, 60.72), crs=vector.guppy.LONLAT)
+        return
+
+    def test_greatcircle(self):
+        d1 = self.vancouver.greatcircle(self.ottawa)
+        d2 = self.vancouver.greatcircle(self.whitehorse)
+        d3 = self.whitehorse.greatcircle(self.ottawa)
+        d4 = self.whitehorse.greatcircle(self.vancouver)
+        self.assertTrue(abs(d1 - 3549030.70541) < 1e-5)
+        self.assertTrue(abs(d2 - 1483327.53922) < 1e-5)
+        self.assertTrue(abs(d3 - 4151366.88185) < 1e-5)
+        self.assertTrue(abs(d4 - 1483327.53922) < 1e-5)
+        return
+
 class TestGuppyOutput(unittest.TestCase):
 
     def setUp(self):

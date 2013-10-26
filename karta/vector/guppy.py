@@ -28,13 +28,24 @@ try:
 except ImportError:
     pass
 
+try:
+    import pyproj
+    PYPROJ = True
+    geod = pyproj.Geod(ellps="WGS84")
+except ImportError:
+    PYPROJ = False
+
+LONLAT = "lonlat"       # This is a temporary, nonstandard SRID
+
 class Geometry(object):
     """ This is the abstract base class for all geometry types, i.e. Point,
     Multipoints and subclasses thereof. """
     _geotype = None
 
-    def __init__(self):
+    def __init__(self, crs=None):
         self.properties = {}
+        self._crs = crs
+        return
 
     def add_property(self, name, value):
         """ Insert a property (name -> value) into the properties dict, raising
@@ -61,9 +72,9 @@ class Point(Geometry):
     constructed. """
     _geotype = "Point"
 
-    def __init__(self, coords, data=None, properties=None):
+    def __init__(self, coords, data=None, properties=None, **kwargs):
         if properties is None: properties = {}
-        super(Point, self).__init__()
+        super(Point, self).__init__(**kwargs)
         self.vertex = coords
         self._setxyz()
         self.data = Metadata(data, singleton=True)
@@ -179,6 +190,17 @@ class Point(Geometry):
             return flat_dist
         else:
             return math.sqrt(flat_dist**2. + (self.z-other.z)**2.)
+
+    def greatcircle(self, other):
+        """ Return the greatcircle distance between two geographical points. """
+        if not PYPROJ:
+            raise CRSError("Great circle computations require pyproj")
+        if not (self._crs == LONLAT and other._crs == LONLAT):
+            raise CRSError("Great circle diastances require both points to be "
+                           "in geographical coordinates")
+        az1, az2, dist = geod.inv(self.x, self.y, other.x, other.y, radians=False)
+        return dist
+
 
     def shift(self, shift_vector):
         """ Shift point by the amount given by a vector. Operation occurs
@@ -733,6 +755,10 @@ class GGeoError(GuppyError):
     def __init__(self, message=''):
         self.message = message
 
+class CRSError(GuppyError):
+    """ Exception to raise for invalid geodetic operations. """
+    def __init__(self, message=''):
+        self.message = message
 
 def ray_intersection(pt, endpt1, endpt2, direction=0.0):
     """ Determines whether a ray intersects a line segment. If yes,

@@ -3,8 +3,8 @@
 *Karta* is a Leatherman for geographic analyses. *Karta* provides an interface
 for solving problems in Python that works nicely with existing packages. To this
 end, it provides simple and clean vector and raster data types, a selection of
-analysis functions, the ability to read and write a useful subset of formats,
-and close interoperability with *numpy*.
+analysis functions, the ability to read and write a small number of useful
+formats, and interoperability with *numpy*.
 
 Goals of *Karta* include providing a simple, lightweight, and fast set of tools
 useful for "everyday" spatial analysis, as well as a flexible set of
@@ -12,7 +12,6 @@ abstractions upon which to build more advanced routines. *Karta* should be
 considered a work in progress.
 
 **Future goals:**
-- projection handling
 - native GeoTiff support
 - shapefile support through OGR rather than pyshp
 
@@ -63,6 +62,7 @@ The easiest way to install is to use `pip`.
 
 - Python 2.x
 - numpy
+- pyproj (optional, but required for geodetic calculations)
 - scipy (optional)
 - Cython (optional)
 
