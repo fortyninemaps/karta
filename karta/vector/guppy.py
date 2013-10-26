@@ -292,6 +292,9 @@ class Multipoint(Geometry):
     def __iter__(self):
         return (pt for pt in self.vertices)
 
+    def __eq__(self, other):
+        return isinstance(other, type(self)) and other.vertices == self.vertices
+
     def _bbox_overlap(self, other):
         """ Return whether bounding boxes between self and another geometry
         overlap.
@@ -503,6 +506,10 @@ class ConnectedMultipoint(Multipoint):
 
     def segments(self):
         """ Returns an iterator of adjacent line segments. """
+        return (Line(self.vertices[i:i+2]) for i in range(len(self.vertices)-1))
+
+    def segment_tuples(self):
+        """ Returns an iterator of adjacent line segments as coordinate tuples. """
         return ((self.vertices[i], self.vertices[i+1])
                 for i in range(len(self.vertices)-1))
 

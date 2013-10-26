@@ -24,6 +24,7 @@ class TestGuppy(unittest.TestCase):
                      47.0, 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]
 
         self.mp = vector.guppy.Multipoint(self.vertices, data=self.data)
+        self.line = vector.guppy.Line(self.vertices, data=self.data)
         self.poly = vector.guppy.Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
         self.ring = vector.guppy.Polygon([(2.0, 2.0), (4.0, 2.0), (3.0, 6.0)])
         self.ringed_poly = vector.guppy.Polygon([(0.0, 0.0), (10, 0.0),
@@ -137,6 +138,12 @@ class TestGuppy(unittest.TestCase):
 
     def test_ringedpoly_area(self):
         self.assertEqual(self.ringed_poly.area(), 100 - self.ring.area())
+        return
+
+    def test_segments(self):
+        v = self.vertices
+        self.assertEqual([tuple(a.vertices) for a in self.line.segments()],
+                         [(v[i], v[i+1]) for i in range(len(self.vertices)-1)])
         return
 
 
