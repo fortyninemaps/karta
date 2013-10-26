@@ -91,7 +91,11 @@ class Metadata(Mapping):
         return self._data.__iter__()
 
     def __getitem__(self, key):
-        if isinstance(key, numbers.Integral):
+        # If there is one field type, a number index should return a scalar
+        # If there are multiple field types, a number index should return a dict
+        # Although this is a bit irregular, it probably adheres better to the
+        # principle of least surprise
+        if isinstance(key, numbers.Integral) or isinstance(key, slice):
             if len(self._fieldtypes) == 1:
                 return self.values()[0][key]
             else:

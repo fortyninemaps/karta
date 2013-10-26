@@ -241,6 +241,34 @@ class TestGuppyOutput(unittest.TestCase):
                          md5sum('reference_data/testgeojson.json'))
         return
 
+class TestMetadata(unittest.TestCase):
+
+    def setUp(self):
+        self.onefield = vector.metadata.Metadata(data=np.arange(200), singleton=False)
+        self.multifield = vector.metadata.Metadata(
+                data={"a":np.arange(200), "b":np.arange(200,400), "c":np.arange(200)**2}, singleton=False)
+        return
+
+    def test_indexing(self):
+        self.assertEqual(self.onefield[10], 10)
+        self.assertEqual(self.multifield[10], {"a":10, "b": 210, "c": 100})
+        return
+
+    def test_slicing(self):
+        self.assertTrue(np.all(self.onefield[5:15] == np.arange(5, 15)))
+        res = self.multifield[5:15]
+        self.assertTrue(np.all(res["a"] == np.arange(5, 15)))
+        self.assertTrue(np.all(res["b"] == np.arange(205, 215)))
+        self.assertTrue(np.all(res["c"] == np.arange(5, 15)**2))
+        return
+
+    def test_keys(self):
+        self.assertTrue(np.all(self.onefield["values"] == np.arange(200)))
+        self.assertTrue(np.all(self.multifield["a"] == np.arange(200)))
+        self.assertTrue(np.all(self.multifield["b"] == np.arange(200, 400)))
+        self.assertTrue(np.all(self.multifield["c"] == np.arange(200)**2))
+        return
+
 class TestGeoJSONInput(unittest.TestCase):
 
     def test_point_read(self):
