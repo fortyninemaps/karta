@@ -5,7 +5,6 @@ import sys
 import operator
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
-import karta.vector.guppy
 
 def mp2vtp(mp_list, f, **kwargs):
     """ Write a list of Multipoint instances to a serial VTK PolyData (.vtp)
@@ -38,7 +37,7 @@ def mp2vtp(mp_list, f, **kwargs):
 
     xugrid = ET.SubElement(xdoc, vtype)
 
-    if isinstance(mp_list, karta.vector.guppy.Multipoint):
+    if hasattr(mp_list, "_geotype") and mp_list._geotype == "Multipoint":
         mp_list = [mp_list]
 
     for mp in mp_list:

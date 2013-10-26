@@ -10,9 +10,9 @@ import math
 import sys
 import traceback
 import numpy as np
-import vtk
-import geojson
-import xyfile
+from . import vtk
+from . import geojson
+from . import xyfile
 
 from collections import deque
 from metadata import Metadata
