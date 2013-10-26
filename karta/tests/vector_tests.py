@@ -59,6 +59,10 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(self.point, point)
         return
 
+    def test_nearest_to(self):
+        self.assertEqual(self.mp.nearest_to(self.point), self.mp[15])
+        return
+
     def test_multipoint_getset(self):
         self.assertEqual(self.mp[0], vector.guppy.Point(self.vertices[0],
                                                         data=self.mp.data[0],

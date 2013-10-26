@@ -84,6 +84,7 @@ class Point(Geometry):
             return False
 
     def _setxyz(self):
+        """ Create convenience *x*, *y* (, *z*) attributes from vertices. """
         self.x = self.vertex[0]
         self.y = self.vertex[1]
         try:
@@ -422,7 +423,7 @@ class Multipoint(Geometry):
         """
         distances = self._distance_to(pt)
         idx = distances.index(min(distances))
-        return self._subset(list(idx))
+        return self[idx]
 
     def get_extents(self):
         """ Calculate a bounding box. """
