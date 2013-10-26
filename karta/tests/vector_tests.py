@@ -2,6 +2,7 @@
 
 import unittest
 import os
+import math
 import numpy as np
 import karta.vector as vector
 from karta.vector.geojson import GeoJSONReader
@@ -108,6 +109,18 @@ class TestGuppy(unittest.TestCase):
                  50.0, 25.0, 11.0, 80.0, 59.0, 56.0, 32.0, 8.0, 88.0, 76.0]
 
         L2 = vector.guppy.Multipoint(vertices, data={'d0':data0, 'd1':data1})
+        return
+
+    def test_connected_multipoint_distance_to(self):
+        line = vector.guppy.Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
+        dist = line.distance_to(vector.guppy.Point((0.0, 2.0)))
+        self.assertTrue(abs(dist - math.sqrt(2)) < 1e-10)
+        return
+
+    def test_connected_multipoint_nearest_on_boundary(self):
+        line = vector.guppy.Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
+        npt = line.nearest_on_boundary(vector.guppy.Point((0.0, 2.0)))
+        self.assertEqual(npt, vector.guppy.Point((1.0, 1.0)))
         return
 
     def test_line_intersection(self):

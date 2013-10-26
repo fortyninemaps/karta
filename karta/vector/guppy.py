@@ -520,16 +520,26 @@ class ConnectedMultipoint(Multipoint):
         return ((self.vertices[i], self.vertices[i+1])
                 for i in range(len(self.vertices)-1))
 
+    def distance_to(self, pt):
+        """ Return the shortest distance from a point on the Multipoint
+        boundary to *pt* (Point) """
+        point_dist = map(_vecgeo.pt_nearest,
+                                [pt.vertex for seg in self.segments()],
+                                [seg[0].vertex for seg in self.segments()],
+                                [seg[1].vertex for seg in self.segments()])
+        distances = [i[1] for i in point_dist]
+        return min(distances)
+
     def nearest_on_boundary(self, pt):
         """ Returns the point on the Multipoint boundary that is nearest to pt
-        (point class).
+        (Point).
 
         Warning: If two points are equidistant, only one will be returned.
         """
         point_dist = map(_vecgeo.pt_nearest,
                                 [pt.vertex for seg in self.segments()],
-                                [seg[0] for seg in self.segments()],
-                                [seg[1] for seg in self.segments()])
+                                [seg[0].vertex for seg in self.segments()],
+                                [seg[1].vertex for seg in self.segments()])
         distances = [i[1] for i in point_dist]
         return Point(point_dist[distances.index(min(distances))][0])
 
