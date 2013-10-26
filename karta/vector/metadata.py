@@ -7,7 +7,11 @@ from collections import Mapping
 class Metadata(Mapping):
     """ Class for handling collections of metadata. Data are organized similar
     to a Python dict, however different values must all have the same length
-    and be of uniform type. Data are accessed by field (key). """
+    and be of uniform type.
+
+    Data are accessed either by field name (returning the entire series for
+    that field) for by index (returning the value within eather field at that
+    index). """
 
     _data = {}
     _fieldtypes = []
@@ -86,14 +90,14 @@ class Metadata(Mapping):
     def __iter__(self):
         return self._data.__iter__()
 
-    def __getitem__(self, idx):
-        if isinstance(idx, numbers.Integral):
+    def __getitem__(self, key):
+        if isinstance(key, numbers.Integral):
             if len(self._fieldtypes) == 1:
-                return self._data["values"][idx]
+                return self.values()[0][key]
             else:
-                return tuple([self._data[k][idx] for k in self._data])
+                return dict((k, self._data[k][key]) for k in self.keys())
         else:
-            return self.getfield(idx)
+            return self.getfield(key)
 
     def __delitem__(self, idx):
         for k in self._data:
