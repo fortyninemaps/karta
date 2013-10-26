@@ -26,7 +26,7 @@ cpdef int intersects(double x0, double x1, double x2, double x3,
         return False
     x = (y1 - y3 + m1*x3 - m0*x1) / (m1 - m0)
     if (x < dbl_max(x0, x1) and x < dbl_max(x2, x3) and
-        x > dbl_min(x0, y1) and x > dbl_min(x2, x3)):
+        x > dbl_min(x0, x1) and x > dbl_min(x2, x3)):
         return True
     else:
         return False
@@ -51,7 +51,7 @@ def intersections(double x0, double x1, double x2, double x3,
         return (np.nan, np.nan)
     x = (m0*x0 - m1*x2 + y2 - y0) / (m0 - m1)
     if (x < dbl_max(x0, x1) and x < dbl_max(x2, x3) and
-        x > dbl_min(x0, y1) and x > dbl_min(x2, x3)):
+        x > dbl_min(x0, x1) and x > dbl_min(x2, x3)):
         y = m0 * (x-x0) + y0
         return (x, y)
     else:
