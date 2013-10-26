@@ -2,8 +2,9 @@
 
 import copy
 import numbers
+from collections import Mapping
 
-class Metadata(object):
+class Metadata(Mapping):
     """ Class for handling collections of metadata. Data are organized similar
     to a Python dict, however different values must all have the same length
     and be of uniform type. Data are accessed by field (key). """
@@ -15,7 +16,7 @@ class Metadata(object):
         """ Create a collection of metadata from *data*, which may be a list
         with uniform type or a dictionary with equally-sized fields of uniform
         type.
-        
+
         Parameters
         ----------
         data : list of uniform type or dictionary of equally-sized fields of
@@ -66,9 +67,18 @@ class Metadata(object):
             self._fieldtypes = [type(data[k][0]) for k in data]
 
     def __add__(self, other):
-        if isinstance(other, type(self)):
-            res = copy.deepcopy(self)
-        return res.extend(other)
+        if not isinstance(other, type(self)):
+            raise MetadataError("self and other must both be instances of {0}".format(type(self)))
+        if set(self.keys()) != set(other.keys()):
+            raise MetadataError("self and other do not have identical field names")
+        res = copy.deepcopy(self)
+        for k in res:
+            res[k] += other[k]
+        return res
+
+    def __len__(self):
+        k = self.keys()[0]
+        return len(self._data[k])
 
     def __contains__(self, other):
         return (other in self._data)
