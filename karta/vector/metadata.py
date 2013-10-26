@@ -11,38 +11,59 @@ class Metadata(object):
     _data = {}
     _fieldtypes = []
 
-    def __init__(self, data):
+    def __init__(self, data, singleton=False):
         """ Create a collection of metadata from *data*, which may be a list
         with uniform type or a dictionary with equally-sized fields of uniform
-        type. """
+        type.
+        
+        Parameters
+        ----------
+        data : list of uniform type or dictionary of equally-sized fields of
+        uniform type
 
-        if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
-            # Dictionary of attributes
-            for k in data:
-                dtype = type(data[k][0])
-                if False in (isinstance(a, dtype) for a in data[k]):
-                    raise MetadataError("Data must have uniform type")
+        *kwargs*:
+        singleton : treat data as a single unit, rather than as a list of units
+        """
 
-            n = len(data[k])
-            if False in (len(data[k]) == n for k in data):
-                raise MetadataError("Data must have uniform lengths")
+        if singleton:
 
-        elif data is not None:
-            # Single attribute
-            if not hasattr(data, '__iter__'):
-                data = [data]
-            dtype = type(data[0])
-            if False in (isinstance(a, dtype) for a in data):
-                raise MetadataError("Data must have uniform type")
+            if hasattr(data, "keys") and hasattr(data.values, "__call__"):
+                self._data = data
+            elif data is not None:
+                self._data = {"values": data}
             else:
-                data = {'values': data}
+                self._data = {}
+            self._fieldtypes = [type(self._data[k]) for k in self._data]
 
         else:
-            # No metadata
-            data = {}
 
-        self._data = data
-        self._fieldtypes = [type(data[k][0]) for k in data]
+            if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
+                # Dictionary of attributes
+                for k in data:
+                    dtype = type(data[k][0])
+                    if False in (isinstance(a, dtype) for a in data[k]):
+                        raise MetadataError("Data must have uniform type")
+
+                n = len(data[k])
+                if False in (len(data[k]) == n for k in data):
+                    raise MetadataError("Data must have uniform lengths")
+
+            elif data is not None:
+                # Single attribute
+                if not hasattr(data, '__iter__'):
+                    data = [data]
+                dtype = type(data[0])
+                if False in (isinstance(a, dtype) for a in data):
+                    raise MetadataError("Data must have uniform type")
+                else:
+                    data = {'values': data}
+
+            else:
+                # No metadata
+                data = {}
+
+            self._data = data
+            self._fieldtypes = [type(data[k][0]) for k in data]
 
     def __add__(self, other):
         if isinstance(other, type(self)):
@@ -57,7 +78,10 @@ class Metadata(object):
 
     def __getitem__(self, idx):
         if isinstance(idx, numbers.Integral):
-            return tuple([self._data[k][idx] for k in self._data])
+            if len(self._fieldtypes) == 1:
+                return self._data["values"][idx]
+            else:
+                return tuple([self._data[k][idx] for k in self._data])
         else:
             return self.getfield(idx)
 

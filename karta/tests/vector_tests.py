@@ -10,7 +10,9 @@ from test_helper import md5sum
 class TestGuppy(unittest.TestCase):
 
     def setUp(self):
-        self.point = vector.guppy.Point((1.0, 2.0, 3.0))
+        self.point = vector.guppy.Point((1.0, 2.0, 3.0),
+                                        data={"color":(43,67,10)},
+                                        properties="apple")
 
         self.vertices = [(2.0, 9.0, 9.0), (4.0, 1.0, 9.0), (4.0, 1.0, 5.0),
                          (2.0, 8.0, 0.0), (9.0, 8.0, 4.0), (1.0, 4.0, 6.0),
@@ -37,6 +39,8 @@ class TestGuppy(unittest.TestCase):
 
     def test_point_coordsxy(self):
         self.assertEqual(self.point.coordsxy(), (1.0, 2.0))
+        self.assertEqual(self.point[0], 1.0)
+        self.assertEqual(self.point[1], 2.0)
         return
 
     def test_point_bearing(self):
@@ -56,7 +60,9 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_multipoint_getset(self):
-        self.assertEqual(self.mp[0], self.vertices[0])
+        self.assertEqual(self.mp[0], vector.guppy.Point(self.vertices[0],
+                                                        data=self.mp.data[0],
+                                                        properties=self.mp.properties))
         return
 
     def test_multipoint_bbox(self):

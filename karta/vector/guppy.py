@@ -66,10 +66,22 @@ class Point(Geometry):
         super(Point, self).__init__()
         self.vertex = coords
         self._setxyz()
-        self.data = Metadata(data)
+        self.data = Metadata(data, singleton=True)
         if hasattr(properties, "keys"):
             self.properties = properties
         return
+
+    def __getitem__(self, idx):
+        return self.vertex[idx]
+
+    def __repr__(self):
+        return 'Point(' + str(self.vertex) + ')'
+
+    def __eq__(self, other):
+        if hasattr(other, "vertex"):
+            return self.vertex == other.vertex
+        else:
+            return False
 
     def _setxyz(self):
         self.x = self.vertex[0]
@@ -81,15 +93,6 @@ class Point(Geometry):
             self.z = None
             self.rank = 2
         return
-
-    def __repr__(self):
-        return 'Point(' + str(self.vertex) + ')'
-
-    def __eq__(self, other):
-        if hasattr(other, "vertex"):
-            return self.vertex == other.vertex
-        else:
-            return False
 
     def get_vertex(self):
         """ Return the Point vertex as a tuple. """
@@ -271,7 +274,8 @@ class Multipoint(Geometry):
     def __getitem__(self, key):
         if not isinstance(key, int):
             raise GGeoError('Indices must be integers')
-        return self.vertices[key]
+        return Point(self.vertices[key], data=self.data[key],
+                     properties=self.properties)
 
     def __setitem__(self, key, value):
         if not isinstance(key, int):
@@ -280,6 +284,7 @@ class Multipoint(Geometry):
             raise GGeoError('Cannot insert values with'
                             'rank != {0}'.format(self.rank))
         self.vertices[key] = value
+        return
 
     def __delitem__(self, key):
         if len(self) > key:
@@ -288,6 +293,7 @@ class Multipoint(Geometry):
         else:
             raise GGeoError('Index ({0}) exceeds length'
                             '({1})'.format(key, len(self)))
+        return
 
     def __iter__(self):
         return (pt for pt in self.vertices)
@@ -397,7 +403,7 @@ class Multipoint(Geometry):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
         data = [self.data[i] for i in idxs]
-        subset = Multipoint(vertices, data=data, properties=self.properties)
+        subset = type(self)(vertices, data=data, properties=self.properties)
         return subset
 
     def near(self, pt, radius):
