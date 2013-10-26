@@ -256,7 +256,7 @@ class Multipoint(Geometry):
     polyline and polygon classes. """
     _geotype = "Multipoint"
 
-    def __init__(self, vertices, data=None, properties=None):
+    def __init__(self, vertices, data=None, properties=None, **kwargs):
         """ Create a feature with multiple vertices.
 
         vertices : a list of tuples containing point coordinates.
@@ -265,7 +265,7 @@ class Multipoint(Geometry):
         point attributes. If `data` is not `None`, then it (or its values) must
         match `vertices` in length.
         """
-        super(Multipoint, self).__init__()
+        super(Multipoint, self).__init__(**kwargs)
         if properties is None: properties = {}
         if len(vertices) > 0:
             self.rank = len(vertices[0])
@@ -298,7 +298,7 @@ class Multipoint(Geometry):
         if not isinstance(key, int):
             raise GGeoError('Indices must be integers')
         return Point(self.vertices[key], data=self.data[key],
-                     properties=self.properties)
+                     properties=self.properties, crs=self._crs)
 
     def __setitem__(self, key, value):
         if not isinstance(key, int):
@@ -319,7 +319,8 @@ class Multipoint(Geometry):
         return
 
     def __iter__(self):
-        return (pt for pt in self.vertices)
+        return (self[i] for i in range(len(self)))
+        #return (pt for pt in self.vertices)
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and other.vertices == self.vertices
@@ -416,11 +417,11 @@ class Multipoint(Geometry):
         self.shift(origin)
         return
 
-    def _distance_to(self, pt):
-        """ Calculate distance of each member point to an external point. """
-        dist = lambda pts: np.sqrt((pts[0] - pts[1])**2)
-        pta = np.array(pt.vertex)
-        return map(dist, ((np.array(v) - pta) for v in self.vertices))
+    def _distances_to(self, pt):
+        A = np.array(self.vertices)
+        P = np.tile(np.array(pt.vertex), (A.shape[0], 1))
+        d = np.sqrt(np.sum((A-P)**2, 1))
+        return d
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
@@ -433,7 +434,7 @@ class Multipoint(Geometry):
         """ Return Multipoint of subset of member vertices that are within
         *radius* of *pt*.
         """
-        distances = self._distance_to(pt)
+        distances = self._distances_to(pt)
         nearidx = [i for i,d in enumerate(distances) if d < radius]
         subset = self._subset(nearidx)
         return subset
@@ -443,8 +444,8 @@ class Multipoint(Geometry):
 
         Warning: If two points are equidistant, only one will be returned.
         """
-        distances = self._distance_to(pt)
-        idx = distances.index(min(distances))
+        distances = self._distances_to(pt)
+        idx = np.argmin(distances)
         return self[idx]
 
     def get_extents(self):
@@ -660,11 +661,11 @@ class Polygon(ConnectedMultipoint):
     _geotype = "Polygon"
     subs = []
 
-    def __init__(self, vertices, data=None, properties=None, **kwargs):
-        Multipoint.__init__(self, vertices, data=data, properties=properties)
+    def __init__(self, vertices, data=None, properties=None, subs=None, **kwargs):
+        Multipoint.__init__(self, vertices, data=data, properties=properties, **kwargs)
         if vertices[0] != vertices[-1]:
             self.vertices.append(vertices[0])
-        self.subs = kwargs.get('subs', [])
+        self.subs = subs if subs is not None else []
         return
 
     #def __repr__(self):
