@@ -4,7 +4,6 @@ import sys
 import copy
 from math import sqrt
 import numpy as np
-import tiffile          # Temporarily used for TIF IO
 import _aai             # Contains the ascread driver
 try:
     from fill_sinks import fill_sinks
@@ -476,22 +475,6 @@ def dummy_hdr(arr):
            'dx': 1.0, 'dy': 1.0,
            'nbands': nbands}
     return hdr
-
-
-def readtif(incoming, band=0):
-    """ Read a TIF image. If the image is contains bands, return band 0. """
-    with tiffile.TiffFile(incoming) as tif:
-        imdata = tif[0].asarray()
-    rgrid = RegularGrid(dummy_hdr(imdata), Z=imdata)
-    return rgrid
-
-
-def readtifbands(incoming):
-    """ Read a TIF image, returning a tuple of image data. """
-    with tiffile.TiffFile(incoming) as tif:
-        imdata = [page.asarray() for page in tif]
-    rgridlist = [RegularGrid(dummy_hdr(a), Z=a) for a in imdata]
-    return tuple(rgridlist)
 
 def aairead(fnm):
     Z, aschdr = _aai.aairead(fnm)
