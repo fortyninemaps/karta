@@ -543,6 +543,23 @@ class ConnectedMultipoint(Multipoint):
         return ((self.vertices[i], self.vertices[i+1])
                 for i in range(len(self.vertices)-1))
 
+    def intersects(self, other):
+        """ Return whether an intersection exists with another geometry. """
+        interxbool = (_vecgeo.intersects(a[0][0], a[1][0], b[0][0], b[1][0],
+                                         a[0][1], a[1][1], b[0][1], b[1][1])
+                    for a in self.segments() for b in other.segments())
+        if self._bbox_overlap(other) and (True in interxbool):
+            return True
+        else:
+            return False
+
+    def intersections(self, other):
+        """ Return the intersections with another geometry. """
+        interx = (_vecgeo.intersections(a[0][0], a[1][0], b[0][0], b[1][0],
+                                        a[0][1], a[1][1], b[0][1], b[1][1])
+                    for a in self.segments() for b in other.segments())
+        return filter(lambda a: np.nan not in a, interx)
+
     def distance_to(self, pt):
         """ Return the shortest distance from a point on the Multipoint
         boundary to *pt* (Point) """
@@ -577,6 +594,14 @@ class Line(ConnectedMultipoint):
     #def __repr__(self):
     #    return 'Line(' + reduce(lambda a,b: str(a) + ' ' + str(b),
     #            self.vertices) + ')'
+
+    def __getitem__(self, idx):
+        if not isinstance(idx, slice):
+            return super(Line, self).__getitem__(idx)
+        else:
+            return type(self)(self.vertices[idx], data=self.data[idx],
+                              properties=self.properties, crs=self._crs)
+
 
     def add_vertex(self, vertex):
         """ Add a vertex to self.vertices. """
@@ -620,23 +645,6 @@ class Line(ConnectedMultipoint):
     def displacement(self):
         """ Returns the distance between the first and last vertex. """
         return Point(self.vertices[0]).distance(Point(self.vertices[-1]))
-
-    def intersects(self, other):
-        """ Return whether an intersection exists with another geometry. """
-        interxbool = (_vecgeo.intersects(a[0][0], a[1][0], b[0][0], b[1][0],
-                                         a[0][1], a[1][1], b[0][1], b[1][1])
-                    for a in self.segments() for b in other.segments())
-        if self._bbox_overlap(other) and (True in interxbool):
-            return True
-        else:
-            return False
-
-    def intersections(self, other):
-        """ Return the intersections with another geometry. """
-        interx = (_vecgeo.intersections(a[0][0], a[1][0], b[0][0], b[1][0],
-                                        a[0][1], a[1][1], b[0][1], b[1][1])
-                    for a in self.segments() for b in other.segments())
-        return filter(lambda a: np.nan not in a, interx)
 
     def to_polygon(self):
         """ Returns a polygon. """
