@@ -44,6 +44,10 @@ def intersections(x0, x1, x2, x3, y0, y1, y2, y3):
     else:
         return (np.nan, np.nan)
 
+def distance(pt0, pt1):
+    """ Calculate the distance between two points (tuples) """
+    d = math.sqrt(sum([abs(a-b)**2 for a, b in zip(pt0, pt1)]))
+    return d
 
 def pt_nearest(pt, endpt1, endpt2):
     """ Determines the point on a segment defined by tuples endpt1
