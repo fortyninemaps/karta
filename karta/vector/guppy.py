@@ -402,7 +402,7 @@ class Multipoint(Geometry):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
         data = [self.data[i] for i in idxs]
-        subset = type(self)(vertices, data=data, properties=self.properties)
+        subset = type(self)(vertices, data=data, properties=self.properties, crs=self._crs)
         return subset
 
     def distances_to(self, pt):
@@ -517,7 +517,7 @@ class ConnectedMultipoint(Multipoint):
 
     def segments(self):
         """ Returns an iterator of adjacent line segments. """
-        return (Line(self.vertices[i:i+2]) for i in range(len(self.vertices)-1))
+        return (self._subset((i,i+1)) for i in range(len(self)-1))
 
     def segment_tuples(self):
         """ Returns an iterator of adjacent line segments as coordinate tuples. """
