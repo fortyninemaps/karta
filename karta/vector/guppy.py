@@ -158,7 +158,7 @@ class Point(Geometry):
         return
 
     def azimuth(self, other, spherical=False):
-        """ Returns the aximuth from self to other in radians. Returns None
+        """ Returns the azimuth from self to other in radians. Returns None
         if points are coincident. """
 
         if self.z is None:
@@ -171,7 +171,11 @@ class Point(Geometry):
         distxy = math.sqrt((self.x-other.x)**2. + (self.y-other.y)**2.)
         dz = other.z - self.z
 
-        if spherical is False:
+        if self._crs == LONLAT and other._crs == LONLAT:
+            az1, _, _ = Geod.inv(self.x, self.y, other.x, other.y)
+            return az1
+
+        elif self._crs != LONLAT and other._crs != LONLAT:
             if distxy == 0.0:
                 if dz > 0.0:
                     return 0.5 * np.pi
@@ -182,11 +186,8 @@ class Point(Geometry):
             else:
                 return math.atan(dz / distxy)
 
-        elif spherical is True:
-            raise NotImplementedError("Not implemented")
         else:
-            raise GuppyError("Value for 'spherical' kwarg not understood")
-        return
+            raise CRSError("Cannot compute azimuth between point in different coordinate systems")
 
     def walk(self, distance, bearing, azimuth=0.0, spherical=False):
         """ Wraps walk() """
