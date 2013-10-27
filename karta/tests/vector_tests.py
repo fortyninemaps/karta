@@ -44,14 +44,9 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(self.point[1], 2.0)
         return
 
-    def test_point_bearing(self):
-        other = vector.guppy.Point((7.0, 8.0))
-        self.assertEqual(self.point.bearing(other), 225.0 / 180.0 * np.pi)
-        return
-
     def test_point_azimuth(self):
-        other = vector.guppy.Point((2.0, 1.0, 1.0))
-        self.assertEqual(self.point.azimuth(other), -np.arctan(2./np.sqrt(2.0)))
+        other = vector.guppy.Point((7.0, 8.0))
+        self.assertEqual(self.point.azimuth(other), 225.0 / 180.0 * np.pi)
         return
 
     def test_point_shift(self):
@@ -190,8 +185,10 @@ class TestGuppyProj(unittest.TestCase):
         return
 
     def test_azimuth_lonlat(self):
-        az = self.vancouver.azimuth(self.ottawa)
-        print az
+        az1 = self.vancouver.azimuth(self.ottawa) * 180. / math.pi
+        az2 = self.vancouver.azimuth(self.whitehorse) * 180. / math.pi
+        self.assertTrue(abs(az1 - 78.4833443403) < 1e-10)
+        self.assertTrue(abs(az2 - (-26.1358265354)) < 1e-10)
         return
 
 class TestGuppyOutput(unittest.TestCase):

@@ -120,14 +120,19 @@ class Point(Geometry):
         else:
             return (self.x, self.y)
 
-    def bearing(self, other, spherical=False):
-        """ Returns the bearing from self to other in radians. Returns
-        None if points have equal x and y. See point.azimuth() for
-        z-axis directions. """
-        dx = self.x - other.x
-        dy = self.y - other.y
+    def azimuth(self, other, spherical=False):
+        """ Returns the azimuth from self to other in radians. Returns
+        None if points are coincident.
+        """
 
-        if spherical is False:
+        if self._crs == LONLAT and other._crs == LONLAT:
+            az1, _, _ = geod.inv(self.x, self.y, other.x, other.y)
+            return az1 * math.pi / 180.0
+
+        elif self._crs != LONLAT and other._crs != LONLAT:
+            dx = self.x - other.x
+            dy = self.y - other.y
+
             if dx == 0.0:
                 if dy > 0.0:
                     return 0.0
@@ -142,43 +147,9 @@ class Point(Geometry):
             else:
                 return math.atan(dy / dx) + math.pi
 
-        elif spherical is True:
-            raise NotImplementedError
         else:
-            raise Exception("Value for 'spherical' kwarg not understood")
-        return
-
-    def azimuth(self, other, spherical=False):
-        """ Returns the azimuth from self to other in radians. Returns None
-        if points are coincident. """
-
-        if self.z is None:
-            raise GGeoError("Point.azimuth() cannot be called from a rank 2 "
-                            "coordinate.")
-        elif other.z is None:
-            raise GGeoError("Point.azimuth() cannot be called on a rank 2 "
-                            "coordinate.")
-
-        distxy = math.sqrt((self.x-other.x)**2. + (self.y-other.y)**2.)
-        dz = other.z - self.z
-
-        if self._crs == LONLAT and other._crs == LONLAT:
-            az1, _, _ = Geod.inv(self.x, self.y, other.x, other.y)
-            return az1
-
-        elif self._crs != LONLAT and other._crs != LONLAT:
-            if distxy == 0.0:
-                if dz > 0.0:
-                    return 0.5 * np.pi
-                elif dz < 0.0:
-                    return -0.5 * np.pi
-                elif dz == 0.0:
-                    return np.nan
-            else:
-                return math.atan(dz / distxy)
-
-        else:
-            raise CRSError("Cannot compute azimuth between point in different coordinate systems")
+            raise CRSError("Cannot compute azimuth between point in different "
+                           "coordinate systems")
 
     def walk(self, distance, bearing, azimuth=0.0, spherical=False):
         """ Wraps walk() """
