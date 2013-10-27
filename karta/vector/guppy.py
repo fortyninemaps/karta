@@ -47,6 +47,15 @@ class Geometry(object):
         self._crs = crs
         return
 
+    def _distance(self, pos0, pos1):
+        """ Generic method for calculating distance between positions that
+        respects CRS """
+        if self._crs == LONLAT:
+            _, _, dist = geod.inv(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
+        else:
+            dist = _vecgeo.distance(pos0.x, pos0.y, pos1.x, pos1.y)
+        return dist
+
     def add_property(self, name, value):
         """ Insert a property (name -> value) into the properties dict, raising
         a NameError if the property already exists. Compared to directly
@@ -389,12 +398,6 @@ class Multipoint(Geometry):
         self.shift(origin)
         return
 
-    def _distances_to(self, pt):
-        A = np.array(self.vertices)
-        P = np.tile(np.array(pt.vertex), (A.shape[0], 1))
-        d = np.sqrt(np.sum((A-P)**2, 1))
-        return d
-
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
@@ -402,21 +405,27 @@ class Multipoint(Geometry):
         subset = type(self)(vertices, data=data, properties=self.properties)
         return subset
 
-    def near(self, pt, radius):
+    def distances_to(self, pt):
+        A = np.array(self.vertices)
+        P = np.tile(np.array(pt.vertex), (A.shape[0], 1))
+        d = np.sqrt(np.sum((A-P)**2, 1))
+        return d
+
+    def within_radius(self, pt, radius):
         """ Return Multipoint of subset of member vertices that are within
         *radius* of *pt*.
         """
-        distances = self._distances_to(pt)
+        distances = self.distances_to(pt)
         nearidx = [i for i,d in enumerate(distances) if d < radius]
         subset = self._subset(nearidx)
         return subset
 
-    def nearest_to(self, pt):
+    def nearest_point_to(self, pt):
         """ Returns the internal point that is nearest to pt (Point class).
 
         Warning: If two points are equidistant, only one will be returned.
         """
-        distances = self._distances_to(pt)
+        distances = self.distances_to(pt)
         idx = np.argmin(distances)
         return self[idx]
 
@@ -532,7 +541,7 @@ class ConnectedMultipoint(Multipoint):
                     for a in self.segments() for b in other.segments())
         return filter(lambda a: np.nan not in a, interx)
 
-    def distance_to(self, pt):
+    def shortest_distance_to(self, pt):
         """ Return the shortest distance from a point on the Multipoint
         boundary to *pt* (Point) """
         point_dist = map(_vecgeo.pt_nearest,

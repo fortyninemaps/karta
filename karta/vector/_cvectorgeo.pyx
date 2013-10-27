@@ -66,6 +66,14 @@ cdef tuple cproj2(tuple u, tuple v):
     vv = cdot2(v,v)
     return (uv / vv * v[0], uv / vv * v[1])
 
+def distance(tuple pt0, tuple pt1):
+    """ Calculate the distance between two points (tuples) """
+    cdef float dsq
+    dsq = 0.0
+    for i in range(min(len(pt0), len(pt1))):
+        dsq += abs(pt0[i] - pt1[i])**2
+    return math.sqrt(dsq)
+
 def pt_nearest(tuple pt, tuple endpt1, tuple endpt2):
     """ Determines the point on a segment defined by tuples endpt1
     and endpt2 nearest to a point defined by tuple pt.
