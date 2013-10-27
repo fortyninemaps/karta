@@ -1,17 +1,17 @@
 #Karta - tidy Python package for geospatial computation
 
-*Karta* is a Leatherman for geographic analyses. *Karta* provides an interface for solving
-problems in Python that works nicely with existing packages. To this end, it provides a
-simple and clean vector and raster data types, a selection of analysis functions, the
-ability to read and write a useful subset of formats, and close interoperability with
-*numpy*.
+*Karta* is a Leatherman for geographic analyses. *Karta* provides an interface
+for solving problems in Python that works nicely with existing packages. To this
+end, it provides simple and clean vector and raster data types, a selection of
+analysis functions, the ability to read and write a small number of useful
+formats, and interoperability with *numpy*.
 
-Goals of *Karta* include providing a simple, lightweight, and fast set of tools useful for
-"everyday" spatial analysis, as well as a flexible set of abstractions upon which to build
-more advanced routines. *Karta* should be considered a work in progress.
+Goals of *Karta* include providing a simple, lightweight, and fast set of tools
+useful for "everyday" spatial analysis, as well as a flexible set of
+abstractions upon which to build more advanced routines. *Karta* should be
+considered a work in progress.
 
 **Future goals:**
-- projection handling
 - native GeoTiff support
 - shapefile support through OGR rather than pyshp
 
@@ -19,7 +19,7 @@ more advanced routines. *Karta* should be considered a work in progress.
 
 - vector
     - guppy:        Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`)
-    - gpx\_parser:  Parser for GPX files exported from GPS devices
+    - gpx:          GPX class for parsing and constructing GPX eXchange files
     - geojson:      Classes and functions for reading and writing GeoJSON
     - vtk:          XML-based VTK interface
     - shp\_funcs:   Shapefile-to-guppy conversions based on _pyshp_
@@ -38,59 +38,70 @@ more advanced routines. *Karta* should be considered a work in progress.
 
 ##FORMATS
 
-*Karta* provides a basic working interface to several of common file formats. Currently
-partially-supported are:
+*Karta* provides a basic working interface to several of common file formats.
+Currently partially-supported are:
 
 - vector
     - ASCII tables (XYZ) (r,w)
     - GeoJSON (r,w)
+    - GPS eXchange (GPX) (r,w)
     - VTK (w)
     - ESRI Shapefiles via pyshp (r,w)
 - raster
-    - ESRI ASCII Grids (r,w)
-    - GeoTiff (WIP)
+    - ESRI ASCII Grid (r,w)
+    - USGS DEM (WIP)
+
+## INSTALLATION
+
+The easiest way to install is to use `pip`.
+
+    cd karta/
+    pip install .
 
 ## DEPENDENCIES
 
 - Python 2.x
 - numpy
+- pyproj (optional, but required for geodetic calculations)
 - scipy (optional)
 - Cython (optional)
 
 ###CYTHON
 
-Cython is an optional dependency used to speed up select functions. To compile the
-Cython-enabled sub-modules, run:
+Cython is an optional dependency used to speed up select functions. In general,
+enhanced-performance functions will then be called automatically when available,
+otherwise *Karta* will fall back to numpy and pure-Python versions.
 
-    setup.py build_ext --inplace
+## TESTING
 
-In general, enhanced-performance functions will then be called automatically when
-available, otherwise *Karta* will fall back to numpy and pure-Python versions.
+To run unit tests, execute
 
-
+    python karta/tests/test_runner.py
 
 ##LICENSE
 
 This software is provided under the MIT license.
 
-The vector module contains a snapshot of the pyshp shapefile module, available at
-(http://code.google.com/p/pyshp/). This module is also available under the MIT license.
+The vector module contains a snapshot of the pyshp shapefile module, available
+at (http://code.google.com/p/pyshp/). This module is also available under the
+MIT license.
 
 ###MIT License:
 
-Permission is hereby granted, free of charge, to any person obtaining a copy of this
-software and associated documentation files (the "Software"), to deal in the Software
-without restriction, including without limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
-to whom the Software is furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
