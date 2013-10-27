@@ -61,7 +61,7 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_nearest_to(self):
-        self.assertEqual(self.mp.nearest_to(self.point), self.mp[12])
+        self.assertEqual(self.mp.nearest_point_to(self.point), self.mp[12])
         return
 
     def test_multipoint_getset(self):
@@ -111,9 +111,9 @@ class TestGuppy(unittest.TestCase):
         L2 = vector.guppy.Multipoint(vertices, data={'d0':data0, 'd1':data1})
         return
 
-    def test_connected_multipoint_distance_to(self):
+    def test_connected_multipoint_shortest_distance_to(self):
         line = vector.guppy.Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
-        dist = line.distance_to(vector.guppy.Point((0.0, 2.0)))
+        dist = line.shortest_distance_to(vector.guppy.Point((0.0, 2.0)))
         self.assertTrue(abs(dist - math.sqrt(2)) < 1e-10)
         return
 
