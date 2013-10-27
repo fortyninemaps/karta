@@ -29,22 +29,22 @@
       </header>
       <section>
         <h1>
-<a name="karta" class="anchor" href="#karta"><span class="octicon octicon-link"></span></a>Karta</h1>
+<a name="karta---tidy-python-package-for-geospatial-computation" class="anchor" href="#karta---tidy-python-package-for-geospatial-computation"><span class="octicon octicon-link"></span></a>Karta - tidy Python package for geospatial computation</h1>
 
-<p><em>Karta</em> is a Leatherman for geographic analyses. <em>Karta</em> provides an interface for solving
-problems in Python that works nicely with existing packages. To this end, it provides a
-simple and clean vector and raster data types, a selection of analysis functions, the
-ability to read and write a useful subset of formats, and close interoperability with
-<em>numpy</em>.</p>
+<p><em>Karta</em> is a Leatherman for geographic analyses. <em>Karta</em> provides an interface
+for solving problems in Python that works nicely with existing packages. To this
+end, it provides simple and clean vector and raster data types, a selection of
+analysis functions, the ability to read and write a small number of useful
+formats, and interoperability with <em>numpy</em>.</p>
 
-<p>Goals of <em>Karta</em> include providing a simple, lightweight, and fast set of tools useful for
-"everyday" spatial analysis, as well as a flexible set of abstractions upon which to build
-more advanced routines. <em>Karta</em> should be considered a work in progress.</p>
+<p>Goals of <em>Karta</em> include providing a simple, lightweight, and fast set of tools
+useful for "everyday" spatial analysis, as well as a flexible set of
+abstractions upon which to build more advanced routines. <em>Karta</em> should be
+considered a work in progress.</p>
 
 <p><strong>Future goals:</strong></p>
 
 <ul>
-<li>projection handling</li>
 <li>native GeoTiff support</li>
 <li>shapefile support through OGR rather than pyshp</li>
 </ul><h2>
@@ -56,7 +56,7 @@ more advanced routines. <em>Karta</em> should be considered a work in progress.<
 
 <ul>
 <li>guppy:        Vector geometry classes (e.g. <code>Point</code>, <code>Multipoint</code>, <code>Line</code>, <code>Polygon</code>)</li>
-<li>gpx_parser:  Parser for GPX files exported from GPS devices</li>
+<li>gpx:          GPX class for parsing and constructing GPX eXchange files</li>
 <li>geojson:      Classes and functions for reading and writing GeoJSON</li>
 <li>vtk:          XML-based VTK interface</li>
 <li>shp_funcs:   Shapefile-to-guppy conversions based on <em>pyshp</em>
@@ -81,8 +81,8 @@ more advanced routines. <em>Karta</em> should be considered a work in progress.<
 </ul><h2>
 <a name="formats" class="anchor" href="#formats"><span class="octicon octicon-link"></span></a>FORMATS</h2>
 
-<p><em>Karta</em> provides a basic working interface to several of common file formats. Currently
-partially-supported are:</p>
+<p><em>Karta</em> provides a basic working interface to several of common file formats.
+Currently partially-supported are:</p>
 
 <ul>
 <li>vector
@@ -90,6 +90,7 @@ partially-supported are:</p>
 <ul>
 <li>ASCII tables (XYZ) (r,w)</li>
 <li>GeoJSON (r,w)</li>
+<li>GPS eXchange (GPX) (r,w)</li>
 <li>VTK (w)</li>
 <li>ESRI Shapefiles via pyshp (r,w)</li>
 </ul>
@@ -97,56 +98,71 @@ partially-supported are:</p>
 <li>raster
 
 <ul>
-<li>ESRI ASCII Grids (r,w)</li>
-<li>GeoTiff (WIP)</li>
+<li>ESRI ASCII Grid (r,w)</li>
+<li>USGS DEM (WIP)</li>
 </ul>
 </li>
 </ul><h2>
+<a name="installation" class="anchor" href="#installation"><span class="octicon octicon-link"></span></a>INSTALLATION</h2>
+
+<p>The easiest way to install is to use <code>pip</code>.</p>
+
+<pre><code>cd karta/
+pip install .
+</code></pre>
+
+<h2>
 <a name="dependencies" class="anchor" href="#dependencies"><span class="octicon octicon-link"></span></a>DEPENDENCIES</h2>
 
 <ul>
 <li>Python 2.x</li>
 <li>numpy</li>
+<li>pyproj (optional, but required for geodetic calculations)</li>
 <li>scipy (optional)</li>
 <li>Cython (optional)</li>
 </ul><h3>
 <a name="cython" class="anchor" href="#cython"><span class="octicon octicon-link"></span></a>CYTHON</h3>
 
-<p>Cython is an optional dependency used to speed up select functions. To compile the
-Cython-enabled sub-modules, run:</p>
+<p>Cython is an optional dependency used to speed up select functions. In general,
+enhanced-performance functions will then be called automatically when available,
+otherwise <em>Karta</em> will fall back to numpy and pure-Python versions.</p>
 
-<pre><code>setup.py build_ext --inplace
+<h2>
+<a name="testing" class="anchor" href="#testing"><span class="octicon octicon-link"></span></a>TESTING</h2>
+
+<p>To run unit tests, execute</p>
+
+<pre><code>python karta/tests/test_runner.py
 </code></pre>
-
-<p>In general, enhanced-performance functions will then be called automatically when
-available, otherwise <em>Karta</em> will fall back to numpy and pure-Python versions.</p>
 
 <h2>
 <a name="license" class="anchor" href="#license"><span class="octicon octicon-link"></span></a>LICENSE</h2>
 
 <p>This software is provided under the MIT license.</p>
 
-<p>The vector module contains a snapshot of the pyshp shapefile module, available at
-(<a href="http://code.google.com/p/pyshp/">http://code.google.com/p/pyshp/</a>). This module is also available under the MIT license.</p>
+<p>The vector module contains a snapshot of the pyshp shapefile module, available
+at (<a href="http://code.google.com/p/pyshp/">http://code.google.com/p/pyshp/</a>). This module is also available under the
+MIT license.</p>
 
 <h3>
 <a name="mit-license" class="anchor" href="#mit-license"><span class="octicon octicon-link"></span></a>MIT License:</h3>
 
-<p>Permission is hereby granted, free of charge, to any person obtaining a copy of this
-software and associated documentation files (the "Software"), to deal in the Software
-without restriction, including without limitation the rights to use, copy, modify, merge,
-publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons
-to whom the Software is furnished to do so, subject to the following conditions:</p>
+<p>Permission is hereby granted, free of charge, to any person obtaining a copy of
+this software and associated documentation files (the "Software"), to deal in
+the Software without restriction, including without limitation the rights to
+use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
+the Software, and to permit persons to whom the Software is furnished to do so,
+subject to the following conditions:</p>
 
-<p>The above copyright notice and this permission notice shall be included in all copies or
-substantial portions of the Software.</p>
+<p>The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.</p>
 
-<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
-INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE
-FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-DEALINGS IN THE SOFTWARE.</p>
+<p>THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
+IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
+CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
       </section>
       <footer>
         <p>This project is maintained by <a href="https://github.com/njwilson23">njwilson23</a></p>
