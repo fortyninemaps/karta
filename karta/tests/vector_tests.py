@@ -189,6 +189,11 @@ class TestGuppyProj(unittest.TestCase):
         self.assertTrue(abs(d4 - 1483327.53922) < 1e-5)
         return
 
+    def test_azimuth_lonlat(self):
+        az = self.vancouver.azimuth(self.ottawa)
+        print az
+        return
+
 class TestGuppyOutput(unittest.TestCase):
 
     def setUp(self):
