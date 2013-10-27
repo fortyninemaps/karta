@@ -4,11 +4,10 @@ import unittest
 import os
 import sys
 import numpy as np
-from test_helper import md5sum
+from test_helper import md5sum, TESTDATA
 import karta
 
-sys.path.append("../raster")
-import _dem as _dem
+from ..raster import _dem
 
 class RegularGrid(unittest.TestCase):
 
@@ -100,7 +99,7 @@ class RegularGrid(unittest.TestCase):
         return
 
     def test_aairead(self):
-        grid = karta.grid.aairead('reference_data/peaks49.asc')
+        grid = karta.grid.aairead(os.path.join(TESTDATA,'peaks49.asc'))
         self.assertTrue(False not in (grid.data == self.rast.data))
         return
 

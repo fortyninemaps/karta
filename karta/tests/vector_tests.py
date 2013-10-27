@@ -6,7 +6,7 @@ import math
 import numpy as np
 import karta.vector as vector
 from karta.vector.geojson import GeoJSONReader
-from test_helper import md5sum
+from test_helper import md5sum, TESTDATA
 
 class TestGuppy(unittest.TestCase):
 
@@ -230,7 +230,7 @@ class TestGuppyOutput(unittest.TestCase):
         with open('data/testmp2vtp.vtp', 'w') as f:
             self.mp.to_vtk(f)
         self.assertEqual(md5sum('data/testmp2vtp.vtp'),
-                         md5sum('reference_data/testmp2vtp.vtp'))
+                         md5sum(os.path.join(TESTDATA, 'testmp2vtp.vtp')))
         return
 
     def test_geojson(self):
@@ -238,7 +238,7 @@ class TestGuppyOutput(unittest.TestCase):
         with open('data/testgeojson.json', 'w') as f:
             self.mp.to_geojson(f)
         self.assertEqual(md5sum('data/testgeojson.json'),
-                         md5sum('reference_data/testgeojson.json'))
+                         md5sum(os.path.join(TESTDATA, 'testgeojson.json')))
         return
 
 class TestMetadata(unittest.TestCase):
@@ -272,21 +272,21 @@ class TestMetadata(unittest.TestCase):
 class TestGeoJSONInput(unittest.TestCase):
 
     def test_point_read(self):
-        with open('reference_data/point.geojson') as f:
+        with open(os.path.join(TESTDATA, 'point.geojson')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_points()
         self.assertEqual(res[0].coordinates, [100.0, 0.0])
         return
 
     def test_linestring_read(self):
-        with open('reference_data/linestring.geojson') as f:
+        with open(os.path.join(TESTDATA, 'linestring.geojson')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_lines()
         self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_polygon_read(self):
-        with open('reference_data/polygon.geojson') as f:
+        with open(os.path.join(TESTDATA, 'polygon.geojson')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_polygons()
         self.assertEqual(res[0].coordinates, [[[100.0, 0.0], [101.0, 0.0],
@@ -295,14 +295,14 @@ class TestGeoJSONInput(unittest.TestCase):
         return
 
     def test_multipoint_read(self):
-        with open('reference_data/multipoint.geojson') as f:
+        with open(os.path.join(TESTDATA, 'multipoint.geojson')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_multipoints()
         self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_multilinestring_read(self):
-        with open('reference_data/multilinestring.geojson') as f:
+        with open(os.path.join(TESTDATA, 'multilinestring.geojson')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_lines()
         self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
@@ -311,7 +311,7 @@ class TestGeoJSONInput(unittest.TestCase):
 
     # This test will fail until holes are implemented
     def test_multipolygon_read(self):
-        with open('reference_data/multipolygon.geojson') as f:
+        with open(os.path.join(TESTDATA, 'multipolygon.geojson')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_polygons()
         self.assertEqual(res[0].coordinates, [[[[102.0, 2.0], [103.0, 2.0],
