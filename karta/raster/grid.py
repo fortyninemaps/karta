@@ -19,9 +19,9 @@ except ImportError:
 
 class Grid(object):
     """ Grid baseclass. Don't use this directly except to implement subclasses.
+    The primary attributes defined by all Grid-derived classed are _hdr and
+    data.
     """
-    _hdr = {}
-    data = np.empty((0,0))
 
     def __len__(self):
         # Number of bands
