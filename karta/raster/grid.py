@@ -450,7 +450,7 @@ class StructuredGrid(Grid):
                     Y -= Y[-1,0]
                 self.X = X
                 self.Y = Y
-                self.Z = Z
+                self.data = Z
         else:
             if True in (a is None for a in (X,Y,Z)):
                 raise GridError('Either all or none of (`X`, `Y`, `Z`) must '
@@ -461,14 +461,14 @@ class StructuredGrid(Grid):
     def __add__(self, other):
         if self._equivalent_structure(other):
             return StructuredGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
-                                  Y=self.Y.copy(), Z=self.Z + other.Z)
+                                  Y=self.Y.copy(), Z=self.data + other.data)
         else:
             raise NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
             return StructuredGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
-                                  Y=self.Y.copy(), Z=self.Z-other.Z)
+                                  Y=self.Y.copy(), Z=self.data-other.data)
         else:
             raise NonEquivalentGridError(self, other)
 

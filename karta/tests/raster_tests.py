@@ -137,16 +137,16 @@ class TestStructuredGrid(unittest.TestCase):
 
     def test_add_sgrid(self):
         rast2 = karta.grid.StructuredGrid(X=self.rast.X, Y=self.rast.Y,
-                                          Z=np.random.random(self.rast.Z.shape)) 
+                                          Z=np.random.random(self.rast.data.shape))
         res = self.rast + rast2
-        self.assertTrue(np.all(res.Z == self.rast.Z+rast2.Z))
+        self.assertTrue(np.all(res.data == self.rast.data+rast2.data))
         return
 
     def test_sub_sgrid(self):
         rast2 = karta.grid.StructuredGrid(X=self.rast.X, Y=self.rast.Y,
-                                          Z=np.random.random(self.rast.Z.shape)) 
+                                          Z=np.random.random(self.rast.data.shape))
         res = self.rast - rast2
-        self.assertTrue(np.all(res.Z == self.rast.Z-rast2.Z))
+        self.assertTrue(np.all(res.data == self.rast.data-rast2.data))
         return
 
 class TestAAIGrid(unittest.TestCase):
