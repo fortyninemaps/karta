@@ -21,6 +21,20 @@ class RegularGrid(unittest.TestCase):
                                                 'nbands':1}, Z=pe)
         return
 
+    def test_add_rgrid(self):
+        rast2 = karta.grid.RegularGrid(self.rast.get_hdr(),
+                                       Z=np.random.random(self.rast.data.shape)) 
+        res = self.rast + rast2
+        self.assertTrue(np.all(res.data == self.rast.data+rast2.data))
+        return
+
+    def test_sub_rgrid(self):
+        rast2 = karta.grid.RegularGrid(self.rast.get_hdr(),
+                                       Z=np.random.random(self.rast.data.shape)) 
+        res = self.rast - rast2
+        self.assertTrue(np.all(res.data == self.rast.data-rast2.data))
+        return
+
     def test_center_coords(self):
         ans = np.meshgrid(np.arange(15.0, 1471.0, 30.0),
                           np.arange(15.0, 1471.0, 30.0))
@@ -119,6 +133,20 @@ class TestStructuredGrid(unittest.TestCase):
         self.assertEqual(hdr, {'xllcorner': 0.0,
                                'yllcorner': -0.12533323356430465,
                                'nbands':1})
+        return
+
+    def test_add_sgrid(self):
+        rast2 = karta.grid.StructuredGrid(X=self.rast.X, Y=self.rast.Y,
+                                          Z=np.random.random(self.rast.Z.shape)) 
+        res = self.rast + rast2
+        self.assertTrue(np.all(res.Z == self.rast.Z+rast2.Z))
+        return
+
+    def test_sub_sgrid(self):
+        rast2 = karta.grid.StructuredGrid(X=self.rast.X, Y=self.rast.Y,
+                                          Z=np.random.random(self.rast.Z.shape)) 
+        res = self.rast - rast2
+        self.assertTrue(np.all(res.Z == self.rast.Z-rast2.Z))
         return
 
 class TestAAIGrid(unittest.TestCase):

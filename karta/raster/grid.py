@@ -27,6 +27,15 @@ class Grid(object):
         # Number of bands
         return np.atleast_3d(self.data).shape[2]
 
+    def _equivalent_structure(self, other):
+        """ Test whether another object shares an equivalent grid layout. """
+        shdr = self.get_hdr()
+        ohdr = self.get_hdr()
+        for key in shdr:
+            if shdr[key] != ohdr[key]:
+                return False
+        return True
+
     def _check_hdr(self, hdr):
         """ Check that hdr contains required fields. Intended to be overloaded.
         """
@@ -58,7 +67,7 @@ class Grid(object):
     def minmax(self):
         """ Return the minimum and maximum value of data array. """
         A = self.data[np.isnan(self.data)==False]
-        return (A.min(), A.max())
+        return (np.nanmin(self.data), np.nanmax(self.data))
 
     def copy(self):
         """ Return a copy. """
@@ -99,6 +108,18 @@ class RegularGrid(Grid):
                 raise GridError('Data array `Z` has an invalid shape')
         self.data = Z
         return
+
+    def __add__(self, other):
+        if self._equivalent_structure(other):
+            return RegularGrid(copy.copy(self.get_hdr()), Z=self.data + other.data)
+        else:
+            raise NonEquivalentGridError(self, other)
+
+    def __sub__(self, other):
+        if self._equivalent_structure(other):
+            return RegularGrid(copy.copy(self.get_hdr()), Z=self.data-other.data)
+        else:
+            raise NonEquivalentGridError(self, other)
 
     def _check_hdr(self, hdr):
         """ Check that the header contains the required fields. """
@@ -437,6 +458,20 @@ class StructuredGrid(Grid):
         self.set_hdr(hdr)
         return
 
+    def __add__(self, other):
+        if self._equivalent_structure(other):
+            return StructuredGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
+                                  Y=self.Y.copy(), Z=self.Z + other.Z)
+        else:
+            raise NonEquivalentGridError(self, other)
+
+    def __sub__(self, other):
+        if self._equivalent_structure(other):
+            return StructuredGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
+                                  Y=self.Y.copy(), Z=self.Z-other.Z)
+        else:
+            raise NonEquivalentGridError(self, other)
+
     def _check_hdr(self, hdr):
         """ Check that the header contains the required fields. """
         for key in ('xllcorner', 'yllcorner', 'nbands'):
@@ -460,10 +495,25 @@ class StructuredGrid(Grid):
 
 
 class GridError(Exception):
-    pass
+    def __init__(self, message=''):
+        self.message = message
+    def __str__(self):
+        return self.message
+
 
 class GridIOError(GridError):
-    pass
+    def __init__(self, message=''):
+        self.message = message
+
+
+class NonEquivalentGridError(GridError):
+    def __init__(self, A, B, message=''):
+        if len(message) == 0:
+            self.message = ("{0} and {1} do not share equivalent "
+                            "grid layouts".format(A, B))
+        else:
+            self.message = message
+
 
 def dummy_hdr(arr):
     if len(arr.shape) > 2:
@@ -487,4 +537,16 @@ def aairead(fnm):
            'nbands'     : 1}
     Z[Z==aschdr['nodata_value']] = np.nan
     return RegularGrid(hdr, Z=Z)
+
+def gtiffread(fnm, band=1):
+   x, y, Z = _gtiff.load(fnm, band)
+   nbands = Z.shape[2] if Z.ndim == 3 else 1
+   hdr = {'xllcorner'   : x[0],
+          'yllcorner'   : y[0],
+          'nx'          : len(x),
+          'ny'          : len(y),
+          'dx'          : x[1] - x[0],
+          'dy'          : y[1] - y[0],
+          'nbands'      : nbands}
+   return RegularGrid(hdr, Z=Z)
 
