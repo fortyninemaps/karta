@@ -433,28 +433,28 @@ class StructuredGrid(Grid):
             - yllcenter (float)
             - nbands (int)
         """
-        if True not in (a is None for a in (X,Y,Z)):
-            if not (X.shape == Y.shape == Z.shape[:2]):
-                raise GridError('All of (`X`, `Y`, `Z`) must share the same '
-                                'two-dimensional size')
+
+        if True in (a is None for a in (X,Y,Z)):
+            raise GridError('Either all or none of (`X`, `Y`, `Z`) must be '
+                            'provided')
+
+        if not (X.shape == Y.shape == Z.shape[:2]):
+            raise GridError('All of (`X`, `Y`, `Z`) must share the same '
+                            'two-dimensional size')
+
+        if hdr is None:
+            hdr = {'xllcorner' : X[-1,0], 'yllcorner' : Y[-1,0]}
+            if Z.ndim == 2:
+                hdr['nbands'] = 1
+            elif Z.ndim == 3:
+                hdr['nbands'] = Z.shape[2]
             else:
-                if hdr is None:
-                    hdr = {'xllcorner' : X[-1,0], 'yllcorner' : Y[-1,0]}
-                    if Z.ndim == 2:
-                        hdr['nbands'] = 1
-                    elif Z.ndim == 3:
-                        hdr['nbands'] = Z.shape[2]
-                    else:
-                        raise GridError('`Z` must be of dimension 2 or 3')
-                    X -= X[-1,0]
-                    Y -= Y[-1,0]
-                self.X = X
-                self.Y = Y
-                self.data = Z
-        else:
-            if True in (a is None for a in (X,Y,Z)):
-                raise GridError('Either all or none of (`X`, `Y`, `Z`) must '
-                                'be provided')
+                raise GridError('`Z` must be of dimension 2 or 3')
+            X -= X[-1,0]
+            Y -= Y[-1,0]
+        self.X = X
+        self.Y = Y
+        self.data = Z
         self.set_hdr(hdr)
         return
 
