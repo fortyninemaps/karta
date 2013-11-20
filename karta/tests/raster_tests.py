@@ -118,7 +118,7 @@ class RegularGrid(unittest.TestCase):
         return
 
 
-class TestStructuredGrid(unittest.TestCase):
+class TestWarpedGrid(unittest.TestCase):
 
     def setUp(self):
         ii = np.arange(50.0)
@@ -126,7 +126,7 @@ class TestStructuredGrid(unittest.TestCase):
         X, Y = np.meshgrid(np.sin(ii/25.0 * 2*np.pi),
                            np.sin(jj/50.0 * 2*np.pi))
         Z = karta.raster.witch_of_agnesi(50, 50)
-        self.rast = karta.grid.StructuredGrid(X=X, Y=Y, Z=Z)
+        self.rast = karta.grid.WarpedGrid(X=X, Y=Y, Z=Z)
 
     def test_hdr(self):
         hdr = self.rast.get_hdr()
@@ -136,14 +136,14 @@ class TestStructuredGrid(unittest.TestCase):
         return
 
     def test_add_sgrid(self):
-        rast2 = karta.grid.StructuredGrid(X=self.rast.X, Y=self.rast.Y,
+        rast2 = karta.grid.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
                                           Z=np.random.random(self.rast.data.shape))
         res = self.rast + rast2
         self.assertTrue(np.all(res.data == self.rast.data+rast2.data))
         return
 
     def test_sub_sgrid(self):
-        rast2 = karta.grid.StructuredGrid(X=self.rast.X, Y=self.rast.Y,
+        rast2 = karta.grid.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
                                           Z=np.random.random(self.rast.data.shape))
         res = self.rast - rast2
         self.assertTrue(np.all(res.data == self.rast.data-rast2.data))

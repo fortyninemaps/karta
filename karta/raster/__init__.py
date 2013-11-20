@@ -7,7 +7,7 @@ import aaigrid
 import raster
 import flow
 
-from grid import RegularGrid, StructuredGrid, aairead
+from grid import RegularGrid, WarpedGrid, aairead
 from aaigrid import AAIGrid
 from raster import witch_of_agnesi, peaks, pad, slope, aspect, grad, div
 from raster import normed_vector_field
@@ -28,7 +28,7 @@ except ImportError:
     pass
 
 __all__ = ["grid", "aaigrid", "raster", "flow",
-           "RegularGrid", "StructuredGrid", "aairead",
+           "RegularGrid", "WarpedGrid", "aairead",
            "AAIGrid",
            "pad", "slope", "aspect", "grad", "div", "normed_vector_field",
            "streamline2d",

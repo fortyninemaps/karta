@@ -362,11 +362,11 @@ class RegularGrid(Grid):
         return RegularGrid(copy.copy(self._hdr), Z=fill_sinks(self.data))
 
     def as_structured(self):
-        """ Return a copy as a StructuredGrid instance. This is a more general
-        grid class that had a larger memory footprint but can represent more
+        """ Return a copy as a WarpedGrid instance. This is a more general
+        grid class that has a larger memory footprint but can represent more
         flexible data layouts. """
         Xv, Yv = self.vertex_coords()
-        return StructuredGrid(Xv, Yv, self.data.copy())
+        return WarpedGrid(Xv, Yv, self.data.copy())
 
     def aaiwrite(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
@@ -415,8 +415,8 @@ class RegularGrid(Grid):
             f.close()
         return
 
-class StructuredGrid(Grid):
-    """ Structured Grid class. A StructuredGrid contains a fixed number of rows
+class WarpedGrid(Grid):
+    """ Warped Grid class. A WarpedGrid contains a fixed number of rows
     and columns and a scalar or vector field defined on the z-axis. Grid
     spacing is not necessarily regular.
     """
@@ -460,14 +460,14 @@ class StructuredGrid(Grid):
 
     def __add__(self, other):
         if self._equivalent_structure(other):
-            return StructuredGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
+            return WarpedGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
                                   Y=self.Y.copy(), Z=self.data + other.data)
         else:
             raise NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
-            return StructuredGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
+            return WarpedGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
                                   Y=self.Y.copy(), Z=self.data-other.data)
         else:
             raise NonEquivalentGridError(self, other)
@@ -480,8 +480,7 @@ class StructuredGrid(Grid):
 
     def rotate(self, deg, origin=(0.0, 0.0)):
         """ Rotate grid by *deg* degrees counter-clockwise around *origin*. """
-        return
-
+        raise NotImplementedError
 
     def resample(self, X, Y):
         """ Resample internal grid to the points defined by `X`, `Y`. """
@@ -489,7 +488,7 @@ class StructuredGrid(Grid):
 
     def fill_sinks(self):
         """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
-        return StructuredGrid(copy.copy(self._hdr),
+        return WarpedGrid(copy.copy(self._hdr),
                               X=self.X.copy(), Y=self.Y.copy(),
                               Z=fill_sinks(self.data))
 
