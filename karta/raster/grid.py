@@ -308,9 +308,9 @@ class RegularGrid(Grid):
                      0, ny-1)
         return xi, yi
 
-    def sample(self, x, y):
-        """ Return the value nearest to (`x`, `y`).
-        """
+    def sample_nearest(self, x, y):
+        """ Return the value nearest to (`x`, `y`). Nearest grid center
+        sampling scheme. """
         xi, yi = self.get_indices(x, y)
         nx = self._hdr['nx']
         ny = self._hdr['ny']
@@ -319,6 +319,19 @@ class RegularGrid(Grid):
             raise GridError("coordinates ({0}, {1}) are outside grid region "
                             "({2}, {3})".format(xi, yi, nx, ny))
         return self.data[yi, xi]
+
+    def sample(self, x, y, method="nearest"):
+        """ Return the values nearest (`x`, `y`), where `x` and `y` may be
+        equal length vectors. *method* may be one of `nearest`, `linear`. """
+        if method == "nearest":
+            return sample_nearest(x, y)
+        elif method == "linear":
+            import scipy.interpolate
+            Xd, Yd = self.center_coords()
+            return scipy.interpolate.griddata((Xd.flat, Yd.flat), self.data.flat,
+                                              (x,y), method="linear")
+        else:
+            raise ValueError("method \"{0}\" not understood".format(method))
 
     def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as `segments`. Does not interpolate.
