@@ -324,7 +324,7 @@ class RegularGrid(Grid):
         """ Return the values nearest (`x`, `y`), where `x` and `y` may be
         equal length vectors. *method* may be one of `nearest`, `linear`. """
         if method == "nearest":
-            return sample_nearest(x, y)
+            return self.sample_nearest(x, y)
         elif method == "linear":
             import scipy.interpolate
             Xd, Yd = self.center_coords()
