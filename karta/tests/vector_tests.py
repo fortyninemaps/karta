@@ -72,6 +72,14 @@ class TestGuppy(unittest.TestCase):
                                                         properties=self.mp.properties))
         return
 
+    def test_multipoint_slicing(self):
+        submp = vector.guppy.Multipoint(self.vertices[5:10], data=self.data[5:10])
+        self.assertEqual(self.mp[5:10], submp)
+
+        submp = vector.guppy.Multipoint(self.vertices[5:], data=self.data[5:])
+        self.assertEqual(self.mp[5:], submp)
+        return
+
     def test_multipoint_bbox(self):
         bbox = (1.0, 9.0, 0.0, 9.0, 0.0, 9.0)
         self.assertEqual(self.mp.get_bbox(), bbox)
