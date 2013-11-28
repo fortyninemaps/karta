@@ -268,9 +268,21 @@ class Multipoint(Geometry):
         self.data = Metadata(data)
         return
 
-    #def __repr__(self):
-    #    return 'Multipoint(' + reduce(lambda a,b: str(a) + ' ' + str(b),
-    #            self.vertices) + ')'
+    def __repr__(self):
+        if len(self) < 5:
+            ppverts = str(self.vertices)
+        else:
+            ppverts = str(self.vertices[:2])[:-1] + "..." + str(self.vertices[-2:])[1:]
+        return '{typ}({verts})>'.format(
+                typ=str(type(self))[:-1], verts=ppverts, prop=self.properties)
+
+    def __str__(self):
+        if len(self) < 5:
+            ppverts = str(self.vertices)
+        else:
+            ppverts = str(self.vertices[:2])[:-1] + "..." + str(self.vertices[-2:])[1:]
+        return '{typ}\n{verts}\nProperties:{prop}'.format(
+                typ=type(self), verts=ppverts, prop=self.properties)
 
     def __len__(self):
         return len(self.vertices)
@@ -576,10 +588,6 @@ class Line(ConnectedMultipoint):
     """
     _geotype = "Line"
 
-    #def __repr__(self):
-    #    return 'Line(' + reduce(lambda a,b: str(a) + ' ' + str(b),
-    #            self.vertices) + ')'
-
     def add_vertex(self, vertex):
         """ Add a vertex to self.vertices. """
         if isinstance(vertex, Point):
@@ -652,10 +660,6 @@ class Polygon(ConnectedMultipoint):
             self.vertices.append(vertices[0])
         self.subs = subs if subs is not None else []
         return
-
-    #def __repr__(self):
-    #    return 'Polygon(' + reduce(lambda a,b: str(a) + ' ' + str(b),
-    #            self.vertices) + ')'
 
     def perimeter(self):
         """ Return the perimeter of the polygon. If there are sub-polygons,
