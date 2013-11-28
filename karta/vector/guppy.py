@@ -276,10 +276,14 @@ class Multipoint(Geometry):
         return len(self.vertices)
 
     def __getitem__(self, key):
-        if not isinstance(key, int):
-            raise GGeoError('Indices must be integers')
-        return Point(self.vertices[key], data=self.data[key],
-                     properties=self.properties, crs=self._crs)
+        if isinstance(key, int):
+            return Point(self.vertices[key], data=self.data[key],
+                         properties=self.properties, crs=self._crs)
+        elif isinstance(key, slice):
+            return type(self)(self.vertices[key], data=self.data[key],
+                              properties=self.properties, crs=self._crs)
+        else:
+            raise GGeoError('Index must be an integer or a slice object')
 
     def __setitem__(self, key, value):
         if not isinstance(key, int):
@@ -575,14 +579,6 @@ class Line(ConnectedMultipoint):
     #def __repr__(self):
     #    return 'Line(' + reduce(lambda a,b: str(a) + ' ' + str(b),
     #            self.vertices) + ')'
-
-    def __getitem__(self, idx):
-        if not isinstance(idx, slice):
-            return super(Line, self).__getitem__(idx)
-        else:
-            return type(self)(self.vertices[idx], data=self.data[idx],
-                              properties=self.properties, crs=self._crs)
-
 
     def add_vertex(self, vertex):
         """ Add a vertex to self.vertices. """
