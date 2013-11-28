@@ -80,6 +80,10 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(self.mp[5:], submp)
         return
 
+    def test_multipoint_negative_index(self):
+        self.assertEqual(self.mp[len(self.mp)-1], self.mp[-1])
+        return
+
     def test_multipoint_bbox(self):
         bbox = (1.0, 9.0, 0.0, 9.0, 0.0, 9.0)
         self.assertEqual(self.mp.get_bbox(), bbox)
