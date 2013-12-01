@@ -90,8 +90,20 @@ def estimate_vario(mp, npoints=2000, max_dist=None, interval=None):
 
     irand = random.sample(np.arange(len(mp)), npoints)
     verts = mp.get_vertices()[irand]
-    z = mp.get_data()[irand]
-    dist = pdist(verts)
+    z = np.array([mp.data[i] for i in irand])
+
+    if mp._crs == "lonlat":
+        import warnings
+        import pyproj
+        warnings.warn("For improved performance, consider projecting data to an "
+                      "approximately equidistant reference system first.")
+        geod = pyproj.Geod(ellps="WGS84")
+        def distfunc(a, b):
+            return geod.inv(a[0], a[1], b[0], b[1])[2]
+    else:
+        distfunc = "euclidean"
+
+    dist = pdist(verts, distfunc)
     I, J = ppairs(z)
     diff = z[I] - z[J]
 
@@ -109,7 +121,7 @@ def estimate_vario(mp, npoints=2000, max_dist=None, interval=None):
     sigma_variance = np.empty_like(lags)
     for i, lag in enumerate(lags):
         band = (lag <= dist) * (dist < lag + interval)
-        sigma_variance[i] = 0.5 * np.std(diff[band])**2
+        sigma_variance[i] = 0.5 * np.nanstd(diff[band])**2
     return lags, sigma_variance
 
 def ppairs(A):
