@@ -177,7 +177,7 @@ class Point(Geometry):
         if not PYPROJ:
             raise CRSError("Great circle computations require pyproj")
         if not (self._crs == LONLAT and other._crs == LONLAT):
-            raise CRSError("Great circle diastances require both points to be "
+            raise CRSError("Great circle distances require both points to be "
                            "in geographical coordinates")
         az1, az2, dist = geod.inv(self.x, self.y, other.x, other.y, radians=False)
         return dist
