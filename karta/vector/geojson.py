@@ -7,6 +7,7 @@ import copy
 import json
 from collections import namedtuple
 import itertools
+from math import isnan
 import traceback
 
 
@@ -124,7 +125,7 @@ class GeoJSONWriter(object):
         return
 
     def add_properties(self, target=None):
-        """ Add the data from the geometry object's data attribute. """
+        """ Add the data from the geometry object's data dictionary. """
         if target is None:
             target = self.supobj
         target['properties'] = {}
@@ -134,7 +135,8 @@ class GeoJSONWriter(object):
             else:
                 data = {'point_data': self.gpobj.data}
             for key in data:
-                target['properties'][key] = data.getfield(key)
+                target['properties'][key] = map(lambda a: a if not isnan(a) else None,
+                                                data.getfield(key))
         return
 
     def add_id(self, target=None):
