@@ -83,6 +83,8 @@ class Point(Geometry):
 
     def __init__(self, coords, data=None, properties=None, **kwargs):
         if properties is None: properties = {}
+        if not hasattr(coords, "__iter__"):
+            raise ValueError("input argument must be a sequence")
         super(Point, self).__init__(**kwargs)
         self.vertex = coords
         self._setxyz()
@@ -417,7 +419,7 @@ class Multipoint(Geometry):
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
-        data = [self.data[i] for i in idxs]
+        data = self.data.sub(idxs)
         subset = type(self)(vertices, data=data, properties=self.properties, crs=self._crs)
         return subset
 

@@ -48,8 +48,8 @@ class Metadata(Mapping):
                     dtype = type(data[k][0])
                     if False in (isinstance(a, dtype) for a in data[k]):
                         raise MetadataError("Data must have uniform type")
+                    n = len(data[k])
 
-                n = len(data[k])
                 if False in (len(data[k]) == n for k in data):
                     raise MetadataError("Data must have uniform lengths")
 
@@ -96,16 +96,23 @@ class Metadata(Mapping):
         # Although this is a bit irregular, it probably adheres better to the
         # principle of least surprise
         if isinstance(key, numbers.Integral) or isinstance(key, slice):
-            if len(self._fieldtypes) == 1:
-                return self.values()[0][key]
-            else:
-                return dict((k, self._data[k][key]) for k in self.keys())
+            #       if len(self._fieldtypes) == 1:
+            #           return self.values()[0][key]
+            #       else:
+            return dict((k, self._data[k][key]) for k in self.keys())
         else:
             return self.getfield(key)
 
     def __delitem__(self, idx):
         for k in self._data:
             del self._data[k][idx]
+
+    def sub(self, idxs):
+        """ Return a Metadata instance with values from idxs. """
+        newdata = dict()
+        for key, val in self._data.iteritems():
+            newdata[key] = [self._data[key][i] for i in idxs]
+        return Metadata(newdata)
 
     def getfield(self, name):
         """ Return all values from field *name*. """
