@@ -430,6 +430,11 @@ class Multipoint(Geometry):
         d = np.sqrt(np.sum((A-P)**2, 1))
         return d
 
+    def greatcircles_to(self, pt):
+        """ Return the great circle distances from each vertex to a point. """
+        d = [pt.greatcircle(a) for a in self]
+        return np.array(d)
+
     def within_radius(self, pt, radius):
         """ Return Multipoint of subset of member vertices that are within
         *radius* of *pt*.
@@ -623,7 +628,7 @@ class Line(ConnectedMultipoint):
         return Line(vertices, data=data)
 
     def cumlength(self):
-        """ Returns the cumulative length of each segment, prefixed by zero. """
+        """ Returns the cumulative length by segment, prefixed by zero. """
         d = [0.0]
         for i, vert in enumerate(self.vertices[1:]):
             d_ = math.sqrt(sum([(a-b)**2 for a,b in zip(self.vertices[i], vert)]))
