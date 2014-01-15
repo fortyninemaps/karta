@@ -424,6 +424,7 @@ class Multipoint(Geometry):
         return subset
 
     def distances_to(self, pt):
+        """ Return the distance from each vertex to a point. """
         A = np.array(self.vertices)
         P = np.tile(np.array(pt.vertex), (A.shape[0], 1))
         d = np.sqrt(np.sum((A-P)**2, 1))
@@ -440,8 +441,7 @@ class Multipoint(Geometry):
 
     def nearest_point_to(self, pt):
         """ Returns the internal point that is nearest to pt (Point class).
-
-        Warning: If two points are equidistant, only one will be returned.
+        If two points are equidistant, only one will be returned.
         """
         distances = self.distances_to(pt)
         idx = np.argmin(distances)
