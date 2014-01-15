@@ -622,7 +622,7 @@ class Line(ConnectedMultipoint):
             GGeoError('Cannot add geometries with inconsistent rank')
         return Line(vertices, data=data)
 
-    def distances(self):
+    def cumlength(self):
         """ Returns the cumulative length of each segment, prefixed by zero. """
         d = [0.0]
         for i, vert in enumerate(self.vertices[1:]):
