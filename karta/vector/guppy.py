@@ -580,7 +580,8 @@ class ConnectedMultipoint(Multipoint):
                                 [seg[0].vertex for seg in self.segments()],
                                 [seg[1].vertex for seg in self.segments()])
         distances = [i[1] for i in point_dist]
-        return Point(point_dist[distances.index(min(distances))][0])
+        return Point(point_dist[distances.index(min(distances))][0],
+                     properties=self.properties, crs=self._crs)
 
 
 class Line(ConnectedMultipoint):
