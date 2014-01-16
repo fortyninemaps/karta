@@ -4,8 +4,7 @@ from collections import namedtuple
 
 CRS = namedtuple("CRS", ["id", "type"])
 
+# List of the available coordinate systems
 LONLAT = CRS("lonlat", "geographical")
 CARTESIAN = CRS("cartesian", "projected")
-
-LONLAT = "lonlat"       # This is a temporary, nonstandard SRID
 
