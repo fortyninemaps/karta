@@ -5,6 +5,7 @@ import os
 import math
 import numpy as np
 import karta.vector as vector
+import karta.crs as crs
 from karta.vector.geojson import GeoJSONReader
 from test_helper import md5sum, TESTDATA, CURDIR
 
@@ -187,9 +188,9 @@ class TestGuppy(unittest.TestCase):
 class TestGuppyProj(unittest.TestCase):
 
     def setUp(self):
-        self.vancouver = vector.guppy.Point((-123.1, 49.25), crs=vector.guppy.LONLAT)
-        self.ottawa = vector.guppy.Point((-75.69, 45.42), crs=vector.guppy.LONLAT)
-        self.whitehorse = vector.guppy.Point((-135.05, 60.72), crs=vector.guppy.LONLAT)
+        self.vancouver = vector.guppy.Point((-123.1, 49.25), crs=crs.LONLAT)
+        self.ottawa = vector.guppy.Point((-75.69, 45.42), crs=crs.LONLAT)
+        self.whitehorse = vector.guppy.Point((-135.05, 60.72), crs=crs.LONLAT)
         return
 
     def test_greatcircle(self):

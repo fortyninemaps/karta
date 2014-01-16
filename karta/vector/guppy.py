@@ -13,6 +13,7 @@ import numpy as np
 from . import vtk
 from . import geojson
 from . import xyfile
+from .. import crs
 
 from collections import deque
 from metadata import Metadata
@@ -35,8 +36,6 @@ try:
 except ImportError:
     PYPROJ = False
 
-LONLAT = "lonlat"       # This is a temporary, nonstandard SRID
-
 class Geometry(object):
     """ This is the abstract base class for all geometry types, i.e. Point,
     Multipoints and subclasses thereof. """
@@ -50,7 +49,7 @@ class Geometry(object):
     def _distance(self, pos0, pos1):
         """ Generic method for calculating distance between positions that
         respects CRS """
-        if self._crs == LONLAT:
+        if self._crs == crs.LONLAT:
             _, _, dist = geod.inv(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
         else:
             dist = _vecgeo.distance(pos0.x, pos0.y, pos1.x, pos1.y)
@@ -136,11 +135,11 @@ class Point(Geometry):
         None if points are coincident.
         """
 
-        if self._crs == LONLAT and other._crs == LONLAT:
+        if self._crs == crs.LONLAT and other._crs == crs.LONLAT:
             az1, _, _ = geod.inv(self.x, self.y, other.x, other.y)
             return az1 * math.pi / 180.0
 
-        elif self._crs != LONLAT and other._crs != LONLAT:
+        elif self._crs != crs.LONLAT and other._crs != crs.LONLAT:
             dx = self.x - other.x
             dy = self.y - other.y
 
@@ -178,7 +177,7 @@ class Point(Geometry):
         """ Return the greatcircle distance between two geographical points. """
         if not PYPROJ:
             raise CRSError("Great circle computations require pyproj")
-        if not (self._crs == LONLAT and other._crs == LONLAT):
+        if not (self._crs == crs.LONLAT and other._crs == crs.LONLAT):
             raise CRSError("Great circle distances require both points to be "
                            "in geographical coordinates")
         az1, az2, dist = geod.inv(self.x, self.y, other.x, other.y, radians=False)
