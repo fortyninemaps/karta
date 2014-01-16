@@ -49,10 +49,12 @@ class Geometry(object):
     def _distance(self, pos0, pos1):
         """ Generic method for calculating distance between positions that
         respects CRS """
-        if self._crs.type == "geographical":
+        if self._crs.type == "projected":
+            dist = _vecgeo.distance((pos0.x, pos0.y), (pos1.x, pos1.y))
+        elif PYPROJ:
             _, _, dist = geod.inv(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
         else:
-            dist = _vecgeo.distance((pos0.x, pos0.y), (pos1.x, pos1.y))
+            dist = greatcircle(pos0, pos1)
         return dist
 
     def add_property(self, name, value):
@@ -806,16 +808,11 @@ def ray_intersection(pt, endpt1, endpt2, direction=0.0):
             return
 
 
-def distance(pntlist, angular_unit="deg", space_unit="km", method="vicenty"):
+def greatcircle(pta, ptb, method="vicenty"):
     """ Computes the great circle distance between n point pairs on a
     sphere. Returns a list of length (n-1)
 
     [pntlist] contains a list of point objects
-
-    [angular_unit] may be "deg" (default) or "rad".
-
-    [space_unit] may be "km" (kilometers, default), "m" (meters), "mi"
-    (miles), "ft" (feet), or "nm" (nautical miles).
 
     [method] may be "vicenty" (default) or "haversine". The Haversine
     method is roughly 20% faster, but may yield rounding errors when
@@ -823,63 +820,42 @@ def distance(pntlist, angular_unit="deg", space_unit="km", method="vicenty"):
     """
 
     radius = 6371.
+    deg2rad = np.pi / 180.
 
-    if angular_unit == "deg":
-        xpts = [i.x * 3.14159 / 180. for i in pntlist]
-        ypts = [i.y * 3.14159 / 180. for i in pntlist]
-    elif angular_unit == "rad":
-        xpts = [i.x for i in pntlist]
-        ypts = [i.y for i in pntlist]
-    else:
-        raise GUnitError("Angular unit unrecognized")
-        return None
+    x1 = pta.x * deg2rad
+    x2 = ptb.x * deg2rad
+    y1 = pta.y * deg2rad
+    y2 = ptb.y * deg2rad
 
-    distances = []
+    dx = x2 - x1
+    dy = y2 - y1
 
-    for i in xrange(len(pntlist)-1):
+    if method == "haversine":
+        try:
+            distance = 2 * radius * math.asin(math.sqrt((math.sin(dy /
+                2.))**2 + math.cos(y1) * math.cos(y2) *
+                (math.sin(dx / 2.))**2))
+        except GGeoError:
+            traceback.print_exc()
 
-        x1 = xpts[i]
-        x2 = xpts[i+1]
-        y1 = ypts[i]
-        y2 = ypts[i+1]
-        dx = x2 - x1
-        dy = y2 - y1
-        if method == "haversine":
-            try:
-                distance = 2 * radius * math.asin(math.sqrt((math.sin(dy /
-                    2.))**2 + math.cos(y1) * math.cos(y2) *
-                    (math.sin(dx / 2.))**2))
-            except GGeoError:
-                traceback.print_exc()
-        elif method == "vicenty":
-            try:
-                a = math.sqrt((math.cos(y2) * math.sin(dx))**2 +
-                    (math.cos(y1) * math.sin(y2) - math.sin(y1) *
-                    math.cos(y2) * math.cos(dx))**2)
-                b = (math.sin(y1) * math.sin(y2) + math.cos(y1) *
-                    math.cos(y2) * math.cos(dx))
-                distance = radius * math.atan2(a, b)
-            except ZeroDivisionError:
-                raise GGeoError("Zero in denominator")
-                return None
-            except:
-                traceback.print_exc()
-        else:
-            raise Exception("Distance method unrecognized")
+    elif method == "vicenty":
+        try:
+            a = math.sqrt((math.cos(y2) * math.sin(dx))**2 +
+                (math.cos(y1) * math.sin(y2) - math.sin(y1) *
+                math.cos(y2) * math.cos(dx))**2)
+            b = (math.sin(y1) * math.sin(y2) + math.cos(y1) *
+                math.cos(y2) * math.cos(dx))
+            distance = radius * math.atan2(a, b)
+        except ZeroDivisionError:
+            raise GGeoError("Zero in denominator")
             return None
-
-        distances.append(distance)
-
-    if space_unit == "km": pass
-    elif space_unit == "m": distances = [i * 1000. for i in distances]
-    elif space_unit == "mi": distances = [i * 0.6213712 for i in distances]
-    elif space_unit == "ft": distances = [i * 3280.840 for i in distances]
-    elif space_unit == "nm": distances = [i * 0.5399568 for i in distances]
+        except:
+            traceback.print_exc()
     else:
-        print "Space unit unrecognized"
-        return None
+        raise Exception("Distance method unrecognized")
+        distance = np.nan
 
-    return distances
+    return distance
 
 
 def walk(start_pt, distance, bearing, azimuth=0.0, spherical=False):
