@@ -540,12 +540,9 @@ class Multipoint(Geometry):
 class ConnectedMultipoint(Multipoint):
     """ Class for Multipoints in which vertices are assumed to be connected. """
 
-    def length(self, spherical=False):
+    def length(self):
         """ Returns the length of the line/boundary. """
-        if spherical is True:
-            raise NotImplementedError("Spherical metrics not implemented")
-        points = [Point(i) for i in self.vertices]
-        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
+        distances = [a.distance(b) for a, b in zip(self[:-1], self[1:])]
         return sum(distances)
 
     def segments(self):
