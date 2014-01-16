@@ -41,7 +41,7 @@ class Geometry(object):
     Multipoints and subclasses thereof. """
     _geotype = None
 
-    def __init__(self, crs=None):
+    def __init__(self, crs=crs.CARTESIAN):
         self.properties = {}
         self._crs = crs
         return
@@ -49,10 +49,10 @@ class Geometry(object):
     def _distance(self, pos0, pos1):
         """ Generic method for calculating distance between positions that
         respects CRS """
-        if self._crs == crs.LONLAT:
+        if self._crs.type == "geographical":
             _, _, dist = geod.inv(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
         else:
-            dist = _vecgeo.distance(pos0.x, pos0.y, pos1.x, pos1.y)
+            dist = _vecgeo.distance((pos0.x, pos0.y), (pos1.x, pos1.y))
         return dist
 
     def add_property(self, name, value):
@@ -166,15 +166,20 @@ class Point(Geometry):
         return walk(self, distance, bearing, azimuth=0.0, spherical=False)
 
     def distance(self, other):
-        """ Returns a cartesian distance. """
-        flat_dist = math.sqrt((self.x-other.x)**2. + (self.y-other.y)**2.)
-        if self.z is None or other.z is None:
+        """ Returns a distance to another Point. If the coordinate system is
+        geographical and a third (z) coordinate exists, it is assumed to have
+        the same units as the real-world horizontal distance (i.e. meters). """
+        if self._crs != other._crs:
+            raise CRSError("Points must share the same coordinate system.")
+        flat_dist = self._distance(self, other)
+        if None in (self.z, other.z):
             return flat_dist
         else:
             return math.sqrt(flat_dist**2. + (self.z-other.z)**2.)
 
+
     def greatcircle(self, other):
-        """ Return the greatcircle distance between two geographical points. """
+        """ Return the great circle distance between two geographical points. """
         if not PYPROJ:
             raise CRSError("Great circle computations require pyproj")
         if not (self._crs == crs.LONLAT and other._crs == crs.LONLAT):
@@ -182,7 +187,6 @@ class Point(Geometry):
                            "in geographical coordinates")
         az1, az2, dist = geod.inv(self.x, self.y, other.x, other.y, radians=False)
         return dist
-
 
     def shift(self, shift_vector):
         """ Shift point by the amount given by a vector. Operation occurs
@@ -422,12 +426,17 @@ class Multipoint(Geometry):
         subset = type(self)(vertices, data=data, properties=self.properties, crs=self._crs)
         return subset
 
-    def distances_to(self, pt):
-        """ Return the distance from each vertex to a point. """
+    def flat_distances_to(self, pt):
+        """ Return the "flat Earth" distance from each vertex to a point. """
         A = np.array(self.vertices)
         P = np.tile(np.array(pt.vertex), (A.shape[0], 1))
         d = np.sqrt(np.sum((A-P)**2, 1))
         return d
+
+    def distances_to(self, pt):
+        """ Return the distance from each vertex to a point. """
+        d = [pt.distance(a) for a in self]
+        return np.array(d)
 
     def greatcircles_to(self, pt):
         """ Return the great circle distances from each vertex to a point. """
@@ -629,9 +638,11 @@ class Line(ConnectedMultipoint):
     def cumlength(self):
         """ Returns the cumulative length by segment, prefixed by zero. """
         d = [0.0]
-        for i, vert in enumerate(self.vertices[1:]):
-            d_ = math.sqrt(sum([(a-b)**2 for a,b in zip(self.vertices[i], vert)]))
-            d.append(d_ + d[i])
+        pta = self[0]
+        for ptb in self[1:]:
+            d_ = pta.distance(ptb)
+            d.append(d_ + d[-1])
+            pta = ptb
         return d
 
     def displacement(self):
