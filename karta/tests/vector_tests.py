@@ -160,6 +160,8 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_poly_length(self):
+        #poly = vector.Polygon(((0,0), (2, 0), (3, 1), (1, 1)))
+        #self.assertEqual(poly.length(), 6.82)
         self.assertEqual(self.poly.length(), 19.430647008220866)
         return
 
@@ -182,6 +184,13 @@ class TestGuppy(unittest.TestCase):
         v = self.vertices
         self.assertEqual([tuple(a.vertices) for a in self.line.segments()],
                          [(v[i], v[i+1]) for i in range(len(self.vertices)-1)])
+        return
+
+    def test_within_distance(self):
+        line = vector.Line([(0,0), (1,1), (3,1)])
+        pt = vector.Point((1,1.5))
+        self.assertTrue(line.within_distance(pt, 0.6))
+        self.assertFalse(line.within_distance(pt, 0.4))
         return
 
 
