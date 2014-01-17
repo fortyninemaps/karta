@@ -595,6 +595,11 @@ class ConnectedMultipoint(Multipoint):
         return Point(point_dist[distances.index(min(distances))][0],
                      properties=self.properties, crs=self._crs)
 
+    def within_distance(self, pt, distance):
+        """ Test whether a point is within *distance* of a ConnectedMultipoint. """
+        #return distance <= self.shortest_distance_to(pt)
+        return True in (distance >= seg.shortest_distance_to(pt)
+                        for seg in self.segments())
 
 class Line(ConnectedMultipoint):
     """ This defines the polyline class, from which geographic line
