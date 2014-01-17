@@ -542,7 +542,8 @@ class ConnectedMultipoint(Multipoint):
 
     def length(self):
         """ Returns the length of the line/boundary. """
-        distances = [a.distance(b) for a, b in zip(self[:-1], self[1:])]
+        points = [Point(i, crs=self._crs) for i in self.vertices]
+        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
         return sum(distances)
 
     def segments(self):
