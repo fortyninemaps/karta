@@ -11,12 +11,12 @@ from math import isnan
 import traceback
 
 
-Point = namedtuple('Point', ['coordinates'])
-MultiPoint = namedtuple('MultiPoint', ['coordinates'])
-LineString = namedtuple('LineString', ['coordinates'])
-MultiLineString = namedtuple('MultiLineString', ['coordinates'])
-Polygon = namedtuple('Polygon', ['coordinates'])
-MultiPolygon = namedtuple('MultiPolygon', ['coordinates'])
+Point = namedtuple('Point', ['coordinates', 'crs'])
+MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])
+LineString = namedtuple('LineString', ['coordinates', 'crs'])
+MultiLineString = namedtuple('MultiLineString', ['coordinates', 'crs'])
+Polygon = namedtuple('Polygon', ['coordinates', 'crs'])
+MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
 GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
 
 
@@ -29,8 +29,6 @@ class GeoJSONWriter(object):
     Does not handle 'FeatureCollection' types (see printFeatureCollection()
     function).
     """
-    supobj = {}
-
     def __init__(self, gpobj, **kwargs):
         type_equiv = {'Point'       : 'Point',
                       'Multipoint'  : 'MultiPoint',
@@ -47,6 +45,7 @@ class GeoJSONWriter(object):
         bbox = kwargs.get('bbox', None)
 
         self.gpobj = gpobj
+        self.supobj = {}
         if crs is not None:
             self.add_named_crs(crs, crs_fmt)
         if self.typestr != 'Point':
@@ -250,7 +249,7 @@ class GeoJSONReader(object):
         jsonpoints = self._walk(dic, 'Point')
         points = []
         for point in jsonpoints:
-            points.append(Point(point['coordinates']))
+            points.append(Point(point['coordinates'], None))
         return points
 
     def pull_multipoints(self, dic=None):
@@ -261,7 +260,7 @@ class GeoJSONReader(object):
         jsonmultipoints = self._walk(dic, 'MultiPoint')
         multipoints = []
         for jsonmultipoint in jsonmultipoints:
-            multipoints.append(MultiPoint(jsonmultipoint['coordinates']))
+            multipoints.append(MultiPoint(jsonmultipoint['coordinates'], None))
         return multipoints
 
     def pull_lines(self, dic=None):
@@ -273,10 +272,10 @@ class GeoJSONReader(object):
         jsonmultilines = self._walk(dic, 'MultiLineString')
         lines = []
         for jsonline in jsonlines:
-            lines.append(LineString(jsonline['coordinates']))
+            lines.append(LineString(jsonline['coordinates'], None))
         for jsonmultiline in jsonmultilines:
             for vertices in jsonmultiline['coordinates']:
-                lines.append(MultiLineString(vertices))
+                lines.append(MultiLineString(vertices, None))
         return lines
 
     def pull_polygons(self, dic=None):
@@ -288,9 +287,9 @@ class GeoJSONReader(object):
         jsonmultipolygons = self._walk(dic, 'MultiPolygon')
         polygons = []
         for jsonpolygon in jsonpolygons:
-            polygons.append(Polygon(jsonpolygon['coordinates']))
+            polygons.append(Polygon(jsonpolygon['coordinates'], None))
         for jsonmultipolygon in jsonmultipolygons:
-            polygons.append(Polygon(jsonmultipolygon['coordinates']))
+            polygons.append(Polygon(jsonmultipolygon['coordinates'], None))
         return polygons
 
     def iter_geometries(self):
