@@ -5,6 +5,13 @@ import copy
 from math import sqrt
 import numpy as np
 import _aai             # Contains the ascread driver
+
+try:
+    import _gtiff
+    HAS_GDAL = True
+except ImportError:
+    HAS_GDAL = False
+
 try:
     from fill_sinks import fill_sinks
 except ImportError:
@@ -539,6 +546,9 @@ def dummy_hdr(arr):
     return hdr
 
 def aairead(fnm):
+    """ Convenience function to open a ESRI ASCII grid and return a RegularGrid
+    instance.
+    """
     Z, aschdr = _aai.aairead(fnm)
     hdr = {'xllcorner'  : aschdr['xllcorner'],
            'yllcorner'  : aschdr['yllcorner'],
@@ -550,15 +560,12 @@ def aairead(fnm):
     Z[Z==aschdr['nodata_value']] = np.nan
     return RegularGrid(hdr, Z=Z)
 
-def gtiffread(fnm, band=1):
-   x, y, Z = _gtiff.load(fnm, band)
-   nbands = Z.shape[2] if Z.ndim == 3 else 1
-   hdr = {'xllcorner'   : x[0],
-          'yllcorner'   : y[0],
-          'nx'          : len(x),
-          'ny'          : len(y),
-          'dx'          : x[1] - x[0],
-          'dy'          : y[1] - y[0],
-          'nbands'      : nbands}
-   return RegularGrid(hdr, Z=Z)
+def gtiffread(fnm):
+    """ Convenience function to open a GeoTIFF and return a RegularGrid
+    instance.
+    """
+    if not HAS_GDAL:
+        raise NotImplementedError("Right now, loading GeoTiffs requires GDAL.")
+    arr, hdr = _gtiff.read(fnm)
+    return RegularGrid(hdr, Z=arr.transpose((1,2,0)).squeeze())
 
