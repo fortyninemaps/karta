@@ -311,19 +311,18 @@ def list_rec(A):
     else:
         return A
 
-def print_FeatureCollection(gpobj_list, **kwargs):
+def printGeometryCollection(gpobj_list, **kwargs):
     """ Given an iterable that returns guppy objects, construct a GeoJSON
     FeatureCollection string.
     """
-    featurelist = []
+    geometrylist = []
     for gp in gpobj_list:
         writer = GeoJSONWriter(gp)
-        featurelist.append(copy.copy(writer.supobj))
-    feature_coll = {'type' : 'FeatureCollection',
-                    'features' : featurelist}
-    return json.dumps(feature_coll, indent=2)
-
-
+        geometrylist.append(copy.copy(writer.supobj))
+    geometry_coll = {'type' : 'GeometryCollection',
+                    'geometries' : geometrylist}
+    kwargs.setdefault("indent", 2)
+    return json.dumps(geometry_coll, **kwargs)
 
 def geojson2csv(fin, fout):
     """ Convert a JSON file to a CSV. Only properties (attributes) common to
