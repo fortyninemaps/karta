@@ -12,6 +12,7 @@ abstractions upon which to build more advanced routines. *Karta* should be
 considered a work in progress.
 
 **Future goals:**
+- test coverage
 - native GeoTiff support
 - shapefile support through OGR rather than pyshp
 
