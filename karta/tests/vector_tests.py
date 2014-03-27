@@ -4,10 +4,11 @@ import unittest
 import os
 import math
 import numpy as np
+from test_helper import md5sum, TESTDATA, TESTDIR
+
 import karta.vector as vector
 import karta.crs as crs
 from karta.vector.geojson import GeoJSONReader
-from test_helper import md5sum, TESTDATA, CURDIR
 
 class TestGuppy(unittest.TestCase):
 
@@ -258,7 +259,7 @@ class TestGuppyOutput(unittest.TestCase):
 
     def test_mp2vtp(self):
         # Test VTK output for a Multipoint
-        with open(os.path.join(CURDIR, 'data', 'testmp2vtp.vtp'), 'w') as f:
+        with open(os.path.join(TESTDIR, 'data', 'testmp2vtp.vtp'), 'w') as f:
             self.mp.to_vtk(f)
         self.assertEqual(md5sum('data/testmp2vtp.vtp'),
                          md5sum(os.path.join(TESTDATA, 'testmp2vtp.vtp')))
