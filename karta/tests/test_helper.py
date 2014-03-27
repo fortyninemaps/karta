@@ -1,10 +1,12 @@
 """ Helper functions for testing """
 
 import os
+import inspect
 import hashlib
 
-CURDIR = os.path.split(os.path.abspath(__file__))[0]
-TESTDATA = os.path.join(CURDIR, "reference_data")
+TESTDIR = os.path.dirname(os.path.abspath(
+                inspect.getfile(inspect.currentframe())))
+TESTDATA = os.path.join(TESTDIR, "reference_data")
 
 def md5sum(fnm, block=32768):
     """ Generate an MD5 hash from a file given by filename *fnm*. """
