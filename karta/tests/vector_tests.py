@@ -40,6 +40,16 @@ class TestGuppy(unittest.TestCase):
         return
 
 
+    def test_point_equality(self):
+        P = vector.guppy.Point
+        pt1 = P((3.0, 4.0))
+        pt2 = P((3.0, 4.0, 5.0))
+        pt3 = P((3.0, 4.0, 5.0), data={"species":"T. officianale", "density":"high"})
+        self.assertTrue(pt1 == pt2)
+        self.assertTrue(pt1 == pt3)
+        self.assertFalse(pt1 == pt2)
+        return
+
     def test_point_coordsxy(self):
         self.assertEqual(self.point.coordsxy(), (1.0, 2.0))
         self.assertEqual(self.point[0], 1.0)
@@ -380,7 +390,7 @@ class TestGPX(unittest.TestCase):
             g.waypts.append(pt)
         g.tracks = self.tracks
         g.routes = self.routes
-        g.writefile("test.gpx")
+        g.writefile(os.path.join(TESTDIR, "data/test.gpx"))
         return
 
     def test_add_waypoint(self):
