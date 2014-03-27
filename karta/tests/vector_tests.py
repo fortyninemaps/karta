@@ -45,10 +45,13 @@ class TestGuppy(unittest.TestCase):
         pt1 = P((3.0, 4.0))
         pt2 = P((3.0, 4.0, 5.0))
         pt3 = P((3.0, 4.0, 5.0), data={"species":"T. officianale", "density":"high"})
-        self.assertTrue(pt1 == pt2)
-        self.assertTrue(pt1 == pt3)
         self.assertFalse(pt1 == pt2)
+        self.assertFalse(pt1 == pt3)
+        self.assertTrue(pt2 == pt3)
         return
+
+    def test_point_vertex(self):
+        self.assertEqual(self.point.get_vertex(), (1.0, 2.0, 3.0))
 
     def test_point_coordsxy(self):
         self.assertEqual(self.point.coordsxy(), (1.0, 2.0))
