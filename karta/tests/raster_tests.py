@@ -5,9 +5,9 @@ import os
 import sys
 import numpy as np
 from test_helper import md5sum, TESTDATA
-import karta
 
-from ..raster import _dem
+import karta
+from karta.raster import _dem
 
 class RegularGrid(unittest.TestCase):
 
