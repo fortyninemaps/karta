@@ -52,6 +52,7 @@ class TestGuppy(unittest.TestCase):
 
     def test_point_vertex(self):
         self.assertEqual(self.point.get_vertex(), (1.0, 2.0, 3.0))
+        return
 
     def test_point_coordsxy(self):
         self.assertEqual(self.point.coordsxy(), (1.0, 2.0))
@@ -60,8 +61,23 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_point_azimuth(self):
-        other = vector.guppy.Point((7.0, 8.0))
-        self.assertEqual(self.point.azimuth(other), 225.0 / 180.0 * np.pi)
+        other = vector.guppy.Point((2.0, 3.0))
+        self.assertEqual(self.point.azimuth(other), 0.25 * np.pi)
+        return
+
+    def test_point_azimuth2(self):
+        other = vector.guppy.Point((1.0, 3.0))
+        self.assertEqual(self.point.azimuth(other), 0.0)
+        return
+
+    def test_point_azimuth3(self):
+        other = vector.guppy.Point((1.0, 0.0))
+        self.assertEqual(self.point.azimuth(other), np.pi)
+        return
+
+    def test_point_azimuth4(self):
+        other = vector.guppy.Point((0.0, 1.0))
+        self.assertEqual(self.point.azimuth(other), 1.25 * np.pi)
         return
 
     def test_point_shift(self):

@@ -141,9 +141,9 @@ class Point(Geometry):
             az1, _, _ = geod.inv(self.x, self.y, other.x, other.y)
             return az1 * math.pi / 180.0
 
-        elif self._crs != crs.LONLAT and other._crs != crs.LONLAT:
-            dx = self.x - other.x
-            dy = self.y - other.y
+        elif self._crs == crs.CARTESIAN and other._crs == crs.CARTESIAN:
+            dx = other.x - self.x
+            dy = other.y - self.y
 
             if dx == 0.0:
                 if dy > 0.0:
@@ -160,8 +160,8 @@ class Point(Geometry):
                 return math.atan(dy / dx) + math.pi
 
         else:
-            raise CRSError("Cannot compute azimuth between point in different "
-                           "coordinate systems")
+            raise CRSError("azimuth undefined for points in CRS {0} and "
+                           "{1}".format(self._crs, other._crs))
 
     def walk(self, distance, bearing, azimuth=0.0, spherical=False):
         """ Wraps walk() """
