@@ -1,3 +1,7 @@
+___
+layout: index
+___
+
 #Karta - tidy Python package for geospatial computation
 
 *Karta* is a Leatherman for geographic analyses. *Karta* provides an interface
