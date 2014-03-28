@@ -4,6 +4,7 @@ import unittest
 import os
 import math
 import numpy as np
+import StringIO
 from test_helper import md5sum, TESTDATA, TESTDIR
 
 import karta.vector as vector
@@ -254,9 +255,6 @@ class TestGuppyOutput(unittest.TestCase):
 
     def setUp(self):
 
-        if not os.path.isdir('data'):
-            os.mkdir('data')
-
         vertices = [(2.0, 9.0, 9.0),
                     (4.0, 1.0, 9.0),
                     (4.0, 1.0, 5.0),
@@ -288,17 +286,19 @@ class TestGuppyOutput(unittest.TestCase):
 
     def test_mp2vtp(self):
         # Test VTK output for a Multipoint
-        with open(os.path.join(TESTDIR, 'data', 'testmp2vtp.vtp'), 'w') as f:
-            self.mp.to_vtk(f)
-        self.assertEqual(md5sum('data/testmp2vtp.vtp'),
+        s = StringIO.StringIO()
+        self.mp.to_vtk(s)
+        s.seek(0)
+        self.assertEqual(md5sum(s),
                          md5sum(os.path.join(TESTDATA, 'testmp2vtp.vtp')))
         return
 
     def test_geojson(self):
         # Test GeoJSON output for a Multipoint
-        with open('data/testgeojson.json', 'w') as f:
-            self.mp.to_geojson(f)
-        self.assertEqual(md5sum('data/testgeojson.json'),
+        s = StringIO.StringIO()
+        self.mp.to_geojson(s)
+        s.seek(0)
+        self.assertEqual(md5sum(s),
                          md5sum(os.path.join(TESTDATA, 'testgeojson.json')))
         return
 
@@ -402,21 +402,17 @@ class TestGPX(unittest.TestCase):
         return
 
     def test_track_init(self):
-        """ Test initiation and writing of a GPX file containing a single
-        track. """
+        """ Test initiation of a GPX file containing a single track. """
         g = vector.gpx.GPX()
         for i, pt in enumerate(self.points):
             g.waypts.append(pt)
         g.tracks = self.tracks
         g.routes = self.routes
-        g.writefile(os.path.join(TESTDIR, "data/test.gpx"))
         return
 
     def test_add_waypoint(self):
-        waypoint = vector.guppy.Point((-80.0, 82.0), properties = {"name":
-                                                                   "ellesmere",
-                                                                   "ele":
-                                                                   100})
+        waypoint = vector.Point((-80.0, 82.0), 
+                                properties = {"name": "ellesmere", "ele": 100})
         g = vector.gpx.GPX()
         g.add_waypoint(waypoint)
         expected = self.Point((-80.0, 82.0), {"name": "ellesmere",
