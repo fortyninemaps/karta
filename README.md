@@ -11,10 +11,12 @@ useful for "everyday" spatial analysis, as well as a flexible set of
 abstractions upon which to build more advanced routines. *Karta* should be
 considered a work in progress.
 
-**Future goals:**
+**Current projects:**
 - test coverage
-- native GeoTiff support
-- shapefile support through OGR rather than pyshp
+- minimal system for coordinate system metadata
+
+**Future goals:**
+- native GeoTiff support?
 
 ##CONTENTS AT A GLANCE
 
@@ -61,13 +63,16 @@ The easiest way to install is to use `pip`.
 
 ## DEPENDENCIES
 
+### Required
+
 - Python 2.x
 - numpy
-- pyproj (optional, but required for geodetic calculations)
-- scipy (optional)
-- Cython (optional)
 
-###CYTHON
+### Optional
+
+- pyproj (required for geodetic calculations)
+- scipy
+- Cython
 
 Cython is an optional dependency used to speed up select functions. In general,
 enhanced-performance functions will then be called automatically when available,
@@ -75,7 +80,7 @@ otherwise *Karta* will fall back to numpy and pure-Python versions.
 
 ## TESTING
 
-To run unit tests, execute
+To run all unit tests, execute
 
     python -m karta.tests.test_runner
 
