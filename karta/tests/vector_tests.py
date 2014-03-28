@@ -5,6 +5,7 @@ import os
 import math
 import numpy as np
 import StringIO
+import json
 from test_helper import md5sum, TESTDATA, TESTDIR
 
 import karta.vector as vector
@@ -265,15 +266,6 @@ class TestGuppyOutput(unittest.TestCase):
                          md5sum(os.path.join(TESTDATA, 'testmp2vtp.vtp')))
         return
 
-    def test_geojson(self):
-        # Test GeoJSON output for a Multipoint
-        s = StringIO.StringIO()
-        self.mp.to_geojson(s)
-        s.seek(0)
-        self.assertEqual(md5sum(s),
-                         md5sum(os.path.join(TESTDATA, 'testgeojson.json')))
-        return
-
 class TestMetadata(unittest.TestCase):
 
     def setUp(self):
@@ -352,6 +344,55 @@ class TestGeoJSONInput(unittest.TestCase):
              [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
              [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]])
         return
+
+class TestGeoJSONOutput(unittest.TestCase):
+
+    def verifyJson(self, json1, json2):
+        """ Verify that two JSON strings are equivalent """
+        obj1 = json.loads(json1)
+        obj2 = json.loads(json2)
+        self.assertEqual(obj1, obj2)
+        return
+
+    def asJsonBuffer(self, geo):
+        s = StringIO.StringIO()
+        geo.to_geojson(s)
+        s.seek(0)
+        return s
+
+    def test_point_write(self):
+        p = vector.Point((100.0, 0.0))
+        s = self.asJsonBuffer(p)
+        self.verifyJson(s.read(), 
+                        '{ "type": "Point", "coordinates": [100.0, 0.0] }')
+        return
+
+    def test_line_write(self):
+        p = vector.Line([(100.0, 0.0), (101.0, 1.0)])
+        s = self.asJsonBuffer(p)
+        self.verifyJson(s.read(),
+                        '{ "geometry": { "type": "LineString", '
+                        '                "coordinates": [ [ 100, 0 ], [ 101, 1 ] ] },'
+                        '    "properties": {},'
+                        '    "type": "Feature",'
+                        '    "bbox": { "bbox": [ [ 100, 101 ], [ 0, 1 ] ] },'
+                        '    "id": [ 0, 1 ] }')
+        return
+
+    def test_polygon_write(self):
+        p = vector.Polygon([[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+                            [100.0, 1.0], [100.0, 0.0]])
+        s = self.asJsonBuffer(p)
+        self.verifyJson(s.read(),
+                        '{ "geometry": { "type": "Polygon",'
+                        '        "coordinates": [[[ 100, 0 ], [ 101, 0 ],'
+                        '                         [ 101, 1 ], [ 100, 1 ],'
+                        '                         [ 100, 0 ] ] ] },'
+                        '    "properties": {}, "type": "Feature",'
+                        '    "bbox": { "bbox": [ [ 100, 101 ], [ 0, 1 ] ] },'
+                        '    "id": [ 0, 1, 2, 3, 4 ] }')
+        return
+
 
 class TestGPX(unittest.TestCase):
 
