@@ -178,8 +178,6 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_poly_length(self):
-        #poly = vector.Polygon(((0,0), (2, 0), (3, 1), (1, 1)))
-        #self.assertEqual(poly.length(), 6.82)
         self.assertEqual(self.poly.length(), 19.430647008220866)
         return
 
@@ -281,7 +279,9 @@ class TestMetadata(unittest.TestCase):
     def setUp(self):
         self.onefield = vector.metadata.Metadata(data=np.arange(200), singleton=False)
         self.multifield = vector.metadata.Metadata(
-                data={"a":np.arange(200), "b":np.arange(200,400), "c":np.arange(200)**2}, singleton=False)
+                            data={"a":np.arange(200), "b":np.arange(200,400), 
+                                  "c":np.arange(200)**2},
+                            singleton=False)
         return
 
     def test_indexing(self):
@@ -307,46 +307,44 @@ class TestMetadata(unittest.TestCase):
 class TestGeoJSONInput(unittest.TestCase):
 
     def test_point_read(self):
-        with open(os.path.join(TESTDATA, 'point.geojson')) as f:
+        with open(os.path.join(TESTDATA, 'geojson_input/point.json')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_points()
         self.assertEqual(res[0].coordinates, [100.0, 0.0])
         return
 
     def test_linestring_read(self):
-        with open(os.path.join(TESTDATA, 'linestring.geojson')) as f:
+        with open(os.path.join(TESTDATA, 'geojson_input/linestring.json')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_lines()
         self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_polygon_read(self):
-        with open(os.path.join(TESTDATA, 'polygon.geojson')) as f:
+        with open(os.path.join(TESTDATA, 'geojson_input/polygon.json')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_polygons()
-        self.assertEqual(res[0].coordinates, [[[100.0, 0.0], [101.0, 0.0],
-                                               [101.0, 1.0], [100.0, 1.0],
-                                               [100.0, 0.0]]])
+        self.assertEqual(res[0].coordinates,
+            [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return
 
     def test_multipoint_read(self):
-        with open(os.path.join(TESTDATA, 'multipoint.geojson')) as f:
+        with open(os.path.join(TESTDATA, 'geojson_input/multipoint.json')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_multipoints()
         self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_multilinestring_read(self):
-        with open(os.path.join(TESTDATA, 'multilinestring.geojson')) as f:
+        with open(os.path.join(TESTDATA, 'geojson_input/multilinestring.json')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_lines()
         self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
         self.assertEqual(res[1].coordinates, [[102.0, 2.0], [103.0, 3.0]])
         return
 
-    # This test will fail until holes are implemented
     def test_multipolygon_read(self):
-        with open(os.path.join(TESTDATA, 'multipolygon.geojson')) as f:
+        with open(os.path.join(TESTDATA, 'geojson_input/multipolygon.json')) as f:
             reader = GeoJSONReader(f)
         res = reader.pull_polygons()
         self.assertEqual(res[0].coordinates, 
