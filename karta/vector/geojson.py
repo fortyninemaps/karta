@@ -176,18 +176,21 @@ class GeoJSONReader(object):
     -----------------------------------------------------
      """
 
-    def __init__(self, finput):
+    def __init__(self, finput=None):
         """ Create a reader-object for a GeoJSON-containing file or StreamIO
         object. Use as::
 
             with open(`fnm`, 'r') as f:
                 reader = GeoJSONReader(f)
         """
-        if not hasattr(finput, 'read'):
-            with open(finput) as f:
-                self.jsondict = json.load(f)
+        if finput is not None:
+            if not hasattr(finput, 'read'):
+                with open(finput) as f:
+                    self.jsondict = json.load(f)
+            else:
+                self.jsondict = json.load(finput)
         else:
-            self.jsondict = json.load(finput)
+            self.jsondict = None
         return
 
     def _walk(self, dic, geotype):
