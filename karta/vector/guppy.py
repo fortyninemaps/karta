@@ -472,9 +472,9 @@ class Multipoint(Geometry):
                 mx = max(mx, x)
             return mn, mx
         # Get the min/max for a generator defined for each dimension
-        return map(gen_minmax,
+        return list(map(gen_minmax,
                     map(lambda i: (c[i] for c in self.vertices),
-                        range(self.rank)))
+                        range(self.rank))))
 
     # This code should compute the convex hull of the points and then test the
     # hull's combination space
