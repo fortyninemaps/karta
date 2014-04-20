@@ -2,8 +2,8 @@
 guppy object. """
 
 import os
-from shapefile import Reader, Writer
-import guppy
+from .shapefile import Reader, Writer
+from . import guppy
 
 # # Constants for shape types
 # NULL = 0

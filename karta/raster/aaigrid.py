@@ -9,7 +9,7 @@ Written by Nat Wilson
 
 from math import sin, sqrt
 import numpy as np
-import grid
+from . import grid
 import traceback
 
 class AAIGrid(grid.RegularGrid):
@@ -308,7 +308,7 @@ class AAIGrid(grid.RegularGrid):
         try:
             hdr = self._check_header(hdr)
         except AAIError as s:
-            print s
+            print(s)
             return
 
         self.aschdr = hdr

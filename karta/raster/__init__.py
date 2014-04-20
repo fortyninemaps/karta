@@ -2,28 +2,28 @@
 Classes for handling raster data.
 """
 
-import grid
-import aaigrid
-import raster
-import flow
+from . import grid
+from . import aaigrid
+from . import raster
+from . import flow
 
-from grid import RegularGrid, WarpedGrid, aairead
-from aaigrid import AAIGrid
-from raster import witch_of_agnesi, peaks, pad, slope, aspect, grad, div
-from raster import normed_vector_field
+from .grid import RegularGrid, WarpedGrid, aairead
+from .aaigrid import AAIGrid
+from .raster import witch_of_agnesi, peaks, pad, slope, aspect, grad, div
+from .raster import normed_vector_field
 
 try:
-    from crfuncs import streamline2d
+    from .crfuncs import streamline2d
 except ImportError:
-    from streamline import streamline2d
+    from .streamline import streamline2d
 
 try:
-    import cfill_sinks as fill_sinks
+    from . import cfill_sinks as fill_sinks
 except ImportError:
-    import fill_sinks
+    from . import fill_sinks
 
 try:
-    import flow          # Has a Scipy dependency
+    from . import flow          # Has a Scipy dependency
 except ImportError:
     pass
 

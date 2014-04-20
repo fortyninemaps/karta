@@ -4,20 +4,20 @@ import sys
 import copy
 from math import sqrt
 import numpy as np
-import _aai             # Contains the ascread driver
+from . import _aai          # Contains the ascread driver
 
 try:
-    import _gtiff
+    from . import _gtiff
     HAS_GDAL = True
 except ImportError:
     HAS_GDAL = False
 
 try:
-    from fill_sinks import fill_sinks
+    from .fill_sinks import fill_sinks
 except ImportError:
     sys.stderr.write("Compiled fill_sinks not available. Falling back to "
                      "Python version\n")
-    from raster import fill_sinks
+    from .raster import fill_sinks
 try:
     from scipy.interpolate import griddata
     HAS_SCIPY = True

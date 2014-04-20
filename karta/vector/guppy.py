@@ -16,13 +16,13 @@ from . import xyfile
 from .. import crs
 
 from collections import deque
-from metadata import Metadata
+from .metadata import Metadata
 
 try:
-    import _cvectorgeo as _vecgeo
+    from . import _cvectorgeo as _vecgeo
 except ImportError:
     sys.stderr.write("falling back on slow _vectorgeo")
-    import _vectorgeo as _vecgeo
+    from . import _vectorgeo as _vecgeo
 
 try:
     import shapely.geometry as geometry
@@ -353,7 +353,7 @@ class Multipoint(Geometry):
     def print_vertices(self):
         """ Prints an enumerated list of indices. """
         for i, vertex in enumerate(self.vertices):
-            print i, '\t', vertex
+            print("{0}\t{1}".format(i, vertex))
 
     def get_vertices(self):
         """ Return vertices as a list of tuples. """

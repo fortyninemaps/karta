@@ -42,15 +42,15 @@ The following license applies to:
 """
 
 #import sys
-import raster
 import math
 import numpy as np
 from scipy import sparse
+from . import raster
 
 try:
-    import crfuncs as rfuncs
+    from . import crfuncs as rfuncs
 except ImportError:
-    import rfuncs as rfuncs
+    from . import rfuncs as rfuncs
 
 def facet_flow(e0, e1, e2, d1=1.0, d2=1.0):
     """ Return flow direction and slope for an east-northeast grid
