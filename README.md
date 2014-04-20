@@ -1,10 +1,10 @@
 #Karta - tidy Python package for geospatial computation
 
 *Karta* is a Leatherman for geographic analyses. *Karta* provides an interface
-for solving problems in Python that works nicely with existing packages. To this
-end, it provides simple and clean vector and raster data types, a selection of
-analysis functions, the ability to read and write a small number of useful
-formats, and interoperability with *numpy*.
+for solving problems in Python (2 or 3) that works nicely with existing
+packages. To this end, it provides simple and clean vector and raster data
+types, a selection of analysis functions, the ability to read and write a small
+number of useful formats, and interoperability with *numpy*.
 
 Goals of *Karta* include providing a simple, lightweight, and fast set of tools
 useful for "everyday" spatial analysis, as well as a flexible set of
@@ -12,7 +12,6 @@ abstractions upon which to build more advanced routines. *Karta* should be
 considered a work in progress.
 
 **Current projects:**
-- Python 3 single-codebase compatibility (targeting Python 3.4)
 - test coverage
 - minimal system for coordinate system metadata
 
@@ -66,7 +65,7 @@ The easiest way to install is to use `pip`.
 
 ### Required
 
-- Python 2.x
+- Python 2.7+ or Python 3.3+
 - numpy
 
 ### Optional
