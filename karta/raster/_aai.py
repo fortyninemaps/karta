@@ -51,7 +51,7 @@ def aairead(fnm):
     check_header(hdr)
 
     f = lambda l: [float(i) for i in l.split()]
-    data_f = map(f, data)
+    data_f = list(map(f, data))
     data_a = np.array(data_f)
     data_a[data_a==hdr['nodata_value']] = np.nan
 

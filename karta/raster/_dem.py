@@ -94,7 +94,7 @@ def reclen(fmt):
 
     except ValueError:
         if "," in fmt:
-            return map(lambda a: reclen(a)[0], fmt.split(","))
+            return list(map(lambda a: reclen(a)[0], fmt.split(",")))
 
         if fmt[0] in ("G", "F", "E", "D"):
             nch = int(fmt[1:].split(".")[0])
@@ -113,7 +113,7 @@ def dtype(fmt):
 
     except ValueError:
         if "," in fmt:
-            return map(lambda a: dtype(a)[0], fmt.split(","))
+            return list(map(lambda a: dtype(a)[0], fmt.split(",")))
         else:
             return [FMT_KEY[fmt[0]]]
 
