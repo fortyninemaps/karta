@@ -110,7 +110,12 @@ class Metadata(Mapping):
     def sub(self, idxs):
         """ Return a Metadata instance with values from idxs. """
         newdata = dict()
-        for key, val in self._data.iteritems():
+        try:
+            items = self._data.iteritems()
+        except AttributeError:
+            items = self._data.items()
+
+        for key, val in items:
             newdata[key] = [self._data[key][i] for i in idxs]
         return Metadata(newdata)
 
