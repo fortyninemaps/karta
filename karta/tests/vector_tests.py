@@ -4,7 +4,10 @@ import unittest
 import os
 import math
 import numpy as np
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 import json
 from test_helper import md5sum, TESTDATA, TESTDIR
 
@@ -259,7 +262,7 @@ class TestGuppyOutput(unittest.TestCase):
 
     def test_mp2vtp(self):
         # Test VTK output for a Multipoint
-        s = StringIO.StringIO()
+        s = StringIO()
         self.mp.to_vtk(s)
         s.seek(0)
         self.assertEqual(md5sum(s),
@@ -355,7 +358,7 @@ class TestGeoJSONOutput(unittest.TestCase):
         return
 
     def asJsonBuffer(self, geo):
-        s = StringIO.StringIO()
+        s = StringIO()
         geo.to_geojson(s)
         s.seek(0)
         return s

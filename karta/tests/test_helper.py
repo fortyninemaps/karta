@@ -3,7 +3,10 @@
 import os
 import inspect
 import hashlib
-import StringIO
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 TESTDIR = os.path.dirname(os.path.abspath(
                 inspect.getfile(inspect.currentframe())))
@@ -27,6 +30,6 @@ def md5sum(s, block=32768):
 
 def tobuffer(s, pos=0):
     """ Place string *s* in a StringIO instance, set to position *pos*. """
-    sio = StringIO.StringIO(s)
+    sio = StringIO(s)
     sio.seek(pos)
     return sio
