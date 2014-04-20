@@ -3,6 +3,8 @@
 import copy
 import numbers
 from collections import Mapping
+import numpy
+IntegerType = (numbers.Integral, numpy.int32, numpy.int64)
 
 class Metadata(Mapping):
     """ Class for handling collections of metadata. Data are organized similar
@@ -95,7 +97,7 @@ class Metadata(Mapping):
         # If there are multiple field types, a number index should return a dict
         # Although this is a bit irregular, it probably adheres better to the
         # principle of least surprise
-        if isinstance(key, numbers.Integral) or isinstance(key, slice):
+        if isinstance(key, (IntegerType, slice)):
             #       if len(self._fieldtypes) == 1:
             #           return self.values()[0][key]
             #       else:

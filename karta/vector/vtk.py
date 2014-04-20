@@ -5,6 +5,7 @@ import sys
 import operator
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
+from functools import reduce
 
 def mp2vtp(mp_list, f, **kwargs):
     """ Write a list of Multipoint instances to a serial VTK PolyData (.vtp)

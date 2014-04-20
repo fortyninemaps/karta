@@ -12,6 +12,7 @@ abstractions upon which to build more advanced routines. *Karta* should be
 considered a work in progress.
 
 **Current projects:**
+- Python 3 single-codebase compatibility (targeting Python 3.4)
 - test coverage
 - minimal system for coordinate system metadata
 

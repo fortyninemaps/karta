@@ -142,7 +142,7 @@ class GeoJSONWriter(object):
         """ Add an index field. """
         if target is None:
             target = self.supobj
-        target['id'] = range(len(self.gpobj.get_vertices()))
+        target['id'] = list(range(len(self.gpobj.get_vertices())))
         return
 
     def print_json(self):
@@ -308,7 +308,7 @@ class GeoJSONReader(object):
         raise NotImplementedError
 
 def list_rec(A):
-    """ Recursively convert nested iterables to nexted lists """
+    """ Recursively convert nested iterables to nested lists """
     if hasattr(A, '__iter__'):
         return [list_rec(el) for el in A]
     else:

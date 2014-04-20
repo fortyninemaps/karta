@@ -20,7 +20,7 @@ def md5sum(s, block=32768):
         if not hasattr(s, 'read'):
             s = open(s, 'r')
         while True:
-            data = s.read(block)
+            data = s.read(block).encode('utf-8')
             if not data:
                 break
             md5.update(data)

@@ -295,7 +295,7 @@ class Multipoint(Geometry):
         return len(self.vertices)
 
     def __getitem__(self, key):
-        if isinstance(key, int):
+        if isinstance(key, (int, np.int64)):
             return Point(self.vertices[key], data=self.data[key],
                          properties=self.properties, crs=self._crs)
         elif isinstance(key, slice):
@@ -466,7 +466,7 @@ class Multipoint(Geometry):
         """ Calculate a bounding box. """
         def gen_minmax(G):
             """ Get the min/max from a single pass through a generator. """
-            mn = mx = G.next()
+            mn = mx = next(G)
             for x in G:
                 mn = min(mn, x)
                 mx = max(mx, x)
@@ -570,7 +570,7 @@ class ConnectedMultipoint(Multipoint):
         interx = (_vecgeo.intersections(a[0][0], a[1][0], b[0][0], b[1][0],
                                         a[0][1], a[1][1], b[0][1], b[1][1])
                     for a in self.segments() for b in other.segments())
-        return filter(lambda a: np.nan not in a, interx)
+        return list(filter(lambda a: np.nan not in a, interx))
 
     def shortest_distance_to(self, pt):
         """ Return the shortest distance from a point on the Multipoint
@@ -588,10 +588,10 @@ class ConnectedMultipoint(Multipoint):
 
         Warning: If two points are equidistant, only one will be returned.
         """
-        point_dist = map(_vecgeo.pt_nearest,
+        point_dist = list(map(_vecgeo.pt_nearest,
                                 [pt.vertex for seg in self.segments()],
                                 [seg[0].vertex for seg in self.segments()],
-                                [seg[1].vertex for seg in self.segments()])
+                                [seg[1].vertex for seg in self.segments()]))
         distances = [i[1] for i in point_dist]
         return Point(point_dist[distances.index(min(distances))][0],
                      properties=self.properties, crs=self._crs)
