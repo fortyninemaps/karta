@@ -18,7 +18,7 @@ def md5sum(s, block=32768):
     md5 = hashlib.md5()
     try:
         if not hasattr(s, 'read'):
-            s = open(s, 'r')
+            s = open(s, 'r', encoding='utf-8')
         while True:
             data = s.read(block).encode('utf-8')
             if not data:
