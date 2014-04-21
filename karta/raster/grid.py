@@ -181,8 +181,9 @@ class RegularGrid(Grid):
         return (x0, x0 + self._hdr['dx'] * (self._hdr['nx'] + n),
                 y0, y0 + self._hdr['dy'] * (self._hdr['ny'] + n))
 
-    def resample(self, dx, dy, method='nearest'):
-        """ Resample array in-place to have spacing `dx`, `dy'.
+    def resample_griddata(self, dx, dy, method='nearest'):
+        """ Resample array in-place to have spacing `dx`, `dy' using
+        *scipy.griddata*
 
         Parameters
         ----------
@@ -199,7 +200,20 @@ class RegularGrid(Grid):
         nx = int((xurcenter - xllcenter) // dx)
         ny = int((yurcenter - yllcenter) // dy)
 
-        if HAS_SCIPY:
+        xx, yy = self.coordmesh()
+        xxi, yyi = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
+                               np.linspace(yllcenter, yurcenter, ny))
+        idata = griddata((xx.flatten(), yy.flatten()), self.data.flatten(),
+                         (xxi.flatten(), yyi.flatten()), method=method)
+        self.data = idata.reshape(ny, nx)[::-1]
+
+        hdr = self.get_hdr()
+        hdr['dx'] = dx
+        hdr['dy'] = dy
+        hdr['nx'] = nx
+        hdr['ny'] = ny
+        self.set_hdr(hdr)
+        return
 
     def resample(self, dx, dy, method='nearest'):
         """ Resample array in-place to have spacing `dx`, `dy'.
