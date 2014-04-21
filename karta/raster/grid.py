@@ -201,28 +201,33 @@ class RegularGrid(Grid):
 
         if HAS_SCIPY:
 
-            xx, yy = self.coordmesh()
-            xxi, yyi = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
-                                   np.linspace(yllcenter, yurcenter, ny))
-            idata = griddata((xx.flatten(), yy.flatten()), self.data.flatten(),
-                             (xxi.flatten(), yyi.flatten()), method=method)
-            self.data = idata.reshape(ny, nx)[::-1]
+    def resample(self, dx, dy, method='nearest'):
+        """ Resample array in-place to have spacing `dx`, `dy'.
 
+        Parameters
+        ----------
+
+        dx : cell dimension, float
+
+        dy : cell dimension, float
+
+        method : interpolation method, string ('nearest',)
+        """
+        xllcenter, yllcenter = self.center_llref()
+        xurcenter = xllcenter + self._hdr['dx'] * self._hdr['nx']
+        yurcenter = yllcenter + self._hdr['dy'] * self._hdr['ny']
+        nx = int((xurcenter - xllcenter) // dx)
+        ny = int((yurcenter - yllcenter) // dy)
+
+        if method == 'nearest':
+            rx, ry = dx / self._hdr['dx'], dy / self._hdr['dy']
+            I = np.around(np.arange(ry/2, self.data.shape[0], ry)).astype(int)
+            J = np.around(np.arange(rx/2, self.data.shape[1], rx)).astype(int)
+            JJ, II = np.meshgrid(J, I)
+            self.data = self.data[II, JJ]
         else:
-            dimratio = (dx / self._hdr['dx'], dy / self._hdr['dy'])
-
-            if method == 'nearest':
-                JJ, II = np.meshgrid(np.arange(nx), np.arange(ny))
-                srcII = np.around(II * dimratio[1]) \
-                                .astype(int) \
-                                .clip(0, self._hdr['ny'] - 1)
-                srcJJ = np.around(JJ * dimratio[0]) \
-                                .astype(int).\
-                                clip(0, self._hdr['nx'] - 1)
-                self.data = self.data[srcII, srcJJ]
-            else:
-                raise NotImplementedError('method "{0}" not '
-                                          'implemented'.format(method))
+            raise NotImplementedError('method "{0}" not '
+                                      'implemented'.format(method))
 
         hdr = self.get_hdr()
         hdr['dx'] = dx

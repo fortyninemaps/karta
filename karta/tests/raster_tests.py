@@ -43,10 +43,23 @@ class RegularGrid(unittest.TestCase):
         return
 
     def test_resample(self):
-        small = karta.raster.peaks(n=7)
-        rast = self.rast.copy()
-        rast.resample(210.0, 210.0)
-        self.assertEqual(0.0, np.sum(rast.data - small))
+        # use linear function so that nearest neighbour and linear interp are
+        # exact
+        def makegrid(s, f, n):
+            xx, yy = np.meshgrid(np.linspace(s, f, n),
+                                 np.linspace(s, f, n))
+            zz = 2.0*xx + -3.0*yy
+            return karta.grid.RegularGrid(hdr={'nx':n, 'ny':n,
+                                               'xllcorner':0.0,
+                                               'yllcorner':0.0,
+                                               'dx':30.0,
+                                               'dy':30.0,
+                                               'nbands':1}, Z=zz)
+        g = makegrid(0.0, 1.0, 129)
+        sol = makegrid(1.0/128.0, 1.0-1.0/128.0, 64)
+        g.resample(60.0, 60.0)
+        residue = g.data - sol.data
+        self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return
 
     def test_vertex_coords(self):
