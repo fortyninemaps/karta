@@ -138,6 +138,9 @@ class Point(Geometry):
         """
 
         if self._crs == crs.LONLAT and other._crs == crs.LONLAT:
+            if not PYPROJ:
+                raise CRSError("Azimuth computation on LONLAT grids "
+                               "requires pyproj")
             az1, _, _ = geod.inv(self.x, self.y, other.x, other.y)
             return az1 * math.pi / 180.0
 
@@ -160,7 +163,7 @@ class Point(Geometry):
                 return math.atan(dy / dx) + math.pi
 
         else:
-            raise CRSError("azimuth undefined for points in CRS {0} and "
+            raise CRSError("Azimuth undefined for points in CRS {0} and "
                            "{1}".format(self._crs, other._crs))
 
     def walk(self, distance, bearing, azimuth=0.0, spherical=False):
