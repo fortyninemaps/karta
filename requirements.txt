@@ -1,4 +1,3 @@
-karta
 pyproj
 cython >= 0.18
 numpy >= 1.7
