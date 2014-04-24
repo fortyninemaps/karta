@@ -1,5 +1,7 @@
 #Karta - tidy Python package for geospatial computation
 
+[![Build Status](https://travis-ci.org/njwilson23/karta.svg?branch=master)](https://travis-ci.org/njwilson23/karta)
+
 *Karta* is a Leatherman for geographic analyses. *Karta* provides an interface
 for solving problems in Python (2 or 3) that works nicely with existing
 packages. To this end, it provides simple and clean vector and raster data

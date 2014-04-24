@@ -8,7 +8,9 @@ branches:
   only:
     - master
     - travis
-# command to install dependencies
+before-install:
+  - sudo apt-get update -q
+  - sudo apt-get install numpy cython pyproj
 install:
   - "pip install -r requirements.txt"
   - "pip install ."
