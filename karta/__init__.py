@@ -4,7 +4,6 @@ geospatial data.
 """
 
 __version__ = 0.1
-#__path__ = ["vector", "raster", "tests"]
 __all__ = ["vector", "raster", "crs"]
 
 from . import vector
