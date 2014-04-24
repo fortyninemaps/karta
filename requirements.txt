@@ -1,3 +1,3 @@
 pyproj
-cython >= 0.18
-numpy >= 1.7
+cython >= 0.15
+numpy >= 1.6
