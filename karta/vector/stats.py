@@ -3,8 +3,11 @@ Variogram estimation and modelling functions
 """
 
 import numpy as np
-from scipy.spatial.distance import pdist
-from scipy.optimize import minimize
+try:
+    from scipy.spatial.distance import pdist
+    from scipy.optimize import minimize
+except ImportError:
+    pass
 import random
 
 class VariogramFunction(object):
