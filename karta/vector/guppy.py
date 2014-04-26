@@ -203,7 +203,7 @@ class Point(Geometry):
 
         self.vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
         self._setxyz()
-        return
+        return self
 
     def as_geojson(self, **kwargs):
         """ Write data as a GeoJSON string to a file-like object `f`.
@@ -400,7 +400,7 @@ class Multipoint(Geometry):
             f = lambda pt: (pt[0] + shift_vector[0], pt[1] + shift_vector[1],
                             pt[2] + shift_vector[2])
         self.vertices = map(f, self.vertices)
-        return
+        return self
 
     def _matmult(self, A, x):
         """ Return Ax=b """
@@ -424,7 +424,7 @@ class Multipoint(Geometry):
 
         # Shift back
         self.shift(origin)
-        return
+        return self
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
