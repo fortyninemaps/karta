@@ -14,13 +14,14 @@ from test_helper import md5sum, md5sum_file, TESTDATA, TESTDIR
 import karta.vector as vector
 import karta.crs as crs
 from karta.vector.geojson import GeoJSONReader
+from karta.vector.guppy import Point, Multipoint, Line, Polygon
+from karta.vector.metadata import Metadata
 
 class TestGuppy(unittest.TestCase):
 
     def setUp(self):
-        self.point = vector.guppy.Point((1.0, 2.0, 3.0),
-                                        data={"color":(43,67,10)},
-                                        properties="apple")
+        self.point = Point((1.0, 2.0, 3.0), data={"color":(43,67,10)},
+                           properties="apple")
 
         self.vertices = [(2.0, 9.0, 9.0), (4.0, 1.0, 9.0), (4.0, 1.0, 5.0),
                          (2.0, 8.0, 0.0), (9.0, 8.0, 4.0), (1.0, 4.0, 6.0),
@@ -33,23 +34,21 @@ class TestGuppy(unittest.TestCase):
         self.data = [99.0, 2.0, 60.0, 75.0, 71.0, 34.0, 1.0, 49.0, 4.0, 36.0,
                      47.0, 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]
 
-        self.mp = vector.guppy.Multipoint(self.vertices, data=self.data)
-        self.line = vector.guppy.Line(self.vertices, data=self.data)
-        self.poly = vector.guppy.Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
-        self.ring = vector.guppy.Polygon([(2.0, 2.0), (4.0, 2.0), (3.0, 6.0)])
-        self.ringed_poly = vector.guppy.Polygon([(0.0, 0.0), (10, 0.0),
-                                                 (10.0, 10.0), (0.0, 10.0)],
-                                                subs=[self.ring])
-        self.unitsquare = vector.guppy.Polygon([(0.0,0.0), (1.0,0.0), (1.0,1.0),
-                                                (0.0,1.0)])
+        self.mp = Multipoint(self.vertices, data=self.data)
+        self.line = Line(self.vertices, data=self.data)
+        self.poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
+        self.ring = Polygon([(2.0, 2.0), (4.0, 2.0), (3.0, 6.0)])
+        self.ringed_poly = Polygon([(0.0, 0.0), (10, 0.0),
+                                    (10.0, 10.0), (0.0, 10.0)],
+                                   subs=[self.ring])
+        self.unitsquare = Polygon([(0.0,0.0), (1.0,0.0), (1.0,1.0), (0.0,1.0)])
         return
 
 
     def test_point_equality(self):
-        P = vector.guppy.Point
-        pt1 = P((3.0, 4.0))
-        pt2 = P((3.0, 4.0, 5.0))
-        pt3 = P((3.0, 4.0, 5.0), data={"species":"T. officianale", "density":"high"})
+        pt1 = Point((3.0, 4.0))
+        pt2 = Point((3.0, 4.0, 5.0))
+        pt3 = Point((3.0, 4.0, 5.0), data={"species":"T. officianale", "density":"high"})
         self.assertFalse(pt1 == pt2)
         self.assertFalse(pt1 == pt3)
         self.assertFalse(pt2 == pt3)
@@ -66,27 +65,28 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_point_azimuth(self):
-        other = vector.guppy.Point((2.0, 3.0))
+        other = Point((2.0, 3.0))
         self.assertEqual(self.point.azimuth(other), 0.25 * np.pi)
         return
 
     def test_point_azimuth2(self):
-        other = vector.guppy.Point((1.0, 3.0))
+        other = Point((1.0, 3.0))
         self.assertEqual(self.point.azimuth(other), 0.0)
         return
 
     def test_point_azimuth3(self):
-        other = vector.guppy.Point((1.0, 0.0))
+        other = Point((1.0, 0.0))
         self.assertEqual(self.point.azimuth(other), np.pi)
         return
 
     def test_point_azimuth4(self):
-        other = vector.guppy.Point((0.0, 1.0))
+        other = Point((0.0, 1.0))
         self.assertEqual(self.point.azimuth(other), 1.25 * np.pi)
         return
 
     def test_point_shift(self):
-        point = vector.guppy.Point((-3.0, 5.0, 2.5))
+        point = Point((-3.0, 5.0, 2.5), data={"color":(43,67,10)},
+                      properties="apple")
         point.shift((4.0, -3.0, 0.5))
         self.assertEqual(self.point, point)
         return
@@ -98,21 +98,21 @@ class TestGuppy(unittest.TestCase):
     def test_multipoint_subset(self):
         ss1 = self.mp._subset(range(2,7))
         ss2 = self.line._subset(range(2,7))
-        self.assertTrue(isinstance(ss1, vector.guppy.Multipoint))
-        self.assertTrue(isinstance(ss2, vector.guppy.Line))
+        self.assertTrue(isinstance(ss1, Multipoint))
+        self.assertTrue(isinstance(ss2, Line))
         return
 
     def test_multipoint_getset(self):
-        self.assertEqual(self.mp[0], vector.guppy.Point(self.vertices[0],
-                                                        data=self.mp.data[0],
-                                                        properties=self.mp.properties))
+        self.assertEqual(self.mp[0], Point(self.vertices[0],
+                                           data=self.mp.data[0],
+                                           properties=self.mp.properties))
         return
 
     def test_multipoint_slicing(self):
-        submp = vector.guppy.Multipoint(self.vertices[5:10], data=self.data[5:10])
+        submp = Multipoint(self.vertices[5:10], data=self.data[5:10])
         self.assertEqual(self.mp[5:10], submp)
 
-        submp = vector.guppy.Multipoint(self.vertices[5:], data=self.data[5:])
+        submp = Multipoint(self.vertices[5:], data=self.data[5:])
         self.assertEqual(self.mp[5:], submp)
         return
 
@@ -145,38 +145,36 @@ class TestGuppy(unittest.TestCase):
         data1 = [54.0, 40.0, 77.0, 18.0, 84.0, 91.0, 61.0, 92.0, 19.0, 42.0,
                  50.0, 25.0, 11.0, 80.0, 59.0, 56.0, 32.0, 8.0, 88.0, 76.0]
 
-        L2 = vector.guppy.Multipoint(vertices, data={'d0':data0, 'd1':data1})
+        L2 = Multipoint(vertices, data={'d0':data0, 'd1':data1})
         return
 
     def test_connected_multipoint_shortest_distance_to(self):
-        line = vector.guppy.Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
-        dist = line.shortest_distance_to(vector.guppy.Point((0.0, 2.0)))
+        line = Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
+        dist = line.shortest_distance_to(Point((0.0, 2.0)))
         self.assertTrue(abs(dist - math.sqrt(2)) < 1e-10)
         return
 
     def test_connected_multipoint_nearest_on_boundary(self):
-        line = vector.guppy.Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
-        npt = line.nearest_on_boundary(vector.guppy.Point((0.0, 2.0)))
-        self.assertEqual(npt, vector.guppy.Point((1.0, 1.0)))
+        line = Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
+        npt = line.nearest_on_boundary(Point((0.0, 2.0)))
+        self.assertEqual(npt, Point((1.0, 1.0)))
         return
 
     def test_line_add_vertex2d(self):
-        ln0 = vector.guppy.Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0)])
-        ln1 = vector.guppy.Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
-                                 (4.0, 4.0), (0.0, 1.0)])
+        ln0 = Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0)])
+        ln1 = Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
+                    (4.0, 4.0), (0.0, 1.0)])
         ln0.add_vertex((4.0, 4.0))
-        ln0.add_vertex(vector.guppy.Point((0.0, 1.0)))
+        ln0.add_vertex(Point((0.0, 1.0)))
         self.assertEqual(ln0, ln1)
         return
 
     def test_line_add_vertex3d(self):
-        ln0 = vector.guppy.Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0),
-                                 (3.0, 1.0, 5.0)])
-        ln1 = vector.guppy.Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0),
-                                 (3.0, 1.0, 5.0), (4.0, 4.0, 6.0),
-                                 (0.0, 1.0, 3.0)])
+        ln0 = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0)])
+        ln1 = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
+                    (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
         ln0.add_vertex((4.0, 4.0, 6.0))
-        ln0.add_vertex(vector.guppy.Point((0.0, 1.0, 3.0)))
+        ln0.add_vertex(Point((0.0, 1.0, 3.0)))
         self.assertEqual(ln0, ln1)
         return
 
@@ -202,8 +200,8 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_line_intersection(self):
-        line0 = vector.guppy.Line([(0.0, 0.0), (3.0, 3.0)])
-        line1 = vector.guppy.Line([(0.0, 3.0), (3.0, 0.0)])
+        line0 = Line([(0.0, 0.0), (3.0, 3.0)])
+        line1 = Line([(0.0, 3.0), (3.0, 0.0)])
         self.assertTrue(line0.intersects(line1))
         self.assertEqual(line0.intersections(line1), [(1.5, 1.5)])
         return
@@ -227,8 +225,8 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_poly_contains(self):
-        pt0 = vector.guppy.Point((-0.5, 0.92))
-        pt1 = vector.guppy.Point((0.125, 0.875))
+        pt0 = Point((-0.5, 0.92))
+        pt1 = Point((0.125, 0.875))
         self.assertFalse(self.unitsquare.contains(pt0))
         self.assertTrue(self.unitsquare.contains(pt1))
         return
@@ -258,9 +256,9 @@ class TestGuppy(unittest.TestCase):
 class TestGuppyProj(unittest.TestCase):
 
     def setUp(self):
-        self.vancouver = vector.guppy.Point((-123.1, 49.25), crs=crs.LONLAT)
-        self.ottawa = vector.guppy.Point((-75.69, 45.42), crs=crs.LONLAT)
-        self.whitehorse = vector.guppy.Point((-135.05, 60.72), crs=crs.LONLAT)
+        self.vancouver = Point((-123.1, 49.25), crs=crs.LONLAT)
+        self.ottawa = Point((-75.69, 45.42), crs=crs.LONLAT)
+        self.whitehorse = Point((-135.05, 60.72), crs=crs.LONLAT)
         return
 
     def test_greatcircle(self):
@@ -298,8 +296,7 @@ class TestGuppyOutput(unittest.TestCase):
 
         data1 = [54.0, 40.0, 77.0, 18.0, 84.0, 91.0, 61.0, 92.0, 19.0, 42.0,
                  50.0, 25.0, 11.0, 80.0, 59.0, 56.0, 32.0, 8.0, 88.0, 76.0]
-        self.mp = vector.guppy.Multipoint(vertices,
-                                          data={'d0':data0, 'd1':data1})
+        self.mp = Multipoint(vertices, data={'d0':data0, 'd1':data1})
 
     # Due to the output of ElementTree.tostring not being deterministic, this
     # test randomly fails due to the DataArray attributes being swapped. The
@@ -321,8 +318,8 @@ class TestGuppyOutput(unittest.TestCase):
 class TestMetadata(unittest.TestCase):
 
     def setUp(self):
-        self.onefield = vector.metadata.Metadata(data=np.arange(200), singleton=False)
-        self.multifield = vector.metadata.Metadata(
+        self.onefield = Metadata(data=np.arange(200), singleton=False)
+        self.multifield = Metadata(
                             data={"a":np.arange(200), "b":np.arange(200,400), 
                                   "c":np.arange(200)**2},
                             singleton=False)
@@ -481,8 +478,8 @@ class TestGPX(unittest.TestCase):
         return
 
     def test_add_track(self):
-        track = [vector.guppy.Line([(np.random.random(), np.random.random())
-                           for i in range(10)], properties={"name":"segment0"})]
+        track = [Line([(np.random.random(), np.random.random())
+                       for i in range(10)], properties={"name":"segment0"})]
         g = vector.gpx.GPX()
         g.add_track(track)
         expected = self.Track([self.Trkseg(
@@ -492,8 +489,8 @@ class TestGPX(unittest.TestCase):
         return
 
     def test_add_route(self):
-        route = vector.guppy.Line([(np.random.random(), np.random.random())
-                             for i in range(10)], properties={"name":"route0"})
+        route = Line([(np.random.random(), np.random.random())
+                      for i in range(10)], properties={"name":"route0"})
         g = vector.gpx.GPX()
         g.add_route(route)
         expected = self.Route([self.Point(xy, {}, {}) for xy in route.vertices],
