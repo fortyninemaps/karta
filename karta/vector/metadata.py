@@ -72,6 +72,9 @@ class Metadata(Mapping):
             self._data = data
             self._fieldtypes = [type(data[k][0]) for k in data]
 
+    def __repr__(self):
+        return "D[" + ", ".join(str(k) for k in self._data.keys()) + "]"
+
     def __add__(self, other):
         if not isinstance(other, type(self)):
             raise MetadataError("self and other must both be instances of {0}".format(type(self)))
