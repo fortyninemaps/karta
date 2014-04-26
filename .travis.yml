@@ -12,7 +12,8 @@ before_install:
   - sudo apt-get update -q
   - sudo apt-get install python-numpy cython python-pyproj python3-numpy
 install:
-  - "pip install -r requirements.txt"
+  #- "pip install -r requirements.txt"
+  #- "pip install pyproj"
   - "pip install ."
 # command to run tests
 script: python karta/tests/test_runner.py
