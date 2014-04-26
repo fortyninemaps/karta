@@ -102,10 +102,26 @@ class TestGuppy(unittest.TestCase):
         self.assertTrue(isinstance(ss2, Line))
         return
 
-    def test_multipoint_getset(self):
+    def test_multipoint_get(self):
         self.assertEqual(self.mp[0], Point(self.vertices[0],
                                            data=self.mp.data[0],
                                            properties=self.mp.properties))
+        return
+
+    def test_multipoint_set(self):
+        mp = Multipoint([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
+                         (4.0, 4.0), (0.0, 1.0)],
+                         data=["rankin", "corbet", "arviat",
+                               "severn", "churchill"])
+        mpresult = Multipoint([(3.0, 3.0), (5.0, 1.0), (4.0, 5.0),
+                               (4.0, 4.0), (0.0, 1.0)],
+                              data=["rankin", "corbet", "umiujaq",
+                                    "severn", "churchill"])
+        mp[2] = (4.0, 5.0)
+        self.assertNotEqual(mp, mpresult)
+        mp[2] = Point((4.0, 5.0), data="umiujaq")
+        #import pdb; pdb.set_trace()
+        self.assertEqual(mp, mpresult)
         return
 
     def test_multipoint_slicing(self):

@@ -312,10 +312,15 @@ class Multipoint(Geometry):
     def __setitem__(self, key, value):
         if not isinstance(key, int):
             raise GGeoError('Indices must be integers')
-        if len(value) != self.rank:
-            raise GGeoError('Cannot insert values with'
-                            'rank != {0}'.format(self.rank))
-        self.vertices[key] = value
+        if getattr(value, "_geotype", None) == "Point":
+            self.vertices[key] = value.vertex
+            self.data[key] = list(value.data.values())[0]
+        elif len(value) == self.rank:
+            self.vertices[key] = value
+            self.data[key] = None
+        else:
+            raise GGeoError('Cannot insert non-Pointlike value with '
+                            'length != {0}'.format(self.rank))
         return
 
     def __delitem__(self, key):
@@ -332,7 +337,10 @@ class Multipoint(Geometry):
         #return (pt for pt in self.vertices)
 
     def __eq__(self, other):
-        return isinstance(other, type(self)) and other.vertices == self.vertices
+        return hasattr(other, "_geotype") and \
+               (self._geotype == other._geotype) and \
+               (len(self) == len(other)) and \
+               (False not in (a==b for a,b in zip(self, other)))
 
     def _bbox_overlap(self, other):
         """ Return whether bounding boxes between self and another geometry
