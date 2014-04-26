@@ -95,16 +95,38 @@ class Metadata(Mapping):
     def __iter__(self):
         return self._data.__iter__()
 
+    def __setitem__(self, key, value):
+        if isinstance(key, (IntegerType, slice)):
+            #       if len(self._fieldtypes) == 1:
+            #           return self.values()[0][key]
+            #       else:
+
+            nkeys = len(self._data.keys())
+            if (nkeys > 1) and (nkeys != len(list(value))):
+                raise IndexError("Setting Metadata requires a value to be "
+                                 "provided for every Metadata field")
+
+            if nkeys > 1:
+                for seq in self._data.values():
+                    seq[key] = value[key]
+            else:
+                for k in self._data.keys():
+                    self._data[k][key] = value
+
+        else:
+            if len(list(value)) != len(self):
+                raise IndexError("Setting a Metadata field requires that "
+                                 "length be preserved")
+            self._data[key] = list(value)
+        return
+
     def __getitem__(self, key):
         # If there is one field type, a number index should return a scalar
         # If there are multiple field types, a number index should return a dict
         # Although this is a bit irregular, it probably adheres better to the
         # principle of least surprise
         if isinstance(key, (IntegerType, slice)):
-            #       if len(self._fieldtypes) == 1:
-            #           return self.values()[0][key]
-            #       else:
-            return dict((k, self._data[k][key]) for k in self.keys())
+            return dict((k, self._data[k][key]) for k in self._data.keys())
         else:
             return self.getfield(key)
 
@@ -126,6 +148,8 @@ class Metadata(Mapping):
 
     def getfield(self, name):
         """ Return all values from field *name*. """
+        if name not in self._data:
+            raise IndexError("Field {0} not in Metadata".format(name))
         return self._data[name]
 
     def extend(self, other):
