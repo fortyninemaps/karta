@@ -52,7 +52,7 @@ class TestGuppy(unittest.TestCase):
         pt3 = P((3.0, 4.0, 5.0), data={"species":"T. officianale", "density":"high"})
         self.assertFalse(pt1 == pt2)
         self.assertFalse(pt1 == pt3)
-        self.assertTrue(pt2 == pt3)
+        self.assertFalse(pt2 == pt3)
         return
 
     def test_point_vertex(self):
@@ -178,6 +178,27 @@ class TestGuppy(unittest.TestCase):
         ln0.add_vertex((4.0, 4.0, 6.0))
         ln0.add_vertex(vector.guppy.Point((0.0, 1.0, 3.0)))
         self.assertEqual(ln0, ln1)
+        return
+
+    def test_line_extend(self):
+        ln0a = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0)])
+        ln0b = Line([(4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
+        ln1 = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
+                    (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
+        ln0a.extend(ln0b)
+        self.assertEqual(ln0a, ln1)
+
+    def test_line_remove(self):
+        ln = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
+                   (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)],
+                  data=["red", "green", "blue", "chartreuse", "aquamarine"])
+        lnresult = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
+                         (0.0, 1.0, 3.0)],
+                        data=["red", "green", "blue", "aquamarine"])
+        pt = ln.remove_vertex(3)
+        ptresult = Point((4.0, 4.0, 6.0), data="chartreuse")
+        self.assertEqual(pt, ptresult)
+        self.assertEqual(ln, lnresult)
         return
 
     def test_line_intersection(self):
