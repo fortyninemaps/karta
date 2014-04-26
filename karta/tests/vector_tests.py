@@ -160,6 +160,26 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(npt, vector.guppy.Point((1.0, 1.0)))
         return
 
+    def test_line_add_vertex2d(self):
+        ln0 = vector.guppy.Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0)])
+        ln1 = vector.guppy.Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
+                                 (4.0, 4.0), (0.0, 1.0)])
+        ln0.add_vertex((4.0, 4.0))
+        ln0.add_vertex(vector.guppy.Point((0.0, 1.0)))
+        self.assertEqual(ln0, ln1)
+        return
+
+    def test_line_add_vertex3d(self):
+        ln0 = vector.guppy.Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0),
+                                 (3.0, 1.0, 5.0)])
+        ln1 = vector.guppy.Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0),
+                                 (3.0, 1.0, 5.0), (4.0, 4.0, 6.0),
+                                 (0.0, 1.0, 3.0)])
+        ln0.add_vertex((4.0, 4.0, 6.0))
+        ln0.add_vertex(vector.guppy.Point((0.0, 1.0, 3.0)))
+        self.assertEqual(ln0, ln1)
+        return
+
     def test_line_intersection(self):
         line0 = vector.guppy.Line([(0.0, 0.0), (3.0, 3.0)])
         line1 = vector.guppy.Line([(0.0, 3.0), (3.0, 0.0)])
