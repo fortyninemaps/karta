@@ -9,8 +9,8 @@ branches:
     - master
     - travis
 before_install:
-  - sudo apt-get update -q
-  - sudo apt-get install python-numpy cython python-pyproj python3-numpy
+    - sudo apt-get update --quiet
+    - sudo apt-get install --assume-yes python-numpy cython python-pyproj python3-numpy
 install:
   #- "pip install -r requirements.txt"
   #- "pip install pyproj"
