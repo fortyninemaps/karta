@@ -102,7 +102,9 @@ class Point(Geometry):
 
     def __eq__(self, other):
         if hasattr(other, "vertex"):
-            return self.vertex == other.vertex
+            return (self.vertex == other.vertex) and \
+                   (self.data == other.data) and \
+                   (self.properties == other.properties)
         else:
             return False
 
@@ -625,23 +627,26 @@ class Line(ConnectedMultipoint):
                 self.vertices.append((vertex[0], vertex[1]))
             elif self.rank == 3:
                 self.vertices.append((vertex[0], vertex[1], vertex[2]))
+        return self
 
     def remove_vertex(self, index):
         """ Removes a vertex from the register by index. """
-        self.vertices.pop(index)
+        pt = Point(self.vertices.pop(index), data=self.data[index])
+        del self.data[index]
+        return pt
 
     def extend(self, other):
         """ Combine two lines, provided that that the data formats are similar.
         """
         if self.rank == other.rank:
             if self._geotype == other._geotype:
-                vertices = self.vertices + other.vertices
-                data = self.data + other.data
+                self.vertices.extend(other.vertices)
+                self.data = self.data + other.data
             else:
                 GGeoError('Cannot add inconsistent geometry types')
         else:
             GGeoError('Cannot add geometries with inconsistent rank')
-        return Line(vertices, data=data)
+        return self
 
     def cumlength(self):
         """ Returns the cumulative length by segment, prefixed by zero. """
