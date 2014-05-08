@@ -12,7 +12,11 @@ before_install:
   #- sudo apt-get update --quiet
   #- sudo apt-get install --assume-yes python-numpy cython python3-numpy
 install:
+  - "pip install coveralls"
   - "pip install -r requirements.txt"
   - "pip install ."
 # command to run tests
-script: python karta/tests/test_runner.py
+script:
+  coverage run --source=karta karta/tests/test_runner.py
+after_success:
+  coveralls
