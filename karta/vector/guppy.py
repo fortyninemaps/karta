@@ -259,7 +259,9 @@ class Multipoint(Geometry):
         match `vertices` in length.
         """
         super(Multipoint, self).__init__(**kwargs)
-        if properties is None: properties = {}
+        vertices = list(vertices)
+        if properties is None:
+            properties = {}
         if len(vertices) > 0:
             self.rank = len(vertices[0])
 

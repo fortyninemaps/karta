@@ -95,6 +95,12 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(self.mp.nearest_point_to(self.point), self.mp[12])
         return
 
+    def test_multipoint_zip_init(self):
+        x = range(-10, 10)
+        y = [_x**2 for _x in x]
+        Line(zip(x, y))
+        return
+
     def test_multipoint_subset(self):
         ss1 = self.mp._subset(range(2,7))
         ss2 = self.line._subset(range(2,7))
