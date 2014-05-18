@@ -15,9 +15,15 @@ except ImportError:
 
 ext = ".pyx" if USE_CYTHON else ".c"
 
-extensions = [Extension("karta.raster.cfill_sinks", ["karta/raster/cfill_sinks"+ext]),
-              Extension("karta.raster.crfuncs", ["karta/raster/crfuncs"+ext]),
-              Extension("karta.vector._cvectorgeo", ["karta/vector/_cvectorgeo"+ext])]
+extensions = [Extension("karta.raster.cfill_sinks",
+                        ["karta/raster/cfill_sinks"+ext],
+                        include_dirs=include_dirs),
+              Extension("karta.raster.crfuncs",
+                        ["karta/raster/crfuncs"+ext],
+                        include_dirs=include_dirs),
+              Extension("karta.vector._cvectorgeo",
+                        ["karta/vector/_cvectorgeo"+ext],
+                        include_dirs=include_dirs)]
 
 if USE_CYTHON:
     extensions = cythonize(extensions)
@@ -34,8 +40,8 @@ setup(
     name = "karta",
     version = "0.1",
     author = "Nat Wilson",
+    author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
-    include_dirs = include_dirs,
     ext_modules = extensions
 )
 
