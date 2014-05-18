@@ -1,0 +1,6 @@
+include README.md
+include setup.py setup.cfg
+include requirements.txt
+include doc
+recursive-include karta *.py *.pyx *.c
+prune karta/tests
