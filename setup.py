@@ -176,7 +176,10 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """,
     download_url = "https://github.com/njwilson23/karta/archive/master.zip",
-    classifiers = ("geospatial", "vector", "raster"),
+    classifiers = ["Programming Language :: Python",
+                   "Programming Language :: Python :: 3",
+                   "Development Status :: 4 - Beta",
+                   "Topic :: Scientific/Engineering"],
     license = "MIT License",
     ext_modules = extensions
 )
