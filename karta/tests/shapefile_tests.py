@@ -27,8 +27,17 @@ class TestShapefile(unittest.TestCase):
         self.polygon = Polygon([[1,5],[5,5],[5,1],[3,3],[1,1]])
         return
 
+    def test_writepoints(self):
+        mp = Multipoint([p.vertex for p in self.points])
+        mp.to_shapefile("data/points_shp")
+        return
+
     def test_writeline(self):
         self.line.to_shapefile("data/line_shp")
+        return
+
+    def test_writepoly(self):
+        self.polygon.to_shapefile("data/polygon_shp")
         return
 
     def test_dbase_type(self):

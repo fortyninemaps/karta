@@ -6,7 +6,7 @@ import datetime
 import numbers
 import shapefile
 from shapefile import Reader, Writer
-from . import guppy
+#from . import guppy
 
 # # Constants for shape types
 # NULL = 0
@@ -23,28 +23,6 @@ from . import guppy
 # POLYGONM = 25
 # MULTIPOINTM = 28
 # MULTIPATCH = 31
-
-def property_field_type(value):
-    """ Determine the appropriate dBase field type for *value* """
-    if isinstance(value, numbers.Number):
-        if isinstance(value, numbers.Integral):
-            desc = "I"
-        elif isinstance(value, numbers.Real):
-            desc = "O"
-        else:
-            raise TypeError("cannot choose the correct dBase type for {0}\n".format(type(value)))
-    elif isinstance(value, str):
-        desc = "C"
-    elif isinstance(value, datetime.datetime):
-        desc = "@"
-    elif isinstance(value, datetime.date):
-        desc = "D"
-    elif isinstance(value, bool):
-        desc = "L"
-    else:
-        raise TypeError("cannot choose the correct dBase type for {0}\n".format(type(value)))
-
-    return desc
 
 def shape2point(shape):
     """ Convert a shapefile._Shape `shape` to a guppy.Point. """
@@ -113,6 +91,64 @@ def read_shapefile(stem):
             f.close()
 
     return features
+
+def property_field_type(value):
+    """ Determine the appropriate dBase field type for *value* """
+    if isinstance(value, numbers.Number):
+        if isinstance(value, numbers.Integral):
+            desc = "I"
+        elif isinstance(value, numbers.Real):
+            desc = "O"
+        else:
+            raise TypeError("cannot choose the correct dBase type for {0}\n".format(type(value)))
+    elif isinstance(value, str):
+        desc = "C"
+    elif isinstance(value, datetime.datetime):
+        desc = "@"
+    elif isinstance(value, datetime.date):
+        desc = "D"
+    elif isinstance(value, bool):
+        desc = "L"
+    else:
+        raise TypeError("cannot choose the correct dBase type for {0}\n".format(type(value)))
+    return desc
+
+def addfields(writer, properties):
+    if len(properties) == 0:
+        writer.field("PROPERTIES", "C", "40")
+        writer.record("_karta.Line")
+    else:
+        values = []
+        for key in properties:
+            value = properties[key]
+            typ = property_field_type(value)
+            length = "100"
+            writer.field(key.upper(), typ, length)
+            value.append(value)
+        writer.record(*values)
+    return
+
+def write_multipoint(mp, fstem):
+    w = shapefile.Writer(shapeType=shapefile.POINT)
+    for pt in mp:
+        w.point(*pt.vertex)
+    addfields(w, mp.properties)
+    w.save(fstem)
+    return
+
+def write_line(line, fstem):
+    w = shapefile.Writer(shapeType=shapefile.POLYLINE)
+    w.poly(shapeType=shapefile.POLYLINE, parts=[line.vertices])
+    addfields(w, line.properties)
+    w.save(fstem)
+    return
+
+def write_poly2(poly, fstem):
+    w = shapefile.Writer(shapeType=shapefile.POLYGON)
+    w.poly(shapeType=shapefile.POLYGON, parts=[poly.vertices])
+    addfields(w, poly.properties)
+    w.save(fstem)
+    return
 
 def list_parts(feature):
     """ Return a list of polygon parts. """

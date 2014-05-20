@@ -10,9 +10,11 @@ import math
 import sys
 import traceback
 import numpy as np
+import shapefile
 from . import vtk
 from . import geojson
 from . import xyfile
+from . import _shpfuncs
 from .. import crs
 
 from collections import deque
@@ -119,6 +121,12 @@ class Point(Geometry):
             self.z = None
             self.rank = 2
         return
+
+    def isat(self, other, tol=0.001):
+        """ Test whether point vertices are the same, regardless of properties or data.
+        Tolarance is not geodetic. """
+        return False not in [abs(a-b) <= tol for (a, b) in zip(self.vertices,
+                                                               other.vertices)]
 
     def get_vertex(self):
         """ Return the Point vertex as a tuple. """
@@ -551,6 +559,11 @@ class Multipoint(Geometry):
         vtk.mp2vtp(self, f, **kwargs)
         return
 
+    def to_shapefile(self, fstem):
+        """ Save line to a shapefile """
+        _shpfuncs.write_multipoint(self, fstem)
+        return
+
 
 class ConnectedMultipoint(Multipoint):
     """ Class for Multipoints in which vertices are assumed to be connected. """
@@ -686,6 +699,10 @@ class Line(ConnectedMultipoint):
         except NameError:
             raise GuppyError('Shapely module not available\n')
 
+    def to_shapefile(self, fstem):
+        """ Save line to a shapefile """
+        _shpfuncs.write_line(self, fstem)
+        return
 
 class Polygon(ConnectedMultipoint):
     """ This defines the polygon class, from which geographic
@@ -759,6 +776,11 @@ class Polygon(ConnectedMultipoint):
         except NameError:
             raise ImportError('Shapely module did not import\n')
         return shp
+
+    def to_shapefile(self, fstem):
+        """ Save line to a shapefile """
+        _shpfuncs.write_poly2(self, fstem)
+        return
 
 
 class GuppyError(Exception):
