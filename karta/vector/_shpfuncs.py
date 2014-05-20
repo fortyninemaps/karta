@@ -22,6 +22,28 @@ from . import guppy
 # MULTIPOINTM = 28
 # MULTIPATCH = 31
 
+def property_field_type(value):
+    """ Determine the appropriate dBase field type for *value* """
+    if isinstance(value, numbers.Number):
+        if isinstance(value, numbers.Real):
+            desc = "O"
+        elif isinstance(value, numbers.Integral):
+            desc = "L"
+        else:
+            raise TypeError("cannot choose the correct dBase type for {0}\n".format(type(value)))
+    elif isinstance(value, str):
+        desc = "C"
+    elif isinstance(value, datetime.date):
+        desc = "D"
+    elif isinstance(value, datetime.datetime):
+        desc = "@"
+    elif isinstance(value, bool):
+        desc = "L"
+    else:
+        raise TypeError("cannot choose the correct dBase type for {0}\n".format(type(value)))
+
+    return desc
+
 def shape2point(shape):
     """ Convert a shapefile._Shape `shape` to a guppy.Point. """
     return guppy.Point(*shape.points)
