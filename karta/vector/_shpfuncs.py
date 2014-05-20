@@ -128,7 +128,7 @@ def addfields(writer, properties):
         writer.record(*values)
     return
 
-def write_multipoint(mp, fstem):
+def write_multipoint2(mp, fstem):
     w = shapefile.Writer(shapeType=shapefile.POINT)
     for pt in mp:
         w.point(*pt.vertex)
@@ -136,9 +136,24 @@ def write_multipoint(mp, fstem):
     w.save(fstem)
     return
 
-def write_line(line, fstem):
+def write_multipoint3(mp, fstem):
+    w = shapefile.Writer(shapeType=shapefile.POINTZ)
+    for pt in mp:
+        w.point(*pt.vertex)
+    addfields(w, mp.properties)
+    w.save(fstem)
+    return
+
+def write_line2(line, fstem):
     w = shapefile.Writer(shapeType=shapefile.POLYLINE)
     w.poly(shapeType=shapefile.POLYLINE, parts=[line.vertices])
+    addfields(w, line.properties)
+    w.save(fstem)
+    return
+
+def write_line3(line, fstem):
+    w = shapefile.Writer(shapeType=shapefile.POLYLINEZ)
+    w.poly(shapeType=shapefile.POLYLINEZ, parts=[line.vertices])
     addfields(w, line.properties)
     w.save(fstem)
     return
@@ -146,6 +161,13 @@ def write_line(line, fstem):
 def write_poly2(poly, fstem):
     w = shapefile.Writer(shapeType=shapefile.POLYGON)
     w.poly(shapeType=shapefile.POLYGON, parts=[poly.vertices])
+    addfields(w, poly.properties)
+    w.save(fstem)
+    return
+
+def write_poly3(poly, fstem):
+    w = shapefile.Writer(shapeType=shapefile.POLYGONZ)
+    w.poly(shapeType=shapefile.POLYGONZ, parts=[poly.vertices])
     addfields(w, poly.properties)
     w.save(fstem)
     return

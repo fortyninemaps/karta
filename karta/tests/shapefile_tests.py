@@ -25,6 +25,13 @@ class TestShapefile(unittest.TestCase):
                        Point((2, 2))]
         self.line = Line([[1,5],[5,5],[5,1],[3,3],[1,1]])
         self.polygon = Polygon([[1,5],[5,5],[5,1],[3,3],[1,1]])
+
+        self.points3 = [Point((1, 1, 0)),
+                       Point((3, 1, 3)),
+                       Point((4, 3, 2)),
+                       Point((2, 2, -1))]
+        self.line3 = Line([[1,5,2],[5,5,-1],[5,1,3],[3,3,1],[1,1,0]])
+        self.polygon3 = Polygon([[1,5,2],[5,5,-1],[5,1,3],[3,3,1],[1,1,0]])
         return
 
     def test_writepoints(self):
@@ -38,6 +45,19 @@ class TestShapefile(unittest.TestCase):
 
     def test_writepoly(self):
         self.polygon.to_shapefile("data/polygon_shp")
+        return
+
+    def test_writepoints3(self):
+        mp = Multipoint([p.vertex for p in self.points3])
+        mp.to_shapefile("data/pointsz_shp")
+        return
+
+    def test_writeline3(self):
+        self.line3.to_shapefile("data/linez_shp")
+        return
+
+    def test_writepoly3(self):
+        self.polygon3.to_shapefile("data/polygonz_shp")
         return
 
     def test_dbase_type(self):

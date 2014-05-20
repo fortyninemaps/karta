@@ -561,7 +561,12 @@ class Multipoint(Geometry):
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
-        _shpfuncs.write_multipoint(self, fstem)
+        if self.rank == 2:
+            _shpfuncs.write_multipoint2(self, fstem)
+        elif self.rank == 3:
+            _shpfuncs.write_multipoint3(self, fstem)
+        else:
+            raise IOError("rank must be 2 or 3 to write as a shapefile\n")
         return
 
 
@@ -701,7 +706,12 @@ class Line(ConnectedMultipoint):
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
-        _shpfuncs.write_line(self, fstem)
+        if self.rank == 2:
+            _shpfuncs.write_line2(self, fstem)
+        elif self.rank == 3:
+            _shpfuncs.write_line3(self, fstem)
+        else:
+            raise IOError("rank must be 2 or 3 to write as a shapefile\n")
         return
 
 class Polygon(ConnectedMultipoint):
@@ -779,7 +789,12 @@ class Polygon(ConnectedMultipoint):
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
-        _shpfuncs.write_poly2(self, fstem)
+        if self.rank == 2:
+            _shpfuncs.write_poly2(self, fstem)
+        elif self.rank == 3:
+            _shpfuncs.write_poly3(self, fstem)
+        else:
+            raise IOError("rank must be 2 or 3 to write as a shapefile\n")
         return
 
 
