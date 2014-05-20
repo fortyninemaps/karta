@@ -2,6 +2,7 @@
 guppy object. """
 
 import os
+import shapefile
 from shapefile import Reader, Writer
 from . import guppy
 
@@ -52,7 +53,7 @@ def get_filenames(stem, check=False):
                 raise Exception('missing {0}'.format(fnm))
     return {'shp':shp, 'shx':shx, 'dbf':dbf}
 
-def open_file_dict(fdict, mode='r'):
+def open_file_dict(fdict, mode='rb'):
     """ Open each file in a dictionary of filenames and return a matching
     dictionary of the file objects. """
     files = {}
@@ -103,29 +104,28 @@ def write_shapefile(features, stem):
     if not hasattr(features[0], '__iter__'):
         # Must be a Point type
         for feature in features:
-            writer.shapeType = 1
+            writer.shapeType = POINT
             writer.point(*feature.get_vertex())
     else:
         if isinstance(features[0], guppy.Line):
-            shape_type = 3
+            writer.shapeType = shapefile.POLYLINE
         elif isinstance(features[0], guppy.Polygon):
-            shape_type = 5
+            writer.shapeType = shapefile.POLYGON
         elif isinstance(features[0], guppy.Multipoint):
-            shape_type = 8
+            writer.shapeType = shapefile.MULTIPOINT
         else:
             raise NotImplementedError("cannot save type "
                                       "{0}".format(type(feature)))
 
-        writer.shapeType = shape_type
         for feature in features:
-            if shape_type == 5:
+            if writer.shapeType == shapefile.POLYLINE:
                 parts = list_parts(feature)
             else:
                 parts = [feature.vertices]
             writer.poly(parts)
 
     try:
-        files = open_file_dict(fnms, 'w')
+        files = open_file_dict(fnms, 'wb')
         writer.saveShp(files['shp'])
         writer.saveShx(files['shx'])
         writer.saveDbf(files['dbf'])
