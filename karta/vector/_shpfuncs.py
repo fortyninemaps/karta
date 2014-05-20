@@ -2,6 +2,8 @@
 guppy object. """
 
 import os
+import datetime
+import numbers
 import shapefile
 from shapefile import Reader, Writer
 from . import guppy
@@ -25,18 +27,18 @@ from . import guppy
 def property_field_type(value):
     """ Determine the appropriate dBase field type for *value* """
     if isinstance(value, numbers.Number):
-        if isinstance(value, numbers.Real):
+        if isinstance(value, numbers.Integral):
+            desc = "I"
+        elif isinstance(value, numbers.Real):
             desc = "O"
-        elif isinstance(value, numbers.Integral):
-            desc = "L"
         else:
             raise TypeError("cannot choose the correct dBase type for {0}\n".format(type(value)))
     elif isinstance(value, str):
         desc = "C"
-    elif isinstance(value, datetime.date):
-        desc = "D"
     elif isinstance(value, datetime.datetime):
         desc = "@"
+    elif isinstance(value, datetime.date):
+        desc = "D"
     elif isinstance(value, bool):
         desc = "L"
     else:
