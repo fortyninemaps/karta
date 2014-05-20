@@ -8,7 +8,6 @@ from . import xyfile
 from . import geojson
 from . import gpx
 from . import vtk
-from . import shapefile
 from . import shp_funcs
 
 from .guppy import Point, Multipoint, Line, Polygon

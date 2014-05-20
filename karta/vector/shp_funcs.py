@@ -2,7 +2,7 @@
 guppy object. """
 
 import os
-from .shapefile import Reader, Writer
+from shapefile import Reader, Writer
 from . import guppy
 
 # # Constants for shape types

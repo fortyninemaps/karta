@@ -27,7 +27,7 @@ considered a work in progress.
     - gpx:          GPX class for parsing and constructing GPX eXchange files
     - geojson:      Classes and functions for reading and writing GeoJSON
     - vtk:          XML-based VTK interface
-    - shp\_funcs:   Shapefile-to-guppy conversions based on _pyshp_
+    - shp\_funcs:   Shapefile-to-guppy conversions through _pyshp_ interface
     - stats:        Geostatistical functions
     - xyfile:       ASCII table functions
 
@@ -89,10 +89,6 @@ To run all unit tests, execute
 ##LICENSE
 
 This software is provided under the MIT license.
-
-The vector module contains a snapshot of the pyshp shapefile module, available
-at (http://code.google.com/p/pyshp/). This module is also available under the
-MIT license.
 
 ###MIT License:
 

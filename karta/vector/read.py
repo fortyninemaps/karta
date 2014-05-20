@@ -1,10 +1,10 @@
 """ Convenience reader functions """
 
 import os
+import shapefile
 from . import guppy
 from . import geojson
 from . import xyfile
-from . import shapefile
 
 def read_geojson(f):
     """ Read a GeoJSON object file and return a list of geometries """
