@@ -38,6 +38,9 @@ def addfields(writer, properties):
         values = []
         for key in properties:
             value = properties[key]
+            #if hasattr("value", "__iter__"):
+            #    typ = property_field_type(value[0])
+            #else:
             typ = property_field_type(value)
             length = "100"
             writer.field(key.upper(), typ, length)
@@ -45,11 +48,24 @@ def addfields(writer, properties):
         writer.record(*values)
     return
 
+def addfields_points(writer, points):
+    if len(points.data) == 0:
+        writer.field("ID", "C", "8")
+        for i in range(len(points)):
+            writer.record(str(i))
+    else:
+        keys = list(points.data.keys())
+        for key in keys:
+            writer.field(key, property_field_type(points.data[key][0]), "100")
+        for pt in points:
+            writer.record(*[pt.data[key] for pt in points])
+    return
+
 def write_multipoint2(mp, fstem):
     w = shapefile.Writer(shapeType=shapefile.POINT)
     for pt in mp:
         w.point(*pt.vertex)
-    addfields(w, mp.data)
+    addfields_points(w, mp)
     w.save(fstem)
     return
 
@@ -57,7 +73,7 @@ def write_multipoint3(mp, fstem):
     w = shapefile.Writer(shapeType=shapefile.POINTZ)
     for pt in mp:
         w.point(*pt.vertex)
-    addfields(w, mp.data)
+    addfields_points(w, mp)
     w.save(fstem)
     return
 
@@ -100,7 +116,8 @@ def write_shapefile(features, fstem):
     elif False in (f.rank == features[0].rank for f in features[1:]):
         raise IOError("all features must have the same dimensionality")
 
-    RankError = IOError("feature must be in two or three dimensions to write as shapefile")
+    RankError = IOError("feature must be in two or three dimensions to write "
+                        "as shapefile")
     if features[0]._geotype == "Multipoint":
         if features[0].rank == 2:
             typ = shapefile.POINT
@@ -133,7 +150,7 @@ def write_shapefile(features, fstem):
 
         # add records
         keys = set(features[0].data.keys())     # for testing similarity
-        keylist = list(keys)                        # preserves order
+        keylist = list(keys)                    # preserves order
         if len(keys) != 0 and \
            False not in (set(f.data.keys()) for f in features[1:]):
             for key in keylist:

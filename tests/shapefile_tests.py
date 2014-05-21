@@ -2,10 +2,6 @@ import unittest
 import os
 import math
 import numpy as np
-try:
-    from StringIO import StringIO
-except ImportError:
-    from io import StringIO
 from test_helper import md5sum, md5sum_file, TESTDATA, TESTDIR
 
 import datetime
@@ -13,17 +9,15 @@ import numbers
 from copy import copy
 
 from karta.vector import _shpfuncs
-import karta.vector as vector
-import karta.crs as crs
 from karta.vector.guppy import Point, Multipoint, Line, Polygon
 
 class TestShapefile(unittest.TestCase):
 
     def setUp(self):
-        self.points = [Point((1, 1)),
-                       Point((3, 1)),
-                       Point((4, 3)),
-                       Point((2, 2))]
+        self.points = [Point((1, 1), data={"species": "T. officianale"}),
+                       Point((3, 1), data={"species": "C. tectorum"}),
+                       Point((4, 3), data={"species": "M. alba"}),
+                       Point((2, 2), data={"species": "V. cracca"})]
         self.line = Line([[1,5],[5,5],[5,1],[3,3],[1,1]])
         self.polygon = Polygon([[1,5],[5,5],[5,1],[3,3],[1,1]])
 
