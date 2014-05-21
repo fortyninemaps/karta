@@ -67,6 +67,7 @@ The easiest way to install is to use `pip`.
 
 ### Required
 
+- pyshp
 - Python 2.6+ or Python 3.2+
 - numpy
 
