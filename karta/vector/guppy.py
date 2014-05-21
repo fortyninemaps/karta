@@ -573,8 +573,11 @@ class Multipoint(MultipointBase):
         point attributes. If `data` is not `None`, then it (or its values) must
         match `vertices` in length.
         """
-        MultipointBase.__init__(self, vertices, **kwargs)
-        #super(MultipointBase, self).__init__(vertices, **kwargs)
+        super(Multipoint, self).__init__(vertices,
+                                         data=data, 
+                                         properties=properties,
+                                         **kwargs)
+        return
 
     def within_radius(self, pt, radius):
         """ Return Multipoint of subset of member vertices that are within
