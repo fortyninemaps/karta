@@ -18,6 +18,6 @@ install:
   - "pip install ."
 # command to run tests
 script:
-  coverage run --source=karta karta/tests/test_runner.py
+  coverage run --source=karta tests/runtests.py
 after_success:
   coveralls
