@@ -116,7 +116,7 @@ def property_field_type(value):
 def addfields(writer, properties):
     if len(properties) == 0:
         writer.field("PROPERTIES", "C", "40")
-        writer.record("_karta.Line")
+        writer.record("unnamed_karta_feature")
     else:
         values = []
         for key in properties:
@@ -132,7 +132,7 @@ def write_multipoint2(mp, fstem):
     w = shapefile.Writer(shapeType=shapefile.POINT)
     for pt in mp:
         w.point(*pt.vertex)
-    addfields(w, mp.properties)
+    addfields(w, mp.data)
     w.save(fstem)
     return
 
@@ -140,7 +140,7 @@ def write_multipoint3(mp, fstem):
     w = shapefile.Writer(shapeType=shapefile.POINTZ)
     for pt in mp:
         w.point(*pt.vertex)
-    addfields(w, mp.properties)
+    addfields(w, mp.data)
     w.save(fstem)
     return
 
@@ -172,50 +172,140 @@ def write_poly3(poly, fstem):
     w.save(fstem)
     return
 
-def list_parts(feature):
-    """ Return a list of polygon parts. """
-    return [feature.vertices()].extend(
-            [list_parts(p) for p in feature.subs])
+def write_shapefile(features, fstem):
+    """ Write *features* to a shapefile. All features must be of the same type
+    (i.e. Multipoints, Lines, Polygons). """
+    if len(features) == 1:
+        features[0].to_shapefile(fstem)
+        return
+    elif False in (f._geotype == features[0]._geotype for f in features[1:]):
+        raise IOError("all features must be of the same type")
+    elif False in (f.rank == features[0].rank for f in features[1:]):
+        raise IOError("all features must have the same dimensionality")
 
-def write_shapefile(features, stem):
-    """ Write a list of features to a shapefile. The features must be of the
-    same type. """
-    fnms = get_filenames(stem, check=False)
-
-    writer = Writer()
-    if not hasattr(features[0], '__iter__'):
-        # Must be a Point type
-        for feature in features:
-            writer.shapeType = POINT
-            writer.point(*feature.get_vertex())
-    else:
-        if isinstance(features[0], guppy.Line):
-            writer.shapeType = shapefile.POLYLINE
-        elif isinstance(features[0], guppy.Polygon):
-            writer.shapeType = shapefile.POLYGON
-        elif isinstance(features[0], guppy.Multipoint):
-            writer.shapeType = shapefile.MULTIPOINT
+    RankError = IOError("feature must be in two or three dimensions to write as shapefile")
+    if features[0]._geotype == "Multipoint":
+        if features[0].rank == 2:
+            typ = shapefile.POINT
+        elif features[0].rank == 3:
+            typ = shapefile.POINTZ
         else:
-            raise NotImplementedError("cannot save type "
-                                      "{0}".format(type(feature)))
+            raise RankError
+    elif features[0]._geotype == "Line":
+        if features[0].rank == 2:
+            typ = shapefile.POLYLINE
+        elif features[0].rank == 3:
+            typ = shapefile.POLYLINEZ
+        else:
+            raise RankError
+    elif features[0]._geotype == "Polygon":
+        if features[0].rank == 2:
+            typ = shapefile.POLYGON
+        elif features[0].rank == 3:
+            typ = shapefile.POLYGONZ
+        else:
+            raise RankError
 
+    w = shapefile.Writer(shapeType=typ)
+    if typ in (shapefile.POINT, shapefile.POINTZ):
+
+        # add geometry
         for feature in features:
-            if writer.shapeType == shapefile.POLYLINE:
-                parts = list_parts(feature)
-            else:
-                parts = [feature.vertices]
-            writer.poly(parts)
+            for pt in feature:
+                w.point(*pt.vertex)
 
-    try:
-        files = open_file_dict(fnms, 'wb')
-        writer.saveShp(files['shp'])
-        writer.saveShx(files['shx'])
-        writer.saveDbf(files['dbf'])
+        # add records
+        keys = set(features[0].data.keys())     # for testing similarity
+        keylist = list(keys)                        # preserves order
+        if len(keys) != 0 and \
+           False not in (set(f.data.keys()) for f in features[1:]):
+            for key in keylist:
+                testvalue = features[0].data[key][0]
+                w.field(key.upper(), property_field_type(testvalue), "100")
+            for feature in features:
+                for pt in feature:
+                    w.record(*[pt.data[key] for key in keylist])
+        else:
+            w.field("unnamed", "C", "1")
+            for feature in features:
+                for pt in feature:
+                    w.record("0")
 
-    except Exception as e:
-        raise e
+    else:
 
-    finally:
-        for f in files.values():
-            f.close()
+        # add geometry
+        for feature in features:
+            #print(feature)
+            w.poly([feature.vertices])
+
+        # add records
+        keys = set(features[0].properties.keys())   # for testing similarity
+        keylist = list(keys)                        # preserves order
+        if len(keys) != 0 and \
+           False not in (set(f.data.keys()) for f in features[1:]):
+            for key in features[0].properties:
+                value = features[0].properties[key]
+                typ = property_field_type(value)
+                length = "100"
+                w.field(key.upper(), typ, length)
+            for feature in features:
+                values = []
+                for key in keylist:
+                    value.append(feature.properties[key])
+                w.record(*values)
+        else:
+            w.field("unnamed", "C", "1")
+            for feature in features:
+                w.record("0")
+
+    w.save(fstem)
+    return
+
+
+#def list_parts(feature):
+#    """ Return a list of polygon parts. """
+#    return [feature.vertices()].extend(
+#            [list_parts(p) for p in feature.subs])
+#
+#def write_shapefile(features, stem):
+#    """ Write a list of features to a shapefile. The features must be of the
+#    same type. """
+#    fnms = get_filenames(stem, check=False)
+#
+#    writer = Writer()
+#    if not hasattr(features[0], '__iter__'):
+#        # Must be a Point type
+#        for feature in features:
+#            writer.shapeType = POINT
+#            writer.point(*feature.get_vertex())
+#    else:
+#        if isinstance(features[0], guppy.Line):
+#            writer.shapeType = shapefile.POLYLINE
+#        elif isinstance(features[0], guppy.Polygon):
+#            writer.shapeType = shapefile.POLYGON
+#        elif isinstance(features[0], guppy.Multipoint):
+#            writer.shapeType = shapefile.MULTIPOINT
+#        else:
+#            raise NotImplementedError("cannot save type "
+#                                      "{0}".format(type(feature)))
+#
+#        for feature in features:
+#            if writer.shapeType == shapefile.POLYLINE:
+#                parts = list_parts(feature)
+#            else:
+#                parts = [feature.vertices]
+#            writer.poly(parts)
+#
+#    try:
+#        files = open_file_dict(fnms, 'wb')
+#        writer.saveShp(files['shp'])
+#        writer.saveShx(files['shx'])
+#        writer.saveDbf(files['dbf'])
+#
+#    except Exception as e:
+#        raise e
+#
+#    finally:
+#        for f in files.values():
+#            f.close()
 

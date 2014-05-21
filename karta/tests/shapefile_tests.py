@@ -10,6 +10,7 @@ from test_helper import md5sum, md5sum_file, TESTDATA, TESTDIR
 
 import datetime
 import numbers
+from copy import copy
 
 from karta.vector import _shpfuncs
 import karta.vector as vector
@@ -58,6 +59,21 @@ class TestShapefile(unittest.TestCase):
 
     def test_writepoly3(self):
         self.polygon3.to_shapefile("data/polygonz_shp")
+        return
+
+    def test_write_collection_points(self):
+        mp = Multipoint([p.vertex for p in self.points])
+        mp0 = copy(mp)
+        mp1 = copy(mp.shift((4, 2)))
+        mp2 = copy(mp.shift((-2, 3)))
+        _shpfuncs.write_shapefile([mp0, mp1, mp2], "data/points_collection")
+        return
+
+    def test_write_collection_lines(self):
+        line0 = copy(self.line)
+        line1 = copy(self.line.shift((4, 2)))
+        line2 = copy(self.line.shift((-2, 3)))
+        _shpfuncs.write_shapefile([line0, line1, line2], "data/line_collection")
         return
 
     def test_dbase_type(self):
