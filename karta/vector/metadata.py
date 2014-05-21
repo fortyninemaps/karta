@@ -156,7 +156,7 @@ class Metadata(Mapping):
 
         for key, val in items:
             newdata[key] = [self._data[key][i] for i in idxs]
-        return Metadata(newdata, copy=False)
+        return Metadata(newdata, copydata=False)
 
     def getfield(self, name):
         """ Return all values from field *name*. """
