@@ -8,7 +8,6 @@ python:
 branches:
   only:
     - master
-    - travis
 before_install:
   #- sudo apt-get update --quiet
   #- sudo apt-get install --assume-yes python-numpy cython python3-numpy

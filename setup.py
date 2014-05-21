@@ -38,7 +38,7 @@ for extension in extensions:
 
 setup(
     name = "karta",
-    version = "0.2.0",
+    version = "0.2.1",
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
@@ -164,7 +164,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
     download_url = "https://github.com/njwilson23/karta/archive/master.zip",
     classifiers = ["Programming Language :: Python",
                    "Programming Language :: Python :: 3",
-                   "Development Status :: 4 - Beta",
+                   "Development Status :: 3 - Alpha",
                    "Topic :: Scientific/Engineering"],
     license = "MIT License",
     ext_modules = extensions
