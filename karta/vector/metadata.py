@@ -18,7 +18,7 @@ class Metadata(Mapping):
     _data = {}
     _fieldtypes = []
 
-    def __init__(self, data, singleton=False):
+    def __init__(self, data, singleton=False, copydata=True):
         """ Create a collection of metadata from *data*, which may be a list
         with uniform type or a dictionary with equally-sized fields of uniform
         type.
@@ -31,13 +31,15 @@ class Metadata(Mapping):
         *kwargs*:
         singleton : treat data as a single unit, rather than as a list of units
         """
+        if copydata:
+            data = copy.deepcopy(data)
 
         if singleton:
 
             if hasattr(data, "keys") and hasattr(data.values, "__call__"):
-                self._data = copy.deepcopy(data)
+                    self._data = data
             elif data is not None:
-                self._data = {"values": copy.copy(data)}
+                self._data = {"values": data}
             else:
                 self._data = {}
             self._fieldtypes = [type(self._data[k]) for k in self._data]
@@ -59,7 +61,7 @@ class Metadata(Mapping):
                     self._len = 0
                 else:
                     self._len = n
-                data = copy.deepcopy(data)
+                data = data
 
             elif data is not None:
                 # Single attribute
@@ -70,7 +72,7 @@ class Metadata(Mapping):
                 if False in (isinstance(a, dtype) for a in data):
                     raise MetadataError("Data must have uniform type")
                 else:
-                    data = {'values': copy.copy(data)}
+                    data = {'values': data}
 
             else:
                 # No metadata
@@ -154,7 +156,7 @@ class Metadata(Mapping):
 
         for key, val in items:
             newdata[key] = [self._data[key][i] for i in idxs]
-        return Metadata(newdata)
+        return Metadata(newdata, copy=False)
 
     def getfield(self, name):
         """ Return all values from field *name*. """
