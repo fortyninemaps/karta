@@ -83,8 +83,6 @@ CONTENTS AT A GLANCE
    -  raster: General purpose raster functions
    -  streamline: Streamline calculation
 
--  tests : unit tests
-
 FORMATS
 -------
 
@@ -122,6 +120,7 @@ Required
 
 -  Python 2.6+ or Python 3.2+
 -  numpy
+-  pyshp
 
 Optional
 ~~~~~~~~
@@ -135,23 +134,10 @@ general, enhanced-performance functions will then be called
 automatically when available, otherwise *Karta* will fall back to numpy
 and pure-Python versions.
 
-TESTING
--------
-
-To run all unit tests, execute
-
-::
-
-    python karta/tests/test_runner.py
-
 LICENSE
 -------
 
 This software is provided under the MIT license.
-
-The vector module contains a snapshot of the pyshp shapefile module,
-available at (http://code.google.com/p/pyshp/). This module is also
-available under the MIT license.
 
 MIT License:
 ~~~~~~~~~~~~

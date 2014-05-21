@@ -85,7 +85,7 @@ otherwise *Karta* will fall back to numpy and pure-Python versions.
 
 To run all unit tests, execute
 
-    python karta/tests/test_runner.py
+    python tests/runtests.py
 
 ##LICENSE
 
