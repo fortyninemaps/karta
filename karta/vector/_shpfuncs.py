@@ -58,21 +58,21 @@ def addfields_points(writer, points):
         for key in keys:
             writer.field(key, property_field_type(points.data[key][0]), "100")
         for pt in points:
-            writer.record(*[pt.data[key] for pt in points])
+            writer.record(*[pt.data[key] for key in keys])
     return
 
 def write_multipoint2(mp, fstem):
     w = shapefile.Writer(shapeType=shapefile.POINT)
-    for pt in mp:
-        w.point(*pt.vertex)
+    for vertex in mp.vertices:
+        w.point(*vertex)
     addfields_points(w, mp)
     w.save(fstem)
     return
 
 def write_multipoint3(mp, fstem):
     w = shapefile.Writer(shapeType=shapefile.POINTZ)
-    for pt in mp:
-        w.point(*pt.vertex)
+    for vertex in mp.vertices:
+        w.point(*vertex)
     addfields_points(w, mp)
     w.save(fstem)
     return
