@@ -133,7 +133,6 @@ class TestGuppy(unittest.TestCase):
         mp[2] = (4.0, 5.0)
         self.assertNotEqual(mp, mpresult)
         mp[2] = Point((4.0, 5.0), data="umiujaq")
-        #import pdb; pdb.set_trace()
         self.assertEqual(mp, mpresult)
         return
 

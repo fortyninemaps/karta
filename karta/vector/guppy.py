@@ -252,10 +252,10 @@ class Point(Geometry):
             raise ImportError('Shapely module did not import\n')
 
 
-class Multipoint(Geometry):
+class MultipointBase(Geometry):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes. """
-    _geotype = "Multipoint"
+    _geotype = "MultipointBase"
 
     def __init__(self, vertices, data=None, properties=None, **kwargs):
         """ Create a feature with multiple vertices.
@@ -266,7 +266,7 @@ class Multipoint(Geometry):
         point attributes. If `data` is not `None`, then it (or its values) must
         match `vertices` in length.
         """
-        super(Multipoint, self).__init__(**kwargs)
+        super(MultipointBase, self).__init__(**kwargs)
         vertices = list(vertices)
         if properties is None:
             properties = {}
@@ -344,7 +344,6 @@ class Multipoint(Geometry):
 
     def __iter__(self):
         return (self[i] for i in range(len(self)))
-        #return (pt for pt in self.vertices)
 
     def __eq__(self, other):
         return hasattr(other, "_geotype") and \
@@ -468,15 +467,6 @@ class Multipoint(Geometry):
         d = [pt.greatcircle(a) for a in self]
         return np.array(d)
 
-    def within_radius(self, pt, radius):
-        """ Return Multipoint of subset of member vertices that are within
-        *radius* of *pt*.
-        """
-        distances = self.distances_to(pt)
-        nearidx = [i for i,d in enumerate(distances) if d < radius]
-        subset = self._subset(nearidx)
-        return subset
-
     def nearest_point_to(self, pt):
         """ Returns the internal point that is nearest to pt (Point class).
         If two points are equidistant, only one will be returned.
@@ -569,8 +559,34 @@ class Multipoint(Geometry):
             raise IOError("rank must be 2 or 3 to write as a shapefile\n")
         return
 
+class Multipoint(MultipointBase):
+    """ Point cloud with associated attributes. This is a base class for the
+    polyline and polygon classes. """
+    _geotype = "Multipoint"
 
-class ConnectedMultipoint(Multipoint):
+    def __init__(self, vertices, data=None, properties=None, **kwargs):
+        """ Create a feature with multiple vertices.
+
+        vertices : a list of tuples containing point coordinates.
+
+        data : is either `None` a list of point attributes, or a dictionary of
+        point attributes. If `data` is not `None`, then it (or its values) must
+        match `vertices` in length.
+        """
+        MultipointBase.__init__(self, vertices, **kwargs)
+        #super(MultipointBase, self).__init__(vertices, **kwargs)
+
+    def within_radius(self, pt, radius):
+        """ Return Multipoint of subset of member vertices that are within
+        *radius* of *pt*.
+        """
+        distances = self.distances_to(pt)
+        nearidx = [i for i,d in enumerate(distances) if d < radius]
+        subset = self._subset(nearidx)
+        return subset
+
+
+class ConnectedMultipoint(MultipointBase):
     """ Class for Multipoints in which vertices are assumed to be connected. """
 
     def length(self):
@@ -723,7 +739,7 @@ class Polygon(ConnectedMultipoint):
     subs = []
 
     def __init__(self, vertices, data=None, properties=None, subs=None, **kwargs):
-        Multipoint.__init__(self, vertices, data=data, properties=properties, **kwargs)
+        ConnectedMultipoint.__init__(self, vertices, data=data, properties=properties, **kwargs)
         if vertices[0] != vertices[-1]:
             self.vertices.append(vertices[0])
         self.subs = subs if subs is not None else []
