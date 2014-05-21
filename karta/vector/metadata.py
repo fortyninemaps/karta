@@ -41,6 +41,7 @@ class Metadata(Mapping):
             else:
                 self._data = {}
             self._fieldtypes = [type(self._data[k]) for k in self._data]
+            self._len = 1
 
         else:
 
@@ -54,11 +55,16 @@ class Metadata(Mapping):
 
                 if False in (len(data[k]) == n for k in data):
                     raise MetadataError("Data must have uniform lengths")
+                elif len(data) == 0:
+                    self._len = 0
+                else:
+                    self._len = n
 
             elif data is not None:
                 # Single attribute
                 if not hasattr(data, '__iter__'):
                     data = [data]
+                self._len = len(data)
                 dtype = type(data[0])
                 if False in (isinstance(a, dtype) for a in data):
                     raise MetadataError("Data must have uniform type")
@@ -68,9 +74,11 @@ class Metadata(Mapping):
             else:
                 # No metadata
                 data = {}
+                self._len = 0
 
             self._data = data
             self._fieldtypes = [type(data[k][0]) for k in data]
+        return
 
     def __repr__(self):
         return "D[" + ", ".join(str(k) for k in self._data.keys()) + "]"
@@ -81,13 +89,13 @@ class Metadata(Mapping):
         if set(self.keys()) != set(other.keys()):
             raise MetadataError("self and other do not have identical field names")
         res = copy.deepcopy(self)
+        res._len += other._len
         for k in res:
             res[k] += other[k]
         return res
 
     def __len__(self):
-        k = self.keys()[0]
-        return len(self._data[k])
+        return self._len
 
     def __contains__(self, other):
         return (other in self._data)
@@ -133,6 +141,7 @@ class Metadata(Mapping):
     def __delitem__(self, idx):
         for k in self._data:
             del self._data[k][idx]
+        self._len -= 1
 
     def sub(self, idxs):
         """ Return a Metadata instance with values from idxs. """
@@ -158,6 +167,7 @@ class Metadata(Mapping):
             for i, k in enumerate(self._data):
                 if type(self._fieldtypes[i]) == type(other._fieldtypes[i]):
                     self._data[k] += other._data[k]
+                    self._len += other._len
                 else:
                     raise MetadataError("Cannot combine metadata instances "
                                          "with different type hierarchies")
