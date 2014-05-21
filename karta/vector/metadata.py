@@ -35,9 +35,9 @@ class Metadata(Mapping):
         if singleton:
 
             if hasattr(data, "keys") and hasattr(data.values, "__call__"):
-                self._data = data
+                self._data = copy.deepcopy(data)
             elif data is not None:
-                self._data = {"values": data}
+                self._data = {"values": copy.copy(data)}
             else:
                 self._data = {}
             self._fieldtypes = [type(self._data[k]) for k in self._data]
@@ -59,6 +59,7 @@ class Metadata(Mapping):
                     self._len = 0
                 else:
                     self._len = n
+                data = copy.deepcopy(data)
 
             elif data is not None:
                 # Single attribute
@@ -69,7 +70,7 @@ class Metadata(Mapping):
                 if False in (isinstance(a, dtype) for a in data):
                     raise MetadataError("Data must have uniform type")
                 else:
-                    data = {'values': data}
+                    data = {'values': copy.copy(data)}
 
             else:
                 # No metadata

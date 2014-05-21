@@ -374,6 +374,23 @@ class TestMetadata(unittest.TestCase):
         self.assertTrue(np.all(self.multifield["c"] == np.arange(200)**2))
         return
 
+    def test_reference_vs_value_list(self):
+        # metadata objects should carry values rather than references
+        L = [1,2,3,4,5]
+        md = Metadata(L)
+        L[3] = -99
+        self.assertEqual(md["values"], [1,2,3,4,5])
+        return
+
+    def test_reference_vs_value_dict(self):
+        # metadata objects should carry values rather than references
+        D = {"A":[1,2,3,4,5],
+             "B":[6,7,8,9,10]}
+        md = Metadata(D)
+        D["A"][3] = -99
+        self.assertEqual(md["A"], [1,2,3,4,5])
+        return
+
 class TestGeoJSONInput(unittest.TestCase):
 
     def test_point_read(self):
