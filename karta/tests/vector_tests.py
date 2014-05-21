@@ -101,6 +101,13 @@ class TestGuppy(unittest.TestCase):
         Line(zip(x, y))
         return
 
+    def test_multipoint_shift(self):
+        vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
+        mp = Multipoint(vertices, data=self.data)
+        mp.shift((1, -2, 0.5))
+        self.assertEqual(mp, self.mp)
+        return
+
     def test_multipoint_subset(self):
         ss1 = self.mp._subset(range(2,7))
         ss2 = self.line._subset(range(2,7))

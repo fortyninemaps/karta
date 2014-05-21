@@ -417,7 +417,7 @@ class Multipoint(Geometry):
         elif self.rank == 3:
             f = lambda pt: (pt[0] + shift_vector[0], pt[1] + shift_vector[1],
                             pt[2] + shift_vector[2])
-        self.vertices = map(f, self.vertices)
+        self.vertices = list(map(f, self.vertices))
         return self
 
     def _matmult(self, A, x):
