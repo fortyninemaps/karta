@@ -31,34 +31,24 @@ def property_field_type(value):
     return desc
 
 def addfields(writer, properties):
-    if len(properties) == 0:
-        writer.field("PROPERTIES", "C", "40")
-        writer.record("unnamed_karta_feature")
-    else:
-        values = []
-        for key in properties:
-            value = properties[key]
-            #if hasattr("value", "__iter__"):
-            #    typ = property_field_type(value[0])
-            #else:
-            typ = property_field_type(value)
-            length = "100"
-            writer.field(key.upper(), typ, length)
-            value.append(value)
-        writer.record(*values)
+    writer.field("ID", "I", "8")
+    values = []
+    for key in properties:
+        value = properties[key]
+        typ = property_field_type(value)
+        length = "100"
+        writer.field(key.upper(), typ, length)
+        value.append(value)
+    writer.record("0", *values)
     return
 
 def addfields_points(writer, points):
-    if len(points.data) == 0:
-        writer.field("ID", "C", "8")
-        for i in range(len(points)):
-            writer.record(str(i))
-    else:
-        keys = list(points.data.keys())
-        for key in keys:
-            writer.field(key, property_field_type(points.data[key][0]), "100")
-        for pt in points:
-            writer.record(*[pt.data[key] for key in keys])
+    writer.field("ID", "I", "8")
+    keys = list(points.data.keys())
+    for key in keys:
+        writer.field(key, property_field_type(points.data[key][0]), "100")
+    for i, pt in enumerate(points):
+        writer.record(str(i), *[pt.data[key] for key in keys])
     return
 
 def write_multipoint2(mp, fstem):
@@ -149,21 +139,26 @@ def write_shapefile(features, fstem):
                 w.point(*pt.vertex)
 
         # add records
+        w.field("ID", "I", "8")
         keys = set(features[0].data.keys())     # for testing similarity
         keylist = list(keys)                    # preserves order
+
         if len(keys) != 0 and \
            False not in (set(f.data.keys()) for f in features[1:]):
             for key in keylist:
                 testvalue = features[0].data[key][0]
                 w.field(key.upper(), property_field_type(testvalue), "100")
+            i = 0
             for feature in features:
                 for pt in feature:
-                    w.record(*[pt.data[key] for key in keylist])
+                    w.record(str(i), *[pt.data[key] for key in keylist])
+                    i += 1
         else:
-            w.field("unnamed", "C", "1")
+            i = 0
             for feature in features:
                 for pt in feature:
-                    w.record("0")
+                    w.record(str(i))
+                    i += 1
 
     else:
 
@@ -173,8 +168,10 @@ def write_shapefile(features, fstem):
             w.poly([feature.vertices])
 
         # add records
+        w.field("ID", "I", "8")
         keys = set(features[0].properties.keys())   # for testing similarity
         keylist = list(keys)                        # preserves order
+
         if len(keys) != 0 and \
            False not in (set(f.data.keys()) for f in features[1:]):
             for key in features[0].properties:
@@ -182,15 +179,14 @@ def write_shapefile(features, fstem):
                 typ = property_field_type(value)
                 length = "100"
                 w.field(key.upper(), typ, length)
-            for feature in features:
+            for (i, feature) in enumerate(features):
                 values = []
                 for key in keylist:
                     value.append(feature.properties[key])
-                w.record(*values)
+                w.record(str(i), *values)
         else:
-            w.field("unnamed", "C", "1")
-            for feature in features:
-                w.record("0")
+            for (i, feature) in enumerate(features):
+                w.record(str(i))
 
     w.save(fstem)
     return
