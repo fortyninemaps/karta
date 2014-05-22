@@ -143,14 +143,15 @@ class Point(Geometry):
             return (self.x, self.y)
 
     def azimuth(self, other, spherical=False):
-        """ Returns the azimuth from self to other in radians. Returns
-        None if points are coincident.
-        """
+        """ Returns the compass azimuth from self to other in radians (i.e.
+        clockwise, with north at 0). Returns NaN if points are coincident. """
+
+        if self.coordsxy() == other.coordsxy():
+            return np.nan
 
         if self._crs == crs.LONLAT and other._crs == crs.LONLAT:
             if not PYPROJ:
-                raise CRSError("Azimuth computation on LONLAT grids "
-                               "requires pyproj")
+                raise CRSError("Azimuth on LONLAT grids requires pyproj")
             az1, _, _ = geod.inv(self.x, self.y, other.x, other.y)
             return az1 * math.pi / 180.0
 
@@ -158,19 +159,25 @@ class Point(Geometry):
             dx = other.x - self.x
             dy = other.y - self.y
 
-            if dx == 0.0:
-                if dy > 0.0:
-                    return 0.0
-                elif dy < 0.0:
-                    return math.pi
+            if dx > 0:
+                if dy > 0:
+                    return math.atan(dx/dy)
+                elif dy < 0:
+                    return math.pi - math.atan(-dx/dy)
                 else:
-                    return None
-
-            elif dy >= 0.0:
-                return math.atan(dy / dx)
-
+                    return 0.5*math.pi
+            elif dx < 0:
+                if dy > 0:
+                    return 2*math.pi - math.atan(-dx/dy)
+                elif dy < 0:
+                    return math.pi + math.atan(dx/dy)
+                else:
+                    return 1.5*math.pi
             else:
-                return math.atan(dy / dx) + math.pi
+                if dy > 0:
+                    return 0.0
+                else:
+                    return math.pi
 
         else:
             raise CRSError("Azimuth undefined for points in CRS {0} and "
@@ -708,6 +715,28 @@ class Line(ConnectedMultipoint):
     def displacement(self):
         """ Returns the distance between the first and last vertex. """
         return Point(self.vertices[0]).distance(Point(self.vertices[-1]))
+
+    def direction(self):
+        """ Returns a vector of the azimuth along a line at each point,
+        weighted by neighbour position. """
+        # The weights are calculated to give greater weight to azimuths to
+        # nearby points
+        # a' = w1 a1 + w2 a2
+        #    = (a1 h2) / (h1 + h2) + (a2 h1) / (h1 + h2)
+        #    = (a1 h2 + a2 h1) / (h1 + h2)
+        azs = np.empty(len(self)-1)
+        hs = np.empty(len(self)-1)
+        pts = [pt for pt in self]
+        for i in range(len(self)-1):
+            azs[i] = pt[i].azimuth(pt[i+1])
+            hs[i] = pt[i].distance(pt[i+1])
+        weighted_azs = np.empty(len(self))
+        weighted_azs[0] = azs[0]
+        weighted_azs[-1] = azs[-1]
+        for i in range(1, len(self)-1):
+            raise NotImplementedError("need to phase unwrap")
+            weighted_azs[i] = (azs[i]*hs[i+1] + azs[i+1]*hs[i]) / (hs[i] + hs[i+1])
+        return weighted_azs
 
     def to_polygon(self):
         """ Returns a polygon. """

@@ -65,23 +65,31 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_point_azimuth(self):
+        point = Point((1.0, 2.0))
+
         other = Point((2.0, 3.0))
-        self.assertEqual(self.point.azimuth(other), 0.25 * np.pi)
+        self.assertEqual(point.azimuth(other), 0.25*np.pi)
+
+        other = Point((0.0, 3.0))
+        self.assertEqual(point.azimuth(other), 1.75*np.pi)
+
+        other = Point((0.0, 1.0))
+        self.assertEqual(point.azimuth(other), 1.25 * np.pi)
+
+        other = Point((2.0, 1.0))
+        self.assertEqual(point.azimuth(other), 0.75 * np.pi)
+
+        other = Point((1.0, 3.0))
+        self.assertEqual(point.azimuth(other), 0.0)
+
+        other = Point((1.0, 1.0))
+        self.assertEqual(point.azimuth(other), np.pi)
         return
 
     def test_point_azimuth2(self):
-        other = Point((1.0, 3.0))
-        self.assertEqual(self.point.azimuth(other), 0.0)
-        return
-
-    def test_point_azimuth3(self):
-        other = Point((1.0, 0.0))
-        self.assertEqual(self.point.azimuth(other), np.pi)
-        return
-
-    def test_point_azimuth4(self):
-        other = Point((0.0, 1.0))
-        self.assertEqual(self.point.azimuth(other), 1.25 * np.pi)
+        point = Point((5.0, 2.0))
+        other = Point((5.0, 2.0))
+        self.assertTrue(np.isnan(point.azimuth(other)))
         return
 
     def test_point_shift(self):
