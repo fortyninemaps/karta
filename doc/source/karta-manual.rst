@@ -110,6 +110,44 @@ To run all unit tests, execute
 
     python tests/runtests.py
 
+.. include:: tutorial.rst
+
+Package reference
+-----------------
+
+The following sections describe the full library API.
+
+Vector package
+~~~~~~~~~~~~~~
+
+.. automodule:: karta.vector.guppy
+    :members:
+
+.. automodule:: karta.vector.geojson
+    :members:
+
+.. automodule:: karta.vector.gpx
+    :members:
+
+.. automodule:: karta.vector.xyfile
+    :members:
+
+.. automodule:: karta.vector.metadata
+    :members:
+
+Raster package
+~~~~~~~~~~~~~~
+
+.. automodule:: karta.raster.grid
+    :members:
+
+.. automodule:: karta.raster.raster
+    :members:
+
+.. automodule:: karta.raster.aaigrid
+    :members:
+
+
 LICENSE
 -------
 
@@ -136,39 +174,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
 CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-Tutorial
---------
-
-:ref:`tutorial`
-
-Package reference
------------------
-
-Vector package
-~~~~~~~~~~~~~~
-
-.. automodule:: karta.vector.guppy
-    :members:
-
-.. automodule:: karta.vector.geojson
-    :members:
-
-.. automodule:: karta.vector.xyfile
-    :members:
-
-Raster package
-~~~~~~~~~~~~~~
-
-.. automodule:: karta.raster.raster
-    :members:
-
-.. automodule:: karta.raster.aaigrid
-    :members:
-
-.. automodule:: karta.raster.grid
-    :members:
-
 
 
 Indices and tables
