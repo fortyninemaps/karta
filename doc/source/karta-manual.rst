@@ -6,6 +6,34 @@
 Karta - tidy Python package for geospatial computation
 ======================================================
 
+License
+-------
+
+This software is provided under the MIT license.
+
+MIT License:
+~~~~~~~~~~~~
+
+Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
 Contents:
 
 .. toctree::
@@ -23,7 +51,7 @@ of tools useful for "everyday" spatial analysis, as well as a flexible
 set of abstractions upon which to build more advanced routines. *Karta*
 should be considered a work in progress.
 
-CONTENTS AT A GLANCE
+Contents at a glance
 --------------------
 
 -  vector
@@ -50,7 +78,7 @@ CONTENTS AT A GLANCE
 
 -  tests : unit tests
 
-FORMATS
+Formats
 -------
 
 *Karta* provides a basic working interface to several of common file
@@ -69,7 +97,7 @@ formats. Currently partially-supported are:
    -  ESRI ASCII Grid (r,w)
    -  USGS DEM (WIP)
 
-INSTALLATION
+Installation
 ------------
 
 The easiest way to install is to use ``pip``.
@@ -79,7 +107,7 @@ The easiest way to install is to use ``pip``.
     cd karta/
     pip install .
 
-DEPENDENCIES
+Dependencies
 ------------
 
 Required
@@ -101,7 +129,7 @@ general, enhanced-performance functions will then be called
 automatically when available, otherwise *Karta* will fall back to numpy
 and pure-Python versions.
 
-TESTING
+Testing
 -------
 
 To run all unit tests, execute
@@ -113,7 +141,7 @@ To run all unit tests, execute
 .. include:: tutorial.rst
 
 Package reference
------------------
+=================
 
 The following sections describe the full library API.
 
@@ -148,38 +176,9 @@ Raster package
     :members:
 
 
-LICENSE
--------
-
-This software is provided under the MIT license.
-
-MIT License:
-~~~~~~~~~~~~
-
-Permission is hereby granted, free of charge, to any person obtaining a
-copy of this software and associated documentation files (the
-"Software"), to deal in the Software without restriction, including
-without limitation the rights to use, copy, modify, merge, publish,
-distribute, sublicense, and/or sell copies of the Software, and to
-permit persons to whom the Software is furnished to do so, subject to
-the following conditions:
-
-The above copyright notice and this permission notice shall be included
-in all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
-OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
-IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
-CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
-TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
-SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
 Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 
