@@ -331,8 +331,8 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_within_distance(self):
-        line = vector.Line([(0,0), (1,1), (3,1)])
-        pt = vector.Point((1,1.5))
+        line = Line([(0,0), (1,1), (3,1)])
+        pt = Point((1,1.5))
         self.assertTrue(line.within_distance(pt, 0.6))
         self.assertFalse(line.within_distance(pt, 0.4))
         return
@@ -512,14 +512,14 @@ class TestGeoJSONOutput(unittest.TestCase):
         return s
 
     def test_point_write(self):
-        p = vector.Point((100.0, 0.0))
+        p = Point((100.0, 0.0))
         s = self.asJsonBuffer(p)
         self.verifyJson(s.read(), 
                         '{ "type": "Point", "coordinates": [100.0, 0.0] }')
         return
 
     def test_line_write(self):
-        p = vector.Line([(100.0, 0.0), (101.0, 1.0)])
+        p = Line([(100.0, 0.0), (101.0, 1.0)])
         s = self.asJsonBuffer(p)
         self.verifyJson(s.read(),
                         '{ "geometry": { "type": "LineString", '
@@ -531,7 +531,7 @@ class TestGeoJSONOutput(unittest.TestCase):
         return
 
     def test_polygon_write(self):
-        p = vector.Polygon([[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+        p = Polygon([[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
                             [100.0, 1.0], [100.0, 0.0]])
         s = self.asJsonBuffer(p)
         self.verifyJson(s.read(),
@@ -544,6 +544,33 @@ class TestGeoJSONOutput(unittest.TestCase):
                         '    "id": [ 0, 1, 2, 3, 4 ] }')
         return
 
+    def test_write_string_data(self):
+        capitols = Multipoint([Point((-112.1, 33.57), properties={"n": "Phoenix, Arizona"}),
+                               Point((-121.5, 38.57), properties={"n": "Sacramento, California"}),
+                               Point((-84.42, 33.76), properties={"n": "Atlanta, Georgia"}),
+                               Point((-86.15, 39.78), properties={"n": "Indianapolis, Indiana"}),
+                               Point((-112.0, 46.6,) , properties={"n": "Helena, Montana"}),
+                               Point((-82.99, 39.98), properties={"n": "Columbus, Ohio"}),
+                               Point((-77.48, 37.53), properties={"n": "Richmond, Virginia"}),
+                               Point((-95.69, 39.04), properties={"n": "Topeka, Kansas"}),
+                               Point((-71.02, 42.33), properties={"n": "Boston, Massachusetts"}),
+                               Point((-96.68, 40.81), properties={"n": "Lincoln, Nebraska"})])
+        s = capitols.as_geojson()
+
+        ans = """{ "geometry": { "type": "MultiPoint", 
+            "coordinates": [ [ -112.1, 33.57 ], [ -121.5, 38.57 ], [ -84.42,
+            33.76 ], [ -86.15, 39.78 ], [ -112.0, 46.6 ], [ -82.99, 39.98 ], [
+            -77.48, 37.53 ], [ -95.69, 39.04 ], [ -71.02, 42.33 ], [ -96.68,
+            40.81 ] ] }, 
+            "type": "Feature", "id": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ], 
+            "bbox": { "bbox": [ [ -121.5, -71.02 ], [ 33.57, 46.6 ] ] },
+            "properties": { "n": [ "Phoenix, Arizona", "Sacramento, California",
+            "Atlanta, Georgia", "Indianapolis, Indiana", "Helena, Montana",
+            "Columbus, Ohio", "Richmond, Virginia", "Topeka, Kansas",
+            "Boston, Massachusetts", "Lincoln, Nebraska" ] } } """
+
+        self.assertEqual(json.loads(s), json.loads(ans))
+        return
 
 class TestGPX(unittest.TestCase):
 
@@ -570,7 +597,7 @@ class TestGPX(unittest.TestCase):
         return
 
     def test_add_waypoint(self):
-        waypoint = vector.Point((-80.0, 82.0), 
+        waypoint = Point((-80.0, 82.0), 
                                 properties = {"name": "ellesmere", "ele": 100})
         g = vector.gpx.GPX()
         g.add_waypoint(waypoint)
