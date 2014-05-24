@@ -267,6 +267,27 @@ class TestGuppy(unittest.TestCase):
         self.assertTrue(self.unitsquare.contains(pt1))
         return
 
+    def test_poly_getitem(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        sub = poly[:3]
+        self.assertEqual(sub, Line([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)]))
+        return
+
+    def test_poly_getitem2(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        sub = poly[:4:2]
+        self.assertEqual(sub, Line([(0.0, 8.0), (6.0, 1.0)]))
+        return
+
+    def test_poly_getitem3(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        sub = poly[:]
+        self.assertEqual(sub, poly)
+        return
+
     def test_ringedpoly_perimeter(self):
         self.assertEqual(round(self.ringed_poly.perimeter(), 3), 50.246)
         return

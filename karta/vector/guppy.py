@@ -777,6 +777,14 @@ class Polygon(ConnectedMultipoint):
         self.subs = subs if subs is not None else []
         return
 
+    def __getitem__(self, key):
+        if isinstance(key, slice):
+            ind = key.indices(len(self))
+            if len(self) != ((ind[1] - ind[0]) // ind[2]):
+                return Line(self.vertices[key], data=self.data[key], 
+                            properties=self.properties, crs=self._crs)
+        return super(Polygon, self).__getitem__(key)
+
     def perimeter(self):
         """ Return the perimeter of the polygon. If there are sub-polygons,
         their perimeters are added recursively. """
