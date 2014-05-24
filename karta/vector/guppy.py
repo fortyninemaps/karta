@@ -553,7 +553,11 @@ class MultipointBase(Geometry):
 
     def to_vtk(self, f, **kwargs):
         """ Write data to an ASCII VTK .vtp file. """
-        vtk.mp2vtp(self, f, **kwargs)
+        if not hasattr(f, "write"):
+            with open(f) as fobj:
+                vtk.mp2vtp(self, f, **kwargs)
+        else:
+            vtk.mp2vtp(self, f, **kwargs)
         return
 
     def to_shapefile(self, fstem):
