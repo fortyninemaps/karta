@@ -247,8 +247,16 @@ class Point(Geometry):
         crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
-        writer = geojson.GeoJSONWriter(self, **kwargs)
-        writer.write_json(f)
+        try:
+            if not hasattr(f, "write"):
+                fobj = open(f, "w")
+            else:
+                fobj = f
+            writer = geojson.GeoJSONWriter(self, **kwargs)
+            writer.write_json(fobj)
+        finally:
+            if not hasattr(f, "write"):
+                fobj.close()
         return writer
 
     def to_shapely(self):
@@ -547,13 +555,25 @@ class MultipointBase(Geometry):
         crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
-        writer = geojson.GeoJSONWriter(self, **kwargs)
-        writer.write_json(f)
+        try:
+            if not hasattr(f, "write"):
+                fobj = open(f, "w")
+            else:
+                fobj = f
+            writer = geojson.GeoJSONWriter(self, **kwargs)
+            writer.write_json(fobj)
+        finally:
+            if not hasattr(f, "write"):
+                fobj.close()
         return writer
 
     def to_vtk(self, f, **kwargs):
         """ Write data to an ASCII VTK .vtp file. """
-        vtk.mp2vtp(self, f, **kwargs)
+        if not hasattr(f, "write"):
+            with open(f, "w") as fobj:
+                vtk.mp2vtp(self, fobj, **kwargs)
+        else:
+            vtk.mp2vtp(self, f, **kwargs)
         return
 
     def to_shapefile(self, fstem):
