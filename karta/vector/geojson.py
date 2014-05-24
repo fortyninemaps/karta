@@ -177,21 +177,19 @@ class GeoJSONReader(object):
     -----------------------------------------------------
      """
 
-    def __init__(self, finput=None):
+    def __init__(self, finput):
         """ Create a reader-object for a GeoJSON-containing file or StreamIO
         object. Use as::
 
             with open(`fnm`, 'r') as f:
                 reader = GeoJSONReader(f)
         """
-        if finput is not None:
-            if not hasattr(finput, 'read'):
-                with open(finput) as f:
-                    self.jsondict = json.load(f)
-            else:
-                self.jsondict = json.load(finput)
+        if not hasattr(finput, 'read'):
+            with open(finput) as f:
+                self.jsondict = json.load(f)
         else:
-            self.jsondict = None
+            self.jsondict = json.load(finput)
+        self.crs = self._getcrs()
         return
 
     def _walk(self, dic, geotype):
@@ -218,6 +216,17 @@ class GeoJSONReader(object):
                     return True
         return False
 
+    def _getcrs(self):
+        crs = self.jsondict.get("crs", None)
+        if crs is not None:
+            if "name" in crs["properties"]:
+                res = (crs["properties"]["name"], None)
+            else:
+                res = (crs["properties"]["href"], crs["properties"]["type"])
+        else:
+            res = None
+        return res
+
     def pull_features(self):
         """ Find and return all Feature objects """
         jsonfeats = [obj for obj in self._walk(self.jsondict, 'Feature')]
@@ -235,13 +244,17 @@ class GeoJSONReader(object):
 
         features = []
         for feat in points:
-            features.append((self.pull_points(feat), feat['properties'], feat.get('id', None)))
+            features.append((self.pull_points(feat), feat['properties'],
+                             feat.get('id', None)))
         for feat in multipoints:
-            features.append((self.pull_multipoints(feat), feat['properties'], feat.get('id', None)))
+            features.append((self.pull_multipoints(feat), feat['properties'],
+                             feat.get('id', None)))
         for feat in lines:
-            features.append((self.pull_lines(feat), feat['properties'], feat.get('id', None)))
+            features.append((self.pull_lines(feat), feat['properties'],
+                             feat.get('id', None)))
         for feat in polygons:
-            features.append((self.pull_polygons(feat), feat['properties'], feat.get('id', None)))
+            features.append((self.pull_polygons(feat), feat['properties'],
+                             feat.get('id', None)))
 
         return features
 
@@ -253,7 +266,7 @@ class GeoJSONReader(object):
         jsonpoints = self._walk(dic, 'Point')
         points = []
         for point in jsonpoints:
-            points.append(Point(point['coordinates'], None))
+            points.append(Point(point['coordinates'], self.crs))
         return points
 
     def pull_multipoints(self, dic=None):
@@ -264,7 +277,7 @@ class GeoJSONReader(object):
         jsonmultipoints = self._walk(dic, 'MultiPoint')
         multipoints = []
         for jsonmultipoint in jsonmultipoints:
-            multipoints.append(MultiPoint(jsonmultipoint['coordinates'], None))
+            multipoints.append(MultiPoint(jsonmultipoint['coordinates'], self.crs))
         return multipoints
 
     def pull_lines(self, dic=None):
@@ -276,10 +289,10 @@ class GeoJSONReader(object):
         jsonmultilines = self._walk(dic, 'MultiLineString')
         lines = []
         for jsonline in jsonlines:
-            lines.append(LineString(jsonline['coordinates'], None))
+            lines.append(LineString(jsonline['coordinates'], self.crs))
         for jsonmultiline in jsonmultilines:
             for vertices in jsonmultiline['coordinates']:
-                lines.append(MultiLineString(vertices, None))
+                lines.append(MultiLineString(vertices, self.crs))
         return lines
 
     def pull_polygons(self, dic=None):
@@ -291,9 +304,9 @@ class GeoJSONReader(object):
         jsonmultipolygons = self._walk(dic, 'MultiPolygon')
         polygons = []
         for jsonpolygon in jsonpolygons:
-            polygons.append(Polygon(jsonpolygon['coordinates'], None))
+            polygons.append(Polygon(jsonpolygon['coordinates'], self.crs))
         for jsonmultipolygon in jsonmultipolygons:
-            polygons.append(Polygon(jsonmultipolygon['coordinates'], None))
+            polygons.append(Polygon(jsonmultipolygon['coordinates'], self.crs))
         return polygons
 
     def iter_geometries(self):

@@ -10,13 +10,13 @@ from .. import crs
 def _parsegeojsoncrs(crstup):
     """ From a tuple representing a GeoJSON (name,None) or (href,type) pair,
     return an appropriate karta crs instance. """
-    if crstup[1] is None:       # linked CRS
-        return crs.CRS("unknown", crstup[1], crstup[0])
-    else:
-        for c in crs:
+    if crstup[1] is None:       # named CRS
+        for c in crs.crslist:
             if c.urn == crstup[0]:
                 return c
         return crs.CRS("unknown", "unknown", crstup[0])
+    else:                       # linked CRS
+        return crs.CRS("unknown", crstup[1], crstup[0])
 
 def read_geojson(f):
     """ Read a GeoJSON object file and return a list of geometries """
