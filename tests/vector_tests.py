@@ -202,6 +202,16 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(sub, Multipoint(ans))
         return
 
+    def test_multipoint_from_points(self):
+        pts = [Point((x,y), properties={"amount": x+y}) for x in range(3)
+                                                        for y in range(2)]
+        mp = Multipoint(pts)
+        verts = [Point((x,y), properties={"amount": x+y}) for x in range(3)
+                                                          for y in range(2)]
+        ans = Multipoint(verts, data={"amount":[sum(v) for v in verts]})
+        self.assertEqual(mp, ans)
+        return
+
     def test_connected_multipoint_shortest_distance_to(self):
         line = Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
         dist = line.shortest_distance_to(Point((0.0, 2.0)))
