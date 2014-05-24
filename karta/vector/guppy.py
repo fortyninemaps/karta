@@ -607,13 +607,19 @@ class Multipoint(MultipointBase):
         return
 
     def within_radius(self, pt, radius):
-        """ Return Multipoint of subset of member vertices that are within
-        *radius* of *pt*.
+        """ Return Multipoint of subset that is within *radius* of *pt*.
         """
         distances = self.distances_to(pt)
-        nearidx = [i for i,d in enumerate(distances) if d < radius]
-        subset = self._subset(nearidx)
-        return subset
+        indices = [i for i,d in enumerate(distances) if d <= radius]
+        return self._subset(indices)
+
+    def within_bbox(self, bbox):
+        """ Return Multipoint subset that is within a square boundaing box
+        given by (xmin, xmax, ymin, ymax). """
+        filtbbox = lambda pt: (bbox[0] <= pt.vertex[0] <= bbox[1]) and \
+                              (bbox[2] <= pt.vertex[1] <= bbox[3])
+        indices = [i for (i, pt) in enumerate(self) if filtbbox(pt)]
+        return self._subset(indices)
 
 
 class ConnectedMultipoint(MultipointBase):

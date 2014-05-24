@@ -184,6 +184,24 @@ class TestGuppy(unittest.TestCase):
         L2 = Multipoint(vertices, data={'d0':data0, 'd1':data1})
         return
 
+    def test_multipoint_within_radius(self):
+        vertices = [(float(x),float(y)) for x in range(-10,11)
+                                        for y in range(-10,11)]
+        ans = [v for v in vertices if math.sqrt(v[0]**2 + v[1]**2) <= 5.0]
+        mp = Multipoint(vertices)
+        sub = mp.within_radius(Point((0,0)), 5.0)
+        self.assertEqual(sub, Multipoint(ans))
+        return
+
+    def test_multipoint_within_bbox(self):
+        vertices = [(float(x),float(y)) for x in range(-10,11)
+                                        for y in range(-10,11)]
+        ans = [v for v in vertices if (-5.0<=v[0]<=5.0) and (-4.0<=v[1]<=6.0)]
+        mp = Multipoint(vertices)
+        sub = mp.within_bbox((-5.0, 5.0, -4.0, 6.0))
+        self.assertEqual(sub, Multipoint(ans))
+        return
+
     def test_connected_multipoint_shortest_distance_to(self):
         line = Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
         dist = line.shortest_distance_to(Point((0.0, 2.0)))
