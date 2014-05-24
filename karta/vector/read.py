@@ -5,6 +5,18 @@ import shapefile
 from . import guppy
 from . import geojson
 from . import xyfile
+from .. import crs
+
+def _parsegeojsoncrs(crstup):
+    """ From a tuple representing a GeoJSON (name,None) or (href,type) pair,
+    return an appropriate karta crs instance. """
+    if crstup[1] is None:       # linked CRS
+        return crs.CRS("unknown", crstup[1], crstup[0])
+    else:
+        for c in crs:
+            if c.urn == crstup[0]:
+                return c
+        return crs.CRS("unknown", "unknown", crstup[0])
 
 def read_geojson(f):
     """ Read a GeoJSON object file and return a list of geometries """
@@ -12,15 +24,17 @@ def read_geojson(f):
     geoms = R.iter_geometries()
     gplist = []
     for geom in geoms:
+        coordsys = _parsegeojsoncrs(geom.crs)
         if isinstance(geom, geojson.Point):
-            gplist.append(guppy.Point(geom.coordinates))
+            gplist.append(guppy.Point(geom.coordinates, crs=coordsys))
         elif isinstance(geom, geojson.MultiPoint):
-            gplist.append(guppy.Multipoint(geom.coordinates))
+            gplist.append(guppy.Multipoint(geom.coordinates, crs=coordsys))
         elif isinstance(geom, geojson.LineString):
-            gplist.append(guppy.Line(geom.coordinates))
+            gplist.append(guppy.Line(geom.coordinates, crs=coordsys))
         elif isinstance(geom, geojson.Polygon):
             gplist.append(guppy.Polygon(geom.coordinates[0],
-                                        subs=geom.coordinates[1:]))
+                                        subs=geom.coordinates[1:],
+                                        crs=coordsys))
     return gplist
 
 def read_geojson_features(f):
