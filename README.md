@@ -3,22 +3,19 @@
 [![Build Status](https://travis-ci.org/njwilson23/karta.svg?branch=master)](https://travis-ci.org/njwilson23/karta)
 
 *Karta* is a Leatherman for geographic analyses. *Karta* provides an interface
-for solving problems in Python (2 or 3) that works nicely with existing
-packages. To this end, it provides simple and clean vector and raster data
-types, a selection of analysis functions, the ability to read and write a small
-number of useful formats, and interoperability with *numpy*.
+for solving problems in Python/Python3 that works nicely with existing packages.
+It provides simple and clean vector and raster data types, a small selection of
+analysis functions, and the ability to read and write several useful formats.
 
 Goals of *Karta* include providing a simple, lightweight, and fast set of tools
-useful for "everyday" spatial analysis, as well as a flexible set of
-abstractions upon which to build more advanced routines. *Karta* should be
-considered a work in progress.
+useful for everyday spatial analysis, as well as a flexible set of abstractions
+upon which to build more advanced routines. *Karta* should be considered a work
+in progress.
 
 **Current projects:**
 - test coverage
+- documentation
 - minimal system for coordinate system metadata
-
-**Future goals:**
-- native GeoTiff support?
 
 ##CONTENTS AT A GLANCE
 
@@ -28,14 +25,14 @@ considered a work in progress.
     - geojson:      Classes and functions for reading and writing GeoJSON
     - vtk:          XML-based VTK interface
     - shp\_funcs:   Shapefile-to-guppy conversions through _pyshp_ interface
-    - stats:        Geostatistical functions
+    - stats:        Basic geostatistical functions
     - xyfile:       ASCII table functions
 
 - raster
     - grid:         Basic Grid types, including `StructuredGrid` and `RegularGrid`
+    - raster:       General purpose raster functions
     - aaigrid:      Grid subclass specifically for reading, writing, and manipulating ESRI ASCII grids
     - flow:         Stream flow functions
-    - raster:       General purpose raster functions
     - streamline:   Streamline calculation
 
 - tests : unit tests
@@ -67,19 +64,22 @@ The easiest way to install is to use `pip`.
 
 ### Required
 
-- pyshp
-- Python 2.6+ or Python 3.2+
+- Python 2.7+ or Python 3.2+
 - numpy
+- pyshp
+- pyproj (required for geodetic calculations)
 
 ### Optional
 
-- pyproj (required for geodetic calculations)
+- cython
 - scipy
-- Cython
 
 Cython is an optional dependency used to speed up select functions. In general,
 enhanced-performance functions will then be called automatically when available,
 otherwise *Karta* will fall back to numpy and pure-Python versions.
+
+When installing from PyPI, C source code is provided and will be automatically
+compiled if a suitable compiler is available.
 
 ## TESTING
 
