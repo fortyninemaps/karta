@@ -51,7 +51,7 @@ class Geometry(object):
     def _distance(self, pos0, pos1):
         """ Generic method for calculating distance between positions that
         respects CRS """
-        if self._crs.type == "projected":
+        if self._crs == crs.CARTESIAN:
             dist = _vecgeo.distance((pos0.x, pos0.y), (pos1.x, pos1.y))
         elif PYPROJ:
             _, _, dist = geod.inv(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
@@ -198,7 +198,6 @@ class Point(Geometry):
             return flat_dist
         else:
             return math.sqrt(flat_dist**2. + (self.z-other.z)**2.)
-
 
     def greatcircle(self, other):
         """ Return the great circle distance between two geographical points. """
@@ -540,7 +539,8 @@ class MultipointBase(Geometry):
         crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
-        writer = geojson.GeoJSONWriter(self, **kwargs)
+        writer = geojson.GeoJSONWriter(self, crs=self._crs,
+                    crs_fmt="ogc_crs_urn", **kwargs)
         return writer.print_json()
 
     def to_geojson(self, f, **kwargs):
@@ -560,7 +560,8 @@ class MultipointBase(Geometry):
                 fobj = open(f, "w")
             else:
                 fobj = f
-            writer = geojson.GeoJSONWriter(self, **kwargs)
+            writer = geojson.GeoJSONWriter(self, crs=self._crs,
+                        crs_fmt="ogc_crs_urn", **kwargs)
             writer.write_json(fobj)
         finally:
             if not hasattr(f, "write"):

@@ -7,6 +7,7 @@ import copy
 import json
 from collections import namedtuple
 import itertools
+from numbers import Number
 from math import isnan
 import traceback
 
@@ -67,7 +68,7 @@ class GeoJSONWriter(object):
                     'proj4/'.format(crs))
             islinked = True
         elif fmt == 'ogc_crs_urn':
-            crs_str = crs
+            crs_str = crs.urn
             islinked = False
         else:
             raise NotImplementedError('CRS fmt {0} not recognized'.format(fmt))
@@ -134,8 +135,8 @@ class GeoJSONWriter(object):
             else:
                 data = {'point_data': self.gpobj.data}
             for key in data:
-                target['properties'][key] = map(lambda a: a if not isnan(a) else None,
-                                                data.getfield(key))
+                nan2none = lambda a: None if isinstance(a, Number) and isnan(a) else a
+                target['properties'][key] = list(map(nan2none, data.getfield(key)))
         return
 
     def add_id(self, target=None):
