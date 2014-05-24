@@ -600,10 +600,38 @@ class Multipoint(MultipointBase):
         point attributes. If `data` is not `None`, then it (or its values) must
         match `vertices` in length.
         """
-        super(Multipoint, self).__init__(vertices,
-                                         data=data, 
-                                         properties=properties,
-                                         **kwargs)
+        if False not in (hasattr(v, "_geotype") and \
+                         v._geotype == "Point" and \
+                         v.rank == vertices[0].rank for v in vertices):
+            points = vertices
+            crs = points[0]._crs
+            if False in (pt._crs == crs for pt in points):
+                raise CRSError("All points must share the same CRS")
+
+            keys = list(points[0].properties.keys())
+            for pt in points[1:]:
+                for key in keys:
+                    if key not in pt.properties:
+                        keys.pop(keys.index(key))
+
+            ptdata = {}
+            for key in keys:
+                ptdata[key] = [pt.properties[key] for pt in points]
+
+            if data is not None:
+                ptdata.update(data)
+            self.data = Metadata(ptdata)
+            self.vertices = [pt.vertex for pt in points]
+            self.rank = vertices[0].rank
+            self.properties = properties
+            self._crs = crs
+
+        else:
+
+            super(Multipoint, self).__init__(vertices,
+                                             data=data, 
+                                             properties=properties,
+                                             **kwargs)
         return
 
     def within_radius(self, pt, radius):
@@ -1036,6 +1064,28 @@ def sortby(A, B):
     comb.sort()
     return [i[1] for i in comb]
 
+
+def points_to_multipoint(points):
+    """ Merge *points* into a Multipoint instance. Point properties are stored
+    as Multipoint data. All points must use the same CRS.
+    """
+    crs = points[0]._crs
+    if False in (pt._crs == crs for pt in points):
+        raise CRSError("All points must share the same CRS")
+
+    keys = list(points[0].properties.keys())
+    for pt in points[1:]:
+        for key in keys:
+            if key not in pt.properties:
+                keys.pop(keys.index(key))
+
+    ptdata = {}
+    for key in keys:
+        ptdata[key] = [pt.properties[key] for pt in points]
+
+    vertices = [pt.vertex for pt in points]
+
+    return Multipoint(vertices, data=ptdata, crs=crs)
 
 def tighten(X, Z):
     """ Return a list of corrected measurements from observations of
