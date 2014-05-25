@@ -2,15 +2,14 @@
 
 [![Build Status](https://travis-ci.org/njwilson23/karta.svg?branch=master)](https://travis-ci.org/njwilson23/karta)
 
-*Karta* is a Leatherman for geographic analyses. *Karta* provides an interface
-for solving problems in Python/Python3 that works nicely with existing packages.
-It provides simple and clean vector and raster data types, a small selection of
-analysis functions, and the ability to read and write several useful formats.
+*Karta* is a Leatherman for geographic analyses. *Karta* provides an lightweight
+interface for solving problems in Python/Python3. It provides simple and clean
+vector and raster data types, a small selection of geographical analysis
+functions, and the ability to read and write several useful formats.
 
-Goals of *Karta* include providing a simple, lightweight, and fast set of tools
-useful for everyday spatial analysis, as well as a flexible set of abstractions
-upon which to build more advanced routines. *Karta* should be considered a work
-in progress.
+Goals of *Karta* include providing a simple and fast framework for spatial
+analysis. *Karta* is under development and suggestions and pull requests are
+welcome, particularly to improve format support and test coverage.
 
 **Current projects:**
 - test coverage
@@ -31,7 +30,7 @@ in progress.
 - raster
     - grid:         Basic Grid types, including `StructuredGrid` and `RegularGrid`
     - raster:       General purpose raster functions
-    - aaigrid:      Grid subclass specifically for reading, writing, and manipulating ESRI ASCII grids
+    - aaigrid:      Grid subclass specifically for reading and writing ESRI ASCII grids
     - flow:         Stream flow functions
     - streamline:   Streamline calculation
 
@@ -44,21 +43,29 @@ in progress.
 Currently partially-supported are:
 
 - vector
-    - ASCII tables (XYZ) (r,w)
     - GeoJSON (r,w)
-    - GPS eXchange (GPX) (r,w)
-    - VTK (w)
     - ESRI Shapefiles via pyshp (r,w)
+    - GPS eXchange (GPX) (r,w)
+    - ASCII tables (XYZ) (r,w)
+    - VTK (w)
 - raster
     - ESRI ASCII Grid (r,w)
+    - GeoTiff through GDAL (r)
     - USGS DEM (WIP)
 
 ## INSTALLATION
 
 The easiest way to install is to use `pip`.
 
-    cd karta/
-    pip install .
+To install the latest release from PyPI, run
+
+    pip install karta
+
+To build from source,
+
+    git clone https://github.com/njwilson23/karta.git
+    pip install -r karta/requirements.txt
+    pip install karta/
 
 ## DEPENDENCIES
 
@@ -71,8 +78,9 @@ The easiest way to install is to use `pip`.
 
 ### Optional
 
-- cython
 - scipy
+- gdal
+- cython
 
 Cython is an optional dependency used to speed up select functions. In general,
 enhanced-performance functions will then be called automatically when available,
