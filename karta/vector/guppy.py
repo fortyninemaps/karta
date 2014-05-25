@@ -151,7 +151,7 @@ class Point(Geometry):
 
         if self._crs == crs.LONLAT and other._crs == crs.LONLAT:
             if not PYPROJ:
-                raise CRSError("Azimuth on LONLAT grids requires pyproj")
+                raise CRSError("Non-cartesian points require pyproj")
             az1, _, _ = geod.inv(self.x, self.y, other.x, other.y)
             return az1 * math.pi / 180.0
 
@@ -183,9 +183,32 @@ class Point(Geometry):
             raise CRSError("Azimuth undefined for points in CRS {0} and "
                            "{1}".format(self._crs, other._crs))
 
-    def walk(self, distance, bearing, azimuth=0.0, spherical=False):
-        """ Wraps walk() """
-        return walk(self, distance, bearing, azimuth=0.0, spherical=False)
+    def walk(self, distance, direction):
+        """ Returns the point reached when moving in a given direction for
+        a given distance from a specified starting location.
+
+            distance (float): distance to walk
+            direction (float): horizontal walk direction in radians
+        """
+        if self._crs == crs.CARTESIAN:
+            dx = distance * math.cos(direction)
+            dy = distance * math.sin(direction)
+
+            if self.rank == 2:
+                return Point((self.x+dx, self.y+dy),
+                             properties=self.properties, data=self.data, crs=self._crs)
+            elif self.rank == 3:
+                return Point((self.x+dx, self.y+dy, self.z),
+                             properties=self.properties, data=self.data, crs=self._crs)
+
+        elif PYPROJ:
+            (x, y, backaz) = geod.fwd(self.x, self.y, direction*180.0/math.pi,
+                                      distance, radians=False)
+            return Point((x, y), properties=self.properties, data=self.data,
+                         crs=self._crs)
+
+        else:
+            raise CRSError("Non-cartesian points require pyproj")
 
     def distance(self, other):
         """ Returns a distance to another Point. If the coordinate system is
@@ -202,7 +225,7 @@ class Point(Geometry):
     def greatcircle(self, other):
         """ Return the great circle distance between two geographical points. """
         if not PYPROJ:
-            raise CRSError("Great circle computations require pyproj")
+            raise CRSError("Non-cartesian points require pyproj")
         if not (self._crs == crs.LONLAT and other._crs == crs.LONLAT):
             raise CRSError("Great circle distances require both points to be "
                            "in geographical coordinates")
@@ -1027,36 +1050,6 @@ def greatcircle(pta, ptb, method="vicenty"):
     return distance
 
 
-def walk(start_pt, distance, bearing, azimuth=0.0, spherical=False):
-    """ Returns the point reached when moving in a given direction for
-    a given distance from a specified starting location.
-
-        start_pt (point): starting location
-        distance (float): distance to walk
-        bearing (float): horizontal walk direction in radians
-        azimuth (float): vertical walk direction in radians
-
-        [NOT IMPLEMENTED]
-        spherical (bool): use a spherical reference surface (globe)
-    """
-    if azimuth != 0.0:
-        distxy = distance * math.sin(azimuth)
-        dz = distance * math.cos(azimuth)
-    else:
-        distxy = distance
-        dz = 0.0
-    dx = distxy * math.sin(bearing)
-    dy = distxy * math.cos(bearing)
-
-    if start_pt.rank == 3:
-        return Point((start_pt.x+dx, start_pt.y+dy, start_pt.z+dz))
-    elif start_pt.rank == 2:
-        if azimuth != 0:
-            sys.stderr.write("Warning: start_pt has rank 2 but azimuth is "
-                             "nonzero\n")
-        return Point((start_pt.x+dx, start_pt.y+dy))
-
-
 def sortby(A, B):
     """ Sort a list A by the values in an ordered list B. """
     if len(A) != len(B):
@@ -1087,26 +1080,4 @@ def points_to_multipoint(points):
     vertices = [pt.vertex for pt in points]
 
     return Multipoint(vertices, data=ptdata, crs=crs)
-
-def tighten(X, Z):
-    """ Return a list of corrected measurements from observations of
-    topography across a cross-section. The inputs are equal length
-    lists of observed distance and elevation.
-
-    Usage scenario: While surveying transects using a tape, the tape
-    is anchored to the topographical surface, rather than directly
-    between same-height endpoints.
-    """
-    if len(X) != len(Z):
-        raise GGeoError('Observation vectors must have equal length')
-
-    DZ = [z2-z1 for z2,z1 in zip(Z[1:], Z[:-1])]
-    DX = [x2-x1 for x2,x1 in zip(X[1:], X[:-1])]
-
-    DXt = [math.sqrt(x*x-z*z) for x,z in zip(DX, DZ)]
-
-    Xt = map(lambda i: sum(DXt[:i]) + X[0], range(len(DX)))
-
-    return zip(Xt, Z)
-
 

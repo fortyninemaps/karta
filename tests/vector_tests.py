@@ -337,6 +337,13 @@ class TestGuppy(unittest.TestCase):
         self.assertFalse(line.within_distance(pt, 0.4))
         return
 
+    def test_walk_cartesian(self):
+        start = Point((-3, -4), crs=crs.CARTESIAN)
+        dest = start.walk(5.0, math.atan(4.0/3.0))
+        self.assertAlmostEqual(dest.x, 0.0)
+        self.assertAlmostEqual(dest.y, 0.0)
+        return
+
 
 class TestGuppyProj(unittest.TestCase):
 
@@ -363,6 +370,14 @@ class TestGuppyProj(unittest.TestCase):
         self.assertTrue(abs(az1 - 78.4833443403) < 1e-10)
         self.assertTrue(abs(az2 - (-26.1358265354)) < 1e-10)
         return
+
+    def test_walk_lonlat(self):
+        start = Point((-132.14, 54.01), crs=crs.LONLAT_WGS84)
+        dest = start.walk(5440.0, 106.8*math.pi/180.0)
+        self.assertAlmostEqual(dest.x, -132.0605910876)
+        self.assertAlmostEqual(dest.y, 53.99584742821)
+        return
+
 
 class TestGuppyOutput(unittest.TestCase):
 
