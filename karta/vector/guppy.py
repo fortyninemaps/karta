@@ -104,7 +104,7 @@ class Point(Geometry):
 
     def __eq__(self, other):
         if hasattr(other, "vertex"):
-            return (self.vertex == other.vertex) and \
+            return (tuple(self.vertex) == tuple(other.vertex)) and \
                    (self.data == other.data) and \
                    (self.properties == other.properties)
         else:
