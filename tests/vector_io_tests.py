@@ -10,8 +10,10 @@ except ImportError:
 import json
 from test_helper import md5sum, md5sum_file, TESTDATA, TESTDIR
 
+import karta
 import karta.vector as vector
 import karta.crs as crs
+import karta.vector.geojson as geojson
 from karta.vector.geojson import GeoJSONReader
 from karta.vector.guppy import Point, Multipoint, Line, Polygon
 from karta.vector.metadata import Metadata
@@ -65,6 +67,39 @@ class TestGeoJSONInput(unittest.TestCase):
              [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
              [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]])
         return
+
+    def test_featurecollection_read(self):
+        path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
+        with open(path) as f:
+            reader = GeoJSONReader(f)
+        features = reader.pull_features()
+        self.assertTrue(isinstance(features[0][0][0], geojson.Point))
+        self.assertEqual(features[0][0][0].coordinates, [102.0, 0.5])
+        self.assertEqual(features[0][1], {"prop0": "value0"})
+
+        self.assertTrue(isinstance(features[1][0][0], geojson.LineString))
+        self.assertEqual(features[1][0][0].coordinates, [[102.0, 0.0],
+                             [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]])
+        self.assertEqual(features[1][1], {"prop0": "value0", "prop1": 0.0})
+
+        self.assertTrue(isinstance(features[2][0][0], geojson.Polygon))
+        self.assertEqual(features[2][0][0].coordinates, [[[100.0, 0.0],
+                [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
+        self.assertEqual(features[2][1], {"prop0": "value0",
+                                          "prop1": {"this": "that"}})
+        return
+
+
+#class TestGuppyGeoJSON(unittest.TestCase):
+#    """ While the test cases TestGeoJSONInput and TestGeoJSONOutput test the
+#    low level geojson module, this test case focuses on the bindings with guppy.
+#    """
+#
+#    def test_featurecollection_read(self):
+#        path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
+#        features = vector.read_geojson_features(path)
+#        print(features)
+
 
 class TestGeoJSONOutput(unittest.TestCase):
 
