@@ -2,3 +2,5 @@
 *.so
 *.swp
 *.png
+*.html
+*.ipynb_checkpoints
