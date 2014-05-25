@@ -22,6 +22,9 @@ GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
 
 
 class ExtendedJSONEncoder(json.JSONEncoder):
+    """ Numpy-specific numbers prior to 1.9 don't inherit from Python numeric
+    ABCs. This class is a hack to coerce numpy values into Python types for
+    JSON serialization. """
 
     def default(self, o):
         try:
@@ -41,12 +44,15 @@ class GeoJSONWriter(object):
     """ Class for converting guppy objects to GeoJSON strings. Multipoint-based
     opbjects are written as 'Features'.
 
+    CRS defaults to be named. A linked CRS can be used by passing
+    `linkedcrs=True`.
+
     Notes:
     ------
     Does not handle 'FeatureCollection' types (see printFeatureCollection()
     function).
     """
-    def __init__(self, gpobj, **kwargs):
+    def __init__(self, gpobj, linkedcrs=False, **kwargs):
         type_equiv = {'Point'       : 'Point',
                       'Multipoint'  : 'MultiPoint',
                       'Line'        : 'LineString',
@@ -55,16 +61,14 @@ class GeoJSONWriter(object):
         if gpobj._geotype in type_equiv:
             self.typestr = type_equiv[gpobj._geotype]
         else:
-            raise NotImplementedError('input object not a recognizes guppy '
-                                      'type')
-        crs = kwargs.get('crs', None)
-        crs_fmt = kwargs.get('crs_fmt', None)
+            raise TypeError('Input object not a recognized geometry')
+        crs = gpobj._crs
         bbox = kwargs.get('bbox', None)
 
         self.gpobj = gpobj
         self.supobj = {}
         if crs is not None:
-            self.add_named_crs(crs, crs_fmt)
+            self.add_crs(crs, linkedcrs=linkedcrs)
         if self.typestr != 'Point':
             self.supobj['type'] = 'Feature'
             self.add_bbox(bbox)
@@ -74,27 +78,30 @@ class GeoJSONWriter(object):
             self.add_coordinates()
         return
 
-    def add_named_crs(self, crs, fmt='epsg'):
+    def add_crs(self, crs, linkedcrs, **kw):
         """ Tag the JSON object with coordinate reference system metadata using
-        a named CRS. `fmt` indicates the format of the named CRS argument, and
-        may be one of ('epsg', 'ogc_crs_urn').
-        """
-        if fmt == 'epsg':
-            href = ('http://spatialreference.org/ref/epsg/{0}/'
-                    'proj4/'.format(crs))
-            islinked = True
-        elif fmt == 'ogc_crs_urn':
-            crs_str = crs.urn
-            islinked = False
-        else:
-            raise NotImplementedError('CRS fmt {0} not recognized'.format(fmt))
+        a CRS instance, which is expected the have the interface of crs.CRS.
 
-        if islinked:
+        If True, `linkedcrs` indicates a web-referenced linked CRS. If False,
+        the CRS is taked to be named.
+
+        In the case of a linked CRS, the link address and type can be specified
+        using the `href` and `linktype` keyword arguments. If not supplied,
+        then it is assumed that crs.urn contains the *href* and crs.type
+        contains the *type*.
+
+        For more details, see the GeoJSON specification at:
+        http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
+        """
+        if linkedcrs:
+            href = kw.get('href', crs.urn)
+            linktype = kw.get('linktype', crs.type)
             self.supobj['crs'] = {'type': 'link',
-                                  'properties': {'href': href, 'type': 'proj4'}}
+                                  'properties': {'href': href, 'type': linktype}}
+
         else:
             self.supobj['crs'] = {'type': 'name',
-                                  'properties': {'name': crs_str}}
+                                  'properties': {'name': crs.urn}}
         return
 
     def add_bbox(self, bbox=None):
@@ -164,7 +171,6 @@ class GeoJSONWriter(object):
 
     def print_json(self):
         """ Print GeoJSON representation. """
-        print(self.supobj)
         return json.dumps(self.supobj, indent=2, cls=ExtendedJSONEncoder)
 
     def write_json(self, fout):
@@ -334,9 +340,6 @@ class GeoJSONReader(object):
                                   self.pull_polygons())
         return itergeo
 
-    def list_features(self):
-        """ List the features present. """
-        raise NotImplementedError
 
 def list_rec(A):
     """ Recursively convert nested iterables to nested lists """

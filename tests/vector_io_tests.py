@@ -84,20 +84,14 @@ class TestGeoJSONOutput(unittest.TestCase):
     def test_point_write(self):
         p = Point((100.0, 0.0))
         s = self.asJsonBuffer(p)
-        self.verifyJson(s.read(), 
-                        '{ "type": "Point", "coordinates": [100.0, 0.0] }')
+        ans = """{ "crs": { "properties": { "name": "urn:ogc:def:crs:EPSG::5806" }, "type": "name" }, "coordinates": [ 100.0, 0.0 ], "type": "Point" }"""
+        self.verifyJson(s.read(), ans)
         return
 
     def test_line_write(self):
         p = Line([(100.0, 0.0), (101.0, 1.0)])
         s = self.asJsonBuffer(p)
-        ans = """{"properties":{},
-            "crs":{"type":"name",
-                "properties":{"name":"urn:ogc:def:crs:EPSG::5806"}},
-            "geometry":{"type":"LineString",
-                "coordinates":[[100,0],[101,1]]},
-                    "type":"Feature","id":[0,1],
-            "bbox":{"bbox":[[100,101],[0,1]]}}"""
+        ans = """{ "type": "Feature", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "properties": {}, "id": [ 0, 1 ], "geometry": { "coordinates": [ [ 100.0, 0.0 ], [ 101.0, 1.0 ] ], "type": "LineString" }, "bbox": [ [ 100.0, 101.0 ], [ 0.0, 1.0 ] ] }"""
 
         self.verifyJson(s.read(), ans)
         return
@@ -106,15 +100,7 @@ class TestGeoJSONOutput(unittest.TestCase):
         p = Polygon([[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
                             [100.0, 1.0], [100.0, 0.0]])
         s = self.asJsonBuffer(p)
-        ans = """{ "type": "Feature", "id": [ 0, 1, 2, 3, 4 ],
-                "crs": { "type": "name", 
-                    "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } },
-                "properties": {}, "bbox": { "bbox": [ [ 100.0, 101.0 ],
-                    [ 0.0, 1.0 ] ] },
-                "geometry": { "type": "Polygon", "coordinates": [ [ [ 100.0,
-                    0.0 ], [ 101.0, 0.0 ], [ 101.0, 1.0 ], [ 100.0, 1.0 ],
-                    [ 100.0, 0.0 ] ] ] } }
-        """
+        ans = """{ "bbox": [ [ 100.0, 101.0 ], [ 0.0, 1.0 ] ], "properties": {}, "id": [ 0, 1, 2, 3, 4 ], "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 100.0, 0.0 ], [ 101.0, 0.0 ], [ 101.0, 1.0 ], [ 100.0, 1.0 ], [ 100.0, 0.0 ] ] ] }, "type": "Feature" }"""
         self.verifyJson(s.read(), ans)
         return
 
@@ -131,25 +117,7 @@ class TestGeoJSONOutput(unittest.TestCase):
              Point((-71.02, 42.33), properties={"n": "Boston, Massachusetts"}),
              Point((-96.68, 40.81), properties={"n": "Lincoln, Nebraska"})])
         s = capitols.as_geojson()
-        with open("stub.json", "w") as f:
-            f.write(s)
-
-        ans = """{ "crs": { "type": "name",
-                "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } },
-                "bbox": { "bbox": [ [ -121.5, -71.02 ], [ 33.57, 46.6 ] ] },
-                "geometry": { "type": "MultiPoint",
-                    "coordinates": [ [ -112.1, 33.57 ], [ -121.5, 38.57 ],
-                        [ -84.42, 33.76 ], [ -86.15, 39.78 ], [ -112.0, 46.6 ],
-                        [ -82.99, 39.98 ], [ -77.48, 37.53 ], [ -95.69, 39.04 ],
-                        [ -71.02, 42.33 ], [ -96.68, 40.81 ] ] },
-                "type": "Feature", "id": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ],
-                "properties": { "n": [ "Phoenix, Arizona",
-                    "Sacramento, California", "Atlanta, Georgia",
-                    "Indianapolis, Indiana", "Helena, Montana",
-                    "Columbus, Ohio", "Richmond, Virginia",
-                    "Topeka, Kansas", "Boston, Massachusetts",
-                    "Lincoln, Nebraska" ] } } 
-        """
+        ans = """{ "properties": { "n": [ "Phoenix, Arizona", "Sacramento, California", "Atlanta, Georgia", "Indianapolis, Indiana", "Helena, Montana", "Columbus, Ohio", "Richmond, Virginia", "Topeka, Kansas", "Boston, Massachusetts", "Lincoln, Nebraska" ] }, "bbox": [ [ -121.5, -71.02 ], [ 33.57, 46.6 ] ], "type": "Feature", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -112.1, 33.57 ], [ -121.5, 38.57 ], [ -84.42, 33.76 ], [ -86.15, 39.78 ], [ -112.0, 46.6 ], [ -82.99, 39.98 ], [ -77.48, 37.53 ], [ -95.69, 39.04 ], [ -71.02, 42.33 ], [ -96.68, 40.81 ] ] }, "id": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] } """
         self.verifyJson(s, ans)
         return
 
