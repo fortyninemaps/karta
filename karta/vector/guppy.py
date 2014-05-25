@@ -15,7 +15,7 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import _shpfuncs
-from .. import crs
+from .. import crs as kcrs
 
 from collections import deque
 from .metadata import Metadata
@@ -43,7 +43,7 @@ class Geometry(object):
     Multipoints and subclasses thereof. """
     _geotype = None
 
-    def __init__(self, crs=crs.CARTESIAN):
+    def __init__(self, crs=kcrs.CARTESIAN):
         self.properties = {}
         self._crs = crs
         return
@@ -51,7 +51,7 @@ class Geometry(object):
     def _distance(self, pos0, pos1):
         """ Generic method for calculating distance between positions that
         respects CRS """
-        if self._crs == crs.CARTESIAN:
+        if self._crs == kcrs.CARTESIAN:
             dist = _vecgeo.distance((pos0.x, pos0.y), (pos1.x, pos1.y))
         elif PYPROJ:
             _, _, dist = geod.inv(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
@@ -149,13 +149,13 @@ class Point(Geometry):
         if self.coordsxy() == other.coordsxy():
             return np.nan
 
-        if self._crs == crs.LONLAT and other._crs == crs.LONLAT:
+        if self._crs == kcrs.LONLAT and other._crs == kcrs.LONLAT:
             if not PYPROJ:
                 raise CRSError("Non-cartesian points require pyproj")
             az1, _, _ = geod.inv(self.x, self.y, other.x, other.y)
             return az1 * math.pi / 180.0
 
-        elif self._crs == crs.CARTESIAN and other._crs == crs.CARTESIAN:
+        elif self._crs == kcrs.CARTESIAN and other._crs == kcrs.CARTESIAN:
             dx = other.x - self.x
             dy = other.y - self.y
 
@@ -190,7 +190,7 @@ class Point(Geometry):
             distance (float): distance to walk
             direction (float): horizontal walk direction in radians
         """
-        if self._crs == crs.CARTESIAN:
+        if self._crs == kcrs.CARTESIAN:
             dx = distance * math.cos(direction)
             dy = distance * math.sin(direction)
 
@@ -226,7 +226,7 @@ class Point(Geometry):
         """ Return the great circle distance between two geographical points. """
         if not PYPROJ:
             raise CRSError("Non-cartesian points require pyproj")
-        if not (self._crs == crs.LONLAT and other._crs == crs.LONLAT):
+        if not (self._crs == kcrs.LONLAT and other._crs == kcrs.LONLAT):
             raise CRSError("Great circle distances require both points to be "
                            "in geographical coordinates")
         az1, az2, dist = geod.inv(self.x, self.y, other.x, other.y, radians=False)
