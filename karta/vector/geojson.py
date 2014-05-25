@@ -280,16 +280,16 @@ class GeoJSONReader(object):
 
         features = []
         for feat in points:
-            features.append((self.pull_points(feat), feat['properties'],
+            features.append((self.pull_points(feat)[0], feat['properties'],
                              feat.get('id', None)))
         for feat in multipoints:
-            features.append((self.pull_multipoints(feat), feat['properties'],
+            features.append((self.pull_multipoints(feat)[0], feat['properties'],
                              feat.get('id', None)))
         for feat in lines:
-            features.append((self.pull_lines(feat), feat['properties'],
+            features.append((self.pull_lines(feat)[0], feat['properties'],
                              feat.get('id', None)))
         for feat in polygons:
-            features.append((self.pull_polygons(feat), feat['properties'],
+            features.append((self.pull_polygons(feat)[0], feat['properties'],
                              feat.get('id', None)))
 
         return features
