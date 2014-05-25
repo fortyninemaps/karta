@@ -73,32 +73,44 @@ class TestGeoJSONInput(unittest.TestCase):
         with open(path) as f:
             reader = GeoJSONReader(f)
         features = reader.pull_features()
-        self.assertTrue(isinstance(features[0][0][0], geojson.Point))
-        self.assertEqual(features[0][0][0].coordinates, [102.0, 0.5])
+        self.assertTrue(isinstance(features[0][0], geojson.Point))
+        self.assertEqual(features[0][0].coordinates, [102.0, 0.5])
         self.assertEqual(features[0][1], {"prop0": "value0"})
 
-        self.assertTrue(isinstance(features[1][0][0], geojson.LineString))
-        self.assertEqual(features[1][0][0].coordinates, [[102.0, 0.0],
+        self.assertTrue(isinstance(features[1][0], geojson.LineString))
+        self.assertEqual(features[1][0].coordinates, [[102.0, 0.0],
                              [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]])
         self.assertEqual(features[1][1], {"prop0": "value0", "prop1": 0.0})
 
-        self.assertTrue(isinstance(features[2][0][0], geojson.Polygon))
-        self.assertEqual(features[2][0][0].coordinates, [[[100.0, 0.0],
+        self.assertTrue(isinstance(features[2][0], geojson.Polygon))
+        self.assertEqual(features[2][0].coordinates, [[[100.0, 0.0],
                 [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         self.assertEqual(features[2][1], {"prop0": "value0",
                                           "prop1": {"this": "that"}})
         return
 
 
-#class TestGuppyGeoJSON(unittest.TestCase):
-#    """ While the test cases TestGeoJSONInput and TestGeoJSONOutput test the
-#    low level geojson module, this test case focuses on the bindings with guppy.
-#    """
-#
-#    def test_featurecollection_read(self):
-#        path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
-#        features = vector.read_geojson_features(path)
-#        print(features)
+class TestGuppyGeoJSON(unittest.TestCase):
+    """ While the test cases TestGeoJSONInput and TestGeoJSONOutput test the
+    low level geojson module, this test case focuses on the bindings with guppy.
+    """
+
+    def test_featurecollection2guppy(self):
+        path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
+        features = vector.read_geojson_features(path)
+
+        ans0 = Point((102.0, 0.5), properties={"prop0":"value0"}, crs=karta.LONLAT)
+        self.assertEqual(features[0], ans0)
+
+        ans1 = Line([(102.0, 0.0), (103.0, 1.0), (104.0, 0.0), (105.0, 1.0)],
+                    properties={"prop0":"value0", "prop1":0.0}, crs=karta.LONLAT)
+        self.assertEqual(features[1], ans1)
+
+        ans2 = Polygon([(100.0, 0.0), (101.0, 0.0), (101.0, 1.0), (100.0, 1.0),
+                        (100.0, 0.0)],
+                        properties={"prop0":"value0", "prop1":{"this":"that"}})
+        self.assertEqual(features[2], ans2)
+        return
 
 
 class TestGeoJSONOutput(unittest.TestCase):

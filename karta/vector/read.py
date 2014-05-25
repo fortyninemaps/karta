@@ -43,28 +43,47 @@ def read_geojson_features(f):
     """ Read a GeoJSON object file and return a list of features """
     R = geojson.GeoJSONReader(f)
     features = R.pull_features()
+    print()
     geoms = []
     coordsys = _parsegeojsoncrs(R.getcrs())
     for (geom, properties, id) in features:
 
         if isinstance(geom, geojson.Point):
-            gplist.append(guppy.Point(geom.coordinates,
-                                      properties=properties, crs=coordsys))
+            (p, d) = _geojson_properties2guppy(properties, 1)
+            geoms.append(guppy.Point(geom.coordinates, properties=p, data=d,
+                                     crs=coordsys))
 
         elif isinstance(geom, geojson.MultiPoint):
-            gplist.append(guppy.Multipoint(geom.coordinates,
-                                           data=properties, crs=coordsys))
+            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
+            geoms.append(guppy.Multipoint(geom.coordinates, properties=p, data=d,
+                                          crs=coordsys))
 
         elif isinstance(geom, geojson.LineString):
-            gplist.append(guppy.Line(geom.coordinates,
-                                     data=properties, crs=coordsys))
+            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
+            geoms.append(guppy.Line(geom.coordinates, properties=p, data=d,
+                                    crs=coordsys))
 
         elif isinstance(geom, geojson.Polygon):
-            gplist.append(guppy.Polygon(geom.coordinates[0],
-                                        data=properties,
-                                        subs=geom.coordinates[1:],
-                                        crs=coordsys))
-    return gplist
+            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
+            geoms.append(guppy.Polygon(geom.coordinates[0], properties=p, data=d,
+                                       subs=geom.coordinates[1:],
+                                       crs=coordsys))
+    return geoms
+
+def _geojson_properties2guppy(properties, n):
+    """ Takes a dictionary (derived from a GeoJSON properties object) and
+    divides it into singleton properties and *n*-degree data. """
+    props = {}
+    data = {}
+    for (key, value) in properties.items():
+        if isinstance(value, list) or isinstance(value, tuple):
+            if len(value) == n:
+                data[key] = value
+            else:
+                raise ValueError("properties must be singleton or per-vertex")
+        else:
+            props[key] = value
+    return props, data
 
 
 def shape2point(shape):
