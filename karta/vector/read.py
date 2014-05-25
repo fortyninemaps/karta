@@ -10,7 +10,9 @@ from .. import crs
 def _parsegeojsoncrs(crstup):
     """ From a tuple representing a GeoJSON (name,None) or (href,type) pair,
     return an appropriate karta crs instance. """
-    if crstup[1] is None:       # named CRS
+    if crstup[0] is None:       # use default as defined by spec
+        return crs.LONLAT_WGS84
+    elif crstup[1] is None:     # named CRS
         for c in crs.crslist:
             if c.urn == crstup[0]:
                 return c
@@ -40,14 +42,28 @@ def read_geojson(f):
 def read_geojson_features(f):
     """ Read a GeoJSON object file and return a list of features """
     R = geojson.GeoJSONReader(f)
-    feats = R.pull_features()
-    gplist = []
-    raise NotImplementedError
-    for feat in feats:
+    features = R.pull_features()
+    geoms = []
+    coordsys = _parsegeojsoncrs(R.getcrs())
+    for (geom, properties, id) in features:
 
-        # [...]
-        pass
+        if isinstance(geom, geojson.Point):
+            gplist.append(guppy.Point(geom.coordinates,
+                                      properties=properties, crs=coordsys))
 
+        elif isinstance(geom, geojson.MultiPoint):
+            gplist.append(guppy.Multipoint(geom.coordinates,
+                                           data=properties, crs=coordsys))
+
+        elif isinstance(geom, geojson.LineString):
+            gplist.append(guppy.Line(geom.coordinates,
+                                     data=properties, crs=coordsys))
+
+        elif isinstance(geom, geojson.Polygon):
+            gplist.append(guppy.Polygon(geom.coordinates[0],
+                                        data=properties,
+                                        subs=geom.coordinates[1:],
+                                        crs=coordsys))
     return gplist
 
 
