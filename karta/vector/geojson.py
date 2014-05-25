@@ -12,14 +12,13 @@ from math import isnan
 import traceback
 
 
-interface = ['coordinates', 'data', 'properties', 'crs']
-Point = namedtuple('Point', interface)
-MultiPoint = namedtuple('MultiPoint', interface)
-LineString = namedtuple('LineString', interface)
-MultiLineString = namedtuple('MultiLineString', interface)
-Polygon = namedtuple('Polygon', interface)
-MultiPolygon = namedtuple('MultiPolygon', interface)
-GeometryCollection = namedtuple('GeometryCollection', 'data', ['geometries'])
+Point = namedtuple('Point', ['coordinates', 'crs'])
+MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])
+LineString = namedtuple('LineString', ['coordinates', 'crs'])
+MultiLineString = namedtuple('MultiLineString', ['coordinates', 'crs'])
+Polygon = namedtuple('Polygon', ['coordinates', 'crs'])
+MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
+GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
 
 
 class ExtendedJSONEncoder(json.JSONEncoder):
@@ -213,7 +212,7 @@ class GeoJSONReader(object):
                 self.jsondict = json.load(f)
         else:
             self.jsondict = json.load(finput)
-        self.crs = self._getcrs()
+        self.crs = self.getcrs()
         return
 
     def _walk(self, dic, geotype):
@@ -240,7 +239,18 @@ class GeoJSONReader(object):
                     return True
         return False
 
-    def _getcrs(self):
+    def _getproperties(self):
+        """ Read feature properties and return a two dictionaries:
+            - one representing singleton values ("properties")
+            - one representing per-vertex values ("data")
+        """
+        raise NotImplementedError
+        return {}, {}
+
+    def getcrs(self):
+        """ Look in the top level for a `crs` field. Return a tuple that is
+        either (name, _), (href, type), or (_, _) for a named, linked, or
+        undefined CRS, respectively. """
         crs = self.jsondict.get("crs", None)
         if crs is not None:
             if "name" in crs["properties"]:
@@ -248,18 +258,11 @@ class GeoJSONReader(object):
             else:
                 res = (crs["properties"]["href"], crs["properties"]["type"])
         else:
-            res = None
+            res = (None, None)
         return res
 
-    def _getproperties(self):
-        """ Read feature properties and return a two dictionaries:
-            - one representing singleton values ("properties")
-            - one representing per-vertex values ("data")
-        """
-        return {}, {}
-
     def pull_features(self):
-        """ Find and return all Feature objects """
+        """ Find and return all Feature objects from a FeatureCollection """
         jsonfeats = [obj for obj in self._walk(self.jsondict, 'Feature')]
 
         featuretype = lambda a: a.get('geometry', {}).get('type', None)
@@ -268,6 +271,8 @@ class GeoJSONReader(object):
         isline = lambda a: featuretype(a) in ('LineString', 'MultiLineString')
         ispolygon = lambda a: featuretype(a) in ('Polygon', 'MultiPolygon')
 
+        # This is an idiotic algorithm - pre-mapping the types isn't saving
+        # time because each feature needs to be iterated through anyway
         points = filter(ispoint, jsonfeats)
         multipoints = filter(ismultipoint, jsonfeats)
         lines = filter(isline, jsonfeats)
@@ -385,17 +390,11 @@ def geojson2csv(fin, fout):
     X = []
     Y = []
     PROP = []
-    try:
-        for feat in jsdat['features']:
-            x, y = feat['geometry']['coordinates']
-            X.append(x)
-            Y.append(y)
-            PROP.append(feat['properties'])
-    except KeyError:
-        sys.stderr.write('invalid geojson schema')
-        traceback.print_exc()
-    except:
-        traceback.print_exc()
+    for feat in jsdat['features']:
+        x, y = feat['geometry']['coordinates']
+        X.append(x)
+        Y.append(y)
+        PROP.append(feat['properties'])
 
     # Find subset of properties that exist in all features
     if len(PROP) > 1:
