@@ -21,6 +21,22 @@ MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
 GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
 
 
+class ExtendedJSONEncoder(json.JSONEncoder):
+
+    def default(self, o):
+        try:
+            if o.dtype in ("int8", "int16", "int32", "int64"):
+                return int(o)
+            elif o.dtype in ("float16", "float32", "float64", "float128"):
+                return float(o)
+            elif o.dtype in ("complex64", "complex128", "complex256"):
+                return complex(o)
+            else:
+                raise TypeError("not a recognized type")
+        except (AttributeError, TypeError):
+            return json.JSONEncoder.default(self, o)
+
+
 class GeoJSONWriter(object):
     """ Class for converting guppy objects to GeoJSON strings. Multipoint-based
     opbjects are written as 'Features'.
@@ -92,7 +108,7 @@ class GeoJSONWriter(object):
             else:
                 raise AttributeError("Type {0} has no 'get_extents' "
                                      "method".format(type(self.gpobj)))
-        self.supobj['bbox'] = {'bbox'    :   bbox}
+        self.supobj['bbox'] = bbox
         return
 
     def add_geometry(self):
@@ -148,12 +164,13 @@ class GeoJSONWriter(object):
 
     def print_json(self):
         """ Print GeoJSON representation. """
-        return json.dumps(self.supobj, indent=2)
+        print(self.supobj)
+        return json.dumps(self.supobj, indent=2, cls=ExtendedJSONEncoder)
 
     def write_json(self, fout):
         """ Dump internal dict-object to JSON using the builtin `json` module.
         """
-        json.dump(self.supobj, fout, indent=2)
+        json.dump(self.supobj, fout, indent=2, cls=ExtendedJSONEncoder)
         return
 
 
