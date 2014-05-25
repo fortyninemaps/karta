@@ -112,6 +112,45 @@ class TestGuppyGeoJSON(unittest.TestCase):
         self.assertEqual(features[2], ans2)
         return
 
+    def test_read_capitols(self):
+        path = os.path.join(TESTDATA, "geojson_input/us-capitols.json")
+        features = vector.read_geojson_features(path)
+        names = ['Phoenix, Arizona, United States', 'Sacramento, California, United States', 
+                 'Atlanta, Georgia, United States', 'Indianapolis, Indiana, United States', 
+                 'Helena, Montana, United States', 'Columbus, Ohio, United States', 
+                 'Richmond, Virginia, United States', 'Topeka, Kansas, United States', 
+                 'Boston, Massachusetts, United States', 'Lincoln, Nebraska, United States', 
+                 'Oklahoma City, Oklahoma, United States', 'Juneau, Alaska, United States', 
+                 'Pierre, South Dakota, United States', 'Honolulu, Hawaii, United States', 
+                 'Montgomery, Alabama, United States',
+                 'Little Rock, Arkansas, United States', 'Denver, Colorado, United States', 
+                 'Hartford, Connecticut, United States', 'Dover, Delaware, United States', 
+                 'Washington, District of Columbia, United States', 
+                 'Tallahassee, Florida, United States', 'Boise, Idaho, United States', 
+                 'Springfield, Illinois, United States', 'Des Moines, Iowa, United States', 
+                 'Frankfort, Kentucky, United States', 
+                 'Baton Rouge, Louisiana, United States', 'Augusta, Maine, United States', 
+                 'Annapolis, Maryland, United States', 'Lansing, Michigan, United States', 
+                 'Saint Paul, Minnesota, United States', 
+                 'Jackson, Mississippi, United States', 
+                 'Jefferson City, Missouri, United States', 
+                 'Carson City, Nevada, United States', 
+                 'Concord, New Hampshire, United States', 
+                 'Trenton, New Jersey, United States', 
+                 'Santa Fe, New Mexico, United States', 'Albany, New York, United States', 
+                 'Raleigh, North Carolina, United States', 
+                 'Bismarck, North Dakota, United States', 'Salem, Oregon, United States', 
+                 'Harrisburg, Pennsylvania, United States', 
+                 'Providence, Rhode Island, United States', 
+                 'Columbia, South Carolina, United States', 
+                 'Nashville, Tennessee, United States', 
+                 'Austin, Texas, United States', 'Salt Lake City, Utah, United States', 
+                 'Montpelier, Vermont, United States', 'Olympia, Washington, United States', 
+                 'Charleston, West Virginia, United States', 
+                 'Madison, Wisconsin, United States', 'Cheyenne, Wyoming, United States']
+        self.assertEqual(names, features[0].data["n"])
+        return
+
 
 class TestGeoJSONOutput(unittest.TestCase):
 
