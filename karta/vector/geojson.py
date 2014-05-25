@@ -12,13 +12,14 @@ from math import isnan
 import traceback
 
 
-Point = namedtuple('Point', ['coordinates', 'crs'])
-MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])
-LineString = namedtuple('LineString', ['coordinates', 'crs'])
-MultiLineString = namedtuple('MultiLineString', ['coordinates', 'crs'])
-Polygon = namedtuple('Polygon', ['coordinates', 'crs'])
-MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
-GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
+interface = ['coordinates', 'data', 'properties', 'crs']
+Point = namedtuple('Point', interface)
+MultiPoint = namedtuple('MultiPoint', interface)
+LineString = namedtuple('LineString', interface)
+MultiLineString = namedtuple('MultiLineString', interface)
+Polygon = namedtuple('Polygon', interface)
+MultiPolygon = namedtuple('MultiPolygon', interface)
+GeometryCollection = namedtuple('GeometryCollection', 'data', ['geometries'])
 
 
 class GeoJSONWriter(object):
@@ -147,7 +148,7 @@ class GeoJSONWriter(object):
         return
 
     def print_json(self):
-        """ Print GeoJSON representation. """
+        """ Return GeoJSON representation in a string. """
         return json.dumps(self.supobj, indent=2)
 
     def write_json(self, fout):
@@ -226,6 +227,13 @@ class GeoJSONReader(object):
         else:
             res = None
         return res
+
+    def _getproperties(self):
+        """ Read feature properties and return a two dictionaries:
+            - one representing singleton values ("properties")
+            - one representing per-vertex values ("data")
+        """
+        return {}, {}
 
     def pull_features(self):
         """ Find and return all Feature objects """
