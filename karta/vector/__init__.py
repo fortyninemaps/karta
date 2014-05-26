@@ -8,6 +8,7 @@ from . import xyfile
 from . import geojson
 from . import gpx
 from . import vtk
+from . import quadtree
 
 from .guppy import Point, Multipoint, Line, Polygon
 from .read import read_geojson, read_geojson_features, read_shapefile
