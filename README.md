@@ -16,6 +16,10 @@ welcome, particularly to improve format support and test coverage.
 - documentation
 - minimal system for coordinate system metadata
 
+## DOCUMENTATION
+API documentation can be built by running `make` from the `doc/` directory.
+The beginnings of a tutorial to introduce *Karta* are in the [Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
+
 ##CONTENTS AT A GLANCE
 
 - vector
