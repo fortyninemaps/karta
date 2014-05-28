@@ -38,8 +38,6 @@ def addpt(node, pt, depth, maxchildren, maxdepth):
 
         if len(node.children) == maxchildren and depth != maxdepth:
             node = split(node)
-            # bug here - splitting creates a new object in memory, so gradparent
-            # nodes lose the reference
             (node, depth) = addpt(node, pt, depth, maxchildren, maxdepth)
 
         else:
@@ -109,7 +107,7 @@ def getfrombbox(parent, bbox):
         return pts
 
 def querypt(parent, pt):
-    """ Test whether a point exists at *pt*. """
+    """ Test whether a point exists at *pt* using recursion. """
     if not parent.leaf:
         for child in parent.children:
             if iswithin(child.bbox, pt):
