@@ -51,7 +51,7 @@ class TestQuadTree(unittest.TestCase):
     def test_addpt_full(self):
         pts = [(x,y) for x in range(5) for y in range(5)]
         node = Node(pts, (0, 4.1, 0, 4.1), True)
-        node,_ = addpt(node, (2.5, 2.5), 1, 25, 100)
+        (node, _) = addpt(node, (2.5, 2.5), 1, 25, 100)
         self.assertEqual(node.children[0].children, 
                          [(x,y) for x in range(3) for y in range(3)])
         self.assertEqual(node.children[1].children,
@@ -78,6 +78,21 @@ class TestQuadTree(unittest.TestCase):
         hsh = [next(hashgen) for i in range(10)]
         self.assertEqual(hsh, [2, 3, 0, 2, 0, 2, 3, 2, 1, 0])
         return
+
+    def test_querypt(self):
+        pts = [(x**0.5,0.5*y**0.875) for x in range(50) for y in range(50)]
+        node = Node([], (0, 7.5, 0, 16), True)
+        for pt in pts:
+            node,_ = addpt(node, pt, 1, 20, 200)
+        testpts = [(x**0.5,0.5*y**0.875) for (x,y) in zip((3,12,44,23,36),
+                                                          (46,42,28,2,13))]
+        shouldbetrue = [querypt(node, testpt) for testpt in testpts]
+        testpts = [(x**0.5,0.5*y**0.875) for (x,y) in zip((73,12,54,23,63),
+                                                          (46,72,28,82,13))]
+        shouldbefalse = [querypt(node, testpt) for testpt in testpts]
+        self.assertTrue(False not in shouldbetrue)
+        self.assertTrue(True not in shouldbefalse)
+
 
 if __name__ == "__main__":
     unittest.main()

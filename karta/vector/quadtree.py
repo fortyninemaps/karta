@@ -38,16 +38,19 @@ def addpt(node, pt, depth, maxchildren, maxdepth):
 
         if len(node.children) == maxchildren and depth != maxdepth:
             node = split(node)
-            addpt(node, pt, depth, maxchildren, maxdepth)
+            # bug here - splitting creates a new object in memory, so gradparent
+            # nodes lose the reference
+            (node, depth) = addpt(node, pt, depth, maxchildren, maxdepth)
 
         else:
             node.children.append(pt)
 
     else:
 
-        for child in node.children:
+        for (i,child) in enumerate(node.children):
             if iswithin(child.bbox, pt):
-                (node, depth) = addpt(child, pt, depth+1, maxchildren, maxdepth)
+                (child, depth) = addpt(child, pt, depth+1, maxchildren, maxdepth)
+                node.children[i] = child
                 break
 
     return node, depth
