@@ -31,6 +31,8 @@ def addpt(node, pt, depth, maxchildren, maxdepth):
     Returns the updated node (which may or may not be the same as the starting
     node, depending on whether a split occurred, as well as the depth at which
     the point was inserted. """
+    if not iswithin(node.bbox, pt):
+        raise BBoxError
 
     if node.leaf:
 
@@ -76,13 +78,15 @@ def split(node):
     """ Return a new node with the bbox of *node* and *node*'s children split
     between four child nodes. """
     (x0, x1, y0, y1) = node.bbox
-    xm = mean([pt[0] for pt in node.children])
-    ym = mean([pt[1] for pt in node.children])
+    #xm = mean([pt[0] for pt in node.children])
+    #ym = mean([pt[1] for pt in node.children])
+    # square subdivisions simplifies hashing
+    xm = 0.5 * (x0+x1)
+    ym = 0.5 * (y0+y1)
 
     branch = Node([], node.bbox, False)
-    eps = 3e-15
-    bboxes = ((x0, xm, y0, ym), (xm, x1+eps, y0, ym),
-              (x0, xm, ym, y1+eps), (xm, x1+eps, ym, y1+eps))
+    bboxes = ((x0, xm, y0, ym), (xm, x1, y0, ym),
+              (x0, xm, ym, y1), (xm, x1, ym, y1))
 
     for bbox in bboxes:
         pts = [pt for pt in node.children if iswithin(bbox, pt)]
@@ -112,4 +116,7 @@ def querypt(parent, pt):
             if pt == childpt:
                 return True
     return False
+
+class BBoxError(Exception):
+    pass
 
