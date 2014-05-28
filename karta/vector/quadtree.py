@@ -117,6 +117,32 @@ def querypt(parent, pt):
                 return True
     return False
 
+def hashpt(bbox, pt):
+    """ Returns a generator that returns successive quadrants [0-3] that
+    constitute a geohash for *pt* in a global *bbox*. """
+    while True:
+        xm = 0.5 * (bbox[0] + bbox[1])
+        ym = 0.5 * (bbox[2] + bbox[3])
+        x, y = pt[0], pt[1]
+        if x < xm and y < ym:
+            geohash = 0
+            bbox = (bbox[0], xm, bbox[2], ym)
+        elif x >= xm and y < ym:
+            geohash = 1
+            bbox = (xm, bbox[1], bbox[2], ym)
+        elif x < xm and y >= ym:
+            geohash = 2
+            bbox = (bbox[0], xm, ym, bbox[3])
+        elif x >= xm and y >= ym:
+            geohash = 3
+            bbox = (xm, bbox[1], ym, bbox[3])
+        else:
+            raise HashError
+        yield geohash
+
+class HashError(Exception):
+    pass
+
 class BBoxError(Exception):
     pass
 

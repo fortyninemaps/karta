@@ -4,7 +4,8 @@ import unittest
 import numpy as np
 
 import karta
-from karta.vector.quadtree import QuadTree, Node, addpt, split
+from karta.vector.quadtree import QuadTree, Node
+from karta.vector.quadtree import addpt, split, hashpt, querypt
 from karta.vector.quadtree import iswithin, overlaps
 
 class TestQuadTree(unittest.TestCase):
@@ -60,7 +61,23 @@ class TestQuadTree(unittest.TestCase):
         self.assertEqual(node.children[3].children,
                          [(x,y) for x in range(3,5) for y in range(3,5)] + [(2.5,2.5)])
 
+    def test_hashpt1(self):
+        # Find the depth at which (0.99, 0.99) is not in the last quadrant (should be 7)
+        hashgen = hashpt((0, 1, 0, 1), (0.99, 0.99))
+        for (i,h) in enumerate(hashgen):
+            if h == 0:
+                break
+            if i == 10:
+                break
+        self.assertEqual(i, 6)
+        return
 
+    def test_hashpt2(self):
+        # Find the hash sequence for (0.26, 0.84) out to length 10
+        hashgen = hashpt((0, 1, 0, 1), (0.26, 0.84))
+        hsh = [next(hashgen) for i in range(10)]
+        self.assertEqual(hsh, [2, 3, 0, 2, 0, 2, 3, 2, 1, 0])
+        return
 
 if __name__ == "__main__":
     unittest.main()
