@@ -5,7 +5,6 @@ Classes for handling raster data.
 from . import grid
 from . import aaigrid
 from . import raster
-from . import flow
 
 from .grid import RegularGrid, WarpedGrid, aairead
 from .aaigrid import AAIGrid

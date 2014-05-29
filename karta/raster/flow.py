@@ -44,10 +44,7 @@ The following license applies to:
 import math
 import numpy as np
 from . import raster
-try:
-    from scipy import sparse
-except ImportError:
-    pass
+from scipy import sparse
 
 try:
     from . import crfuncs as rfuncs
