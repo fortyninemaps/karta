@@ -3,7 +3,6 @@ Vector data classes and functions.
 """
 
 from . import guppy
-from . import stats
 from . import xyfile
 from . import geojson
 from . import gpx

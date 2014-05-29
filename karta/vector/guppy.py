@@ -10,7 +10,6 @@ import math
 import sys
 import traceback
 import numpy as np
-import shapefile
 from . import vtk
 from . import geojson
 from . import xyfile
@@ -710,8 +709,9 @@ class ConnectedMultipoint(MultipointBase):
         return list(filter(lambda a: np.nan not in a, interx))
 
     def shortest_distance_to(self, pt):
-        """ Return the shortest distance from a point on the Multipoint
-        boundary to *pt* (Point) """
+        """ Return the shortest distance from any position on the Multipoint
+        boundary to *pt* (Point).
+        """
         point_dist = map(_vecgeo.pt_nearest,
                                 [pt.vertex for seg in self.segments()],
                                 [seg[0].vertex for seg in self.segments()],
@@ -720,10 +720,8 @@ class ConnectedMultipoint(MultipointBase):
         return min(distances)
 
     def nearest_on_boundary(self, pt):
-        """ Returns the point on the Multipoint boundary that is nearest to pt
-        (Point).
-
-        Warning: If two points are equidistant, only one will be returned.
+        """ Returns the position on the Multipoint boundary that is nearest to
+        pt (Point). If two points are equidistant, only one will be returned.
         """
         point_dist = list(map(_vecgeo.pt_nearest,
                                 [pt.vertex for seg in self.segments()],
@@ -794,27 +792,27 @@ class Line(ConnectedMultipoint):
         """ Returns the distance between the first and last vertex. """
         return Point(self.vertices[0]).distance(Point(self.vertices[-1]))
 
-    def direction(self):
-        """ Returns a vector of the azimuth along a line at each point,
-        weighted by neighbour position. """
-        # The weights are calculated to give greater weight to azimuths to
-        # nearby points
-        # a' = w1 a1 + w2 a2
-        #    = (a1 h2) / (h1 + h2) + (a2 h1) / (h1 + h2)
-        #    = (a1 h2 + a2 h1) / (h1 + h2)
-        azs = np.empty(len(self)-1)
-        hs = np.empty(len(self)-1)
-        pts = [pt for pt in self]
-        for i in range(len(self)-1):
-            azs[i] = pt[i].azimuth(pt[i+1])
-            hs[i] = pt[i].distance(pt[i+1])
-        weighted_azs = np.empty(len(self))
-        weighted_azs[0] = azs[0]
-        weighted_azs[-1] = azs[-1]
-        for i in range(1, len(self)-1):
-            raise NotImplementedError("need to phase unwrap")
-            weighted_azs[i] = (azs[i]*hs[i+1] + azs[i+1]*hs[i]) / (hs[i] + hs[i+1])
-        return weighted_azs
+    #def direction(self):
+    #    """ Returns a vector of the azimuth along a line at each point,
+    #    weighted by neighbour position. """
+    #    # The weights are calculated to give greater weight to azimuths to
+    #    # nearby points
+    #    # a' = w1 a1 + w2 a2
+    #    #    = (a1 h2) / (h1 + h2) + (a2 h1) / (h1 + h2)
+    #    #    = (a1 h2 + a2 h1) / (h1 + h2)
+    #    azs = np.empty(len(self)-1)
+    #    hs = np.empty(len(self)-1)
+    #    pts = [pt for pt in self]
+    #    for i in range(len(self)-1):
+    #        azs[i] = pt[i].azimuth(pt[i+1])
+    #        hs[i] = pt[i].distance(pt[i+1])
+    #    weighted_azs = np.empty(len(self))
+    #    weighted_azs[0] = azs[0]
+    #    weighted_azs[-1] = azs[-1]
+    #    for i in range(1, len(self)-1):
+    #        raise NotImplementedError("need to phase unwrap")
+    #        weighted_azs[i] = (azs[i]*hs[i+1] + azs[i+1]*hs[i]) / (hs[i] + hs[i+1])
+    #    return weighted_azs
 
     def to_polygon(self):
         """ Returns a polygon. """

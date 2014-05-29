@@ -1,11 +1,9 @@
 """ Provides functions for reading and writing ESRI shapefiles and returning a
 guppy object. """
 
-import os
 import datetime
 import numbers
 import shapefile
-from shapefile import Reader, Writer
 
 def property_field_type(value):
     """ Determine the appropriate dBase field type for *value* """

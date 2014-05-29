@@ -89,7 +89,7 @@ def estimate_vario(mp, npoints=2000, max_dist=None, interval=None):
         raise Exception('estimate_variogram() requires a Multipoint with '
                         'scalar data')
     if npoints > len(mp):
-        npoint = len(mp)
+        npoints = len(mp)
 
     irand = random.sample(np.arange(len(mp)), npoints)
     verts = mp.get_vertices()[irand]

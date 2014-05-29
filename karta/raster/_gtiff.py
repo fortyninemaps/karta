@@ -27,7 +27,7 @@ def read(fnm):
         else:
             raise AttributeError("No GeoTransform in GDAL Dataset")
 
-        for i in xrange(1, hdr["nbands"]+1):
+        for i in range(1, hdr["nbands"]+1):
             band = dataset.GetRasterBand(i)
             arr[i-1,:,:] = band.ReadAsArray()
 

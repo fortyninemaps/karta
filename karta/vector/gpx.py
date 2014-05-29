@@ -8,7 +8,6 @@ To do:
     - metadata node not addressed
 """
 
-import sys
 import collections
 import xml.etree.ElementTree as ET
 from xml.etree.ElementTree import ElementTree, Element

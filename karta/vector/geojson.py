@@ -2,15 +2,13 @@
 dealing with GeoJSON data. The `GeoJSON` class uses the builtin json module and
 enforces GeoJSON standards. """
 
-import sys
 import copy
 import json
 from collections import namedtuple
 import itertools
 from numbers import Number
 from math import isnan
-import traceback
-
+from functools import reduce
 
 Point = namedtuple('Point', ['coordinates', 'crs'])
 MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])

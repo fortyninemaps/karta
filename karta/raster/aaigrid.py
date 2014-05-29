@@ -7,7 +7,7 @@ argument to open a grid, or can read data from a numpy array.
 Written by Nat Wilson
 """
 
-from math import sin, sqrt
+from math import sqrt
 import numpy as np
 from . import grid
 import traceback

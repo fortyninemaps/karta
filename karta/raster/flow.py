@@ -41,7 +41,6 @@ The following license applies to:
 
 """
 
-#import sys
 import math
 import numpy as np
 from . import raster
@@ -272,8 +271,8 @@ def upslope_area(F, A, proportion=prop_dinfty):
     data = np.zeros(F.size*9)
 
     cnt = 0
-    for i in xrange(m):
-        for j in xrange(n):
+    for i in range(m):
+        for j in range(n):
             i_ = i*n + j
             i0 = i_ - n - 1
             i1 = i_ - n
