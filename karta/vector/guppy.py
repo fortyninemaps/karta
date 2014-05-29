@@ -84,9 +84,10 @@ class Point(Geometry):
     _geotype = "Point"
 
     def __init__(self, coords, data=None, properties=None, **kwargs):
-        if properties is None: properties = {}
+        if properties is None:
+            properties = {}
         if not hasattr(coords, "__iter__"):
-            raise ValueError("input argument must be a sequence")
+            raise ValueError("Point coordinates must be a sequence")
         super(Point, self).__init__(**kwargs)
         self.vertex = coords
         self._setxyz()
@@ -733,7 +734,7 @@ class ConnectedMultipoint(MultipointBase):
 
     def within_distance(self, pt, distance):
         """ Test whether a point is within *distance* of a ConnectedMultipoint. """
-        #return distance <= self.shortest_distance_to(pt)
+        # Avoid calculating more minimum distances than necessary
         return True in (distance >= seg.shortest_distance_to(pt)
                         for seg in self.segments())
 
