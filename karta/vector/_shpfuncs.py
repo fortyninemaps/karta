@@ -5,12 +5,23 @@ import datetime
 import numbers
 import shapefile
 
+def _isnumpyint(o):
+    return hasattr(o, "dtype") and \
+            o.dtype in ("int8", "int16", "int32", "int64")
+
+def _isnumpyfloat(o):
+    return hasattr(o, "dtype") and \
+            o.dtype in ("float16", "float32", "float64", "float128")
+
+def _isnumpytype(o):
+    return hasattr(o, "dtype")
+
 def property_field_type(value):
     """ Determine the appropriate dBase field type for *value* """
-    if isinstance(value, numbers.Number):
-        if isinstance(value, numbers.Integral):
+    if isinstance(value, numbers.Number) or _isnumpytype(value):
+        if isinstance(value, numbers.Integral) or _isnumpyint(value):
             desc = "I"
-        elif isinstance(value, numbers.Real):
+        elif isinstance(value, numbers.Real) or _isnumpyfloat(value):
             desc = "O"
         else:
             raise TypeError("cannot choose the correct dBase type for "
