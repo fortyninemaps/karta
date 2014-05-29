@@ -85,6 +85,14 @@ def check_header(hdr):
 
     return hdr
 
+
+class AAIError(Exception):
+    def __init__(self, message=''):
+        self.message = message
+    def __str__(self):
+        return self.message
+
+
 class AAIIOError(Exception):
     """ Exceptions related to ESRI ASCII grid driver. """
     def __init__(self, value, detail=None):

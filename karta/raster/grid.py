@@ -73,7 +73,6 @@ class Grid(object):
 
     def minmax(self):
         """ Return the minimum and maximum value of data array. """
-        A = self.data[np.isnan(self.data)==False]
         return (np.nanmin(self.data), np.nanmax(self.data))
 
     def copy(self):
