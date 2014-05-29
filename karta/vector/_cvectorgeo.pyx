@@ -74,7 +74,7 @@ def distance(tuple pt0, tuple pt1):
         dsq += abs(pt0[i] - pt1[i])**2
     return math.sqrt(dsq)
 
-def pt_nearest(tuple pt, tuple endpt1, tuple endpt2):
+def pt_nearest_planar(tuple pt, tuple endpt1, tuple endpt2):
     """ Determines the point on a segment defined by tuples endpt1
     and endpt2 nearest to a point defined by tuple pt.
     Returns the a nested tuple of (point, distance)

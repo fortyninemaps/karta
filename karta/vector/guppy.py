@@ -713,10 +713,17 @@ class ConnectedMultipoint(MultipointBase):
         """ Return the shortest distance from any position on the Multipoint
         boundary to *pt* (Point).
         """
-        point_dist = map(_vecgeo.pt_nearest,
-                                [pt.vertex for seg in self.segments()],
-                                [seg[0].vertex for seg in self.segments()],
-                                [seg[1].vertex for seg in self.segments()])
+        if self._crs != pt._crs:
+            raise CRSError("Point must have matching CRS")
+        elif self._crs == kcrs.CARTESIAN:
+            func = _vecgeo.pt_nearest_planar
+        else:
+            func = _vecgeo.pt_nearest_proj
+
+        point_dist = map(func,
+                         [pt.vertex for seg in self.segments()],
+                         [seg[0].vertex for seg in self.segments()],
+                         [seg[1].vertex for seg in self.segments()])
         distances = [i[1] for i in point_dist]
         return min(distances)
 
@@ -724,10 +731,17 @@ class ConnectedMultipoint(MultipointBase):
         """ Returns the position on the Multipoint boundary that is nearest to
         pt (Point). If two points are equidistant, only one will be returned.
         """
-        point_dist = list(map(_vecgeo.pt_nearest,
-                                [pt.vertex for seg in self.segments()],
-                                [seg[0].vertex for seg in self.segments()],
-                                [seg[1].vertex for seg in self.segments()]))
+        if self._crs != pt._crs:
+            raise CRSError("Point must have matching CRS")
+        elif self._crs == kcrs.CARTESIAN:
+            func = _vecgeo.pt_nearest_planar
+        else:
+            func = _vecgeo.pt_nearest_proj
+
+        point_dist = list(map(func,
+                              [pt.vertex for seg in self.segments()],
+                              [seg[0].vertex for seg in self.segments()],
+                              [seg[1].vertex for seg in self.segments()]))
         distances = [i[1] for i in point_dist]
         return Point(point_dist[distances.index(min(distances))][0],
                      properties=self.properties, crs=self._crs)
