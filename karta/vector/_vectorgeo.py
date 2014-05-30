@@ -98,7 +98,7 @@ def iswithin(bbox, pt):
     else:
         return False
 
-def qthashpt(xmin, xmax, ymin, ymax, x, y):
+def hashpt(xmin, xmax, ymin, ymax, x, y):
     """ Returns a generator that returns successive quadrants [0-3] that
     constitute a geohash for *pt* in a global *bbox*. """
     while True:

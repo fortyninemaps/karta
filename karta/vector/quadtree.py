@@ -2,9 +2,9 @@
 
 from collections import namedtuple
 try:
-    from ._cvectorgeo import iswithin
+    from ._cvectorgeo import iswithin, hashpt
 except ImportError:
-    from ._vectorgeo import iswithin
+    from ._vectorgeo import iswithin, hashpt
 
 Node = namedtuple("Node", ["children", "bbox", "leaf"])
 
@@ -133,44 +133,13 @@ def querypt_recursion(parent, pt):
     return False
 
 def querypt_hash(parent, pt):
-    h = hashpt(parent.bbox, pt)
+    (a, b, c, d) = parent.bbox
+    h = hashpt(a, b, c, d, pt[0], pt[1])
     for quad in h:
         if parent.leaf:
             return pt in parent.children
         else:
             parent = parent.children[quad]
-
-def hashpt(bbox, pt):
-    """ Returns a generator that returns successive quadrants [0-3] that
-    constitute a geohash for *pt* in a global *bbox*. """
-    while True:
-        xm = 0.5 * (bbox[0] + bbox[1])
-        ym = 0.5 * (bbox[2] + bbox[3])
-        x, y = pt[0], pt[1]
-        if x < xm:
-            if y < ym:
-                geohash = 0
-                bbox = (bbox[0], xm, bbox[2], ym)
-            elif y >= ym:
-                geohash = 2
-                bbox = (bbox[0], xm, ym, bbox[3])
-            else:
-                raise HashError
-        elif x >= xm:
-            if y < ym:
-                geohash = 1
-                bbox = (xm, bbox[1], bbox[2], ym)
-            elif y >= ym:
-                geohash = 3
-                bbox = (xm, bbox[1], ym, bbox[3])
-            else:
-                raise HashError
-        else:
-            raise HashError
-        yield geohash
-
-class HashError(Exception):
-    pass
 
 class BBoxError(Exception):
     pass

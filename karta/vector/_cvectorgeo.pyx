@@ -130,7 +130,7 @@ def iswithin(tuple bbox, tuple pt):
     else:
         return False
 
-def qthashpt(float xmin, float xmax, float ymin, float ymax, float x, float y):
+def hashpt(float xmin, float xmax, float ymin, float ymax, float x, float y):
     """ Returns a generator that returns successive quadrants [0-3] that
     constitute a geohash for *pt* in a global *bbox*. """
     cdef float xm, ym

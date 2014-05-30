@@ -64,7 +64,7 @@ class TestQuadTree(unittest.TestCase):
 
     def test_hashpt1(self):
         # Find the depth at which (0.99, 0.99) is not in the last quadrant (should be 7)
-        hashgen = hashpt((0, 1, 0, 1), (0.99, 0.99))
+        hashgen = hashpt(0, 1, 0, 1, 0.99, 0.99)
         for (i,h) in enumerate(hashgen):
             if h == 0:
                 break
@@ -75,7 +75,7 @@ class TestQuadTree(unittest.TestCase):
 
     def test_hashpt2(self):
         # Find the hash sequence for (0.26, 0.84) out to length 10
-        hashgen = hashpt((0, 1, 0, 1), (0.26, 0.84))
+        hashgen = hashpt(0, 1, 0, 1, 0.26, 0.84)
         hsh = [next(hashgen) for i in range(10)]
         self.assertEqual(hsh, [2, 3, 0, 2, 0, 2, 3, 2, 1, 0])
         return
