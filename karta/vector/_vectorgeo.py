@@ -89,10 +89,43 @@ def pt_nearest(pt, endpt1, endpt2):
         else:
             return (u_int, dist(u_int, pt))
 
+# QuadTree functions
+
 def iswithin(bbox, pt):
     """ Return whether a point is within a bounding box (planar approximation). """
     if (bbox[0] <= pt[0] < bbox[1] and bbox[2] <= pt[1] < bbox[3]):
         return True
     else:
         return False
+
+def qthashpt(xmin, xmax, ymin, ymax, x, y):
+    """ Returns a generator that returns successive quadrants [0-3] that
+    constitute a geohash for *pt* in a global *bbox*. """
+    while True:
+        xm = 0.5 * (xmn + xmx)
+        ym = 0.5 * (ymn + ymx)
+        if x < xm:
+            if y < ym:
+                geohash = 0
+                bbox = (xmn, xm, ymn, ym)
+            elif y >= ym:
+                geohash = 2
+                bbox = (xmn, xm, ym, ymx)
+            else:
+                raise HashError
+        elif x >= xm:
+            if y < ym:
+                geohash = 1
+                bbox = (xm, xmx, ymn, ym)
+            elif y >= ym:
+                geohash = 3
+                bbox = (xm, xmx, ym, ymx)
+            else:
+                raise HashError
+        else:
+            raise HashError
+        yield geohash
+
+class HashError(Exception):
+    pass
 
