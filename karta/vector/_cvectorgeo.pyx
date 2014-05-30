@@ -115,4 +115,16 @@ def pt_nearest(tuple pt, tuple endpt1, tuple endpt2):
         else:
             return (u_int, dist(u_int, pt))
 
+def iswithin(tuple bbox, tuple pt):
+    """ Return whether a point is within a bounding box (planar approximation). """
+    cdef float xmn = bbox[0]
+    cdef float xmx = bbox[1]
+    cdef float ymn = bbox[2]
+    cdef float ymx = bbox[3]
+    cdef float x = pt[0]
+    cdef float y = pt[1]
+    if (xmn <= x < xmx and ymn <= y < ymx):
+        return True
+    else:
+        return False
 

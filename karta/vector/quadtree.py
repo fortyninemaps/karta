@@ -1,6 +1,10 @@
 """ Implements a simple quadtree datastructure, with emphasis on performance. """
 
 from collections import namedtuple
+try:
+    from ._cvectorgeo import iswithin
+except ImportError:
+    from ._vectorgeo import iswithin
 
 Node = namedtuple("Node", ["children", "bbox", "leaf"])
 
@@ -79,12 +83,6 @@ def mean(x):
     else:
         None
 
-def iswithin(bbox, pt):
-    if (bbox[0] <= pt[0] < bbox[1] and bbox[2] <= pt[1] < bbox[3]):
-        return True
-    else:
-        return False
-
 def overlaps(bbox0, bbox1):
     pts0 = ((x, y) for x in bbox0[:2] for y in bbox0[2:])
     if True in (iswithin(bbox1, pt) for pt in pts0):
@@ -98,9 +96,6 @@ def split(node):
     """ Return a new node with the bbox of *node* and *node*'s children split
     between four child nodes. """
     (x0, x1, y0, y1) = node.bbox
-    #xm = mean([pt[0] for pt in node.children])
-    #ym = mean([pt[1] for pt in node.children])
-    # square subdivisions simplifies hashing
     xm = 0.5 * (x0+x1)
     ym = 0.5 * (y0+y1)
 
@@ -127,14 +122,14 @@ def getfrombbox(parent, bbox):
 
 def querypt_recursion(parent, pt):
     """ Test whether a point exists at *pt* using recursion. """
-    if not parent.leaf:
-        for child in parent.children:
-            if iswithin(child.bbox, pt):
-                return querypt_recursion(child, pt)
-    else:
+    if parent.leaf:
         for childpt in parent.children:
             if pt == childpt:
                 return True
+    else:
+        for child in parent.children:
+            if iswithin(child.bbox, pt):
+                return querypt_recursion(child, pt)
     return False
 
 def querypt_hash(parent, pt):
@@ -152,18 +147,24 @@ def hashpt(bbox, pt):
         xm = 0.5 * (bbox[0] + bbox[1])
         ym = 0.5 * (bbox[2] + bbox[3])
         x, y = pt[0], pt[1]
-        if x < xm and y < ym:
-            geohash = 0
-            bbox = (bbox[0], xm, bbox[2], ym)
-        elif x >= xm and y < ym:
-            geohash = 1
-            bbox = (xm, bbox[1], bbox[2], ym)
-        elif x < xm and y >= ym:
-            geohash = 2
-            bbox = (bbox[0], xm, ym, bbox[3])
-        elif x >= xm and y >= ym:
-            geohash = 3
-            bbox = (xm, bbox[1], ym, bbox[3])
+        if x < xm:
+            if y < ym:
+                geohash = 0
+                bbox = (bbox[0], xm, bbox[2], ym)
+            elif y >= ym:
+                geohash = 2
+                bbox = (bbox[0], xm, ym, bbox[3])
+            else:
+                raise HashError
+        elif x >= xm:
+            if y < ym:
+                geohash = 1
+                bbox = (xm, bbox[1], bbox[2], ym)
+            elif y >= ym:
+                geohash = 3
+                bbox = (xm, bbox[1], ym, bbox[3])
+            else:
+                raise HashError
         else:
             raise HashError
         yield geohash

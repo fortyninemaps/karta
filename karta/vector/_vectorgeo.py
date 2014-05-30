@@ -89,4 +89,10 @@ def pt_nearest(pt, endpt1, endpt2):
         else:
             return (u_int, dist(u_int, pt))
 
+def iswithin(bbox, pt):
+    """ Return whether a point is within a bounding box (planar approximation). """
+    if (bbox[0] <= pt[0] < bbox[1] and bbox[2] <= pt[1] < bbox[3]):
+        return True
+    else:
+        return False
 
