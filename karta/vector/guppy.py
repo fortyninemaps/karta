@@ -37,6 +37,12 @@ try:
 except ImportError:
     PYPROJ = False
 
+try:
+    from scipy.optimize import fmin_l_bfgs_b
+    SCIPY = True
+except ImportError:
+    SCIPY = False
+
 class Geometry(object):
     """ This is the abstract base class for all geometry types, i.e. Point,
     Multipoints and subclasses thereof. """
@@ -718,7 +724,7 @@ class ConnectedMultipoint(MultipointBase):
         elif self._crs == kcrs.CARTESIAN:
             func = _vecgeo.pt_nearest_planar
         else:
-            func = _vecgeo.pt_nearest_proj
+            func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args)
 
         point_dist = map(func,
                          [pt.vertex for seg in self.segments()],
@@ -1093,4 +1099,19 @@ def points_to_multipoint(points):
     vertices = [pt.vertex for pt in points]
 
     return Multipoint(vertices, data=ptdata, crs=crs)
+
+def pt_nearest_proj(geod, pt, endpt1, endpt2):
+    if SCIPY:
+        (az, az2, L) = G.inv(endpt1[0], endpt1[1], endpt2[0], endpt2[1])
+
+        def distance(x):
+            trialpt = geod.fwd(endpt1[0], endpt1[1], az, x*L)
+            (_, _, d) = geod.inv(trialpt[0], trialpt[1], pt[0], pt[1])
+            return d
+
+        res = fmin_l_bfgs_b(distance, [0.5], bounds=[(0, 1.0)], approx_grad=True)
+        x = res[0][0]
+        return geod.fwd(endpt1[0], endpt1[1], ax, x*L)
+    else:
+        raise ImportError("Scipy not available")
 
