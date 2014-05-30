@@ -33,7 +33,12 @@ class QuadTree(object):
     def querypt(self, pt, method="recursion"):
         """ Test whether QuadTree contains a point. *method* may be "recursion"
         [default] or "hash". """
-        return querypt_recursion(self.node, pt)
+        if method == "recursion":
+            return querypt_recursion(self.node, pt)
+        elif method == "hash":
+            return querypt_hash(self.node, pt)
+        else:
+            raise ValueError("Unrecognized method '{0}'".format(method))
 
     def getfrombbox(self, bbox):
         """ Extract all points from a boundary box. """
