@@ -6,7 +6,6 @@ try:
 except ImportError:
     from ._vectorgeo import iswithin, hashpt
 
-#Node = namedtuple("Node", ["children", "bbox", "leaf"])
 class Node(object):
     def __init__(self, children, bbox, leaf):
         self.children = children
@@ -39,7 +38,7 @@ class QuadTree(object):
         self.size += 1
         return d
 
-    def querypt(self, pt, method="recursion"):
+    def querypt(self, pt, method="hash"):
         """ Test whether QuadTree contains a point. *method* may be "recursion"
         [default] or "hash". """
         if method == "recursion":
