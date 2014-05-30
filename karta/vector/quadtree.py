@@ -6,7 +6,15 @@ Node = namedtuple("Node", ["children", "bbox", "leaf"])
 
 class QuadTree(object):
     """ Implements a convenience class that wraps a quadtree data structure and
-    the methods needs to grow or query it. """
+    the methods needs to grow or query it. 
+    
+    Initialize with bbox (xmin, xmax, ymin, ymax).
+
+    Optional parameters
+    -------------------
+    maxchildren         <int> maximum number of points before a node is split
+    maxdepth            <int> maximum tree depth
+    """
 
     def __init__(self, bbox, maxchildren=20, maxdepth=999):
 
@@ -16,13 +24,19 @@ class QuadTree(object):
         self.size = 0
 
     def addpt(self, pt):
-        self.node = addpt(self.node, pt, 1, self.maxchildren, self.maxdepth)
+        """ Add point to the QuadTree. Returns the depth at which the point was
+        added. """
+        (self.node, d) = addpt(self.node, pt, 1, self.maxchildren, self.maxdepth)
         self.size += 1
+        return d
 
-    def querypt(self, pt):
-        return querypt(self.node, pt)
+    def querypt(self, pt, method="recursion"):
+        """ Test whether QuadTree contains a point. *method* may be "recursion"
+        [default] or "hash". """
+        return querypt_recursion(self.node, pt)
 
     def getfrombbox(self, bbox):
+        """ Extract all points from a boundary box. """
         return getfrombbox(self.node, bbox)
 
 
@@ -106,17 +120,25 @@ def getfrombbox(parent, bbox):
                 pts.extend(getfrombbox(child, bbox))
         return pts
 
-def querypt(parent, pt):
+def querypt_recursion(parent, pt):
     """ Test whether a point exists at *pt* using recursion. """
     if not parent.leaf:
         for child in parent.children:
             if iswithin(child.bbox, pt):
-                return querypt(child, pt)
+                return querypt_recursion(child, pt)
     else:
         for childpt in parent.children:
             if pt == childpt:
                 return True
     return False
+
+def querypt_hash(parent, pt):
+    h = hashpt(parent.bbox, pt)
+    for quad in h:
+        if parent.leaf:
+            return pt in parent.children
+        else:
+            parent = parent.children[quad]
 
 def hashpt(bbox, pt):
     """ Returns a generator that returns successive quadrants [0-3] that
