@@ -6,7 +6,12 @@ try:
 except ImportError:
     from ._vectorgeo import iswithin, hashpt
 
-Node = namedtuple("Node", ["children", "bbox", "leaf"])
+#Node = namedtuple("Node", ["children", "bbox", "leaf"])
+class Node(object):
+    def __init__(self, children, bbox, leaf):
+        self.children = children
+        self.bbox = bbox
+        self.leaf = leaf
 
 class QuadTree(object):
     """ Implements a convenience class that wraps a quadtree data structure and
