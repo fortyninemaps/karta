@@ -1,6 +1,5 @@
 """ Implements a simple quadtree datastructure, with emphasis on performance. """
 
-from collections import namedtuple
 try:
     from ._cvectorgeo import iswithin, hashpt
 except ImportError:
