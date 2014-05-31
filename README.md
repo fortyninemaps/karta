@@ -30,6 +30,7 @@ The beginnings of a tutorial to introduce *Karta* are in the [Wiki](https://gith
     - shp\_funcs:   Shapefile-to-guppy conversions through _pyshp_ interface
     - stats:        Basic geostatistical functions
     - xyfile:       ASCII table functions
+    - quadtree:     Simple QuadTree implementation
 
 - raster
     - grid:         Basic Grid types, including `StructuredGrid` and `RegularGrid`
