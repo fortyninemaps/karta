@@ -38,7 +38,7 @@ for extension in extensions:
 
 setup(
     name = "karta",
-    version = "0.2.3",
+    version = "0.2.4",
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
@@ -79,6 +79,7 @@ CONTENTS AT A GLANCE
       interface
    -  stats: Basic geostatistical functions
    -  xyfile: ASCII table functions
+   -  quadtree: Simple QuadTree implementation
 
 -  raster
 
