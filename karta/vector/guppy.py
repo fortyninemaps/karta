@@ -37,12 +37,6 @@ try:
 except ImportError:
     PYPROJ = False
 
-#try:
-#    from scipy.optimize import fmin_l_bfgs_b
-#    SCIPY = True
-#except ImportError:
-#    SCIPY = False
-
 class Geometry(object):
     """ This is the abstract base class for all geometry types, i.e. Point,
     Multipoints and subclasses thereof. """
@@ -423,19 +417,6 @@ class MultipointBase(Geometry):
     def get_vertices(self):
         """ Return vertices as a list of tuples. """
         return np.array(self.vertices)
-
-    #def get_data(self, fields=None):
-    #    """ Return data as an array, regardless of internal type. Optionally
-    #    takes the keyword argument *fields*, which is an iterable listing the
-    #    columns from the data dictionary to retrieve. """
-    #    if hasattr(self.data, 'keys') and hasattr(self.data.values, '__call__'):
-    #        if fields is not None:
-    #            data = np.array([self.data[key] for key in fields])
-    #        else:
-    #            data = np.array(self.data.values())
-    #    else:
-    #        data = np.array(self.data)
-    #    return data.T
 
     def get_coordinate_lists(self):
         """ Return X, Y, and Z lists. If self.rank == 2, Z will be
@@ -1099,19 +1080,4 @@ def points_to_multipoint(points):
     vertices = [pt.vertex for pt in points]
 
     return Multipoint(vertices, data=ptdata, crs=crs)
-
-def pt_nearest_proj(geod, pt, endpt1, endpt2):
-    if SCIPY:
-        (az, az2, L) = G.inv(endpt1[0], endpt1[1], endpt2[0], endpt2[1])
-
-        def distance(x):
-            trialpt = geod.fwd(endpt1[0], endpt1[1], az, x*L)
-            (_, _, d) = geod.inv(trialpt[0], trialpt[1], pt[0], pt[1])
-            return d
-
-        res = fmin_l_bfgs_b(distance, [0.5], bounds=[(0, 1.0)], approx_grad=True)
-        x = res[0][0]
-        return geod.fwd(endpt1[0], endpt1[1], ax, x*L)
-    else:
-        raise ImportError("Scipy not available")
 
