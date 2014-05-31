@@ -218,11 +218,44 @@ class TestGuppy(unittest.TestCase):
         self.assertTrue(abs(dist - math.sqrt(2)) < 1e-10)
         return
 
+    def test_connected_multipoint_shortest_distance_to2(self):
+        line = Line([(127.0, -35.0), (132.0, -28.0), (142.0, -29.0)], crs=crs.LONLAT)
+        dist = line.shortest_distance_to(Point((98.0, -7.0), crs=crs.LONLAT))
+        self.assertAlmostEqual(dist, 4257313.5324397, places=6)
+        return
+
     def test_connected_multipoint_nearest_on_boundary(self):
         line = Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
         npt = line.nearest_on_boundary(Point((0.0, 2.0)))
         self.assertEqual(npt, Point((1.0, 1.0)))
         return
+
+    def assertPointAlmostEqual(self, a, b):
+        for (a_, b_) in zip(a.vertex, b.vertex):
+            self.assertAlmostEqual(a_, b_, places=5)
+        self.assertEqual(a.data, b.data)
+        self.assertEqual(a.properties, b.properties)
+        self.assertEqual(a._crs, b._crs)
+        return
+
+    def test_connected_multipoint_nearest_on_boundary2(self):
+        line = Line([(-40, 0.0), (35, 0.0)], crs=crs.LONLAT)
+        npt = line.nearest_on_boundary(Point((30.0, 80.0), crs=crs.LONLAT))
+        self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=crs.LONLAT))
+        return
+
+    # def test_connected_multipoint_nearest_on_boundary3(self):
+    #     # This is the test that tends to break naive root finding schemes
+    #     line = Line([(-40, 0.0), (35, 0.0)], crs=crs.LONLAT)
+    #     npt = line.nearest_on_boundary(Point((30.0, 1e-8), crs=crs.LONLAT))
+    #     self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=crs.LONLAT))
+    #     return
+
+    # def test_connected_multipoint_nearest_on_boundary4(self):
+    #     line = Line([(-20.0, 32.0), (-26.0, 43.0), (-38.0, 39.0)], crs=crs.LONLAT)
+    #     npt = line.nearest_on_boundary(Point((-34.0, 52.0), crs=crs.LONLAT))
+    #     self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=crs.LONLAT))
+    #     return
 
     def test_line_add_vertex2d(self):
         ln0 = Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0)])

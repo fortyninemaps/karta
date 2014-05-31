@@ -115,6 +115,65 @@ def pt_nearest_planar(tuple pt, tuple endpt1, tuple endpt2):
         else:
             return (u_int, dist(u_int, pt))
 
+def pt_nearest_proj(geod, pt, endpt0, endpt1, float tol=1.0, int maxiter=50):
+    """ Given a geodetic function *geod*, a Point *pt*, and an arc from
+    *endpt1* to *endpt2*, return the point on the arc that is nearest *pt*.
+
+    Scheme employs a bisection minimization method. Iteration continues until a
+    tolerance *tol* in meters is reached, or *maxiter* iterations are
+    exhausted. If the iteration limit is reached, a ConvergenceError is raised.
+    """
+    cdef double az, az2, L
+    (az, az2, L) = geod.inv(endpt0[0], endpt0[1], endpt1[0], endpt1[1])
+
+    def distance(double x):
+        cdef double trialx, trialy, _, d
+        (trialx, trialy, _) = geod.fwd(endpt0[0], endpt0[1], az, x*L)
+        (_, _, d) = geod.inv(trialx, trialy, pt[0], pt[1])
+        return d
+    
+    def ddx(double x):
+        cdef double dx, d1, d2
+        dx = 1e-8
+        d1 = distance(x)
+        d2 = distance(x+dx)
+        return (d2-d1) / dx
+    
+    # Detect whether the nearest point is at an endpoint
+    cdef double dx0, dx1
+    dx0, dx1 = ddx(0), ddx(1)
+    if dx0 > 0:
+        return endpt0, distance(0)
+    elif dx1 < 0:
+        return endpt1, distance(1)
+    
+    # Bisection iteration
+    cdef float x0, x1, xm, xn, yn
+    cdef int i = 0
+    cdef float dx = tol + 1.0
+    x0, x1 = 0.0, 1.0
+    while dx > tol:
+        if i == maxiter:
+            raise ConvergenceError("Maximum iterations exhausted in bisection "
+                                   "method.")
+        xm = 0.5 * (x0 + x1)
+        if ddx(xm) > 0:
+            dx = abs(x1-xm) * L
+            x1 = xm
+        else:
+            dx = abs(x0-xm) * L
+            x0 = xm
+        i += 1
+    (xn, yn, _) = geod.fwd(endpt0[0], endpt0[1], az, xm*L)
+    return (xn, yn), distance(xm)
+
+class ConvergenceError(Exception):
+    def __init__(self, message=''):
+        self.message = message
+    def __str__(self):
+        return self.message
+
+
 # QuadTree functions
 
 def iswithin(tuple bbox, tuple pt):

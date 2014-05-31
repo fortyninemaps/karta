@@ -37,11 +37,11 @@ try:
 except ImportError:
     PYPROJ = False
 
-try:
-    from scipy.optimize import fmin_l_bfgs_b
-    SCIPY = True
-except ImportError:
-    SCIPY = False
+#try:
+#    from scipy.optimize import fmin_l_bfgs_b
+#    SCIPY = True
+#except ImportError:
+#    SCIPY = False
 
 class Geometry(object):
     """ This is the abstract base class for all geometry types, i.e. Point,
@@ -724,7 +724,7 @@ class ConnectedMultipoint(MultipointBase):
         elif self._crs == kcrs.CARTESIAN:
             func = _vecgeo.pt_nearest_planar
         else:
-            func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args)
+            func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args, tol=0.01)
 
         point_dist = map(func,
                          [pt.vertex for seg in self.segments()],
@@ -742,7 +742,7 @@ class ConnectedMultipoint(MultipointBase):
         elif self._crs == kcrs.CARTESIAN:
             func = _vecgeo.pt_nearest_planar
         else:
-            func = _vecgeo.pt_nearest_proj
+            func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args, tol=0.01)
 
         point_dist = list(map(func,
                               [pt.vertex for seg in self.segments()],
