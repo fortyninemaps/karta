@@ -192,16 +192,16 @@ class TestGeoJSONOutput(unittest.TestCase):
 
     def test_write_string_data(self):
         capitols = Multipoint(
-            [Point((-112.1, 33.57), properties={"n": "Phoenix, Arizona"}),
-             Point((-121.5, 38.57), properties={"n": "Sacramento, California"}),
-             Point((-84.42, 33.76), properties={"n": "Atlanta, Georgia"}),
-             Point((-86.15, 39.78), properties={"n": "Indianapolis, Indiana"}),
-             Point((-112.0, 46.6,) , properties={"n": "Helena, Montana"}),
-             Point((-82.99, 39.98), properties={"n": "Columbus, Ohio"}),
-             Point((-77.48, 37.53), properties={"n": "Richmond, Virginia"}),
-             Point((-95.69, 39.04), properties={"n": "Topeka, Kansas"}),
-             Point((-71.02, 42.33), properties={"n": "Boston, Massachusetts"}),
-             Point((-96.68, 40.81), properties={"n": "Lincoln, Nebraska"})])
+            [Point((-112.1, 33.57), data={"n": "Phoenix, Arizona"}),
+             Point((-121.5, 38.57), data={"n": "Sacramento, California"}),
+             Point((-84.42, 33.76), data={"n": "Atlanta, Georgia"}),
+             Point((-86.15, 39.78), data={"n": "Indianapolis, Indiana"}),
+             Point((-112.0, 46.6,) , data={"n": "Helena, Montana"}),
+             Point((-82.99, 39.98), data={"n": "Columbus, Ohio"}),
+             Point((-77.48, 37.53), data={"n": "Richmond, Virginia"}),
+             Point((-95.69, 39.04), data={"n": "Topeka, Kansas"}),
+             Point((-71.02, 42.33), data={"n": "Boston, Massachusetts"}),
+             Point((-96.68, 40.81), data={"n": "Lincoln, Nebraska"})])
         s = capitols.as_geojson()
         ans = """{ "properties": { "n": [ "Phoenix, Arizona", "Sacramento, California", "Atlanta, Georgia", "Indianapolis, Indiana", "Helena, Montana", "Columbus, Ohio", "Richmond, Virginia", "Topeka, Kansas", "Boston, Massachusetts", "Lincoln, Nebraska" ] }, "bbox": [ [ -121.5, -71.02 ], [ 33.57, 46.6 ] ], "type": "Feature", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -112.1, 33.57 ], [ -121.5, 38.57 ], [ -84.42, 33.76 ], [ -86.15, 39.78 ], [ -112.0, 46.6 ], [ -82.99, 39.98 ], [ -77.48, 37.53 ], [ -95.69, 39.04 ], [ -71.02, 42.33 ], [ -96.68, 40.81 ] ] }, "id": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] } """
         self.verifyJson(s, ans)

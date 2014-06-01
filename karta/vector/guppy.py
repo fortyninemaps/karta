@@ -616,21 +616,22 @@ class Multipoint(MultipointBase):
                          v.rank == vertices[0].rank for v in vertices):
             points = vertices
             crs = points[0]._crs
-            if False in (pt._crs == crs for pt in points):
+            if False in (pt._crs == crs for pt in points[1:]):
                 raise CRSError("All points must share the same CRS")
 
-            keys = list(points[0].properties.keys())
+            keys = list(points[0].data.keys())
             for pt in points[1:]:
                 for key in keys:
-                    if key not in pt.properties:
+                    if key not in pt.data:
                         keys.pop(keys.index(key))
 
             ptdata = {}
             for key in keys:
-                ptdata[key] = [pt.properties[key] for pt in points]
+                ptdata[key] = [pt.data[key] for pt in points]
 
             if data is not None:
                 ptdata.update(data)
+
             self.data = Metadata(ptdata)
             self.vertices = [pt.vertex for pt in points]
             self.rank = vertices[0].rank
