@@ -38,8 +38,7 @@ except ImportError:
     PYPROJ = False
 
 class Geometry(object):
-    """ This is the abstract base class for all geometry types, i.e. Point,
-    Multipoints and subclasses thereof. """
+    """ This is the abstract base class for all geometry types """
     _geotype = None
 
     def __init__(self, crs=kcrs.CARTESIAN):
@@ -79,8 +78,14 @@ class Geometry(object):
 
 
 class Point(Geometry):
-    """ This defines the point class, from which x,y[,z] points can be
-    constructed. """
+    """ Point object instantiated with:
+
+    *coords*        2-tuple or 3-tuple
+    *data*          List, dictionary, or Metadata object for point-specific
+                    data [default None]
+    *properties*    Dictionary of geometry specific data [default None]
+    *crs*           Coordinate reference system instance [default CARTESIAN]
+    """
     _geotype = "Point"
 
     def __init__(self, coords, data=None, properties=None, **kwargs):
@@ -295,14 +300,6 @@ class MultipointBase(Geometry):
     _geotype = "MultipointBase"
 
     def __init__(self, vertices, data=None, properties=None, **kwargs):
-        """ Create a feature with multiple vertices.
-
-        vertices : a list of tuples containing point coordinates.
-
-        data : is either `None` a list of point attributes, or a dictionary of
-        point attributes. If `data` is not `None`, then it (or its values) must
-        match `vertices` in length.
-        """
         super(MultipointBase, self).__init__(**kwargs)
         vertices = list(vertices)
         if properties is None:
@@ -492,8 +489,8 @@ class MultipointBase(Geometry):
         return np.array(d)
 
     def nearest_point_to(self, pt):
-        """ Returns the internal point that is nearest to pt (Point class).
-        If two points are equidistant, only one will be returned.
+        """ Returns the internal Point that is nearest to *pt*. If two points
+        are equidistant, only one will be returned.
         """
         distances = self.distances_to(pt)
         idx = np.argmin(distances)
@@ -594,23 +591,22 @@ class MultipointBase(Geometry):
         elif self.rank == 3:
             _shpfuncs.write_multipoint3(self, fstem)
         else:
-            raise IOError("rank must be 2 or 3 to write as a shapefile\n")
+            raise IOError("Rank must be 2 or 3 to write as a shapefile")
         return
 
 class Multipoint(MultipointBase):
     """ Point cloud with associated attributes. This is a base class for the
-    polyline and polygon classes. """
+    polyline and polygon classes.
+
+    *coords*        List of 2-tuples or 3-tuples
+    *data*          List, dictionary, or Metadata object for point-specific
+                    data [default None]
+    *properties*    Dictionary of geometry specific data [default None]
+    *crs*           Coordinate reference system instance [default CARTESIAN]
+    """
     _geotype = "Multipoint"
 
     def __init__(self, vertices, data=None, properties=None, **kwargs):
-        """ Create a feature with multiple vertices.
-
-        vertices : a list of tuples containing point coordinates.
-
-        data : is either `None` a list of point attributes, or a dictionary of
-        point attributes. If `data` is not `None`, then it (or its values) must
-        match `vertices` in length.
-        """
         if False not in (hasattr(v, "_geotype") and \
                          v._geotype == "Point" and \
                          v.rank == vertices[0].rank for v in vertices):
@@ -741,9 +737,13 @@ class ConnectedMultipoint(MultipointBase):
                         for seg in self.segments())
 
 class Line(ConnectedMultipoint):
-    """ This defines the polyline class, from which geographic line
-    objects can be constructed. Line objects consist of joined,
-    georeferenced line segments.
+    """ Line composed of connected vertices.
+    
+    *coords*        List of 2-tuples or 3-tuples
+    *data*          List, dictionary, or Metadata object for point-specific
+                    data [default None]
+    *properties*    Dictionary of geometry specific data [default None]
+    *crs*           Coordinate reference system instance [default CARTESIAN]
     """
     _geotype = "Line"
 
@@ -842,9 +842,14 @@ class Line(ConnectedMultipoint):
         return
 
 class Polygon(ConnectedMultipoint):
-    """ This defines the polygon class, from which geographic
-    polygons objects can be created. Polygon objects consist of
-    point nodes enclosing an area.
+    """ Polygon, composed of a closed sequence of vertices.
+    
+    *coords*        List of 2-tuples or 3-tuples
+    *data*          List, dictionary, or Metadata object for point-specific
+                    data [default None]
+    *properties*    Dictionary of geometry specific data [default None]
+    *subs*          List of sub-polygons [default None]
+    *crs*           Coordinate reference system instance [default CARTESIAN]
     """
     _geotype = "Polygon"
     subs = []
