@@ -2,7 +2,6 @@
 
 import os
 import shapefile
-import dateutil.parser
 from . import guppy
 from . import geojson
 from . import xyfile
@@ -128,7 +127,8 @@ def open_file_dict(fdict):
 dBase_type_dict = {"I": int,
                    "O": float,
                    "C": str,
-                   "@": dateutil.parser.parse,
+                   "@": lambda a: a,    # Temporary
+                   "D": lambda a: a,
                    "L": bool}
 
 def recordsasdata(reader):
