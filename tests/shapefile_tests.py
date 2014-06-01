@@ -83,7 +83,7 @@ class TestShapefile(unittest.TestCase):
         return
 
     def test_read_points(self):
-        shps = read_shapefile(os.path.join(TESTDATA, "newp-current-profiler"))
+        shps = read_shapefile(os.path.join(TESTDATA, "newp"))
         mp = shps[0]
         self.assertEqual(mp.vertices,
                          [(-14.612, 80.50906666666667), (-14.612, 80.50906666666667),
