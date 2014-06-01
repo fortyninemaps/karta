@@ -6,6 +6,7 @@ from . import guppy
 from . import geojson
 from . import xyfile
 from .. import crs
+from .metadata import Metadata
 
 def _parsegeojsoncrs(crstup):
     """ From a tuple representing a GeoJSON (name,None) or (href,type) pair,
@@ -86,6 +87,23 @@ def _geojson_properties2guppy(properties, n):
     return props, data
 
 
+def read_xyfile(f, delimiter='', header_rows=0, astype=guppy.Multipoint, coordrank=2):
+    """ Read an ASCII delimited table and return a guppy object given by *astype*.
+    """
+    dat = xyfile.load_xy(f, delimiter=delimiter, header_rows=header_rows)
+    ncols = dat.shape[1]
+    if ncols >= coordrank:
+        coords = dat[:,:coordrank]
+        if ncols > coordrank:
+            data = dat[:,coordrank:]
+        else:
+            data = None
+        return astype(coords, data=data)
+    else:
+        raise IOError('data table has insufficient number of columns')
+
+### Shapefile functions ###
+
 def shape2point(shape):
     """ Convert a shapefile._Shape `shape` to a guppy.Point. """
     return guppy.Point(*shape.points)
@@ -122,8 +140,25 @@ def open_file_dict(fdict):
     dictionary of the file objects. """
     files = {}
     for ext in fdict.keys():
-        files[ext] = open(fdict[ext], 'r')
+        files[ext] = open(fdict[ext], 'rb')
     return files
+
+def recordsasdata(reader):
+    """ Interpret shapefile records as a Metadata object """
+    d = {}
+    records = [rec for rec in reader.records()]
+    for (i,k) in enumerate(reader.fields[1:]):
+        d[k[0]] = [rec[i] for rec in records]
+    return Metadata(d)
+
+def recordsasproperties(reader):
+    """ Interpret shapefile records as a list of properties dictionaries """
+    proplist = []
+    keys = reader.fields
+    for (i,rec) in enumerate(reader.records()):
+        properties = dict(zip(keys, [val for val in rec]))
+        proplist.append(properties)
+    return proplist
 
 def read_shapefile(stem):
     """ Read a shapefile given `stem`, which is the name without an extension.
@@ -132,42 +167,33 @@ def read_shapefile(stem):
 
     try:
         files = open_file_dict(fnms)
-
         reader = shapefile.Reader(shp=files['shp'], shx=files['shx'],
                                   dbf=files['dbf'])
-        features = []
-        for shape in reader.shapes():
-            if len(shape.points) > 0:
-                if shape.shapeType == 1:
-                    features.append(shape2point(shape))
-                elif shape.shapeType == 3:
-                    features.append(shape2line(shape))
-                elif shape.shapeType == 5:
-                    features.append(shape2poly(shape))
-                elif shape.shapeType == 8:
-                    features.append(shape2multipoint(shape))
-                else:
-                    raise NotImplementedError("cannot read shape type "
-                                              "{0}".format(shape.shapeType))
+
+        if reader.shapeType == 1:       # Points
+            verts = [shp.points[0] for shp in reader.shapes()]
+            d = recordsasdata(reader)
+            geoms = [guppy.Multipoint(verts, data=d)]
+
+        elif reader.shapeType == 3:     # Lines
+            plist = recordsasproperties(reader)
+            geoms = []
+            for (shp,prop) in zip(reader.shapes(), plist):
+                geoms.append(guppy.Line(shp.points, properties=prop))
+
+        elif reader.shapeType == 5:     # Polygon
+            plist = recordsasproperties(reader)
+            geoms = []
+            for (shp,prop) in zip(reader.shapes(), plist):
+                geoms.append(guppy.Polygon(shp.points, properties=prop))
+
+        else:
+            raise NotImplementedError("Shapefile shape type {0} not "
+                "implemented".format(reader.shapeType))
 
     finally:
         for f in files.values():
             f.close()
 
-    return features
-
-def read_xyfile(f, delimiter='', header_rows=0, astype=guppy.Multipoint, coordrank=2):
-    """ Read an ASCII delimited table and return a guppy object given by *astype*.
-    """
-    dat = xyfile.load_xy(f, delimiter=delimiter, header_rows=header_rows)
-    ncols = dat.shape[1]
-    if ncols >= coordrank:
-        coords = dat[:,:coordrank]
-        if ncols > coordrank:
-            data = dat[:,coordrank:]
-        else:
-            data = None
-        return astype(coords, data=data)
-    else:
-        raise IOError('data table has insufficient number of columns')
+    return geoms
 

@@ -8,7 +8,7 @@ import datetime
 import numbers
 from copy import copy
 
-from karta.vector import _shpfuncs
+from karta.vector import _shpfuncs, read_shapefile
 from karta.vector.guppy import Point, Multipoint, Line, Polygon
 
 class TestShapefile(unittest.TestCase):
@@ -81,6 +81,25 @@ class TestShapefile(unittest.TestCase):
         self.assertEqual(_shpfuncs.property_field_type(datetime.date(1986, 8, 17)), "D")
         self.assertEqual(_shpfuncs.property_field_type(datetime.datetime(2013, 5, 4, 20, 40, 21)), "@")
         return
+
+    def test_read_points(self):
+        shps = read_shapefile(os.path.join(TESTDATA, "newp-current-profiler"))
+        mp = shps[0]
+        self.assertEqual(mp.vertices,
+                         [(-14.612, 80.50906666666667), (-14.612, 80.50906666666667),
+                          (-14.612, 80.50906666666667), (-13.744733333333333, 80.28181666666667),
+                          (-13.744733333333333, 80.28181666666667), (-13.744733333333333, 80.28181666666667),
+                          (-11.002583333333334, 80.32173333333333), (-11.002583333333334, 80.32173333333333),
+                          (-11.002583333333334, 80.32173333333333), (-11.07225, 80.56316666666666),
+                          (-11.07225, 80.56316666666666)])
+        self.assertEqual(mp.data["meterno"], ['IMS1/1', 'IMS2/1', '5952/2',
+                                              'IMS4/1', '5953/2', '1963/13',
+                                              'IMS5/1', '5213/A', '2121/13',
+                                              'IMS3/1', '3613/2'])
+        self.assertEqual(mp.data["depth_m"], [73, 143, 247, 86, 147, 250, 74,
+                                              142, 235, 150, 248])
+        return
+
 
 if __name__ == "__main__":
     unittest.main()
