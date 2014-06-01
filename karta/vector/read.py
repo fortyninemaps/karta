@@ -2,6 +2,7 @@
 
 import os
 import shapefile
+import dateutil.parser
 from . import guppy
 from . import geojson
 from . import xyfile
@@ -104,25 +105,6 @@ def read_xyfile(f, delimiter='', header_rows=0, astype=guppy.Multipoint, coordra
 
 ### Shapefile functions ###
 
-def shape2point(shape):
-    """ Convert a shapefile._Shape `shape` to a guppy.Point. """
-    return guppy.Point(*shape.points)
-
-def shape2line(shape):
-    """ Convert a shapefile._Shape `shape` to a guppy.Line. """
-    verts = shape.points
-    return guppy.Line(verts)
-
-def shape2poly(shape):
-    """ Converts a shapefile._Shape `shape` to a guppy.Polygon. """
-    verts = shape.points
-    return guppy.Polygon(verts)
-
-def shape2multipoint(shape):
-    """ Converts a shapefile._Shape `shape` to a guppy.Polygon. """
-    verts = shape.points
-    return guppy.Multipoint(verts)
-
 def get_filenames(stem, check=False):
     """ Given a filename basename, return the associated shapefile paths. If
     `check` is True, ensure that the files exist."""
@@ -143,20 +125,32 @@ def open_file_dict(fdict):
         files[ext] = open(fdict[ext], 'rb')
     return files
 
+dBase_type_dict = {"I": int,
+                   "O": float,
+                   "C": str,
+                   "@": dateutil.parser.parse,
+                   "L": bool}
+
 def recordsasdata(reader):
     """ Interpret shapefile records as a Metadata object """
     d = {}
+    idfunc = lambda a: a
     records = [rec for rec in reader.records()]
     for (i,k) in enumerate(reader.fields[1:]):
-        d[k[0]] = [rec[i] for rec in records]
+        f = dBase_type_dict.get(k[1], idfunc)
+        d[k[0]] = [f(rec[i]) for rec in records]
     return Metadata(d)
 
 def recordsasproperties(reader):
     """ Interpret shapefile records as a list of properties dictionaries """
     proplist = []
     keys = reader.fields
+    idfunc = lambda a: a
     for (i,rec) in enumerate(reader.records()):
-        properties = dict(zip(keys, [val for val in rec]))
+        properties = {}
+        for (k,v) in zip(keys, rec):
+            f = dBase_type_dict.get(k[1], idfunc)
+            properties[k[0]] = f(v)
         proplist.append(properties)
     return proplist
 
