@@ -82,7 +82,7 @@ class Grid(object):
 
 class RegularGrid(Grid):
     """ Regular (structured) grid class. A RegularGrid contains a fixed number
-    of rows and columns with a regular spacing and a scalar or vector field
+    of rows and columns with a constant spacing and a scalar or vector field
     defined as `Z`.
     """
     def __init__(self, hdr, Z=None):
@@ -358,6 +358,12 @@ class RegularGrid(Grid):
         else:
             raise ValueError("method \"{0}\" not understood".format(method))
 
+    def get_extents(self):
+        hdr = self.get_hdr()
+        x1 = hdr["xllcorner"] + hdr["nx"] * hdr["dx"]
+        y1 = hdr["yllcorner"] + hdr["ny"] * hdr["dy"]
+        return (hdr["xllcorner"], x1, hdr["yllcorner"], y1)
+
     def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as `segments`. Does not interpolate.
 
@@ -456,7 +462,7 @@ class RegularGrid(Grid):
 class WarpedGrid(Grid):
     """ Warped Grid class. A WarpedGrid contains a fixed number of rows
     and columns and a scalar or vector field defined on the z-axis. Grid
-    spacing is not necessarily regular.
+    spacing is not necessarily constant.
     """
 
     def __init__(self, hdr=None, X=None, Y=None, Z=None):
