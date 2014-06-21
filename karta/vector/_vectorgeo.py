@@ -16,11 +16,20 @@ def intersects(x0, x1, x2, x3, y0, y1, y2, y3):
     if m0 == m1:
         return False
     x = float(y1 - y3 + m1*x3 - m0*x1) / float(m1 - m0)
-    if (x < max(x0, x1) and x < max(x2, x3) and
-        x > min(x0, x1) and x > min(x2, x3)):
-        return True
+
+    iswithin = False
+    if abs(x1 - x0) >= 1e-15:
+        if abs(x3 - x2) >= 1e-15:
+            if (x <= max(x0, x1) and x <= max(x2, x3) and
+                x > min(x0, x1) and x > min(x2, x3)):
+                    iswithin = True
+        else:
+            if (x <= max(x0, x1) and x > min(x0, x1) and abs(x - x2) < 1e-15):
+                iswithin = True
     else:
-        return False
+        if (x <= max(x2, x3) and x > min(x2, x3) and abs(x - x0) < 1e-15):
+            iswithin = True
+    return iswithin
 
 def intersections(x0, x1, x2, x3, y0, y1, y2, y3):
     """ Return the point of intersection between two line segments. Returns NaN
@@ -37,8 +46,21 @@ def intersections(x0, x1, x2, x3, y0, y1, y2, y3):
     if m0 == m1:
         return (np.nan, np.nan)
     x = float(m0*x0 - m1*x2 + y2 - y0) / float(m0 - m1)
-    if (x < max(x0, x1) and x < max(x2, x3) and
-        x > min(x0, x1) and x > min(x2, x3)):
+
+    iswithin = False
+    if abs(x1 - x0) >= 1e-15:
+        if abs(x3 - x2) >= 1e-15:
+            if (x <= max(x0, x1) and x <= max(x2, x3) and
+                x > min(x0, x1) and x > min(x2, x3)):
+                    iswithin = True
+        else:
+            if (x <= max(x0, x1) and x > min(x0, x1) and abs(x - x2) < 1e-15):
+                iswithin = True
+    else:
+        if (x <= max(x2, x3) and x > min(x2, x3) and abs(x - x0) < 1e-15):
+            iswithin = True
+
+    if iswithin:
         y = m0 * (x-x0) + y0
         return (x, y)
     else:

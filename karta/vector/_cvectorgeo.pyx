@@ -3,6 +3,7 @@
 import math
 import numpy as np
 cimport numpy as np
+from cpython cimport bool
 
 cdef inline double dbl_max(double a, double b): return a if a >= b else b
 cdef inline double dbl_min(double a, double b): return a if a <= b else b
@@ -25,11 +26,21 @@ cpdef int intersects(double x0, double x1, double x2, double x3,
     if m0 == m1:
         return False
     x = (y1 - y3 + m1*x3 - m0*x1) / (m1 - m0)
-    if (x < dbl_max(x0, x1) and x < dbl_max(x2, x3) and
-        x > dbl_min(x0, x1) and x > dbl_min(x2, x3)):
-        return True
+
+    cdef bool iswithin
+    iswithin = False
+    if abs(x1 - x0) >= 1e-15:
+        if abs(x3 - x2) >= 1e-15:
+            if (x <= max(x0, x1) and x <= max(x2, x3) and
+                x > min(x0, x1) and x > min(x2, x3)):
+                    iswithin = True
+        else:
+            if (x <= max(x0, x1) and x > min(x0, x1) and abs(x - x2) < 1e-15):
+                iswithin = True
     else:
-        return False
+        if (x <= max(x2, x3) and x > min(x2, x3) and abs(x - x0) < 1e-15):
+            iswithin = True
+    return iswithin
 
 def intersections(double x0, double x1, double x2, double x3,
                  double y0, double y1, double y2, double y3):
@@ -50,8 +61,22 @@ def intersections(double x0, double x1, double x2, double x3,
     if m0 == m1:
         return (np.nan, np.nan)
     x = (m0*x0 - m1*x2 + y2 - y0) / (m0 - m1)
-    if (x < dbl_max(x0, x1) and x < dbl_max(x2, x3) and
-        x > dbl_min(x0, x1) and x > dbl_min(x2, x3)):
+
+    cdef bool iswithin
+    iswithin = False
+    if abs(x1 - x0) >= 1e-15:
+        if abs(x3 - x2) >= 1e-15:
+            if (x <= max(x0, x1) and x <= max(x2, x3) and
+                x > min(x0, x1) and x > min(x2, x3)):
+                    iswithin = True
+        else:
+            if (x <= max(x0, x1) and x > min(x0, x1) and abs(x - x2) < 1e-15):
+                iswithin = True
+    else:
+        if (x <= max(x2, x3) and x > min(x2, x3) and abs(x - x0) < 1e-15):
+            iswithin = True
+
+    if iswithin:
         y = m0 * (x-x0) + y0
         return (x, y)
     else:
