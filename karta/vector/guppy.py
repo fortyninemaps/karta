@@ -687,11 +687,15 @@ class ConnectedMultipoint(MultipointBase):
             return False
 
     def intersections(self, other):
-        """ Return the intersections with another geometry. """
+        """ Return the intersections with another geometry as a Multipoint. """
         interx = (_vecgeo.intersections(a[0][0], a[1][0], b[0][0], b[1][0],
                                         a[0][1], a[1][1], b[0][1], b[1][1])
                     for a in self.segments() for b in other.segments())
-        return list(filter(lambda a: np.nan not in a, interx))
+        interx_points = []
+        for vertex in interx:
+            if np.nan not in vertex:
+                interx_points.append(Point(vertex, properties=self.properties, crs=self._crs))
+        return Multipoint(interx_points)
 
     def shortest_distance_to(self, pt):
         """ Return the shortest distance from any position on the Multipoint

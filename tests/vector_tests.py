@@ -300,7 +300,7 @@ class TestGuppy(unittest.TestCase):
         line0 = Line([(0.0, 0.0), (3.0, 3.0)])
         line1 = Line([(0.0, 3.0), (3.0, 0.0)])
         self.assertTrue(line0.intersects(line1))
-        self.assertEqual(line0.intersections(line1), [(1.5, 1.5)])
+        self.assertEqual(line0.intersections(line1), Multipoint([(1.5, 1.5)]))
         return
 
     def test_poly_vertices(self):
