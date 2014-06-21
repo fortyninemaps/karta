@@ -607,19 +607,21 @@ class Multipoint(MultipointBase):
     _geotype = "Multipoint"
 
     def __init__(self, vertices, data=None, properties=None, **kwargs):
-        if False not in (hasattr(v, "_geotype") and \
-                         v._geotype == "Point" and \
-                         v.rank == vertices[0].rank for v in vertices):
+        if len(vertices) != 0 and False not in (hasattr(v, "_geotype") and \
+                                                v._geotype == "Point" and \
+                                                v.rank == vertices[0].rank \
+                                                    for v in vertices):
             points = vertices
             crs = points[0]._crs
-            if False in (pt._crs == crs for pt in points[1:]):
+            if len(points) != 1 and False in (pt._crs == crs for pt in points[1:]):
                 raise CRSError("All points must share the same CRS")
 
             keys = list(points[0].data.keys())
-            for pt in points[1:]:
-                for key in keys:
-                    if key not in pt.data:
-                        keys.pop(keys.index(key))
+            if len(points) != 1:
+                for pt in points[1:]:
+                    for key in keys:
+                        if key not in pt.data:
+                            keys.pop(keys.index(key))
 
             ptdata = {}
             for key in keys:
