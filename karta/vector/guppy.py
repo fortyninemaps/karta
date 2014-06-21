@@ -650,7 +650,7 @@ class Multipoint(MultipointBase):
         return self._subset(indices)
 
     def within_bbox(self, bbox):
-        """ Return Multipoint subset that is within a square boundaing box
+        """ Return Multipoint subset that is within a square bounding box
         given by (xmin, xmax, ymin, ymax). """
         filtbbox = lambda pt: (bbox[0] <= pt.vertex[0] <= bbox[1]) and \
                               (bbox[2] <= pt.vertex[1] <= bbox[3])
@@ -668,11 +668,11 @@ class ConnectedMultipoint(MultipointBase):
         return sum(distances)
 
     def segments(self):
-        """ Returns an iterator of adjacent line segments. """
+        """ Returns an generator of adjacent line segments. """
         return (self._subset((i,i+1)) for i in range(len(self)-1))
 
     def segment_tuples(self):
-        """ Returns an iterator of adjacent line segments as coordinate tuples. """
+        """ Returns an generator of adjacent line segments as coordinate tuples. """
         return ((self.vertices[i], self.vertices[i+1])
                 for i in range(len(self.vertices)-1))
 
