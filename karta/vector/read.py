@@ -5,21 +5,21 @@ import shapefile
 from . import guppy
 from . import geojson
 from . import xyfile
-from .. import crs
+from .. import crs as kcrs
 from .metadata import Metadata
 
 def _parsegeojsoncrs(crstup):
     """ From a tuple representing a GeoJSON (name,None) or (href,type) pair,
     return an appropriate karta crs instance. """
     if crstup[0] is None:       # use default as defined by spec
-        return crs.LONLAT_WGS84
+        return kcrs.LONLAT_WGS84
     elif crstup[1] is None:     # named CRS
-        for c in crs.crslist:
+        for c in kcrs.crslist:
             if c.urn == crstup[0]:
                 return c
-        return crs.CRS("unknown", "unknown", crstup[0])
+        return kcrs.CRS("unknown", "unknown", crstup[0])
     else:                       # linked CRS
-        return crs.CRS("unknown", crstup[1], crstup[0])
+        return kcrs.CRS("unknown", crstup[1], crstup[0])
 
 def read_geojson(f):
     """ Read a GeoJSON object file and return a list of geometries """
@@ -154,9 +154,13 @@ def recordsasproperties(reader):
         proplist.append(properties)
     return proplist
 
-def read_shapefile(stem):
+def read_shapefile(stem, crs=None):
     """ Read a shapefile given `stem`, which is the name without an extension.
+    The geometry CRS must be specified, otherwise it is assumed to be
+    cartesian.
     """
+    if crs is None:
+        crs = kcrs.CARTESIAN
     fnms = get_filenames(stem, check=True)
 
     try:
@@ -167,19 +171,19 @@ def read_shapefile(stem):
         if reader.shapeType == 1:       # Points
             verts = [shp.points[0] for shp in reader.shapes()]
             d = recordsasdata(reader)
-            geoms = [guppy.Multipoint(verts, data=d)]
+            geoms = [guppy.Multipoint(verts, data=d, crs=crs)]
 
         elif reader.shapeType == 3:     # Lines
             plist = recordsasproperties(reader)
             geoms = []
             for (shp,prop) in zip(reader.shapes(), plist):
-                geoms.append(guppy.Line(shp.points, properties=prop))
+                geoms.append(guppy.Line(shp.points, properties=prop, crs=crs))
 
         elif reader.shapeType == 5:     # Polygon
             plist = recordsasproperties(reader)
             geoms = []
             for (shp,prop) in zip(reader.shapes(), plist):
-                geoms.append(guppy.Polygon(shp.points, properties=prop))
+                geoms.append(guppy.Polygon(shp.points, properties=prop, crs=crs))
 
         else:
             raise NotImplementedError("Shapefile shape type {0} not "
