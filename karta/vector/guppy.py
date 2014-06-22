@@ -680,23 +680,24 @@ class ConnectedMultipoint(MultipointBase):
 
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
-        interxbool = (_vecgeo.intersects(a[0][0], a[1][0], b[0][0], b[1][0],
-                                         a[0][1], a[1][1], b[0][1], b[1][1])
+        interxbool = (np.nan in _vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+                                                     a[0][1], a[1][1], b[0][1], b[1][1])
                     for a in self.segments() for b in other.segments())
-        if self._bbox_overlap(other) and (True in interxbool):
+        if self._bbox_overlap(other) and (True not in interxbool):
             return True
         else:
             return False
 
     def intersections(self, other):
         """ Return the intersections with another geometry as a Multipoint. """
-        interx = (_vecgeo.intersections(a[0][0], a[1][0], b[0][0], b[1][0],
-                                        a[0][1], a[1][1], b[0][1], b[1][1])
-                    for a in self.segments() for b in other.segments())
+        interx = set(_vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+                                          a[0][1], a[1][1], b[0][1], b[1][1])
+                     for a in self.segments() for b in other.segments())
         interx_points = []
         for vertex in interx:
             if np.nan not in vertex:
-                interx_points.append(Point(vertex, properties=self.properties, crs=self._crs))
+                interx_points.append(Point(vertex, properties=self.properties,
+                                           crs=self._crs))
         return Multipoint(interx_points)
 
     def shortest_distance_to(self, pt):
@@ -893,32 +894,14 @@ class Polygon(ConnectedMultipoint):
         """ Returns True if pt is inside or on the boundary of the
         polygon, and False otherwise.
         """
-        def possible(pt, v1, v2):
-            """ Quickly assess potential for an intersection with an x+
-            pointing ray. """
-            x = pt.vertex[0]
-            y = pt.vertex[1]
-            if ( ((y > v1[1]) is not (y > v2[1]))
-            and ((x < v1[0]) or (x < v2[0])) ):
-                return True
-            else:
-                return False
-
         # Find how many boundaries a ray pointing out from point crosses
-        bool2int = lambda tf: (tf and 1 or 0)
-        rvertices = deque(self.vertices)
-        rvertices.rotate(1)
-        segments = [(v1, v2) for v1, v2 in zip(self.vertices, rvertices)
-                    if possible(pt, v1, v2)]
+        minx = min(v[0] for v in self.vertices) - 1
+        miny = min(v[1] for v in self.vertices) - 1
+        ray = Line([(minx, miny), pt.vertex], crs=pt._crs)
+        nintx = len(self.intersections(ray))
 
-        n_intersect = sum([bool2int(
-            isinstance(ray_intersection(pt.vertex, seg[0], seg[1]), tuple))
-            for seg in segments])
-
-        if n_intersect % 2 == 1:    # If odd, point is inside so check subpolys
-            if True not in (p.contains(pt) for p in self.subs):
-                return True
-        return False                # Point was outside or was in a subpoly
+        # If odd, point is inside so check subpolys
+        return nintx % 2 == 1 and True not in (p.contains(pt) for p in self.subs)
 
     def to_polyline(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """

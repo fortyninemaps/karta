@@ -303,6 +303,19 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(line0.intersections(line1), Multipoint([(1.5, 1.5)]))
         return
 
+    def test_line_intersection_horizontal(self):
+        line0 = Line([(-2.5, 2.5), (2.5, 2.5)])
+        line1 = Line([(0.0, 0.0), (1.0, 5.0)])
+        self.assertTrue(line0.intersects(line1))
+        self.assertEqual(line0.intersections(line1), Multipoint([(0.5, 2.5)]))
+        return
+
+    def test_line_intersection_vertical(self):
+        line0 = Line([(2.5, 2.5), (2.5, -2.5)])
+        line1 = Line([(1.5, 2.5), (3.5, -2.5)])
+        self.assertTrue(line0.intersects(line1))
+        self.assertEqual(line0.intersections(line1), Multipoint([(2.5, 0.0)]))
+
     def test_poly_vertices(self):
         self.assertTrue((self.poly.get_vertices() ==
             np.array([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (0.0, 8.0)])).all())
