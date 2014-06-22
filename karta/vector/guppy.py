@@ -524,6 +524,13 @@ class MultipointBase(Geometry):
     #    D = map(dist, (p[0] for p in P), (p[1] for p in P))
     #    return P[D.index(max(D))]
 
+    def any_within_poly(self, poly):
+        """ Return whether any vertices are inside *poly* """
+        for pt in self:
+            if poly.contains(pt):
+                return True
+        return False
+
     def to_xyfile(self, fnm, fields=None, delimiter=' ', header=None):
         """ Write data to a delimited ASCII table.
 
@@ -875,6 +882,13 @@ class Polygon(ConnectedMultipoint):
                 return Line(self.vertices[key], data=self.data[key], 
                             properties=self.properties, crs=self._crs)
         return super(Polygon, self).__getitem__(key)
+
+    def _subset(self, idxs):
+        """ Return a subset defined by index in *idxs*. """
+        vertices = [self.vertices[i] for i in idxs]
+        data = self.data.sub(idxs)
+        subset = Line(vertices, data=data, properties=self.properties, crs=self._crs)
+        return subset
 
     def perimeter(self):
         """ Return the perimeter of the polygon. If there are sub-polygons,
