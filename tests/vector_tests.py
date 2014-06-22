@@ -103,6 +103,11 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(self.mp.nearest_point_to(self.point), self.mp[12])
         return
 
+    def test_empty_multipoint(self):
+        mp = Multipoint([], crs=crs.LONLAT_WGS84)
+        self.assertEqual(len(mp), 0)
+        return
+
     def test_multipoint_zip_init(self):
         x = range(-10, 10)
         y = [_x**2 for _x in x]

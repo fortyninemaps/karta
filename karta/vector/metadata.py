@@ -49,6 +49,7 @@ class Metadata(Mapping):
 
             if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
                 # Dictionary of attributes
+                n = 0
                 for k in data:
                     dtype = type(data[k][0])
                     if False in (isinstance(a, dtype) for a in data[k]):
