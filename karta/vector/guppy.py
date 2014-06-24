@@ -820,9 +820,9 @@ class Line(ConnectedMultipoint):
         pos = self[0]
         seg = next(segments)
         seg_remaining = seg.displacement()
-        direction = seg[0].azimuth(seg[1])
 
         while x < Ltotal:
+            direction = seg[0].azimuth(seg[1])
 
             if step_remaining <= seg_remaining:
                 pos = pos.walk(step_remaining, direction)
@@ -830,6 +830,7 @@ class Line(ConnectedMultipoint):
                 seg_remaining -= step_remaining
                 step_remaining = step
                 points.append(pos)
+                seg.vertices[0] = pos.vertex
            
             else:
                 pos = seg[1]
