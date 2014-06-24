@@ -197,8 +197,8 @@ class Point(Geometry):
             direction (float): horizontal walk direction in radians
         """
         if self._crs == kcrs.CARTESIAN:
-            dx = distance * math.cos(direction)
-            dy = distance * math.sin(direction)
+            dx = distance * math.sin(direction)
+            dy = distance * math.cos(direction)
 
             if self.rank == 2:
                 return Point((self.x+dx, self.y+dy),
@@ -807,6 +807,45 @@ class Line(ConnectedMultipoint):
             d.append(d_ + d[-1])
             pta = ptb
         return d
+
+    def subsection(self, n):
+        """ Return *n* equally spaced Point instances along line. """
+        segments = self.segments()
+        Ltotal = self.cumlength()[-1]
+        step = Ltotal / (n-1)
+        step_remaining = step
+
+        points = [self[0]]
+        x = 0.0
+        pos = self[0]
+        seg = next(segments)
+        seg_remaining = seg.displacement()
+        direction = seg[0].azimuth(seg[1])
+
+        while x < Ltotal:
+
+            if step_remaining <= seg_remaining:
+                pos = pos.walk(step_remaining, direction)
+                x += step_remaining
+                seg_remaining -= step_remaining
+                step_remaining = step
+                points.append(pos)
+           
+            else:
+                pos = seg[1]
+                x += seg_remaining
+                step_remaining -= seg_remaining
+
+                try:
+                    seg = next(segments)
+                    seg_remaining = seg.displacement()
+                    direction = seg[0].azimuth(seg[1])
+                except StopIteration as e:
+                    if abs(Ltotal-x) > 1e-12:       # tolerance for endpoint
+                        raise e
+
+        points.append(self[-1])
+        return points
 
     def displacement(self):
         """ Returns the distance between the first and last vertex. """
