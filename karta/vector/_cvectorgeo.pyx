@@ -8,8 +8,16 @@ from cpython cimport bool
 cdef inline double dbl_max(double a, double b): return a if a >= b else b
 cdef inline double dbl_min(double a, double b): return a if a <= b else b
 
-cdef isbetween(double a, double b, double c):
+cdef bool isbetween_inc(double a, double b, double c):
     return b <= dbl_max(a, c) and b >= dbl_min(a, c)
+
+cdef bool isbetween_incl(double a, double b, double c):
+    return b < dbl_max(a, c) and b >= dbl_min(a, c)
+
+cdef bool isbetween_incr(double a, double b, double c):
+    return b <= dbl_max(a, c) and b > dbl_min(a, c)
+
+ctypedef bool (*isbetween_t)(double, double, double)
 
 def intersection(double x0, double x1, double x2, double x3,
                  double y0, double y1, double y2, double y3):
@@ -38,13 +46,13 @@ def intersection(double x0, double x1, double x2, double x3,
 
     if abs(x1 - x0) >= 1e-15:
         if abs(x3 - x2) >= 1e-15:
-            if isbetween(x0, x, x1) and isbetween(x2, x, x3):
+            if isbetween_inc(x0, x, x1) and isbetween_inc(x2, x, x3):
                 iswithinx = True
         else:
-            if abs(x - x2) < 1e-15 and isbetween(x0, x, x1):
+            if abs(x - x2) < 1e-15 and isbetween_inc(x0, x, x1):
                 iswithinx = True
     else:
-        if abs(x - x0) < 1e-15 and isbetween(x2, x, x3):
+        if abs(x - x0) < 1e-15 and isbetween_inc(x2, x, x3):
             iswithinx = True
 
     if iswithinx:
@@ -54,17 +62,60 @@ def intersection(double x0, double x1, double x2, double x3,
             y = m1 * (x-x2) + y2
         if abs(y1 - y0) >= 1e-15:
             if abs(y3 - y2) >= 1e-15:
-                if isbetween(y0, y, y1) and isbetween(y2, y, y3):
+                if isbetween_inc(y0, y, y1) and isbetween_inc(y2, y, y3):
                     iswithiny = True
-            elif abs(y - y2) < 1e-15 and isbetween(y0, y, y1):
+            elif abs(y - y2) < 1e-15 and isbetween_inc(y0, y, y1):
                 iswithiny = True
-        elif abs(y - y0) < 1e-15 and isbetween(y2, y, y3):
+        elif abs(y - y0) < 1e-15 and isbetween_inc(y2, y, y3):
             iswithiny = True
             
     if iswithinx and iswithiny:
         return (x, y)
     else:
         return (np.nan, np.nan)
+
+def intersects_cn(double xp, double yp, double x0, double x1, double y0, double y1):
+    """ Test whether a horizontal ray emanating left from a point (xp, yp)
+    crosses a line segment. Used to implement a crossing number membership
+    test.
+    """
+    cdef double m0, m1
+    cdef double x, y
+
+    if x1 != x0:
+        m = float(y1-y0) / float(x1-x0)
+    else:
+        m = 1e37
+    if m == 0.0:
+        return False
+
+    x = float(yp-y0) / m  + x0
+
+    if x < xp:
+        return False
+    
+    cdef bool iswithinx
+    cdef bool iswithiny
+    iswithinx = False
+    iswithiny = False
+
+    cdef isbetween_t isbetween
+    if m > 0:
+        isbetween = isbetween_incl
+    else:
+        isbetween = isbetween_incr
+
+    if abs(x1 - x0) >= 1e-15 and isbetween(x0, x, x1):
+        iswithinx = True
+    elif abs(x - x0) < 1e-15:
+        iswithinx = True
+
+    if iswithinx:
+        if abs(y1 - y0) >= 1e-15 and isbetween(y0, yp, y1):
+            iswithiny = True
+        elif abs(yp - y0) < 1e-15:
+            iswithiny = True
+    return iswithinx and iswithiny
 
 cdef double cdot2(tuple v1, tuple v2):
     return v1[0] * v2[0] + v1[1] * v2[1]

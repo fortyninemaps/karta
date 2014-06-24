@@ -19,11 +19,12 @@ from .. import crs as kcrs
 from collections import deque
 from .metadata import Metadata
 
+from . import _vectorgeo
 try:
     from . import _cvectorgeo as _vecgeo
 except ImportError:
     sys.stderr.write("falling back on slow _vectorgeo")
-    from . import _vectorgeo as _vecgeo
+    _vecgeo = _vectorgeo
 
 try:
     import shapely.geometry as geometry
@@ -695,11 +696,13 @@ class ConnectedMultipoint(MultipointBase):
         else:
             return False
 
-    def intersections(self, other):
+    def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
-        interx = set(_vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+        interx = (_vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                           a[0][1], a[1][1], b[0][1], b[1][1])
                      for a in self.segments() for b in other.segments())
+        if not keep_duplicates:
+            interx = set(interx)
         interx_points = []
         for vertex in interx:
             if np.nan not in vertex:
@@ -909,10 +912,12 @@ class Polygon(ConnectedMultipoint):
         polygon, and False otherwise.
         """
         # Find how many boundaries a ray pointing out from point crosses
-        minx = min(v[0] for v in self.vertices) - 1
-        miny = min(v[1] for v in self.vertices) - 1
-        ray = Line([(minx, miny), pt.vertex], crs=pt._crs)
-        nintx = len(self.intersections(ray))
+        nintx = 0
+        x, y = pt[0], pt[1]
+        for seg in self.segments():
+            (a, b) = seg
+            if _vecgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
+                nintx += 1
 
         # If odd, point is inside so check subpolys
         return nintx % 2 == 1 and True not in (p.contains(pt) for p in self.subs)

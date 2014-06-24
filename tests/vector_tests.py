@@ -339,11 +339,32 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(self.poly.length(), 19.430647008220866)
         return
 
-    def test_poly_contains(self):
+    def test_poly_contains1(self):
+        # trivial case
         pt0 = Point((-0.5, 0.92))
         pt1 = Point((0.125, 0.875))
         self.assertFalse(self.unitsquare.contains(pt0))
         self.assertTrue(self.unitsquare.contains(pt1))
+        return
+
+    def test_poly_contains2(self):
+        # trivial but more interesting case
+        x = np.arange(-4, 5)
+        y = (x)**2
+        line = Line([(x_,y_) for x_,y_ in zip(x, y)], crs=crs.CARTESIAN)
+        bbox = Polygon([(-2.5, 2.5), (2.5, 2.5), (2.5, -2.5), (-2.5, -2.5)],
+                             crs=crs.CARTESIAN)
+
+        self.assertEqual(list(filter(bbox.contains, line)),
+                         [Point((-1, 1)), Point((0, 0)), Point((1, 1))])
+
+    def test_poly_contains3(self):
+        # test some hard cases
+        diamond = Polygon([(0,0), (1,1), (2,0), (1, -1)])
+        self.assertFalse(diamond.contains(Point((2, 1))))
+        self.assertTrue(diamond.contains(Point((1, 0))))
+        self.assertFalse(diamond.contains(Point((2.5, 0))))
+        self.assertFalse(diamond.contains(Point((2, -1))))
         return
 
     def test_poly_getitem(self):

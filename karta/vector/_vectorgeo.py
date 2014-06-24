@@ -3,8 +3,14 @@
 import math
 import numpy as np
 
-def isbetween(a, b, c):
+def isbetween_inc(a, b, c):
     return b <= max(a, c) and b >= min(a, c)
+
+def isbetween_incl(a, b, c):
+    return b < max(a, c) and b >= min(a, c)
+
+def isbetween_incr(a, b, c):
+    return b <= max(a, c) and b > min(a, c)
 
 def intersection(x0, x1, x2, x3, y0, y1, y2, y3):
     """ Return the point of intersection between two line segments. Returns NaN
@@ -27,13 +33,13 @@ def intersection(x0, x1, x2, x3, y0, y1, y2, y3):
 
     if abs(x1 - x0) >= 1e-15:
         if abs(x3 - x2) >= 1e-15:
-            if isbetween(x0, x, x1) and isbetween(x2, x, x3):
+            if isbetween_incl(x0, x, x1) and isbetween_incl(x2, x, x3):
                 iswithinx = True
         else:
-            if abs(x - x2) < 1e-15 and isbetween(x0, x, x1):
+            if abs(x - x2) < 1e-15 and isbetween_incl(x0, x, x1):
                 iswithinx = True
     else:
-        if abs(x - x0) < 1e-15 and isbetween(x2, x, x3):
+        if abs(x - x0) < 1e-15 and isbetween_incl(x2, x, x3):
             iswithinx = True
 
     if iswithinx:
@@ -43,17 +49,51 @@ def intersection(x0, x1, x2, x3, y0, y1, y2, y3):
             y = m1 * (x-x2) + y2
         if abs(y1 - y0) >= 1e-15:
             if abs(y3 - y2) >= 1e-15:
-                if isbetween(y0, y, y1) and isbetween(y2, y, y3):
+                if isbetween_incl(y0, y, y1) and isbetween_incl(y2, y, y3):
                     iswithiny = True
-            elif abs(y - y2) < 1e-15 and isbetween(y0, y, y1):
+            elif abs(y - y2) < 1e-15 and isbetween_incl(y0, y, y1):
                 iswithiny = True
-        elif abs(y - y0) < 1e-15 and isbetween(y2, y, y3):
+        elif abs(y - y0) < 1e-15 and isbetween_incl(y2, y, y3):
             iswithiny = True
             
     if iswithinx and iswithiny:
         return (x, y)
     else:
         return (np.nan, np.nan)
+
+def intersects_cn(xp, yp, x0, x1, y0, y1):
+    """ Test whether a horizontal ray emanating left from a point (xp, yp)
+    crosses a line segment. Used to implement a crossing number membership
+    test.
+    """
+    if x1 != x0:
+        m = float(y1-y0) / float(x1-x0)
+    else:
+        m = 1e37
+    if m == 0.0:
+        return False
+
+    x = float(yp-y0) / m  + x0
+
+    if x < xp:
+        return False
+    
+    iswithinx = False
+    iswithiny = False
+    isbetween = isbetween_incl if m > 0 else isbetween_incr
+
+    if abs(x1 - x0) >= 1e-15 and isbetween(x0, x, x1):
+        iswithinx = True
+    elif abs(x - x0) < 1e-15:
+        iswithinx = True
+
+    if iswithinx:
+        if abs(y1 - y0) >= 1e-15 and isbetween(y0, yp, y1):
+            iswithiny = True
+        elif abs(yp - y0) < 1e-15:
+            iswithiny = True
+            
+    return iswithinx and iswithiny
 
 def distance(pt0, pt1):
     """ Calculate the distance between two points (tuples) """
