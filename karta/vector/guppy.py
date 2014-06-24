@@ -909,9 +909,8 @@ class Polygon(ConnectedMultipoint):
 
     def contains(self, pt):
         """ Returns True if pt is inside or on the boundary of the
-        polygon, and False otherwise.
+        polygon, and False otherwise. Uses a crossing number scheme.
         """
-        # Find how many boundaries a ray pointing out from point crosses
         nintx = 0
         x, y = pt[0], pt[1]
         for seg in self.segments():
