@@ -5,6 +5,7 @@ measurements such as distance, area, and bearing.
 
 Written by Nat Wilson (njwilson23@gmail.com)
 """
+from __future__ import division
 
 import math
 import sys
@@ -812,7 +813,7 @@ class Line(ConnectedMultipoint):
         """ Return *n* equally spaced Point instances along line. """
         segments = self.segments()
         Ltotal = self.cumlength()[-1]
-        step = Ltotal / (n-1)
+        step = Ltotal / float(n-1)
         step_remaining = step
 
         points = [self[0]]
@@ -821,7 +822,7 @@ class Line(ConnectedMultipoint):
         seg = next(segments)
         seg_remaining = seg.displacement()
 
-        while x < Ltotal:
+        while x < Ltotal-1e-8:
             direction = seg[0].azimuth(seg[1])
 
             if step_remaining <= seg_remaining:
@@ -837,14 +838,14 @@ class Line(ConnectedMultipoint):
                 x += seg_remaining
                 step_remaining -= seg_remaining
 
-                try:
-                    seg = next(segments)
-                    seg_remaining = seg.displacement()
-                except StopIteration as e:
-                    if abs(Ltotal-x) > 1e-8:       # tolerance for endpoint
-                         raise e
+                seg = next(segments, seg)
+                seg_remaining = seg.displacement()
+                # except StopIteration as e:
+                #     if abs(Ltotal-x) > 1e-8:       # tolerance for endpoint
+                #         raise e
 
-        points.append(self[-1])
+        if len(points) == n-1:
+            points.append(seg[-1])
         return points
 
     def displacement(self):
