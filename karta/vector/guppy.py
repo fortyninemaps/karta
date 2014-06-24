@@ -839,17 +839,16 @@ class Line(ConnectedMultipoint):
                 try:
                     seg = next(segments)
                     seg_remaining = seg.displacement()
-                    direction = seg[0].azimuth(seg[1])
                 except StopIteration as e:
-                    if abs(Ltotal-x) > 1e-12:       # tolerance for endpoint
-                        raise e
+                    if abs(Ltotal-x) > 1e-8:       # tolerance for endpoint
+                         raise e
 
         points.append(self[-1])
         return points
 
     def displacement(self):
         """ Returns the distance between the first and last vertex. """
-        return Point(self.vertices[0]).distance(Point(self.vertices[-1]))
+        return self[0].distance(self[-1])
 
     #def direction(self):
     #    """ Returns a vector of the azimuth along a line at each point,
