@@ -92,8 +92,6 @@ class Point(Geometry):
 
     def __init__(self, coords, data=None, properties=None, copy_metadata=True,
                  **kwargs):
-        if properties is None:
-            properties = {}
         if not hasattr(coords, "__iter__"):
             raise ValueError("Point coordinates must be a sequence")
         super(Point, self).__init__(**kwargs)
@@ -102,6 +100,8 @@ class Point(Geometry):
         self.data = Metadata(data, singleton=True, copydata=copy_metadata)
         if hasattr(properties, "keys"):
             self.properties = properties
+        else:
+            properties = {}
         return
 
     def __getitem__(self, idx):
@@ -120,14 +120,15 @@ class Point(Geometry):
 
     def _setxyz(self):
         """ Create convenience *x*, *y* (, *z*) attributes from vertices. """
-        self.x = self.vertex[0]
-        self.y = self.vertex[1]
-        try:
-            self.z = self.vertex[2]
-            self.rank = 3
-        except IndexError:
-            self.z = None
+        vertex = self.vertex
+        self.x = vertex[0]
+        self.y = vertex[1]
+        if len(vertex) == 2:
             self.rank = 2
+            self.z = None
+        else:
+            self.rank = 3
+            self.z = vertex[2]
         return
 
     def isat(self, other, tol=0.001):
