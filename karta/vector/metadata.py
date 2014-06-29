@@ -92,10 +92,10 @@ class Metadata(Mapping):
             raise MetadataError("self and other must both be instances of {0}".format(type(self)))
         if set(self.keys()) != set(other.keys()):
             raise MetadataError("self and other do not have identical field names")
-        res = copy.deepcopy(self)
-        res._len += other._len
-        for k in res:
-            res[k] += other[k]
+        res = Metadata({})
+        res._len = self._len + other._len
+        for k in self:
+            res[k] = self[k] + other[k]
         return res
 
     def __len__(self):
