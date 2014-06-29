@@ -465,7 +465,7 @@ class WarpedGrid(Grid):
     spacing is not necessarily constant.
     """
 
-    def __init__(self, hdr=None, X=None, Y=None, Z=None):
+    def __init__(self, X, Y, Z, hdr=None):
         """
         Parameters:
         -----------
@@ -478,12 +478,11 @@ class WarpedGrid(Grid):
             - nbands (int)
         """
 
-        if True in (a is None for a in (X,Y,Z)):
-            raise GridError('Either all or none of (`X`, `Y`, `Z`) must be '
-                            'provided')
+        if any(a is None for a in (X, Y, Z)):
+            raise GridError('All of (X, Y, Z) must be provided')
 
         if not (X.shape == Y.shape == Z.shape[:2]):
-            raise GridError('All of (`X`, `Y`, `Z`) must share the same '
+            raise GridError('All of (X, Y, Z) must share the same '
                             'two-dimensional size')
 
         if hdr is None:
