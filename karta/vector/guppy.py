@@ -16,11 +16,9 @@ from . import geojson
 from . import xyfile
 from . import _shpfuncs
 from .. import crs as kcrs
-
-from collections import deque
 from .metadata import Metadata
-
 from . import _vectorgeo
+
 try:
     from . import _cvectorgeo as _vecgeo
 except ImportError:
