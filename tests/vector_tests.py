@@ -162,8 +162,8 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_multipoint_bbox(self):
-        bbox = (1.0, 9.0, 0.0, 9.0, 0.0, 9.0)
-        self.assertEqual(self.mp.get_bbox(), bbox)
+        bbox = (1.0, 0.0, 9.0, 9.0)
+        self.assertEqual(self.mp.bbox, bbox)
         return
 
     def test_multipoint_bbox_overlap(self):
@@ -482,6 +482,36 @@ class TestGuppy(unittest.TestCase):
             self.assertEqual(len(line.subsection(n)), n)
         return
 
+class TestGuppyGeoInterface(unittest.TestCase):
+
+    def test_point(self):
+        pt = Point((1,2))
+        self.assertEqual(pt.__geo_interface__, {"type":"Point", "coordinates":(1,2)})
+        pt.shift((2,2))
+        self.assertEqual(pt.__geo_interface__, {"type":"Point", "coordinates":(3,4)})
+
+    def test_poly(self):
+        x = np.arange(5)
+        y = x**2
+        poly = Polygon(list(zip(x, y)))
+        self.assertEqual(poly.__geo_interface__,
+                         {"type":"Polygon",
+                          "bbox":(0, 0, 4, 16),
+                          "coordinates": list(zip(np.r_[x,x[0]], np.r_[y,y[0]]))})
+
+    def test_line(self):
+        x = np.arange(10)
+        y = x**2
+        line = Line(zip(x, y))
+        self.assertEqual(line.__geo_interface__,
+                         {"type":"LineString",
+                          "bbox":(0, 0, 9, 81),
+                          "coordinates": list(zip(x,y))})
+        line = line[:5]
+        self.assertEqual(line.__geo_interface__,
+                         {"type":"LineString", 
+                          "bbox":(0, 0, 4, 16),
+                          "coordinates": list(zip(x[:5],y[:5]))})
 
 class TestGuppyProj(unittest.TestCase):
 

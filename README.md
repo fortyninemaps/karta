@@ -23,7 +23,7 @@ The beginnings of a tutorial to introduce *Karta* are in the [Wiki](https://gith
 ##CONTENTS AT A GLANCE
 
 - vector
-    - guppy:        Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`)
+    - guppy:        Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`) supporting the [Python \_\_geo\_interface\_\_](https://gist.github.com/sgillies/2217756)
     - gpx:          GPX class for parsing and constructing GPX eXchange files
     - geojson:      Classes and functions for reading and writing GeoJSON
     - vtk:          XML-based VTK interface

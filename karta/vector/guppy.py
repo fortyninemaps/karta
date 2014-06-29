@@ -116,6 +116,10 @@ class Point(Geometry):
         else:
             return False
 
+    @property
+    def __geo_interface__(self):
+        return {"type" : "Point", "coordinates" : self.vertex}
+
     def _setxyz(self):
         """ Create convenience *x*, *y* (, *z*) attributes from vertices. """
         vertex = self.vertex
@@ -396,21 +400,21 @@ class MultipointBase(Geometry):
         """ Return whether bounding boxes between self and another geometry
         overlap.
         """
-        reg0 = self.get_bbox()
-        reg1 = other.get_bbox()
-        return (reg0[0] < reg1[1] and reg0[1] > reg1[0] and
-                reg0[2] < reg1[3] and reg0[3] > reg1[2])
+        reg0 = self.bbox
+        reg1 = other.bbox
+        return (reg0[0] < reg1[2] and reg0[2] > reg1[0] and
+                reg0[1] < reg1[3] and reg0[3] > reg1[1])
 
-    def get_bbox(self):
+    @property
+    def bbox(self):
         """ Return the extents of a bounding box as
-            (xmin, ymax, ymin, ymax, [zmin, zmin]).
+            (xmin, ymin, xmax, ymax)
         """
         if self.rank == 2:
             x, y = self.get_coordinate_lists()
-            bbox = (min(x), max(x), min(y), max(y))
         elif self.rank == 3:
             x, y, z = self.get_coordinate_lists()
-            bbox = (min(x), max(x), min(y), max(y), min(z), max(z))
+        bbox = (min(x), min(y), max(x), max(y))
         return bbox
 
     def print_vertices(self):
@@ -609,6 +613,7 @@ class MultipointBase(Geometry):
             raise IOError("Rank must be 2 or 3 to write as a shapefile")
         return
 
+
 class Multipoint(MultipointBase):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes.
@@ -661,6 +666,10 @@ class Multipoint(MultipointBase):
                                              properties=properties,
                                              **kwargs)
         return
+
+    @property
+    def __geo_interface__(self):
+        return {"type" : "MultiPoint", "bbox" : self.bbox, "coordinates" : self.vertices}
 
     def within_radius(self, pt, radius):
         """ Return Multipoint of subset that is within *radius* of *pt*.
@@ -762,6 +771,7 @@ class ConnectedMultipoint(MultipointBase):
         """ Test whether a point is within *distance* of a ConnectedMultipoint. """
         return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments())
 
+
 class Line(ConnectedMultipoint):
     """ Line composed of connected vertices.
     
@@ -772,6 +782,10 @@ class Line(ConnectedMultipoint):
     *crs*           Coordinate reference system instance [default CARTESIAN]
     """
     _geotype = "Line"
+
+    @property
+    def __geo_interface__(self):
+        return {"type" : "LineString", "bbox" : self.bbox, "coordinates" : self.vertices}
 
     def add_vertex(self, vertex):
         """ Add a vertex to self.vertices. """
@@ -906,6 +920,7 @@ class Line(ConnectedMultipoint):
             raise IOError("rank must be 2 or 3 to write as a shapefile")
         return
 
+
 class Polygon(ConnectedMultipoint):
     """ Polygon, composed of a closed sequence of vertices.
     
@@ -933,6 +948,10 @@ class Polygon(ConnectedMultipoint):
                 return Line(self.vertices[key], data=self.data[key], 
                             properties=self.properties, crs=self._crs)
         return super(Polygon, self).__getitem__(key)
+
+    @property
+    def __geo_interface__(self):
+        return {"type" : "Polygon", "bbox" : self.bbox, "coordinates" : self.vertices}
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
@@ -1019,10 +1038,12 @@ class GGeoError(GuppyError):
     def __init__(self, message=''):
         self.message = message
 
+
 class CRSError(GuppyError):
     """ Exception to raise for invalid geodetic operations. """
     def __init__(self, message=''):
         self.message = message
+
 
 def ray_intersection(pt, endpt1, endpt2, direction=0.0):
     """ Determines whether a ray intersects a line segment. If yes,
