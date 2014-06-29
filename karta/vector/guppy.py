@@ -732,10 +732,11 @@ class ConnectedMultipoint(MultipointBase):
         else:
             func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args, tol=0.01)
 
+        segments = list(self.segments())
         point_dist = map(func,
-                         [pt.vertex for seg in self.segments()],
-                         [seg[0].vertex for seg in self.segments()],
-                         [seg[1].vertex for seg in self.segments()])
+                         (pt.vertex for seg in segments),
+                         (seg[0].vertex for seg in segments),
+                         (seg[1].vertex for seg in segments))
         point_dist = [i[1] for i in point_dist]
         return min(point_dist)
 
