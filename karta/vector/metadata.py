@@ -34,14 +34,17 @@ class Metadata(Mapping):
         if copydata:
             data = copy.deepcopy(data)
 
-        if singleton:
+        if data is None or len(data) == 0:
+            self._len = 0
+            self._data = {}
+            self._fieldtypes = []
+
+        elif singleton:
 
             if hasattr(data, "keys") and hasattr(data.values, "__call__"):
-                    self._data = data
-            elif data is not None:
-                self._data = {"values": data}
+                self._data = data
             else:
-                self._data = {}
+                self._data = {"values": data}
             self._fieldtypes = [type(self._data[k]) for k in self._data]
             self._len = 1
 
@@ -49,22 +52,21 @@ class Metadata(Mapping):
 
             if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
                 # Dictionary of attributes
-                n = 0
+                n = -1
                 for k in data:
                     dtype = type(data[k][0])
                     if not all(isinstance(a, dtype) for a in data[k]):
                         raise MetadataError("Data must have uniform type")
-                    n = len(data[k])
+                    if n != -1:
+                        if len(data[k]) != n:
+                            raise MetadataError("Data must have uniform lengths")
+                    else:
+                        n = len(data[k])
 
-                if not all(len(v) == n for v in data.values()):
-                    raise MetadataError("Data must have uniform lengths")
-                elif len(data) == 0:
-                    self._len = 0
-                else:
-                    self._len = n
-                data = data
+                self._len = n
+                self._data = data
 
-            elif data is not None:
+            else:
                 # Single attribute
                 if not hasattr(data, '__iter__'):
                     data = [data]
@@ -74,11 +76,6 @@ class Metadata(Mapping):
                     raise MetadataError("Data must have uniform type")
                 else:
                     data = {'values': data}
-
-            else:
-                # No metadata
-                data = {}
-                self._len = 0
 
             self._data = data
             self._fieldtypes = [type(data[k][0]) for k in data]
