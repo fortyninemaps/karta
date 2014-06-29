@@ -294,7 +294,7 @@ class Point(Geometry):
         try:
             return geometry.Point(self.x, self.y, self.z)
         except NameError:
-            raise ImportError('Shapely module did not import\n')
+            raise ImportError('Shapely module did not import')
 
 
 class MultipointBase(Geometry):
@@ -306,15 +306,13 @@ class MultipointBase(Geometry):
                  **kwargs):
         super(MultipointBase, self).__init__(**kwargs)
         vertices = list(vertices)
-        if properties is None:
-            properties = {}
         if len(vertices) > 0:
             self.rank = len(vertices[0])
 
-            if self.rank > 3 or self.rank < 2:
-                raise GInitError('Input must be doubles or triples\n')
+            if not 2 <= self.rank <= 3:
+                raise GInitError("Input must be doubles or triples")
             elif not all(self.rank == len(i) for i in vertices):
-                raise GInitError('Input must have consistent rank\n')
+                raise GInitError("Input must have consistent rank")
             else:
                 self.vertices = [tuple(i) for i in vertices]
 
@@ -324,6 +322,10 @@ class MultipointBase(Geometry):
 
         if hasattr(properties, "keys"):
             self.properties = properties
+        elif properties is None:
+            self.properties = {}
+        else:
+            raise GInitError("value provided as 'properties' must be a hash")
 
         self.data = Metadata(data, copydata=copy_metadata)
         return
@@ -892,7 +894,7 @@ class Line(ConnectedMultipoint):
             elif self.rank == 3:
                 return geometry.LineString([(v[0], v[1], v[2]) for v in self.vertices])
         except NameError:
-            raise GuppyError('Shapely module not available\n')
+            raise GuppyError('Shapely module not available')
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
@@ -901,7 +903,7 @@ class Line(ConnectedMultipoint):
         elif self.rank == 3:
             _shpfuncs.write_line3(self, fstem)
         else:
-            raise IOError("rank must be 2 or 3 to write as a shapefile\n")
+            raise IOError("rank must be 2 or 3 to write as a shapefile")
         return
 
 class Polygon(ConnectedMultipoint):
@@ -978,7 +980,7 @@ class Polygon(ConnectedMultipoint):
             shp = geometry.Polygon(self.vertices,
                                    interiors=[p.vertices for p in self.subs])
         except NameError:
-            raise ImportError('Shapely module did not import\n')
+            raise ImportError('Shapely module did not import')
         return shp
 
     def to_shapefile(self, fstem):
@@ -988,7 +990,7 @@ class Polygon(ConnectedMultipoint):
         elif self.rank == 3:
             _shpfuncs.write_poly3(self, fstem)
         else:
-            raise IOError("rank must be 2 or 3 to write as a shapefile\n")
+            raise IOError("rank must be 2 or 3 to write as a shapefile")
         return
 
 
