@@ -313,7 +313,7 @@ class MultipointBase(Geometry):
 
             if self.rank > 3 or self.rank < 2:
                 raise GInitError('Input must be doubles or triples\n')
-            elif False in [self.rank == len(i) for i in vertices]:
+            elif not all(self.rank == len(i) for i in vertices):
                 raise GInitError('Input must have consistent rank\n')
             else:
                 self.vertices = [tuple(i) for i in vertices]
@@ -389,7 +389,7 @@ class MultipointBase(Geometry):
         return hasattr(other, "_geotype") and \
                (self._geotype == other._geotype) and \
                (len(self) == len(other)) and \
-               (False not in (a==b for a,b in zip(self, other)))
+               all(a==b for a,b in zip(self, other))
 
     def _bbox_overlap(self, other):
         """ Return whether bounding boxes between self and another geometry
@@ -622,14 +622,16 @@ class Multipoint(MultipointBase):
 
     def __init__(self, vertices, data=None, properties=None, copy_metadata=True,
                  **kwargs):
-        if len(vertices) != 0 and False not in (hasattr(v, "_geotype") and \
-                                                v._geotype == "Point" and \
-                                                v.rank == vertices[0].rank \
-                                                    for v in vertices):
+        def ispoint(a):
+            return hasattr(a, "_geotype") and a._geotype == "Point"
+        if len(vertices) != 0 and all(ispoint(a) for a in vertices):
             points = vertices
             crs = points[0]._crs
-            if len(points) != 1 and False in (pt._crs == crs for pt in points[1:]):
+            rank = points[0].rank
+            if len(points) != 1 and not all(pt._crs == crs for pt in points[1:]):
                 raise CRSError("All points must share the same CRS")
+            elif not all(rank == pt.rank for pt in points[1:]):
+                raise GInitError("Input must have consistent rank")
 
             keys = list(points[0].data.keys())
             if len(points) != 1:
@@ -647,8 +649,8 @@ class Multipoint(MultipointBase):
 
             self.data = Metadata(ptdata, copydata=copy_metadata)
             self.vertices = [pt.vertex for pt in points]
-            self.rank = vertices[0].rank
             self.properties = properties
+            self.rank = rank
             self._crs = crs
 
         else:
@@ -732,8 +734,8 @@ class ConnectedMultipoint(MultipointBase):
                          [pt.vertex for seg in self.segments()],
                          [seg[0].vertex for seg in self.segments()],
                          [seg[1].vertex for seg in self.segments()])
-        distances = [i[1] for i in point_dist]
-        return min(distances)
+        point_dist = [i[1] for i in point_dist]
+        return min(point_dist)
 
     def nearest_on_boundary(self, pt):
         """ Returns the position on the Multipoint boundary that is nearest to
@@ -756,9 +758,7 @@ class ConnectedMultipoint(MultipointBase):
 
     def within_distance(self, pt, distance):
         """ Test whether a point is within *distance* of a ConnectedMultipoint. """
-        # Avoid calculating more minimum distances than necessary
-        return True in (distance >= seg.shortest_distance_to(pt)
-                        for seg in self.segments())
+        return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments())
 
 class Line(ConnectedMultipoint):
     """ Line composed of connected vertices.
@@ -966,7 +966,7 @@ class Polygon(ConnectedMultipoint):
                 nintx += 1
 
         # If odd, point is inside so check subpolys
-        return nintx % 2 == 1 and True not in (p.contains(pt) for p in self.subs)
+        return nintx % 2 == 1 and not any(p.contains(pt) for p in self.subs)
 
     def to_polyline(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
@@ -1124,7 +1124,7 @@ def points_to_multipoint(points):
     as Multipoint data. All points must use the same CRS.
     """
     crs = points[0]._crs
-    if False in (pt._crs == crs for pt in points):
+    if not all(pt._crs == crs for pt in points):
         raise CRSError("All points must share the same CRS")
 
     keys = list(points[0].properties.keys())

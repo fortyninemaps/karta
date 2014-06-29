@@ -29,7 +29,7 @@ if USE_CYTHON:
     extensions = cythonize(extensions)
 
 for extension in extensions:
-    if False in (os.path.exists(src) for src in extension.sources):
+    if not all(os.path.exists(src) for src in extension.sources):
         # C-extension sources missing, so don't try to build them
         extensions = []
         print("Warning: Extension source not found: {0}".format(extension.sources))

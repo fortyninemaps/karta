@@ -110,9 +110,9 @@ def write_shapefile(features, fstem):
     if len(features) == 1:
         features[0].to_shapefile(fstem)
         return
-    elif False in (f._geotype == features[0]._geotype for f in features[1:]):
+    elif not all(f._geotype == features[0]._geotype for f in features[1:]):
         raise IOError("all features must be of the same type")
-    elif False in (f.rank == features[0].rank for f in features[1:]):
+    elif not all(f.rank == features[0].rank for f in features[1:]):
         raise IOError("all features must have the same dimensionality")
 
     RankError = IOError("feature must be in two or three dimensions to write "
@@ -152,8 +152,7 @@ def write_shapefile(features, fstem):
         keys = set(features[0].data.keys())     # for testing similarity
         keylist = list(keys)                    # preserves order
 
-        if len(keys) != 0 and \
-           False not in (set(f.data.keys()) for f in features[1:]):
+        if len(keys) != 0 and all(keys == set(f.data.keys()) for f in features[1:]):
             for key in keylist:
                 testvalue = features[0].data[key][0]
                 w.field(key.upper(), property_field_type(testvalue), "100")
@@ -181,8 +180,7 @@ def write_shapefile(features, fstem):
         keys = set(features[0].properties.keys())   # for testing similarity
         keylist = list(keys)                        # preserves order
 
-        if len(keys) != 0 and \
-           False not in (set(f.data.keys()) for f in features[1:]):
+        if len(keys) != 0 and all(keys == set(f.data.keys()) for f in features[1:]):
             for key in features[0].properties:
                 value = features[0].properties[key]
                 typ = property_field_type(value)

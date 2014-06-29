@@ -88,10 +88,10 @@ def mean(x):
 
 def overlaps(bbox0, bbox1):
     pts0 = ((x, y) for x in bbox0[:2] for y in bbox0[2:])
-    if True in (iswithin(bbox1, pt) for pt in pts0):
+    if any(iswithin(bbox1, pt) for pt in pts0):
         return True
     pts1 = ((x, y) for x in bbox1[:2] for y in bbox1[2:])
-    if True in (iswithin(bbox0, pt) for pt in pts1):
+    if any(iswithin(bbox0, pt) for pt in pts1):
         return True
     return False
 

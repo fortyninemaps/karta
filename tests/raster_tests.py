@@ -122,12 +122,12 @@ class RegularGrid(unittest.TestCase):
         orig = self.rast.data.copy()
         x0, x1, y0, y1 = self.rast.get_region()
         self.rast.resize((x0, x1/2.0, y0, y1/2.0))
-        self.assertTrue(False not in (self.rast.data == orig[:25,:25]))
+        self.assertTrue(np.all(self.rast.data == orig[:25,:25]))
         return
 
     def test_aairead(self):
         grid = karta.grid.aairead(os.path.join(TESTDATA,'peaks49.asc'))
-        self.assertTrue(False not in (grid.data == self.rast.data))
+        self.assertTrue(np.all(grid.data == self.rast.data))
         return
 
 
@@ -224,7 +224,7 @@ class TestAAIGrid(unittest.TestCase):
         orig = self.rast.data.copy()
         x0, x1, y0, y1 = self.rast.get_region()
         self.rast.resize((x0, x1/2.0, y0, y1/2.0))
-        self.assertTrue(False not in (self.rast.data == orig[:25,:25]))
+        self.assertTrue(np.all(self.rast.data == orig[:25,:25]))
         return
 
 class TestDEMDriver(unittest.TestCase):

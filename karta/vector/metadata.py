@@ -52,11 +52,11 @@ class Metadata(Mapping):
                 n = 0
                 for k in data:
                     dtype = type(data[k][0])
-                    if False in (isinstance(a, dtype) for a in data[k]):
+                    if not all(isinstance(a, dtype) for a in data[k]):
                         raise MetadataError("Data must have uniform type")
                     n = len(data[k])
 
-                if False in (len(data[k]) == n for k in data):
+                if not all(len(v) == n for v in data.values()):
                     raise MetadataError("Data must have uniform lengths")
                 elif len(data) == 0:
                     self._len = 0
@@ -70,7 +70,7 @@ class Metadata(Mapping):
                     data = [data]
                 self._len = len(data)
                 dtype = type(data[0])
-                if False in (isinstance(a, dtype) for a in data):
+                if not all(isinstance(a, dtype) for a in data):
                     raise MetadataError("Data must have uniform type")
                 else:
                     data = {'values': data}
