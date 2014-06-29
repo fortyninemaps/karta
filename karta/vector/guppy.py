@@ -90,7 +90,8 @@ class Point(Geometry):
     """
     _geotype = "Point"
 
-    def __init__(self, coords, data=None, properties=None, **kwargs):
+    def __init__(self, coords, data=None, properties=None, copy_metadata=True,
+                 **kwargs):
         if properties is None:
             properties = {}
         if not hasattr(coords, "__iter__"):
@@ -98,7 +99,7 @@ class Point(Geometry):
         super(Point, self).__init__(**kwargs)
         self.vertex = coords
         self._setxyz()
-        self.data = Metadata(data, singleton=True)
+        self.data = Metadata(data, singleton=True, copydata=copy_metadata)
         if hasattr(properties, "keys"):
             self.properties = properties
         return
@@ -301,7 +302,8 @@ class MultipointBase(Geometry):
     polyline and polygon classes. """
     _geotype = "MultipointBase"
 
-    def __init__(self, vertices, data=None, properties=None, **kwargs):
+    def __init__(self, vertices, data=None, properties=None, copy_metadata=True,
+                 **kwargs):
         super(MultipointBase, self).__init__(**kwargs)
         vertices = list(vertices)
         if properties is None:
@@ -323,7 +325,7 @@ class MultipointBase(Geometry):
         if hasattr(properties, "keys"):
             self.properties = properties
 
-        self.data = Metadata(data)
+        self.data = Metadata(data, copydata=copy_metadata)
         return
 
     def __repr__(self):
@@ -348,10 +350,12 @@ class MultipointBase(Geometry):
     def __getitem__(self, key):
         if isinstance(key, (int, np.int64)):
             return Point(self.vertices[key], data=self.data[key],
-                         properties=self.properties, crs=self._crs)
+                         properties=self.properties, crs=self._crs,
+                         copy_metadata=False)
         elif isinstance(key, slice):
             return type(self)(self.vertices[key], data=self.data[key],
-                              properties=self.properties, crs=self._crs)
+                              properties=self.properties, crs=self._crs,
+                              copy_metadata=False)
         else:
             raise GGeoError('Index must be an integer or a slice object')
 
@@ -470,7 +474,8 @@ class MultipointBase(Geometry):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
         data = self.data.sub(idxs)
-        subset = type(self)(vertices, data=data, properties=self.properties, crs=self._crs)
+        subset = type(self)(vertices, data=data, properties=self.properties,
+                            crs=self._crs, copy_metadata=False)
         return subset
 
     def flat_distances_to(self, pt):
@@ -615,7 +620,8 @@ class Multipoint(MultipointBase):
     """
     _geotype = "Multipoint"
 
-    def __init__(self, vertices, data=None, properties=None, **kwargs):
+    def __init__(self, vertices, data=None, properties=None, copy_metadata=True,
+                 **kwargs):
         if len(vertices) != 0 and False not in (hasattr(v, "_geotype") and \
                                                 v._geotype == "Point" and \
                                                 v.rank == vertices[0].rank \
@@ -639,7 +645,7 @@ class Multipoint(MultipointBase):
             if data is not None:
                 ptdata.update(data)
 
-            self.data = Metadata(ptdata)
+            self.data = Metadata(ptdata, copydata=copy_metadata)
             self.vertices = [pt.vertex for pt in points]
             self.rank = vertices[0].rank
             self.properties = properties
@@ -930,7 +936,8 @@ class Polygon(ConnectedMultipoint):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
         data = self.data.sub(idxs)
-        subset = Line(vertices, data=data, properties=self.properties, crs=self._crs)
+        subset = Line(vertices, data=data, properties=self.properties,
+                      crs=self._crs, copy_metadata=False)
         return subset
 
     def perimeter(self):
