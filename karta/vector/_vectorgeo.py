@@ -207,24 +207,28 @@ def hashpt(xmin, xmax, ymin, ymax, x, y):
     """ Returns a generator that returns successive quadrants [0-3] that
     constitute a geohash for *pt* in a global *bbox*. """
     while True:
-        xm = 0.5 * (xmn + xmx)
-        ym = 0.5 * (ymn + ymx)
+        xm = 0.5 * (xmin + xmax)
+        ym = 0.5 * (ymin + ymax)
         if x < xm:
             if y < ym:
                 geohash = 0
-                bbox = (xmn, xm, ymn, ym)
+                xmax = xm
+                ymax = ym
             elif y >= ym:
                 geohash = 2
-                bbox = (xmn, xm, ym, ymx)
+                xmax = xm
+                ymin = ym
             else:
                 raise HashError
         elif x >= xm:
             if y < ym:
                 geohash = 1
-                bbox = (xm, xmx, ymn, ym)
+                xmin = xm
+                ymax = ym
             elif y >= ym:
                 geohash = 3
-                bbox = (xm, xmx, ym, ymx)
+                xmin = xm
+                ymin = ym
             else:
                 raise HashError
         else:
