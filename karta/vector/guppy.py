@@ -1,9 +1,7 @@
 """
-Geographical measurement and simple analysis module for Python 2.X.X. Provides
+Geographical measurement and simple analysis module for Python. Provides
 Point, Multipoint, Line, and Polygon classes, with methods for simple
 measurements such as distance, area, and bearing.
-
-Written by Nat Wilson (njwilson23@gmail.com)
 """
 from __future__ import division
 
