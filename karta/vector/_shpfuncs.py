@@ -47,7 +47,7 @@ def addfields(writer, properties):
         typ = property_field_type(value)
         length = "100"
         writer.field(key.upper(), typ, length)
-        value.append(value)
+        values.append(value)
     writer.record("0", *values)
     return
 

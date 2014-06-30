@@ -177,13 +177,21 @@ def read_shapefile(stem, crs=None):
             plist = recordsasproperties(reader)
             geoms = []
             for (shp,prop) in zip(reader.shapes(), plist):
-                geoms.append(guppy.Line(shp.points, properties=prop, crs=crs))
+                parts = list(shp.parts)
+                parts.append(len(shp.points))
+                for (i0, i1) in zip(parts[:-1], parts[1:]):
+                    points = shp.points[i0:i1]
+                    geoms.append(guppy.Line(points, properties=prop, crs=crs))
 
         elif reader.shapeType == 5:     # Polygon
             plist = recordsasproperties(reader)
             geoms = []
             for (shp,prop) in zip(reader.shapes(), plist):
-                geoms.append(guppy.Polygon(shp.points, properties=prop, crs=crs))
+                parts = list(shp.parts)
+                parts.append(len(shp.points))
+                for (i0, i1) in zip(parts[:-1], parts[1:]):
+                    points = shp.points[i0:i1]
+                    geoms.append(guppy.Polygon(points, properties=prop, crs=crs))
 
         else:
             raise NotImplementedError("Shapefile shape type {0} not "
