@@ -725,7 +725,10 @@ class ConnectedMultipoint(MultipointBase):
             if np.nan not in vertex:
                 interx_points.append(Point(vertex, properties=self.properties,
                                            crs=self._crs))
-        return Multipoint(interx_points)
+        nandata = [np.nan for _ in interx_points]
+        keys = [k for k in set(list(self.data.keys()) + list(other.data.keys()))]
+        d = Metadata({key:nandata for key in keys})
+        return Multipoint(interx_points, data=d)
 
     def shortest_distance_to(self, pt):
         """ Return the shortest distance from any position on the Multipoint
