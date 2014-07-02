@@ -444,6 +444,15 @@ class MultipointBase(Geometry):
         self.shift(origin)
         return self
 
+    def apply_affine_transform(self, M):
+        """ Apply an affine transform given by matrix *M* to data and return a
+        new geometry. """
+        vertices = []
+        for x,y in self.get_vertices():
+            vertices.append(tuple(np.dot(M, [x, y, 1])[:2]))
+        return type(self)(vertices, data=self.data, properties=self.properties,
+                          crs=self._crs)
+
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
@@ -739,8 +748,8 @@ class ConnectedMultipoint(MultipointBase):
                               (seg[0].vertex for seg in segments),
                               (seg[1].vertex for seg in segments)))
         distances = [i[1] for i in point_dist]
-        return Point(point_dist[distances.index(min(distances))][0],
-                     properties=self.properties, crs=self._crs)
+        imin = distance.index(min(distances))
+        return Point(point_dist[imin][0], crs=self._crs)
 
     def within_distance(self, pt, distance):
         """ Test whether a point is within *distance* of a ConnectedMultipoint. """
@@ -1083,15 +1092,6 @@ def greatcircle(pta, ptb, method="vicenty"):
     return distance
 
 
-def sortby(A, B):
-    """ Sort a list A by the values in an ordered list B. """
-    if len(A) != len(B):
-        raise GGeoError("A and B must be of the same length")
-    comb = zip(B,A)
-    comb.sort()
-    return [i[1] for i in comb]
-
-
 def points_to_multipoint(points):
     """ Merge *points* into a Multipoint instance. Point properties are stored
     as Multipoint data. All points must use the same CRS.
@@ -1113,4 +1113,16 @@ def points_to_multipoint(points):
     vertices = [pt.vertex for pt in points]
 
     return Multipoint(vertices, data=ptdata, crs=crs)
+
+def affine_matrix(mpa, mpb):
+    """ Compute the affine transformation matrix that projects Multipoint mpa
+    to Multipoint mpb using a least squares fit. """
+    if len(mpa) != len(mpb):
+        raise GuppyError("Input geometries must have identical length")
+    vecp = np.asarray(mpb.get_vertices()).ravel()
+    A = np.empty([2*len(mpa), 6], dtype=np.float64)
+    for i, (x, y) in enumerate(mpa.get_vertices()):
+        A[2*i:2*i+2,:] = np.kron(np.eye(2), [x, y, 1])
+    M, res, rank, singvals = np.linalg.lstsq(A, vecp)
+    return np.vstack([np.reshape(M, [2, 3]), np.atleast_2d([0, 0, 1])])
 
