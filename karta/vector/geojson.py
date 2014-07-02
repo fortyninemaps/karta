@@ -17,7 +17,11 @@ MultiLineString = namedtuple('MultiLineString', ['coordinates', 'crs'])
 Polygon = namedtuple('Polygon', ['coordinates', 'crs'])
 MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
 GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
+Feature = namedtuple('Feature', ['geometry', 'properties', 'id', 'crs'])
+FeatureCollection = namedtuple('FeatureCollection', ['features', 'crs'])
 
+DEFAULTCRS = {'type': 'name',
+              'properties': {'name': 'urn:ogc:def:crs:EPSG::4326'}}
 
 class ExtendedJSONEncoder(json.JSONEncoder):
     """ Numpy-specific numbers prior to 1.9 don't inherit from Python numeric
@@ -177,8 +181,115 @@ class GeoJSONWriter(object):
         json.dump(self.supobj, fout, indent=2, cls=ExtendedJSONEncoder)
         return
 
-
 class GeoJSONReader(object):
+
+    def __init__(self, finput):
+        """ Create a reader-object for a GeoJSON-containing file or StreamIO
+        object. Use as::
+
+            with open(`fnm`, 'r') as f:
+                reader = GeoJSONReader(f)
+        """
+        if not hasattr(finput, 'read'):
+            with open(finput) as f:
+                self.jsondict = json.load(f)
+        else:
+            self.jsondict = json.load(finput)
+        return
+
+    @staticmethod
+    def parsePoint(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return Point(d["coordinates"], crs)
+
+    @staticmethod
+    def parseMultiPoint(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return MultiPoint(d["coordinates"], crs)
+
+    @staticmethod
+    def parseLineString(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return LineString(d["coordinates"], crs)
+
+    @staticmethod
+    def parseMultiLineString(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return MultiLineString(d["coordinates"], crs)
+
+    @staticmethod
+    def parsePolygon(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return Polygon(d["coordinates"], crs)
+
+    @staticmethod
+    def parseMultiPolygon(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return MultiPolygon(d["coordinates"], crs)
+
+    def parseGeometry(self, o, defaultcrs):
+        crs = o.get("crs", defaultcrs)
+        t = o["type"]
+        if t == "Point":
+            return self.parsePoint(o, crs)
+        elif t == "MultiPoint":
+            return self.parseMultiPoint(o, crs)
+        elif t == "LineString":
+            return self.parseLineString(o, crs)
+        elif t == "MultiLineString":
+            return self.parseMultiLineString(o, crs)
+        elif t == "Polygon":
+            return self.parsePolygon(o, crs)
+        elif t == "MultiPolygon":
+            return self.parseMultiPolygon(o, crs)
+        else:
+            raise TypeError("Unrecognized type {0}".format(t))
+
+    def parseGeometryCollection(self, o, defaultcrs):
+        crs = o.get("crs", defaultcrs)
+        geoms = [self.parseGeometry(g) for g in o["geometries"]]
+        return GeometryCollection(geoms, crs)
+
+    def parseFeature(self, o, defaultcrs):
+        crs = o.get("crs", defaultcrs)
+        geom = self.parseGeometry(o["geometry"], crs)
+        prop = self.parseProperties(o["properties"], len(geom.coordinates))
+        fid = o.get("id", None)
+        return Feature(geom, prop, fid, crs)
+
+    def parseFeatureCollection(self, o, defaultcrs):
+        crs = o.get("crs", defaultcrs)
+        features = [self.parseFeature(f, crs) for f in o["features"]]
+        return FeatureCollection(features, crs)
+
+    @staticmethod
+    def parseProperties(prop, geomlen):
+        d = {"scalar":{},
+             "vector":{}}
+        for key, value in prop.items():
+            if geomlen > 1 and hasattr(value, "__iter__") and len(value) == geomlen:
+                d["vector"][key] = value
+            else:
+                d["scalar"][key] = value
+        return d
+
+    def items(self, o=None):
+        if o is None:
+            o = self.jsondict
+        crs = o.get("crs", DEFAULTCRS)
+        items = []
+        if o["type"] == "GeometryCollection":
+            items.append(self.parseGeometryCollection(o, crs))
+        elif o["type"] == "FeatureCollection":
+            items.append(self.parseFeatureCollection(o, crs))
+        elif o["type"] == "Feature":
+            items.append(self.parseFeature(o, crs))
+        else:
+            items.append(self.parseGeometry(o, crs))
+        return items
+
+
+class GeoJSONReader_old(object):
     """ Class for reading general GeoJSON strings and converting to appropriate
     guppy types. Initialize with a file- or StreamIO-like object, and then use
     the pull* methods to extract geometry types. The equivalency table looks
