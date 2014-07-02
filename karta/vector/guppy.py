@@ -760,13 +760,11 @@ class ConnectedMultipoint(MultipointBase):
         else:
             func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args, tol=0.01)
 
-        point_dist = list(map(func,
-                              [pt.vertex for seg in self.segments()],
-                              [seg[0].vertex for seg in self.segments()],
-                              [seg[1].vertex for seg in self.segments()]))
+        point_dist = list(map(func, ((pt.vertex, seg[0].vertex, seg[1].vertex)
+                                     for seg in self.segments())))
         distances = [i[1] for i in point_dist]
-        return Point(point_dist[distances.index(min(distances))][0],
-                     properties=self.properties, crs=self._crs)
+        imin = distance.index(min(distances))
+        return Point(point_dist[imin][0], crs=self._crs)
 
     def within_distance(self, pt, distance):
         """ Test whether a point is within *distance* of a ConnectedMultipoint. """
