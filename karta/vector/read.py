@@ -65,35 +65,6 @@ def read_geojson(f):
             gplist.append(convert_geometry(item))
     return gplist
 
-#def read_geojson_features(f):
-#    """ Read a GeoJSON object file and return a list of features """
-#    R = geojson.GeoJSONReader(f)
-#    geoms = []
-#    coordsys = _parsegeojsoncrs(R.getcrs())
-#    for (geom, properties, id) in R.items():
-#
-#        if isinstance(geom, geojson.Point):
-#            (p, d) = _geojson_properties2guppy(properties, 1)
-#            geoms.append(guppy.Point(geom.coordinates, properties=p, data=d,
-#                                     crs=coordsys))
-#
-#        elif isinstance(geom, geojson.MultiPoint):
-#            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
-#            geoms.append(guppy.Multipoint(geom.coordinates, properties=p, data=d,
-#                                          crs=coordsys))
-#
-#        elif isinstance(geom, geojson.LineString):
-#            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
-#            geoms.append(guppy.Line(geom.coordinates, properties=p, data=d,
-#                                    crs=coordsys))
-#
-#        elif isinstance(geom, geojson.Polygon):
-#            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
-#            geoms.append(guppy.Polygon(geom.coordinates[0], properties=p, data=d,
-#                                       subs=geom.coordinates[1:],
-#                                       crs=coordsys))
-#    return geoms
-
 def _geojson_properties2guppy(properties, n):
     """ Takes a dictionary (derived from a GeoJSON properties object) and
     divides it into singleton properties and *n*-degree data. """
@@ -108,7 +79,6 @@ def _geojson_properties2guppy(properties, n):
         else:
             props[key] = value
     return props, data
-
 
 def read_xyfile(f, delimiter='', header_rows=0, astype=guppy.Multipoint, coordrank=2):
     """ Read an ASCII delimited table and return a guppy object given by *astype*.
