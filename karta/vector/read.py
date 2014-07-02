@@ -8,68 +8,85 @@ from . import xyfile
 from .. import crs as kcrs
 from .metadata import Metadata
 
-def _parsegeojsoncrs(crstup):
+def _parsegeojsoncrs(jsoncrs, default=kcrs.LONLAT_WGS84):
     """ From a tuple representing a GeoJSON (name,None) or (href,type) pair,
     return an appropriate karta crs instance. """
-    if crstup[0] is None:       # use default as defined by spec
-        return kcrs.LONLAT_WGS84
-    elif crstup[1] is None:     # named CRS
+    if jsoncrs is None:
+        return default
+    elif jsoncrs["type"] == "name":
         for c in kcrs.crslist:
-            if c.urn == crstup[0]:
+            if c.urn == jsoncrs["properties"]["name"]:
                 return c
-        return kcrs.CRS("unknown", "unknown", crstup[0])
-    else:                       # linked CRS
-        return kcrs.CRS("unknown", crstup[1], crstup[0])
+        return kcrs.CRS("unknown", "unknown", jsoncrs["properties"]["name"])
+    elif jsoncrs["type"] == "link":
+        return kcrs.CRS("unknown", jsoncrs["properties"]["type"], 
+                                   jsoncrs["properties"]["href"])
+    else:
+        raise TypeError("Invalid GeoJSON CRS type")
 
 def read_geojson(f):
     """ Read a GeoJSON object file and return a list of geometries """
-    R = geojson.GeoJSONReader(f)
-    geoms = R.iter_geometries()
-    gplist = []
-    for geom in geoms:
-        coordsys = _parsegeojsoncrs(geom.crs)
+
+    def convert_geometry(geom, defaultcrs=None, **kw):
+        coordsys = _parsegeojsoncrs(geom.crs, default=defaultcrs)
         if isinstance(geom, geojson.Point):
-            gplist.append(guppy.Point(geom.coordinates, crs=coordsys))
+            return guppy.Point(geom.coordinates, crs=coordsys, **kw)
         elif isinstance(geom, geojson.MultiPoint):
-            gplist.append(guppy.Multipoint(geom.coordinates, crs=coordsys))
+            return guppy.Multipoint(geom.coordinates, crs=coordsys, **kw)
         elif isinstance(geom, geojson.LineString):
-            gplist.append(guppy.Line(geom.coordinates, crs=coordsys))
+            return guppy.Line(geom.coordinates, crs=coordsys, **kw)
         elif isinstance(geom, geojson.Polygon):
-            gplist.append(guppy.Polygon(geom.coordinates[0],
-                                        subs=geom.coordinates[1:],
-                                        crs=coordsys))
+            return guppy.Polygon(geom.coordinates[0],
+                                 subs=geom.coordinates[1:],
+                                 crs=coordsys, **kw)
+        else:
+            raise TypeError("Argument to convert_geometry is a not a JSON geometry")
+
+    def convert_feature(feat, **kw):
+        data = feat.properties["vector"]
+        prop = feat.properties["scalar"]
+        return convert_geometry(feat.geometry, data=data, properties=prop, **kw)
+
+    R = geojson.GeoJSONReader(f)
+    gplist = []
+    for item in R.items():
+        if isinstance(item, geojson.Feature):
+            gplist.append(convert_feature(item))
+        elif isinstance(item, geojson.FeatureCollection):
+            for feature in item.features:
+                gplist.append(convert_feature(feature, defaultcrs=item.crs))
+        else:
+            gplist.append(convert_geometry(item))
     return gplist
 
-def read_geojson_features(f):
-    """ Read a GeoJSON object file and return a list of features """
-    R = geojson.GeoJSONReader(f)
-    features = R.pull_features()
-    print()
-    geoms = []
-    coordsys = _parsegeojsoncrs(R.getcrs())
-    for (geom, properties, id) in features:
-
-        if isinstance(geom, geojson.Point):
-            (p, d) = _geojson_properties2guppy(properties, 1)
-            geoms.append(guppy.Point(geom.coordinates, properties=p, data=d,
-                                     crs=coordsys))
-
-        elif isinstance(geom, geojson.MultiPoint):
-            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
-            geoms.append(guppy.Multipoint(geom.coordinates, properties=p, data=d,
-                                          crs=coordsys))
-
-        elif isinstance(geom, geojson.LineString):
-            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
-            geoms.append(guppy.Line(geom.coordinates, properties=p, data=d,
-                                    crs=coordsys))
-
-        elif isinstance(geom, geojson.Polygon):
-            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
-            geoms.append(guppy.Polygon(geom.coordinates[0], properties=p, data=d,
-                                       subs=geom.coordinates[1:],
-                                       crs=coordsys))
-    return geoms
+#def read_geojson_features(f):
+#    """ Read a GeoJSON object file and return a list of features """
+#    R = geojson.GeoJSONReader(f)
+#    geoms = []
+#    coordsys = _parsegeojsoncrs(R.getcrs())
+#    for (geom, properties, id) in R.items():
+#
+#        if isinstance(geom, geojson.Point):
+#            (p, d) = _geojson_properties2guppy(properties, 1)
+#            geoms.append(guppy.Point(geom.coordinates, properties=p, data=d,
+#                                     crs=coordsys))
+#
+#        elif isinstance(geom, geojson.MultiPoint):
+#            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
+#            geoms.append(guppy.Multipoint(geom.coordinates, properties=p, data=d,
+#                                          crs=coordsys))
+#
+#        elif isinstance(geom, geojson.LineString):
+#            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
+#            geoms.append(guppy.Line(geom.coordinates, properties=p, data=d,
+#                                    crs=coordsys))
+#
+#        elif isinstance(geom, geojson.Polygon):
+#            (p, d) = _geojson_properties2guppy(properties, len(geom.coordinates))
+#            geoms.append(guppy.Polygon(geom.coordinates[0], properties=p, data=d,
+#                                       subs=geom.coordinates[1:],
+#                                       crs=coordsys))
+#    return geoms
 
 def _geojson_properties2guppy(properties, n):
     """ Takes a dictionary (derived from a GeoJSON properties object) and
