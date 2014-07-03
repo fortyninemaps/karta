@@ -16,15 +16,15 @@ try:
 except ImportError:
     from .streamline import streamline2d
 
-try:
-    from . import cfill_sinks as fill_sinks
-except ImportError:
-    from . import fill_sinks
+#try:
+#    from . import cfill_sinks as fill_sinks
+#except ImportError:
+#    from . import fill_sinks
 
-try:
-    from . import flow          # Has a Scipy dependency
-except ImportError:
-    pass
+#try:
+#    from . import flow          # Has a Scipy dependency
+#except ImportError:
+#    pass
 
 __all__ = ["grid", "aaigrid", "raster",
            "RegularGrid", "WarpedGrid", "aairead",

@@ -18,6 +18,7 @@ except ImportError:
     sys.stderr.write("Compiled fill_sinks not available. Falling back to "
                      "Python version\n")
     from .raster import fill_sinks
+
 try:
     from scipy.interpolate import griddata
     HAS_SCIPY = True
@@ -351,10 +352,13 @@ class RegularGrid(Grid):
         if method == "nearest":
             return self.sample_nearest(x, y)
         elif method == "linear":
-            import scipy.interpolate
-            Xd, Yd = self.center_coords()
-            return scipy.interpolate.griddata((Xd.flat, Yd.flat), self.data.flat,
-                                              (x,y), method="linear")
+            if HAS_SCIPY:
+                Xd, Yd = self.center_coords()
+                return griddata((Xd.flat, Yd.flat), self.data.flat,
+                                (x,y), method="linear")
+            else:
+                raise NotImplementedError("linear resampling currently requires"
+                                          " scipy")
         else:
             raise ValueError("method \"{0}\" not understood".format(method))
 

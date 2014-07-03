@@ -28,16 +28,16 @@ The beginnings of a tutorial to introduce *Karta* are in the [Wiki](https://gith
     - geojson:      Classes and functions for reading and writing GeoJSON
     - vtk:          XML-based VTK interface
     - shp\_funcs:   Shapefile-to-guppy conversions through _pyshp_ interface
-    - stats:        Basic geostatistical functions
     - xyfile:       ASCII table functions
-    - quadtree:     Simple QuadTree implementation
+    - quadtree:     QuadTree implementation
+    - stats:        Geostatistical functions (experimental)
 
 - raster
     - grid:         Basic Grid types, including `StructuredGrid` and `RegularGrid`
     - raster:       General purpose raster functions
     - aaigrid:      Grid subclass specifically for reading and writing ESRI ASCII grids
-    - flow:         Stream flow functions
     - streamline:   Streamline calculation
+    - flow:         Stream flow functions (experimental)
 
 - tests : unit tests
 
