@@ -102,11 +102,11 @@ class Point(Geometry):
         return 'Point(' + str(self.vertex) + ')'
 
     def __eq__(self, other):
-        if hasattr(other, "vertex"):
+        try:
             return (tuple(self.vertex) == tuple(other.vertex)) and \
                    (self.data == other.data) and \
                    (self.properties == other.properties)
-        else:
+        except AttributeError:
             return False
 
     @property
