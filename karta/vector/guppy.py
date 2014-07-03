@@ -24,11 +24,6 @@ except ImportError:
     _vecgeo = _vectorgeo
 
 try:
-    import shapely.geometry as geometry
-except ImportError:
-    pass
-
-try:
     import pyproj
     PYPROJ = True
     geod = pyproj.Geod(ellps="WGS84")
@@ -290,13 +285,6 @@ class Point(Geometry):
                 fobj.close()
         return writer
 
-    def to_shapely(self):
-        """ Returns a Shapely Point instance. """
-        try:
-            return geometry.Point(self.x, self.y, self.z)
-        except NameError:
-            raise ImportError('Shapely module did not import')
-
 
 class MultipointBase(Geometry):
     """ Point cloud with associated attributes. This is a base class for the
@@ -337,15 +325,7 @@ class MultipointBase(Geometry):
         else:
             ppverts = str(self.vertices[:2])[:-1] + "..." + str(self.vertices[-2:])[1:]
         return '{typ}({verts})>'.format(
-                typ=str(type(self))[:-1], verts=ppverts, prop=self.properties)
-
-    def __str__(self):
-        if len(self) < 5:
-            ppverts = str(self.vertices)
-        else:
-            ppverts = str(self.vertices[:2])[:-1] + "..." + str(self.vertices[-2:])[1:]
-        return '{typ}\n{verts}\nProperties:{prop}'.format(
-                typ=type(self), verts=ppverts, prop=self.properties)
+                typ=str(type(self))[:-1], verts=ppverts)
 
     def __len__(self):
         return len(self.vertices)
@@ -660,7 +640,7 @@ class Multipoint(MultipointBase):
         else:
 
             super(Multipoint, self).__init__(vertices,
-                                             data=data, 
+                                             data=data,
                                              properties=properties,
                                              **kwargs)
         return
@@ -743,11 +723,11 @@ class ConnectedMultipoint(MultipointBase):
 
         segments = list(self.segments())
         point_dist = map(func,
-                         (pt.vertex for seg in segments),
+                         (pt.vertex for _ in segments),
                          (seg[0].vertex for seg in segments),
                          (seg[1].vertex for seg in segments))
-        point_dist = [i[1] for i in point_dist]
-        return min(point_dist)
+        distances = [i[1] for i in point_dist]
+        return min(distances)
 
     def nearest_on_boundary(self, pt):
         """ Returns the position on the Multipoint boundary that is nearest to
@@ -760,10 +740,11 @@ class ConnectedMultipoint(MultipointBase):
         else:
             func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args, tol=0.01)
 
+        segments = list(self.segments())
         point_dist = list(map(func,
-                              [pt.vertex for seg in self.segments()],
-                              [seg[0].vertex for seg in self.segments()],
-                              [seg[1].vertex for seg in self.segments()]))
+                              (pt.vertex for _ in segments),
+                              (seg[0].vertex for seg in segments),
+                              (seg[1].vertex for seg in segments)))
         distances = [i[1] for i in point_dist]
         return Point(point_dist[distances.index(min(distances))][0],
                      properties=self.properties, crs=self._crs)
@@ -775,7 +756,7 @@ class ConnectedMultipoint(MultipointBase):
 
 class Line(ConnectedMultipoint):
     """ Line composed of connected vertices.
-    
+
     *coords*        List of 2-tuples or 3-tuples
     *data*          List, dictionary, or Metadata object for point-specific
                     data [default None]
@@ -855,7 +836,7 @@ class Line(ConnectedMultipoint):
                 step_remaining = step
                 points.append(pos)
                 seg.vertices[0] = pos.vertex
-           
+
             else:
                 pos = seg[1]
                 x += seg_remaining
@@ -901,16 +882,6 @@ class Line(ConnectedMultipoint):
         """ Returns a polygon. """
         return Polygon(self.vertices)
 
-    def to_shapely(self):
-        """ Returns a Shapely LineString instance. """
-        try:
-            if self.rank == 2:
-                return geometry.LineString([(v[0], v[1]) for v in self.vertices])
-            elif self.rank == 3:
-                return geometry.LineString([(v[0], v[1], v[2]) for v in self.vertices])
-        except NameError:
-            raise GuppyError('Shapely module not available')
-
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
         if self.rank == 2:
@@ -924,7 +895,7 @@ class Line(ConnectedMultipoint):
 
 class Polygon(ConnectedMultipoint):
     """ Polygon, composed of a closed sequence of vertices.
-    
+
     *coords*        List of 2-tuples or 3-tuples
     *data*          List, dictionary, or Metadata object for point-specific
                     data [default None]
@@ -946,7 +917,7 @@ class Polygon(ConnectedMultipoint):
         if isinstance(key, slice):
             ind = key.indices(len(self))
             if len(self) != ((ind[1] - ind[0]) // ind[2]):
-                return Line(self.vertices[key], data=self.data[key], 
+                return Line(self.vertices[key], data=self.data[key],
                             properties=self.properties, crs=self._crs)
         return super(Polygon, self).__getitem__(key)
 
@@ -993,15 +964,6 @@ class Polygon(ConnectedMultipoint):
     def to_polyline(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
         return Line(self.vertices)
-
-    def to_shapely(self):
-        """ Returns a Shapely Polygon instance. """
-        try:
-            shp = geometry.Polygon(self.vertices,
-                                   interiors=[p.vertices for p in self.subs])
-        except NameError:
-            raise ImportError('Shapely module did not import')
-        return shp
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
