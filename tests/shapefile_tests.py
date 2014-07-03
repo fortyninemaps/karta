@@ -18,15 +18,37 @@ class TestShapefile(unittest.TestCase):
                        Point((3, 1), data={"species": "C. tectorum"}),
                        Point((4, 3), data={"species": "M. alba"}),
                        Point((2, 2), data={"species": "V. cracca"})]
-        self.line = Line([[1,5],[5,5],[5,1],[3,3],[1,1]])
-        self.polygon = Polygon([[1,5],[5,5],[5,1],[3,3],[1,1]])
+        self.multipoint = Multipoint([(1,1), (3,1), (4,3), (2,2)],
+                                     data={"species": ["T. officianale", "C. tectorum",
+                                                       "M. alba", "V. cracca"]})
+        self.line = Line([(1.0,5.0),(5.0,5.0),(5.0,1.0),(3.0,3.0),(1.0,1.0)])
+        self.polygon = Polygon([(1.0,5.0),(5.0,5.0),(5.0,1.0),(3.0,3.0),(1.0,1.0)])
 
         self.points3 = [Point((1, 1, 0)),
                        Point((3, 1, 3)),
                        Point((4, 3, 2)),
                        Point((2, 2, -1))]
-        self.line3 = Line([[1,5,2],[5,5,-1],[5,1,3],[3,3,1],[1,1,0]])
-        self.polygon3 = Polygon([[1,5,2],[5,5,-1],[5,1,3],[3,3,1],[1,1,0]])
+        self.line3 = Line([(1,5,2),(5,5,-1),(5,1,3),(3,3,1),(1,1,0)])
+        self.polygon3 = Polygon([(1,5,2),(5,5,-1),(5,1,3),(3,3,1),(1,1,0)])
+
+        exists = os.path.exists
+        join = os.path.join
+        testfiles = ["points.shp", "line.shp", "polygon.shp"]
+        if any(not exists(join(TESTDATA, "shapefiles/", fnm)) for fnm in testfiles):
+            self.saveTestData()
+        return
+
+    def saveTestData(self):
+        testfiles = [(self.multipoint, "points"),
+                     (self.line, "line"),
+                     (self.polygon, "polygon")]
+        for (geom, fnm) in testfiles:
+            geom.to_shapefile(os.path.join(TESTDATA, "shapefiles", fnm))
+        return
+
+    def assertGeomEqual(self, this, that):
+        self.assertTrue(np.all(this.get_vertices() == that.get_vertices()))
+        self.assertEqual(this._crs, that._crs)
         return
 
     def test_writepoints(self):
@@ -100,6 +122,20 @@ class TestShapefile(unittest.TestCase):
                                               142, 235, 150, 248])
         return
 
+    def test_read_multipoint_attributes(self):
+        mp = read_shapefile(os.path.join(TESTDATA, "shapefiles", "points"))
+        self.assertEqual(mp[0].data["species"], self.multipoint.data["species"])
+        return
+
+    def test_read_line(self):
+        line = read_shapefile(os.path.join(TESTDATA, "shapefiles", "line"))[0]
+        self.assertGeomEqual(line, self.line)
+        return
+
+    def test_read_polygon(self):
+        polygon = read_shapefile(os.path.join(TESTDATA, "shapefiles", "polygon"))[0]
+        self.assertGeomEqual(polygon, self.polygon)
+        return
 
 if __name__ == "__main__":
     unittest.main()
