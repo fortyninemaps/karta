@@ -17,7 +17,11 @@ MultiLineString = namedtuple('MultiLineString', ['coordinates', 'crs'])
 Polygon = namedtuple('Polygon', ['coordinates', 'crs'])
 MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
 GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
+Feature = namedtuple('Feature', ['geometry', 'properties', 'id', 'crs'])
+FeatureCollection = namedtuple('FeatureCollection', ['features', 'crs'])
 
+DEFAULTCRS = {'type': 'name',
+              'properties': {'name': 'urn:ogc:def:crs:EPSG::4326'}}
 
 class ExtendedJSONEncoder(json.JSONEncoder):
     """ Numpy-specific numbers prior to 1.9 don't inherit from Python numeric
@@ -177,26 +181,7 @@ class GeoJSONWriter(object):
         json.dump(self.supobj, fout, indent=2, cls=ExtendedJSONEncoder)
         return
 
-
 class GeoJSONReader(object):
-    """ Class for reading general GeoJSON strings and converting to appropriate
-    guppy types. Initialize with a file- or StreamIO-like object, and then use
-    the pull* methods to extract geometry types. The equivalency table looks
-    like:
-
-    -----------------------------------------------------
-    | Guppy class       | GeoJSON geometry object       |
-    --------------------+--------------------------------
-    | Point             | Point                         |
-    |                   |                               |
-    | Multipoint        | MultiPoint                    |
-    |                   |                               |
-    | Line              | Linestring, MultiLineString   |
-    |                   |                               |
-    | Polygon           | Polygon, MultiPolygon         |
-    |                   |                               |
-    -----------------------------------------------------
-     """
 
     def __init__(self, finput):
         """ Create a reader-object for a GeoJSON-containing file or StreamIO
@@ -210,146 +195,98 @@ class GeoJSONReader(object):
                 self.jsondict = json.load(f)
         else:
             self.jsondict = json.load(finput)
-        self.crs = self.getcrs()
         return
 
-    def _walk(self, dic, geotype):
-        """ Find all instances of `key` using recursion. """
-        if 'type' in dic and geotype == dic['type']:
-            yield dic
-        for k in dic:
-            if hasattr(dic[k], 'keys'):
-                for val in self._walk(dic[k], geotype):
-                    yield val
-            elif k == 'features':
-                for feature in dic[k]:
-                    for val in self._walk(feature, geotype):
-                        yield val
-        return
+    @staticmethod
+    def parsePoint(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return Point(d["coordinates"], crs)
 
-    def _contains(self, dic, key):
-        """ Return whether *key* exists within the JSON hierarchy *dic*. """
-        if key in dic:
-            return True
+    @staticmethod
+    def parseMultiPoint(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return MultiPoint(d["coordinates"], crs)
+
+    @staticmethod
+    def parseLineString(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return LineString(d["coordinates"], crs)
+
+    @staticmethod
+    def parseMultiLineString(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return MultiLineString(d["coordinates"], crs)
+
+    @staticmethod
+    def parsePolygon(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return Polygon(d["coordinates"], crs)
+
+    @staticmethod
+    def parseMultiPolygon(d, defaultcrs):
+        crs = d.get("crs", defaultcrs)
+        return MultiPolygon(d["coordinates"], crs)
+
+    def parseGeometry(self, o, defaultcrs):
+        crs = o.get("crs", defaultcrs)
+        t = o["type"]
+        if t == "Point":
+            return self.parsePoint(o, crs)
+        elif t == "MultiPoint":
+            return self.parseMultiPoint(o, crs)
+        elif t == "LineString":
+            return self.parseLineString(o, crs)
+        elif t == "MultiLineString":
+            return self.parseMultiLineString(o, crs)
+        elif t == "Polygon":
+            return self.parsePolygon(o, crs)
+        elif t == "MultiPolygon":
+            return self.parseMultiPolygon(o, crs)
         else:
-            for val in dic.values():
-                if self._contains(val, key):
-                    return True
-        return False
+            raise TypeError("Unrecognized type {0}".format(t))
 
-    def _getproperties(self):
-        """ Read feature properties and return a two dictionaries:
-            - one representing singleton values ("properties")
-            - one representing per-vertex values ("data")
-        """
-        raise NotImplementedError
-        return {}, {}
+    def parseGeometryCollection(self, o, defaultcrs):
+        crs = o.get("crs", defaultcrs)
+        geoms = [self.parseGeometry(g) for g in o["geometries"]]
+        return GeometryCollection(geoms, crs)
 
-    def getcrs(self):
-        """ Look in the top level for a `crs` field. Return a tuple that is
-        either (name, _), (href, type), or (_, _) for a named, linked, or
-        undefined CRS, respectively. """
-        crs = self.jsondict.get("crs", None)
-        if crs is not None:
-            if "name" in crs["properties"]:
-                res = (crs["properties"]["name"], None)
+    def parseFeature(self, o, defaultcrs):
+        crs = o.get("crs", defaultcrs)
+        geom = self.parseGeometry(o["geometry"], crs)
+        prop = self.parseProperties(o["properties"], len(geom.coordinates))
+        fid = o.get("id", None)
+        return Feature(geom, prop, fid, crs)
+
+    def parseFeatureCollection(self, o, defaultcrs):
+        crs = o.get("crs", defaultcrs)
+        features = [self.parseFeature(f, crs) for f in o["features"]]
+        return FeatureCollection(features, crs)
+
+    @staticmethod
+    def parseProperties(prop, geomlen):
+        d = {"scalar":{},
+             "vector":{}}
+        for key, value in prop.items():
+            if geomlen > 1 and hasattr(value, "__iter__") and len(value) == geomlen:
+                d["vector"][key] = value
             else:
-                res = (crs["properties"]["href"], crs["properties"]["type"])
+                d["scalar"][key] = value
+        return d
+
+    def items(self, o=None):
+        if o is None:
+            o = self.jsondict
+        crs = o.get("crs", DEFAULTCRS)
+        items = []
+        if o["type"] == "GeometryCollection":
+            items.append(self.parseGeometryCollection(o, crs))
+        elif o["type"] == "FeatureCollection":
+            items.append(self.parseFeatureCollection(o, crs))
+        elif o["type"] == "Feature":
+            items.append(self.parseFeature(o, crs))
         else:
-            res = (None, None)
-        return res
-
-    def pull_features(self):
-        """ Find and return all Feature objects from a FeatureCollection """
-        jsonfeats = [obj for obj in self._walk(self.jsondict, 'Feature')]
-
-        featuretype = lambda a: a.get('geometry', {}).get('type', None)
-        ispoint = lambda a: featuretype(a) == 'Point'
-        ismultipoint = lambda a: featuretype(a) == 'MultiPoint'
-        isline = lambda a: featuretype(a) in ('LineString', 'MultiLineString')
-        ispolygon = lambda a: featuretype(a) in ('Polygon', 'MultiPolygon')
-
-        # This is an idiotic algorithm - pre-mapping the types isn't saving
-        # time because each feature needs to be iterated through anyway
-        points = filter(ispoint, jsonfeats)
-        multipoints = filter(ismultipoint, jsonfeats)
-        lines = filter(isline, jsonfeats)
-        polygons = filter(ispolygon, jsonfeats)
-
-        features = []
-        for feat in points:
-            features.append((self.pull_points(feat)[0], feat['properties'],
-                             feat.get('id', None)))
-        for feat in multipoints:
-            features.append((self.pull_multipoints(feat)[0], feat['properties'],
-                             feat.get('id', None)))
-        for feat in lines:
-            features.append((self.pull_lines(feat)[0], feat['properties'],
-                             feat.get('id', None)))
-        for feat in polygons:
-            features.append((self.pull_polygons(feat)[0], feat['properties'],
-                             feat.get('id', None)))
-
-        return features
-
-    def pull_points(self, dic=None):
-        """ Return a list of all geometries that can be coerced into a single
-        Point. """
-        if dic is None:
-            dic = self.jsondict
-        jsonpoints = self._walk(dic, 'Point')
-        points = []
-        for point in jsonpoints:
-            points.append(Point(point['coordinates'], self.crs))
-        return points
-
-    def pull_multipoints(self, dic=None):
-        """ Return a list of all geometries that can be coerced into a single
-        Multipoint. """
-        if dic is None:
-            dic = self.jsondict
-        jsonmultipoints = self._walk(dic, 'MultiPoint')
-        multipoints = []
-        for jsonmultipoint in jsonmultipoints:
-            multipoints.append(MultiPoint(jsonmultipoint['coordinates'], self.crs))
-        return multipoints
-
-    def pull_lines(self, dic=None):
-        """ Return a list of all geometries that can be coerced into a Line.
-        """
-        if dic is None:
-            dic = self.jsondict
-        jsonlines = self._walk(dic, 'LineString')
-        jsonmultilines = self._walk(dic, 'MultiLineString')
-        lines = []
-        for jsonline in jsonlines:
-            lines.append(LineString(jsonline['coordinates'], self.crs))
-        for jsonmultiline in jsonmultilines:
-            for vertices in jsonmultiline['coordinates']:
-                lines.append(MultiLineString(vertices, self.crs))
-        return lines
-
-    def pull_polygons(self, dic=None):
-        """ Return a list of all geometries that can be coerced into a Polygon.
-        """
-        if dic is None:
-            dic = self.jsondict
-        jsonpolygons = self._walk(dic, 'Polygon')
-        jsonmultipolygons = self._walk(dic, 'MultiPolygon')
-        polygons = []
-        for jsonpolygon in jsonpolygons:
-            polygons.append(Polygon(jsonpolygon['coordinates'], self.crs))
-        for jsonmultipolygon in jsonmultipolygons:
-            polygons.append(Polygon(jsonmultipolygon['coordinates'], self.crs))
-        return polygons
-
-    def iter_geometries(self):
-        """ Return an iterator through all geometries. """
-        itergeo = itertools.chain(self.pull_points(),
-                                  self.pull_multipoints(),
-                                  self.pull_lines(),
-                                  self.pull_polygons())
-        return itergeo
+            items.append(self.parseGeometry(o, crs))
+        return items
 
 
 def list_rec(A):

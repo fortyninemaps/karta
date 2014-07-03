@@ -24,21 +24,21 @@ class TestGeoJSONInput(unittest.TestCase):
     def test_point_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/point.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.pull_points()
+        res = reader.items()
         self.assertEqual(res[0].coordinates, [100.0, 0.0])
         return
 
     def test_linestring_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/linestring.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.pull_lines()
+        res = reader.items()
         self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_polygon_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/polygon.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.pull_polygons()
+        res = reader.items()
         self.assertEqual(res[0].coordinates,
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return
@@ -46,22 +46,22 @@ class TestGeoJSONInput(unittest.TestCase):
     def test_multipoint_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/multipoint.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.pull_multipoints()
+        res = reader.items()
         self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_multilinestring_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/multilinestring.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.pull_lines()
-        self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
-        self.assertEqual(res[1].coordinates, [[102.0, 2.0], [103.0, 3.0]])
+        res = reader.items()
+        self.assertEqual(res[0].coordinates, [[[100.0, 0.0], [101.0, 1.0]],
+                                              [[102.0, 2.0], [103.0, 3.0]]])
         return
 
     def test_multipolygon_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/multipolygon.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.pull_polygons()
+        res = reader.items()
         self.assertEqual(res[0].coordinates, 
             [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
              [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
@@ -72,21 +72,23 @@ class TestGeoJSONInput(unittest.TestCase):
         path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
         with open(path) as f:
             reader = GeoJSONReader(f)
-        features = reader.pull_features()
-        self.assertTrue(isinstance(features[0][0], geojson.Point))
-        self.assertEqual(features[0][0].coordinates, [102.0, 0.5])
-        self.assertEqual(features[0][1], {"prop0": "value0"})
+        fc = reader.items()[0]
+        self.assertTrue(isinstance(fc.features[0].geometry, geojson.Point))
+        self.assertEqual(fc.features[0].geometry.coordinates, [102.0, 0.5])
+        self.assertEqual(fc.features[0].properties["scalar"], {"prop0": "value0"})
 
-        self.assertTrue(isinstance(features[1][0], geojson.LineString))
-        self.assertEqual(features[1][0].coordinates, [[102.0, 0.0],
-                             [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]])
-        self.assertEqual(features[1][1], {"prop0": "value0", "prop1": 0.0})
+        self.assertTrue(isinstance(fc.features[1].geometry, geojson.LineString))
+        self.assertEqual(fc.features[1].geometry.coordinates,
+                        [[102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]])
+        self.assertEqual(fc.features[1].properties["scalar"],
+                        {"prop0": "value0", "prop1": 0.0})
 
-        self.assertTrue(isinstance(features[2][0], geojson.Polygon))
-        self.assertEqual(features[2][0].coordinates, [[[100.0, 0.0],
-                [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
-        self.assertEqual(features[2][1], {"prop0": "value0",
-                                          "prop1": {"this": "that"}})
+        self.assertTrue(isinstance(fc.features[2].geometry, geojson.Polygon))
+        self.assertEqual(fc.features[2].geometry.coordinates,
+                        [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
+                          [100.0, 1.0], [100.0, 0.0]]])
+        self.assertEqual(fc.features[2].properties["scalar"],
+                        {"prop0": "value0", "prop1": {"this": "that"}})
         return
 
 
@@ -97,7 +99,7 @@ class TestGuppyGeoJSON(unittest.TestCase):
 
     def test_featurecollection2guppy(self):
         path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
-        features = vector.read_geojson_features(path)
+        features = vector.read_geojson(path)
 
         ans0 = Point((102.0, 0.5), properties={"prop0":"value0"}, crs=karta.LONLAT)
         self.assertEqual(features[0], ans0)
@@ -114,7 +116,7 @@ class TestGuppyGeoJSON(unittest.TestCase):
 
     def test_read_capitols(self):
         path = os.path.join(TESTDATA, "geojson_input/us-capitols.json")
-        features = vector.read_geojson_features(path)
+        features = vector.read_geojson(path)
         names = ['Phoenix, Arizona, United States', 'Sacramento, California, United States', 
                  'Atlanta, Georgia, United States', 'Indianapolis, Indiana, United States', 
                  'Helena, Montana, United States', 'Columbus, Ohio, United States', 
