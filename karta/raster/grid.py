@@ -19,12 +19,6 @@ except ImportError:
                      "Python version\n")
     from .raster import fill_sinks
 
-try:
-    from scipy.interpolate import griddata
-    HAS_SCIPY = True
-except ImportError:
-    HAS_SCIPY = False
-
 class Grid(object):
     """ Grid baseclass. Don't use this directly except to implement subclasses.
     The primary attributes defined by all Grid-derived classed are _hdr and
@@ -194,6 +188,7 @@ class RegularGrid(Grid):
 
         method : interpolation method, string ('nearest', 'linear')
         """
+        from scipy.interpolate import griddata
         xllcenter, yllcenter = self.center_llref()
         xurcenter = xllcenter + self._hdr['dx'] * self._hdr['nx']
         yurcenter = yllcenter + self._hdr['dy'] * self._hdr['ny']
@@ -352,11 +347,12 @@ class RegularGrid(Grid):
         if method == "nearest":
             return self.sample_nearest(x, y)
         elif method == "linear":
-            if HAS_SCIPY:
+            from scipy.interpolate import griddata
+            try:
                 Xd, Yd = self.center_coords()
                 return griddata((Xd.flat, Yd.flat), self.data.flat,
                                 (x,y), method="linear")
-            else:
+            except ImportError:
                 raise NotImplementedError("linear resampling currently requires"
                                           " scipy")
         else:
