@@ -7,7 +7,7 @@ Customized reference systems may be added at runtime as follows:
     from karta.crs import crs_reg
 
     crs_reg.add_CRS("my_CRS", proj=[projection parameters],
-                              geoid=[geoid parameters],
+                              geod=[geod parameters],
                               crstype=[one of 'projected', 'local', or 'geographical'],
                               urn=[OGC URN (string)])
 
@@ -15,7 +15,7 @@ For example, to add a CRS for handling data in the European Terrestrial
 Reference System of 1989, use:
 
     crs_reg.add_CRS("ETRS89", proj={"proj": "lonlat", "towgs84": [0,0,0,0,0,0,0]},
-                              geoid={"ellps": "GRS80"},
+                              geod={"ellps": "GRS80"},
                               crstype="geographical",
                               urn="urn:ogc:def:crs:EPSG::4258")
 """
@@ -24,10 +24,10 @@ import pyproj
 
 class CRS(object):
     """ Encapsulated a coordinate reference system. """
-    def __init__(self, proj=None, geoid=None, crstype=None, urn=None):
+    def __init__(self, proj=None, geod=None, crstype=None, urn=None):
         """'proj' : pyproj.Proj or None
 
-        'geoid' : pyproj.Geod or None
+        'geod' : pyproj.Geod or None
 
         'crstype' : string
         Must be one of 'geographical', 'projected', or 'local'
@@ -41,7 +41,7 @@ class CRS(object):
             raise TypeError("CRS argument 'crstype' must be 'geographical', "
                             "'projected', or 'local'")
         self.proj = proj
-        self.geoid = geoid
+        self.geod = geod
         self.urn = urn
         return
 
@@ -67,31 +67,39 @@ class CRSRegister(object):
         if crs is None:
             if name in CRSDict:
                 cfg = CRSDict[name]
-                crs = CRS(proj=pyproj.Proj(**cfg["proj"]),
-                          geoid=pyproj.Geod(**cfg["geoid"]),
-                          crstype=cfg["crstype"],
-                          urn=cfg["urn"])
+
+                if cfg["proj"] is None:
+                    p = None
+                else:
+                    p = pyproj.Proj(**cfg["proj"])
+
+                if cfg["geod"] is None:
+                    g = None
+                else:
+                    g = pyproj.Geod(**cfg["geod"])
+
+                crs = CRS(proj=p, geod=g, crstype=cfg["crstype"], urn=cfg["urn"])
                 self.register[name] = crs
             else:
                 raise CRSLookupError("CRS '{0}' not defined")
         return crs
 
 CRSDict = {"CARTESIAN" : {"proj": None,
-                          "geoid": None,
+                          "geod": None,
                           "crstype": "local",
                           "urn": "urn:ogc:def:crs:EPSG::5806"},
 
            # Geographical
            "LONLAT_WGS84" : {"proj": {"proj": "lonlat"},
-                             "geoid": {"ellps":"WGS84"},
+                             "geod": {"ellps":"WGS84"},
                              "crstype": "geographical",
                              "urn": "urn:ogc:def:crs:EPSG::4326"},
            "LONLAT_NAD27" : {"proj": {"proj": "lonlat"},
-                             "geoid": {"ellps":"NAD27"},
+                             "geod": {"ellps":"NAD27"},
                              "crstype": "geographical",
                              "urn": "urn:ogc:def:crs:EPSG::4267"},
            "LONLAT_NAD83" : {"proj": {"proj": "lonlat"},
-                             "geoid": {"ellps":"NAD83"},
+                             "geod": {"ellps":"NAD83"},
                              "crstype": "geographical",
                              "urn": "urn:ogc:def:crs:EPSG::4269"},
 
@@ -105,7 +113,7 @@ CRSDict = {"CARTESIAN" : {"proj": None,
                                         "y_0": 2000000,
                                         "units": "m",
                                         "no_defs": True},
-                               "geoid": {"ellps": "WGS84"},
+                               "geod": {"ellps": "WGS84"},
                                "crstype": "projected",
                                "urn": "urn:ogc:def:crs:EPSG::32661"},
            "UPSSOUTH_WGS84" : {"proj": {"proj": "stere",
@@ -117,7 +125,7 @@ CRSDict = {"CARTESIAN" : {"proj": None,
                                         "y_0": 2000000,
                                         "units": "m",
                                         "no_defs": True},
-                               "geoid": {"ellps": "WGS84"},
+                               "geod": {"ellps": "WGS84"},
                                "crstype": "projected",
                    "urn": "urn:ogc:def:crs:EPSG::32761"},
            "NSIDCNORTH_WGS84" : {"proj": {"proj": "stere",
@@ -129,7 +137,7 @@ CRSDict = {"CARTESIAN" : {"proj": None,
                                           "y_0": 0,
                                           "units": "m",
                                           "no_defs": True},
-                                 "geoid": {"ellps": "WGS84"},
+                                 "geod": {"ellps": "WGS84"},
                                  "crstype": "projected",
                                  "urn": "urn:ogc:def:crs:EPSG::3413"},
            "NSIDCSOUTH_WGS84" : {"proj": {"proj": "stere",
@@ -141,10 +149,15 @@ CRSDict = {"CARTESIAN" : {"proj": None,
                                           "y_0": 0,
                                           "units": "m",
                                           "no_defs": True},
-                                 "geoid": {"ellps": "WGS84"},
+                                 "geod": {"ellps": "WGS84"},
                                  "crstype": "projected",
                                  "urn": "urn:ogc:def:crs:EPSG::3976"},
 
+           # Unknown
+           "UNKNOWN" : {"proj": None,
+                        "geod": None,
+                        "crstype": "local",
+                        "urn": "unknown"}
            }
 
 # Aliases
@@ -155,7 +168,7 @@ CRSDict["NSIDCNORTH"] = CRSDict["NSIDCNORTH_WGS84"]
 CRSDict["NSIDCSOUTH"] = CRSDict["NSIDCSOUTH_WGS84"]
 
 # This is the CRS register used globally within karta
-crs_reg = CRSRegister()
+crsreg = CRSRegister()
 
 # UTM zones
 #UTM1N = CRS("UTM Zone 1 North (WGS 84)", "projected", "urn:ogc:def:crs:EPSG::32601")
@@ -278,10 +291,14 @@ crs_reg = CRSRegister()
 #UTM59S = CRS("UTM Zone 59 South (WGS 84)", "projected", "urn:ogc:def:crs:EPSG::32759")
 #UTM60N = CRS("UTM Zone 60 North (WGS 84)", "projected", "urn:ogc:def:crs:EPSG::32660")
 #UTM60S = CRS("UTM Zone 60 South (WGS 84)", "projected", "urn:ogc:def:crs:EPSG::32760")
+
+class CRSError(Exception):
+    """ Exception to raise for invalid geodetic operations. """
+    def __init__(self, message=''):
+        self.message = message
+
  
 class CRSLookupError(Exception):
-    def __init__(self, s=None):
-        self.s = s
-    def __str__(self):
-        return self.s
+    def __init__(self, message=''):
+        self.message = message
 

@@ -6,22 +6,24 @@ import shapefile
 from . import guppy
 from . import geojson
 from . import xyfile
-from .. import crs as kcrs
+from ..crs import crsreg
 from .metadata import Metadata
 
-def _parsegeojsoncrs(jsoncrs, default=kcrs.LONLAT_WGS84):
+def _parsegeojsoncrs(jsoncrs, default=crsreg.LONLAT_WGS84):
     """ From a tuple representing a GeoJSON (name,None) or (href,type) pair,
     return an appropriate karta crs instance. """
     if jsoncrs is None:
         return default
     elif jsoncrs["type"] == "name":
-        for c in kcrs.crslist:
+        for c in crsreg.register.values():
             if c.urn == jsoncrs["properties"]["name"]:
                 return c
-        return kcrs.CRS("unknown", "unknown", jsoncrs["properties"]["name"])
+        return crsreg.UNKNOWN
     elif jsoncrs["type"] == "link":
-        return kcrs.CRS("unknown", jsoncrs["properties"]["type"], 
-                                   jsoncrs["properties"]["href"])
+        crs = CRS(proj=None, geod=None,
+                  crstype=jsoncrs["properties"]["type"],
+                  urn=jsoncrs["properties"]["href"])
+        return crs
     else:
         raise TypeError("Invalid GeoJSON CRS type")
 
@@ -153,7 +155,7 @@ def read_shapefile(stem, crs=None):
     cartesian.
     """
     if crs is None:
-        crs = kcrs.CARTESIAN
+        crs = crsreg.CARTESIAN
     fnms = get_filenames(stem, check=True)
 
     try:

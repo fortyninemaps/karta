@@ -12,11 +12,11 @@ from test_helper import md5sum, md5sum_file, TESTDATA, TESTDIR
 
 import karta
 import karta.vector as vector
-import karta.crs as crs
 import karta.vector.geojson as geojson
 from karta.vector.geojson import GeoJSONReader
 from karta.vector.guppy import Point, Multipoint, Line, Polygon
 from karta.vector.metadata import Metadata
+from karta.crs import crsreg
 
 
 class TestGeoJSONInput(unittest.TestCase):
@@ -101,11 +101,11 @@ class TestGuppyGeoJSON(unittest.TestCase):
         path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
         features = vector.read_geojson(path)
 
-        ans0 = Point((102.0, 0.5), properties={"prop0":"value0"}, crs=karta.LONLAT)
+        ans0 = Point((102.0, 0.5), properties={"prop0":"value0"}, crs=crsreg.LONLAT)
         self.assertEqual(features[0], ans0)
 
         ans1 = Line([(102.0, 0.0), (103.0, 1.0), (104.0, 0.0), (105.0, 1.0)],
-                    properties={"prop0":"value0", "prop1":0.0}, crs=karta.LONLAT)
+                    properties={"prop0":"value0", "prop1":0.0}, crs=crsreg.LONLAT)
         self.assertEqual(features[1], ans1)
 
         ans2 = Polygon([(100.0, 0.0), (101.0, 0.0), (101.0, 1.0), (100.0, 1.0),
@@ -210,19 +210,19 @@ class TestGeoJSONOutput(unittest.TestCase):
         return
 
     def test_write_data_crs(self):
-        capitols = Multipoint([Point((-112.1, 33.57), crs=crs.LONLAT),
-                               Point((-121.5, 38.57), crs=crs.LONLAT),
-                               Point((-84.42, 33.76), crs=crs.LONLAT),
-                               Point((-86.15, 39.78), crs=crs.LONLAT),
-                               Point((-112.0, 46.6), crs=crs.LONLAT),
-                               Point((-82.99, 39.98), crs=crs.LONLAT),
-                               Point((-77.48, 37.53), crs=crs.LONLAT),
-                               Point((-95.69, 39.04), crs=crs.LONLAT),
-                               Point((-71.02, 42.33), crs=crs.LONLAT),
-                               Point((-96.68, 40.81), crs=crs.LONLAT),
-                               Point((-97.51, 35.47), crs=crs.LONLAT),
-                               Point((-134.2, 58.37), crs=crs.LONLAT),
-                               Point((-100.3, 44.38), crs=crs.LONLAT)])
+        capitols = Multipoint([Point((-112.1, 33.57), crs=crsreg.LONLAT),
+                               Point((-121.5, 38.57), crs=crsreg.LONLAT),
+                               Point((-84.42, 33.76), crs=crsreg.LONLAT),
+                               Point((-86.15, 39.78), crs=crsreg.LONLAT),
+                               Point((-112.0, 46.6), crs=crsreg.LONLAT),
+                               Point((-82.99, 39.98), crs=crsreg.LONLAT),
+                               Point((-77.48, 37.53), crs=crsreg.LONLAT),
+                               Point((-95.69, 39.04), crs=crsreg.LONLAT),
+                               Point((-71.02, 42.33), crs=crsreg.LONLAT),
+                               Point((-96.68, 40.81), crs=crsreg.LONLAT),
+                               Point((-97.51, 35.47), crs=crsreg.LONLAT),
+                               Point((-134.2, 58.37), crs=crsreg.LONLAT),
+                               Point((-100.3, 44.38), crs=crsreg.LONLAT)])
         s = capitols.as_geojson()
         #print(s)
 

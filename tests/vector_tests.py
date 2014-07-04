@@ -12,10 +12,10 @@ import json
 from test_helper import md5sum, md5sum_file, TESTDATA, TESTDIR
 
 import karta.vector as vector
-import karta.crs as crs
 from karta.vector.geojson import GeoJSONReader
 from karta.vector.guppy import Point, Multipoint, Line, Polygon
 from karta.vector.metadata import Metadata
+from karta.crs import crsreg
 
 class TestGuppy(unittest.TestCase):
 
@@ -104,7 +104,7 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_empty_multipoint(self):
-        mp = Multipoint([], crs=crs.LONLAT_WGS84)
+        mp = Multipoint([], crs=crsreg.LONLAT_WGS84)
         self.assertEqual(len(mp), 0)
         return
 
@@ -224,8 +224,8 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_connected_multipoint_shortest_distance_to2(self):
-        line = Line([(127.0, -35.0), (132.0, -28.0), (142.0, -29.0)], crs=crs.LONLAT)
-        dist = line.shortest_distance_to(Point((98.0, -7.0), crs=crs.LONLAT))
+        line = Line([(127.0, -35.0), (132.0, -28.0), (142.0, -29.0)], crs=crsreg.LONLAT)
+        dist = line.shortest_distance_to(Point((98.0, -7.0), crs=crsreg.LONLAT))
         self.assertAlmostEqual(dist, 4257313.5324397, places=6)
         return
 
@@ -244,22 +244,22 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_connected_multipoint_nearest_on_boundary2(self):
-        line = Line([(-40, 0.0), (35, 0.0)], crs=crs.LONLAT)
-        npt = line.nearest_on_boundary(Point((30.0, 80.0), crs=crs.LONLAT))
-        self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=crs.LONLAT))
+        line = Line([(-40, 0.0), (35, 0.0)], crs=crsreg.LONLAT)
+        npt = line.nearest_on_boundary(Point((30.0, 80.0), crs=crsreg.LONLAT))
+        self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=crsreg.LONLAT))
         return
 
     # def test_connected_multipoint_nearest_on_boundary3(self):
     #     # This is the test that tends to break naive root finding schemes
-    #     line = Line([(-40, 0.0), (35, 0.0)], crs=crs.LONLAT)
-    #     npt = line.nearest_on_boundary(Point((30.0, 1e-8), crs=crs.LONLAT))
-    #     self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=crs.LONLAT))
+    #     line = Line([(-40, 0.0), (35, 0.0)], crs=crsreg.LONLAT)
+    #     npt = line.nearest_on_boundary(Point((30.0, 1e-8), crs=crsreg.LONLAT))
+    #     self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=crsreg.LONLAT))
     #     return
 
     # def test_connected_multipoint_nearest_on_boundary4(self):
-    #     line = Line([(-20.0, 32.0), (-26.0, 43.0), (-38.0, 39.0)], crs=crs.LONLAT)
-    #     npt = line.nearest_on_boundary(Point((-34.0, 52.0), crs=crs.LONLAT))
-    #     self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=crs.LONLAT))
+    #     line = Line([(-20.0, 32.0), (-26.0, 43.0), (-38.0, 39.0)], crs=crsreg.LONLAT)
+    #     npt = line.nearest_on_boundary(Point((-34.0, 52.0), crs=crsreg.LONLAT))
+    #     self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=crsreg.LONLAT))
     #     return
 
     def test_line_add_vertex2d(self):
@@ -360,9 +360,9 @@ class TestGuppy(unittest.TestCase):
         # trivial but more interesting case
         x = np.arange(-4, 5)
         y = (x)**2
-        line = Line([(x_,y_) for x_,y_ in zip(x, y)], crs=crs.CARTESIAN)
+        line = Line([(x_,y_) for x_,y_ in zip(x, y)], crs=crsreg.CARTESIAN)
         bbox = Polygon([(-2.5, 2.5), (2.5, 2.5), (2.5, -2.5), (-2.5, -2.5)],
-                             crs=crs.CARTESIAN)
+                             crs=crsreg.CARTESIAN)
 
         self.assertEqual(list(filter(bbox.contains, line)),
                          [Point((-1, 1)), Point((0, 0)), Point((1, 1))])
@@ -419,7 +419,7 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_walk_cartesian(self):
-        start = Point((-3, -4), crs=crs.CARTESIAN)
+        start = Point((-3, -4), crs=crsreg.CARTESIAN)
         dest = start.walk(5.0, math.atan(3.0/4.0))
         self.assertAlmostEqual(dest.x, 0.0)
         self.assertAlmostEqual(dest.y, 0.0)
@@ -453,9 +453,9 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_subsection_lonlat(self):
-        line = Line([(0, 40), (120, 40)], crs=crs.LONLAT)
+        line = Line([(0, 40), (120, 40)], crs=crsreg.LONLAT)
         points = line.subsection(20)
-        ans = [Point(v, crs=crs.LONLAT) for v in [(0, 40),
+        ans = [Point(v, crs=crsreg.LONLAT) for v in [(0, 40),
                                   (4.006549675732082, 43.200316625343305),
                                   (8.44359845345209, 46.2434129228378),
                                   (13.382442375999254, 49.09308515921458),
@@ -485,7 +485,7 @@ class TestGuppy(unittest.TestCase):
             (-19.13705, 80.048567), (-18.680467, 80.089333), (-17.451917,
                 80.14405), (-16.913233, 80.02715), (-16.631367, 80.022933),
             (-16.194067, 80.0168), (-15.915983, 80.020267), (-15.7763,
-                80.021283)], crs=crs.LONLAT)
+                80.021283)], crs=crsreg.LONLAT)
 
         for n in range(2, 30):
             self.assertEqual(len(line.subsection(n)), n)
@@ -525,9 +525,9 @@ class TestGuppyGeoInterface(unittest.TestCase):
 class TestGuppyProj(unittest.TestCase):
 
     def setUp(self):
-        self.vancouver = Point((-123.1, 49.25), crs=crs.LONLAT)
-        self.ottawa = Point((-75.69, 45.42), crs=crs.LONLAT)
-        self.whitehorse = Point((-135.05, 60.72), crs=crs.LONLAT)
+        self.vancouver = Point((-123.1, 49.25), crs=crsreg.LONLAT)
+        self.ottawa = Point((-75.69, 45.42), crs=crsreg.LONLAT)
+        self.whitehorse = Point((-135.05, 60.72), crs=crsreg.LONLAT)
         return
 
     def test_greatcircle(self):
@@ -549,7 +549,7 @@ class TestGuppyProj(unittest.TestCase):
         return
 
     def test_walk_lonlat(self):
-        start = Point((-132.14, 54.01), crs=crs.LONLAT_WGS84)
+        start = Point((-132.14, 54.01), crs=crsreg.LONLAT_WGS84)
         dest = start.walk(5440.0, 106.8*math.pi/180.0)
         self.assertAlmostEqual(dest.x, -132.0605910876)
         self.assertAlmostEqual(dest.y, 53.99584742821)
