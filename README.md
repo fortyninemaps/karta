@@ -14,11 +14,11 @@ welcome, particularly to improve format support and test coverage.
 **Current projects:**
 - test coverage
 - documentation
-- minimal system for coordinate system metadata
 
 ## DOCUMENTATION
-API documentation can be built by running `make` from the `doc/` directory.
-The beginnings of a tutorial to introduce *Karta* are in the [Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
+API documentation can be built by running `make` from the `doc/` directory. The
+beginnings of a tutorial to introduce *Karta* are in the
+[Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
 
 ##CONTENTS AT A GLANCE
 
@@ -26,7 +26,6 @@ The beginnings of a tutorial to introduce *Karta* are in the [Wiki](https://gith
     - guppy:        Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`) supporting the [Python \_\_geo\_interface\_\_](https://gist.github.com/sgillies/2217756)
     - gpx:          GPX class for parsing and constructing GPX eXchange files
     - geojson:      Classes and functions for reading and writing GeoJSON
-    - vtk:          XML-based VTK interface
     - shp\_funcs:   Shapefile-to-guppy conversions through _pyshp_ interface
     - xyfile:       ASCII table functions
     - quadtree:     QuadTree implementation
@@ -38,6 +37,8 @@ The beginnings of a tutorial to introduce *Karta* are in the [Wiki](https://gith
     - aaigrid:      Grid subclass specifically for reading and writing ESRI ASCII grids
     - streamline:   Streamline calculation
     - flow:         Stream flow functions (experimental)
+
+- crs : `CRS` and `CRSRegister` classes used throughout *Karta*
 
 - tests : unit tests
 
@@ -52,7 +53,6 @@ Currently partially-supported are:
     - ESRI Shapefiles via pyshp (r,w)
     - GPS eXchange (GPX) (r,w)
     - ASCII tables (XYZ) (r,w)
-    - VTK (w)
 - raster
     - ESRI ASCII Grid (r,w)
     - GeoTiff through GDAL (r)
@@ -79,13 +79,13 @@ To build from source,
 - Python 2.7+ or Python 3.2+
 - numpy
 - pyshp
-- pyproj (required for geodetic calculations)
+- pyproj (for geodetic calculations)
 
 ### Optional
 
-- scipy
-- gdal
 - cython
+- gdal (for geotiff I/O)
+- scipy
 
 Cython is an optional dependency used to speed up select functions. In general,
 enhanced-performance functions will then be called automatically when available,
