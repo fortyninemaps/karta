@@ -89,21 +89,21 @@ class GeoJSONWriter(object):
 
         In the case of a linked CRS, the link address and type can be specified
         using the `href` and `linktype` keyword arguments. If not supplied,
-        then it is assumed that crs.urn contains the *href* and crs.type
-        contains the *type*.
+        then it is assumed that crs.id["urn"] contains the *href* and the
+        *type* is "name".
 
         For more details, see the GeoJSON specification at:
         http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
         """
         if linkedcrs:
-            href = kw.get('href', crs.urn)
-            linktype = kw.get('linktype', crs.type)
+            href = kw.get('href', None)
+            linktype = kw.get('linktype', None)
             self.supobj['crs'] = {'type': 'link',
                                   'properties': {'href': href, 'type': linktype}}
 
         else:
             self.supobj['crs'] = {'type': 'name',
-                                  'properties': {'name': crs.urn}}
+                                  'properties': {'name': crs.id.get("urn", None)}}
         return
 
     def add_bbox(self, bbox=None):

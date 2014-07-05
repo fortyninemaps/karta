@@ -9,7 +9,7 @@ Customized reference systems may be added at runtime as follows:
     crs_reg.add_CRS("my_CRS", proj=[projection parameters],
                               geod=[geod parameters],
                               crstype=[one of 'projected', 'local', or 'geographical'],
-                              urn=[OGC URN (string)])
+                              id=[OGC URN (string)])
 
 For example, to add a CRS for handling data in the European Terrestrial
 Reference System of 1989, use:
@@ -17,14 +17,14 @@ Reference System of 1989, use:
     crs_reg.add_CRS("ETRS89", proj={"proj": "lonlat", "towgs84": [0,0,0,0,0,0,0]},
                               geod={"ellps": "GRS80"},
                               crstype="geographical",
-                              urn="urn:ogc:def:crs:EPSG::4258")
+                              id="urn:ogc:def:crs:EPSG::4258")
 """
 
 import pyproj
 
 class CRS(object):
     """ Encapsulated a coordinate reference system. """
-    def __init__(self, proj=None, geod=None, crstype=None, urn=None):
+    def __init__(self, proj=None, geod=None, crstype="unkown", id=None):
         """'proj' : pyproj.Proj or None
 
         'geod' : pyproj.Geod or None
@@ -35,14 +35,14 @@ class CRS(object):
         'urn' : string
         Open Geospatial Consortium uniform resource name
         """
-        if crstype in ("geographical", "projected", "local"):
+        if crstype in ("geographical", "projected", "local", "unknown"):
             self.crstype = crstype
         else:
             raise TypeError("CRS argument 'crstype' must be 'geographical', "
-                            "'projected', or 'local'")
+                            "'projected', 'local', or 'unknown'")
         self.proj = proj
         self.geod = geod
-        self.urn = urn
+        self.id = id
         return
 
     def __str__(self):
@@ -78,7 +78,7 @@ class CRSRegister(object):
                 else:
                     g = pyproj.Geod(**cfg["geod"])
 
-                crs = CRS(proj=p, geod=g, crstype=cfg["crstype"], urn=cfg["urn"])
+                crs = CRS(proj=p, geod=g, crstype=cfg["crstype"], id=cfg["id"])
                 self.register[name] = crs
             else:
                 raise CRSLookupError("CRS '{0}' not defined")
@@ -87,21 +87,21 @@ class CRSRegister(object):
 CRSDict = {"CARTESIAN" : {"proj": None,
                           "geod": None,
                           "crstype": "local",
-                          "urn": "urn:ogc:def:crs:EPSG::5806"},
+                          "id": {"urn": "urn:ogc:def:crs:EPSG::5806"}},
 
            # Geographical
            "LONLAT_WGS84" : {"proj": {"proj": "lonlat"},
                              "geod": {"ellps":"WGS84"},
                              "crstype": "geographical",
-                             "urn": "urn:ogc:def:crs:EPSG::4326"},
+                             "id": {"urn": "urn:ogc:def:crs:EPSG::4326"}},
            "LONLAT_NAD27" : {"proj": {"proj": "lonlat"},
                              "geod": {"ellps":"NAD27"},
                              "crstype": "geographical",
-                             "urn": "urn:ogc:def:crs:EPSG::4267"},
+                             "id": {"urn": "urn:ogc:def:crs:EPSG::4267"}},
            "LONLAT_NAD83" : {"proj": {"proj": "lonlat"},
                              "geod": {"ellps":"NAD83"},
                              "crstype": "geographical",
-                             "urn": "urn:ogc:def:crs:EPSG::4269"},
+                             "id": {"urn": "urn:ogc:def:crs:EPSG::4269"}},
 
            # Polar stereographic
            "UPSNORTH_WGS84" : {"proj": {"proj": "stere",
@@ -115,7 +115,7 @@ CRSDict = {"CARTESIAN" : {"proj": None,
                                         "no_defs": True},
                                "geod": {"ellps": "WGS84"},
                                "crstype": "projected",
-                               "urn": "urn:ogc:def:crs:EPSG::32661"},
+                               "id": {"urn": "urn:ogc:def:crs:EPSG::32661"}},
            "UPSSOUTH_WGS84" : {"proj": {"proj": "stere",
                                         "lat_0": -90,
                                         "lat_ts": -90,
@@ -127,7 +127,7 @@ CRSDict = {"CARTESIAN" : {"proj": None,
                                         "no_defs": True},
                                "geod": {"ellps": "WGS84"},
                                "crstype": "projected",
-                   "urn": "urn:ogc:def:crs:EPSG::32761"},
+                   "id": {"urn": "urn:ogc:def:crs:EPSG::32761"}},
            "NSIDCNORTH_WGS84" : {"proj": {"proj": "stere",
                                           "lat_0": 90,
                                           "lat_ts": 70,
@@ -139,7 +139,7 @@ CRSDict = {"CARTESIAN" : {"proj": None,
                                           "no_defs": True},
                                  "geod": {"ellps": "WGS84"},
                                  "crstype": "projected",
-                                 "urn": "urn:ogc:def:crs:EPSG::3413"},
+                                 "id": {"urn": "urn:ogc:def:crs:EPSG::3413"}},
            "NSIDCSOUTH_WGS84" : {"proj": {"proj": "stere",
                                           "lat_0": -90,
                                           "lat_ts": -70,
@@ -151,13 +151,13 @@ CRSDict = {"CARTESIAN" : {"proj": None,
                                           "no_defs": True},
                                  "geod": {"ellps": "WGS84"},
                                  "crstype": "projected",
-                                 "urn": "urn:ogc:def:crs:EPSG::3976"},
+                                 "id": {"urn": "urn:ogc:def:crs:EPSG::3976"}},
 
            # Unknown
            "UNKNOWN" : {"proj": None,
                         "geod": None,
                         "crstype": "local",
-                        "urn": "unknown"}
+                        "id": {}}
            }
 
 # Aliases

@@ -16,13 +16,13 @@ def _parsegeojsoncrs(jsoncrs, default=crsreg.LONLAT_WGS84):
         return default
     elif jsoncrs["type"] == "name":
         for c in crsreg.register.values():
-            if c.urn == jsoncrs["properties"]["name"]:
+            if c.id.get("urn", None) == jsoncrs["properties"]["name"]:
                 return c
         return crsreg.UNKNOWN
     elif jsoncrs["type"] == "link":
         crs = CRS(proj=None, geod=None,
                   crstype=jsoncrs["properties"]["type"],
-                  urn=jsoncrs["properties"]["href"])
+                  id={"link": jsoncrs["properties"]["href"]})
         return crs
     else:
         raise TypeError("Invalid GeoJSON CRS type")
