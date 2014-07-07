@@ -46,7 +46,18 @@ class CRS(object):
         return
 
     def __str__(self):
-        "{0} CRS (urn: {1}".format(self.crstype, self.urn)
+        return "{0} CRS (ID: {1}".format(self.crstype, self.id)
+
+    def __eq__(self, other):
+        if self.crstype is not "unknown" and self.crstype == other.crstype:
+            if self.id == other.id:
+                if self.proj.srs == other.proj.srs:
+                    if self.geod.initstring == other.geod.initstring:
+                        return True
+        return False
+
+    def __neq(self, other):
+        not self.__eq__(other)
 
 class CRSRegister(object):
     
