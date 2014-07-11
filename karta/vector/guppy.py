@@ -12,7 +12,7 @@ import numpy as np
 from . import vtk
 from . import geojson
 from . import xyfile
-from . import _shpfuncs
+from . import shp
 from .. import crs as kcrs
 from ..crs import crsreg
 from .metadata import Metadata
@@ -584,9 +584,9 @@ class MultipointBase(Geometry):
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
         if self.rank == 2:
-            _shpfuncs.write_multipoint2(self, fstem)
+            shp.write_multipoint2(self, fstem)
         elif self.rank == 3:
-            _shpfuncs.write_multipoint3(self, fstem)
+            shp.write_multipoint3(self, fstem)
         else:
             raise IOError("Rank must be 2 or 3 to write as a shapefile")
         return
@@ -887,9 +887,9 @@ class Line(ConnectedMultipoint):
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
         if self.rank == 2:
-            _shpfuncs.write_line2(self, fstem)
+            shp.write_line2(self, fstem)
         elif self.rank == 3:
-            _shpfuncs.write_line3(self, fstem)
+            shp.write_line3(self, fstem)
         else:
             raise IOError("rank must be 2 or 3 to write as a shapefile")
         return
@@ -970,9 +970,9 @@ class Polygon(ConnectedMultipoint):
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
         if self.rank == 2:
-            _shpfuncs.write_poly2(self, fstem)
+            shp.write_poly2(self, fstem)
         elif self.rank == 3:
-            _shpfuncs.write_poly3(self, fstem)
+            shp.write_poly3(self, fstem)
         else:
             raise IOError("rank must be 2 or 3 to write as a shapefile")
         return

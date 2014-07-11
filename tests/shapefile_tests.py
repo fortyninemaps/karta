@@ -8,7 +8,7 @@ import datetime
 import numbers
 from copy import copy
 
-from karta.vector import _shpfuncs, read_shapefile
+from karta.vector import shp, read_shapefile
 from karta.vector.guppy import Point, Multipoint, Line, Polygon
 
 class TestShapefile(unittest.TestCase):
@@ -82,26 +82,26 @@ class TestShapefile(unittest.TestCase):
         mp0 = copy(mp)
         mp1 = copy(mp.shift((4, 2)))
         mp2 = copy(mp.shift((-2, 3)))
-        _shpfuncs.write_shapefile([mp0, mp1, mp2], "data/points_collection")
+        shp.write_shapefile([mp0, mp1, mp2], "data/points_collection")
         return
 
     def test_write_collection_lines(self):
         line0 = copy(self.line)
         line1 = copy(self.line.shift((4, 2)))
         line2 = copy(self.line.shift((-2, 3)))
-        _shpfuncs.write_shapefile([line0, line1, line2], "data/line_collection")
+        shp.write_shapefile([line0, line1, line2], "data/line_collection")
         return
 
     def test_dbase_type(self):
-        self.assertEqual(_shpfuncs.property_field_type(1.0), "O")
-        self.assertEqual(_shpfuncs.property_field_type(1), "I")
-        self.assertEqual(_shpfuncs.property_field_type(np.float32(1.0)), "O")
-        self.assertEqual(_shpfuncs.property_field_type(np.int16(1)), "I")
-        #self.assertEqual(_shpfuncs.property_field_type(True), "L")
-        #self.assertEqual(_shpfuncs.property_field_type(False), "L")
-        self.assertEqual(_shpfuncs.property_field_type("pale ale"), "C")
-        self.assertEqual(_shpfuncs.property_field_type(datetime.date(1986, 8, 17)), "D")
-        self.assertEqual(_shpfuncs.property_field_type(datetime.datetime(2013, 5, 4, 20, 40, 21)), "@")
+        self.assertEqual(shp.property_field_type(1.0), "O")
+        self.assertEqual(shp.property_field_type(1), "I")
+        self.assertEqual(shp.property_field_type(np.float32(1.0)), "O")
+        self.assertEqual(shp.property_field_type(np.int16(1)), "I")
+        #self.assertEqual(shp.property_field_type(True), "L")
+        #self.assertEqual(shp.property_field_type(False), "L")
+        self.assertEqual(shp.property_field_type("pale ale"), "C")
+        self.assertEqual(shp.property_field_type(datetime.date(1986, 8, 17)), "D")
+        self.assertEqual(shp.property_field_type(datetime.datetime(2013, 5, 4, 20, 40, 21)), "@")
         return
 
     def test_read_points(self):
