@@ -748,7 +748,7 @@ class ConnectedMultipoint(MultipointBase):
                               (seg[0].vertex for seg in segments),
                               (seg[1].vertex for seg in segments)))
         distances = [i[1] for i in point_dist]
-        imin = distance.index(min(distances))
+        imin = distances.index(min(distances))
         return Point(point_dist[imin][0], crs=self._crs)
 
     def within_distance(self, pt, distance):
