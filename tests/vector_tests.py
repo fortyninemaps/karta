@@ -14,6 +14,7 @@ from test_helper import md5sum, md5sum_file, TESTDATA, TESTDIR
 import karta.vector as vector
 from karta.vector.geojson import GeoJSONReader
 from karta.vector.guppy import Point, Multipoint, Line, Polygon
+from karta.vector.guppy import affine_matrix
 from karta.vector.metadata import Metadata
 from karta.crs import crsreg
 
@@ -574,6 +575,49 @@ class TestGuppyOutput(unittest.TestCase):
         data1 = [54.0, 40.0, 77.0, 18.0, 84.0, 91.0, 61.0, 92.0, 19.0, 42.0,
                  50.0, 25.0, 11.0, 80.0, 59.0, 56.0, 32.0, 8.0, 88.0, 76.0]
         self.mp = Multipoint(vertices, data={'d0':data0, 'd1':data1})
+class TestAffineTransforms(unittest.TestCase):
+
+    def setUp(self):
+        self.square = Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])
+        #self.line_geo = Line([(6.5, 45), (6.8, 45.2), (6.9, 45.1), (6.8, 45.6),
+        #                      (6.6, 45.5)],
+        #                     crs=crsreg.LONLAT_WGS84)
+        return
+
+    def test_translate(self):
+        M = affine_matrix(Multipoint([(0,0), (1,0), (0,1)]),
+                          Multipoint([(1,0), (2,0), (1,1)]))
+        Mans = np.array([[1, 0, 1], [0, 1, 0], [0, 0, 1]])
+        self.assertTrue(np.allclose(M, Mans))
+
+        translated_square = self.square.apply_affine_transform(M)
+        ans = np.array([[1, 0], [1, 1], [2, 1], [2, 0], [1, 0]])
+        self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
+        return
+
+    def test_rotate(self):
+        s2 = math.sqrt(0.5)
+        M = affine_matrix(Multipoint([(0,0), (1,0), (0,1)]),
+                          Multipoint([(0,0), (s2,s2), (-s2,s2)]))
+        Mans = np.array([[s2, -s2, 0], [s2, s2, 0], [0, 0, 1]])
+        self.assertTrue(np.allclose(M, Mans))
+
+        translated_square = self.square.apply_affine_transform(M)
+        ans = np.array([[0, 0], [-s2, s2], [0, 2*s2], [s2, s2], [0, 0]])
+        self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
+        return
+
+    def test_stretch(self):
+        M = affine_matrix(Multipoint([(0,0), (1,0), (0,1)]),
+                          Multipoint([(0,0), (2,0), (0,2)]))
+        Mans = np.array([[2, 0, 0], [0, 2, 0], [0, 0, 1]])
+        self.assertTrue(np.allclose(M, Mans))
+
+        translated_square = self.square.apply_affine_transform(M)
+        ans = np.array([[0, 0], [0, 2], [2, 2], [2, 0], [0, 0]])
+        self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
+        return
+
 
     # Due to the output of ElementTree.tostring not being deterministic, this
     # test randomly fails due to the DataArray attributes being swapped. The
