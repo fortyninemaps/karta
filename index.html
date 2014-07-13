@@ -26,15 +26,17 @@
           <li><a href="https://github.com/njwilson23/karta/tarball/master">Download <strong>TAR Ball</strong></a></li>
           <li><a href="https://github.com/njwilson23/karta">View On <strong>GitHub</strong></a></li>
         </ul>
+
+        <p class="center"><img src="images/map_small.png"></p>
+
       </header>
       <section>
 
-
-        <p><em>Karta</em> is a Leatherman for geographic analyses. <em>Karta</em>
-        provides an lightweight interface for solving problems in Python/Python3.
-        It presents a simple and clean vector and raster data types, a small
-        selection of geographical analysis functions, and the ability to read and
-        write several useful formats.</p>
+        <p><em>Karta</em> is a Leatherman for geographic analyses.
+        <em>Karta</em> provides an lightweight interface for solving problems
+        in Python. It presents a simple and clean vector and raster data types,
+        a small selection of geographical analysis functions, and the ability
+        to read and write several useful formats.</p>
 
         <p>Goals of <em>Karta</em> include exposing a simple and fast framework
         for spatial analysis. <em>Karta</em> is under development and suggestions
@@ -48,9 +50,7 @@
         <li>guppy: Vector geometry classes (e.g. <code>Point</code>, <code>Multipoint</code>, <code>Line</code>, <code>Polygon</code>)</li>
         <li>gpx: GPX class for parsing and constructing GPX eXchange files</li>
         <li>geojson: Classes and functions for reading and writing GeoJSON</li>
-        <li>vtk: XML-based VTK interface</li>
-        <li>shp_funcs: Shapefile-to-guppy conversions through <em>pyshp</em> interface</li>
-        <li>stats: Basic geostatistical functions</li>
+        <li>shp: Shapefile-to-guppy conversions through <em>pyshp</em> interface</li>
         <li>xyfile: ASCII table functions</li>
         </ul></li>
         <li>raster
@@ -58,7 +58,6 @@
         <li>grid: Basic Grid types, including <code>StructuredGrid</code> and <code>RegularGrid</code></li>
         <li>raster: General purpose raster functions</li>
         <li>aaigrid: Grid subclass specifically for reading and writing ESRI ASCII grids</li>
-        <li>flow: Stream flow functions</li>
         <li>streamline: Streamline calculation</li>
         </ul></li>
         <li>tests : unit tests</li>
@@ -105,9 +104,9 @@ pip install karta/</code></pre>
         </ul>
         <h3 id="optional">Optional</h3>
         <ul>
-        <li>scipy</li>
         <li>gdal</li>
         <li>cython</li>
+        <li>scipy</li>
         </ul>
 
         <p>Cython is an optional dependency used to speed up select functions. In
