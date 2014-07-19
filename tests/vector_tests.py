@@ -683,6 +683,22 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(md["A"], [1,2,3,4,5])
         return
 
+    def test_nan_values(self):
+        D = {"A":[1,np.nan,3,4,5],
+             "B":[6,7,8,np.nan,10]}
+        md = Metadata(D)
+        self.assertTrue(np.isnan(md["A"][1]))
+        self.assertEqual(md["A"], md["A"])
+        return
+
+    def test_none_values(self):
+        D = {"A":[1,None,3,4,5],
+             "B":[6,7,8,None,10]}
+        md = Metadata(D)
+        self.assertTrue(md["A"][1] is None)
+        self.assertEqual(md["A"], md["A"])
+        return
+
 if __name__ == "__main__":
     unittest.main()
 

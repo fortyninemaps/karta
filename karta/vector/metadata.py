@@ -3,8 +3,8 @@
 import copy
 import numbers
 from collections import Mapping
-import numpy
-IntegerType = (numbers.Integral, numpy.int32, numpy.int64)
+from numpy import isnan, int32, int64
+IntegerType = (numbers.Integral, int32, int64)
 
 class Metadata(Mapping):
     """ Class for handling collections of metadata. Data are organized similar
@@ -55,7 +55,8 @@ class Metadata(Mapping):
                 n = -1
                 for k in data:
                     dtype = type(data[k][0])
-                    if not all(isinstance(a, dtype) for a in data[k]):
+                    if not all(isinstance(a, dtype) or a is None or isnan(a)
+                                    for a in data[k]):
                         raise MetadataError("Data must have uniform type")
                     if n != -1:
                         if len(data[k]) != n:
