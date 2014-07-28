@@ -4,20 +4,20 @@ or created on the fly.
 
 Customized reference systems may be added at runtime as follows:
 
-    from karta.crs import crs_reg
+    from karta.crs import crsreg
 
-    crs_reg.add_CRS("my_CRS", proj=[projection parameters],
-                              geod=[geod parameters],
-                              crstype=[one of 'projected', 'local', or 'geographical'],
-                              id=[OGC URN (string)])
+    crsreg.add_CRS("my_CRS", proj=[projection parameters],
+                             geod=[geod parameters],
+                             crstype=[one of 'projected', 'local', or 'geographical'],
+                             id=[OGC URN (string)])
 
 For example, to add a CRS for handling data in the European Terrestrial
 Reference System of 1989, use:
 
-    crs_reg.add_CRS("ETRS89", proj={"proj": "lonlat", "towgs84": [0,0,0,0,0,0,0]},
-                              geod={"ellps": "GRS80"},
-                              crstype="geographical",
-                              id="urn:ogc:def:crs:EPSG::4258")
+    crsreg.add_CRS("ETRS89", proj={"proj": "lonlat", "towgs84": [0,0,0,0,0,0,0]},
+                             geod={"ellps": "GRS80"},
+                             crstype="geographical",
+                             id="urn:ogc:def:crs:EPSG::4258")
 """
 
 import pyproj
@@ -65,10 +65,7 @@ class CRSRegister(object):
         self.register = {}
 
     def __getattr__(self, name):
-        try:
-            return self.get_CRS(name)
-        except CRSLookupError:
-            return super(CRSRegister, self).__getattr__(name)
+        return self.get_CRS(name)
 
     def add_CRS(self, name, **kwargs):
         self.register[name] = CRS(**kwargs)
@@ -92,7 +89,7 @@ class CRSRegister(object):
                 crs = CRS(proj=p, geod=g, crstype=cfg["crstype"], id=cfg["id"])
                 self.register[name] = crs
             else:
-                raise CRSLookupError("CRS '{0}' not defined")
+                raise CRSLookupError("CRS '{0}' not defined".format(name))
         return crs
 
 CRSDict = {"CARTESIAN" : {"proj": None,
