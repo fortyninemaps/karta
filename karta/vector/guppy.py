@@ -47,6 +47,10 @@ class Geometry(object):
             raise kcrs.CRSError("Positions must use the same CRS")
         return dist
 
+    @property
+    def crs(self):
+        return self._crs
+
     def add_property(self, name, value):
         """ Insert a property (name -> value) into the properties dict, raising
         a NameError if the property already exists. Compared to directly
