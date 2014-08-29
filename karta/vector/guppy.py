@@ -287,14 +287,21 @@ class MultipointBase(Geometry):
         super(MultipointBase, self).__init__(**kwargs)
         vertices = list(vertices)
         if len(vertices) > 0:
-            self.rank = len(vertices[0])
+
+            def getrank(vertex):
+                try:
+                    return vertex.rank
+                except AttributeError:
+                    return len(vertex)
+
+            self.rank = getrank(vertices[0])
 
             if not 2 <= self.rank <= 3:
                 raise GInitError("Input must be doubles or triples")
-            elif not all(self.rank == len(i) for i in vertices):
+            elif not all(self.rank == getrank(v) for v in vertices):
                 raise GInitError("Input must have consistent rank")
             else:
-                self.vertices = [tuple(i) for i in vertices]
+                self.vertices = [tuple(v) for v in vertices]
 
         else:
             self.rank = None
@@ -608,6 +615,7 @@ class Multipoint(MultipointBase):
                  **kwargs):
         def ispoint(a):
             return hasattr(a, "_geotype") and a._geotype == "Point"
+
         if len(vertices) != 0 and all(ispoint(a) for a in vertices):
             points = vertices
             crs = points[0]._crs
@@ -638,7 +646,6 @@ class Multipoint(MultipointBase):
             self._crs = crs
 
         else:
-
             super(Multipoint, self).__init__(vertices,
                                              data=data,
                                              properties=properties,
