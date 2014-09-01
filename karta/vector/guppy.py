@@ -288,6 +288,9 @@ class MultipointBase(Geometry):
 
     def __init__(self, vertices, data=None, properties=None, copy_metadata=True,
                  **kwargs):
+        """ Partial init function that establishes geometry rank and greates a
+        metadata attribute.
+        """
         super(MultipointBase, self).__init__(**kwargs)
         vertices = list(vertices)
         if len(vertices) > 0:
@@ -299,6 +302,10 @@ class MultipointBase(Geometry):
                     return len(vertex)
 
             self.rank = getrank(vertices[0])
+            try:
+                self._crs = vertices[0].crs
+            except AttributeError:
+                pass
 
             if not 2 <= self.rank <= 3:
                 raise GInitError("Input must be doubles or triples")
@@ -620,6 +627,8 @@ class Multipoint(MultipointBase):
         def ispoint(a):
             return hasattr(a, "_geotype") and a._geotype == "Point"
 
+        vertices = list(vertices)
+
         if len(vertices) != 0 and all(ispoint(a) for a in vertices):
             points = vertices
             crs = points[0]._crs
@@ -920,7 +929,9 @@ class Polygon(ConnectedMultipoint):
     subs = []
 
     def __init__(self, vertices, data=None, properties=None, subs=None, **kwargs):
-        ConnectedMultipoint.__init__(self, vertices, data=data, properties=properties, **kwargs)
+        vertices = list(vertices)
+        ConnectedMultipoint.__init__(self, vertices, data=data,
+                                     properties=properties, **kwargs)
         if vertices[0] != vertices[-1]:
             self.vertices.append(vertices[0])
         self.subs = subs if subs is not None else []
