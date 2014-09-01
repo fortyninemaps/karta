@@ -299,6 +299,10 @@ class MultipointBase(Geometry):
                     return len(vertex)
 
             self.rank = getrank(vertices[0])
+            try:
+                self._crs = vertices[0].crs
+            except AttributeError:
+                pass
 
             if not 2 <= self.rank <= 3:
                 raise GInitError("Input must be doubles or triples")
