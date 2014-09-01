@@ -19,10 +19,15 @@ def _isnumpytype(o):
 def property_field_type(value):
     """ Determine the appropriate dBase field type for *value* """
     if isinstance(value, numbers.Number) or _isnumpytype(value):
-        if isinstance(value, numbers.Integral) or _isnumpyint(value):
-            desc = "I"
-        elif isinstance(value, numbers.Real) or _isnumpyfloat(value):
-            desc = "O"
+        ## pyshp doesn't handle the full variety of numeric types
+        ## (float, double, long), only 'N'
+        #if isinstance(value, numbers.Integral) or _isnumpyint(value):
+        #    desc = "I"
+        #elif isinstance(value, numbers.Real) or _isnumpyfloat(value):
+        #    desc = "O"
+        if isinstance(value, (numbers.Integral, numbers.Real)) \
+                or _isnumpyint(value) or _isnumpyfloat(value):
+            desc = "N"
         else:
             raise TypeError("cannot choose the correct dBase type for "
                             "{0}\n".format(type(value)))
@@ -45,8 +50,8 @@ def addfields(writer, properties):
     for key in properties:
         value = properties[key]
         typ = property_field_type(value)
-        length = "100"
-        writer.field(key.upper(), typ, length)
+        dec = 0 if t not in ("N", "F", "O", "I") else 16
+        writer.field(key.upper(), fieldType=typ, size="100", decimal=dec)
         values.append(value)
     writer.record("0", *values)
     return
@@ -55,7 +60,9 @@ def addfields_points(writer, points):
     writer.field("ID", "I", "8")
     keys = list(points.data.keys())
     for key in keys:
-        writer.field(key, property_field_type(points.data[key][0]), "100")
+        t = property_field_type(points.data[key][0])
+        dec = 0 if t not in ("N", "F", "O", "I") else 16
+        writer.field(key, fieldType=t, size="100", decimal=dec)
     for i, pt in enumerate(points):
         writer.record(str(i), *[pt.data[key] for key in keys])
     return

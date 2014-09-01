@@ -93,10 +93,14 @@ class TestShapefile(unittest.TestCase):
         return
 
     def test_dbase_type(self):
-        self.assertEqual(shp.property_field_type(1.0), "O")
-        self.assertEqual(shp.property_field_type(1), "I")
-        self.assertEqual(shp.property_field_type(np.float32(1.0)), "O")
-        self.assertEqual(shp.property_field_type(np.int16(1)), "I")
+        self.assertEqual(shp.property_field_type(1.0), "N")
+        self.assertEqual(shp.property_field_type(1), "N")
+        self.assertEqual(shp.property_field_type(np.float32(1.0)), "N")
+        self.assertEqual(shp.property_field_type(np.int16(1)), "N")
+        #self.assertEqual(shp.property_field_type(1.0), "O")
+        #self.assertEqual(shp.property_field_type(1), "I")
+        #self.assertEqual(shp.property_field_type(np.float32(1.0)), "O")
+        #self.assertEqual(shp.property_field_type(np.int16(1)), "I")
         #self.assertEqual(shp.property_field_type(True), "L")
         #self.assertEqual(shp.property_field_type(False), "L")
         self.assertEqual(shp.property_field_type("pale ale"), "C")
