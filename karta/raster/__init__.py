@@ -6,7 +6,7 @@ from . import grid
 from . import aaigrid
 from . import raster
 
-from .grid import RegularGrid, WarpedGrid, aairead
+from .grid import RegularGrid, WarpedGrid, aairead, gtiffread
 from .aaigrid import AAIGrid
 from .raster import witch_of_agnesi, peaks, pad, slope, aspect, grad, div
 from .raster import normed_vector_field

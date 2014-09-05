@@ -22,10 +22,10 @@ def read(fnm):
         if transform is not None:
             hdr["dx"] = transform[1]
             hdr["dy"] = -transform[5]
-            hdr["xllcorner"] = transform[0]
-            hdr["yllcorner"] = transform[3] - hdr["ny"] * hdr["dy"]
+            hdr["xllcenter"] = transform[0]
+            hdr["yllcenter"] = transform[3] - hdr["ny"] * hdr["dy"]
         else:
-            raise AttributeError("No GeoTransform in GDAL Dataset")
+            raise AttributeError("No GeoTransform in geotiff file")
 
         for i in range(1, hdr["nbands"]+1):
             band = dataset.GetRasterBand(i)

@@ -43,6 +43,10 @@ class Grid(object):
         """
         return
 
+    @property
+    def hdr(self):
+        return self._hdr
+
     def get_hdr(self):
         """ Return the header dictionary. """
         return self._hdr
