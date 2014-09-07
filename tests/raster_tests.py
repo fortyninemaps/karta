@@ -13,12 +13,12 @@ class RegularGrid(unittest.TestCase):
 
     def setUp(self):
         pe = karta.raster.peaks(n=49)
-        self.rast = karta.grid.RegularGrid(hdr={'nx':49, 'ny':49,
-                                                'xllcorner':0.0,
-                                                'yllcorner':0.0,
-                                                'dx':30.0,
-                                                'dy':30.0,
-                                                'nbands':1}, Z=pe)
+        self.rast = karta.grid.RegularGrid(hdr={'nx': 49, 'ny': 49,
+                                                'xllcenter': 15.0,
+                                                'yllcenter': 15.0,
+                                                'dx': 30.0,
+                                                'dy': 30.0,
+                                                'nbands': 1}, Z=pe)
         return
 
     def test_add_rgrid(self):

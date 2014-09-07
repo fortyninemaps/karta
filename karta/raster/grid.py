@@ -89,8 +89,8 @@ class RegularGrid(Grid):
         Parameters:
         -----------
         hdr : dictionary of header fields, which must contain
-            - xllcorner (float)
-            - yllcorner (float)
+            - xllcenter (float)
+            - yllcenter (float)
             - nx (int)
             - ny (int)
             - dx (float)
@@ -103,6 +103,19 @@ class RegularGrid(Grid):
                 hdr['nbands'] = Z.ndim[2]
             else:
                 hdr['nbands'] = 1
+
+        if ('xllcenter' not in hdr):
+            if ('xllcorner' in hdr):
+                hdr['xllcenter'] = hdr['xllcorner'] + 0.5 * hdr['dx']
+            else:
+                raise KeyError("No xllcenter or xllcorner reference in header")
+
+        if ('yllcenter' not in hdr):
+            if ('yllcorner' in hdr):
+                hdr['yllcenter'] = hdr['yllcorner'] + 0.5 * hdr['dy']
+            else:
+                raise KeyError("No yllcenter or yllcorner reference in header")
+
         self.set_hdr(hdr)
 
         shape = (self._hdr['ny'], self._hdr['nx'])
@@ -128,7 +141,7 @@ class RegularGrid(Grid):
 
     def _check_hdr(self, hdr):
         """ Check that the header contains the required fields. """
-        required_fields = ('xllcorner', 'yllcorner', 'nx', 'ny', 'dx', 'dy',
+        required_fields = ('xllcenter', 'yllcenter', 'nx', 'ny', 'dx', 'dy',
                            'nbands')
         for key in required_fields:
             if key not in hdr:
@@ -143,8 +156,14 @@ class RegularGrid(Grid):
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
         """
-        return (self._hdr['xllcorner'] + 0.5*self._hdr['dx'],
-                self._hdr['yllcorner'] + 0.5*self._hdr['dy'])
+        return (self._hdr['xllcenter'], self._hdr['yllcenter'])
+
+    def corner_llref(self):
+        """ Return the 'lower-left' reference in terms of a center coordinate.
+        """
+        xllcorner = self._hdr['xllcenter'] - 0.5 * self._hdr['dx']
+        yllcorner = self._hdr['yllcenter'] - 0.5 * self._hdr['dy']
+        return (xllcorner, yllcorner)
 
     def center_coords(self):
         """ Return the cell-center coordinates. """
@@ -156,8 +175,7 @@ class RegularGrid(Grid):
 
     def vertex_coords(self):
         """ Return the coordinates of vertices. """
-        xllcorner = self._hdr['xllcorner']
-        yllcorner = self._hdr['yllcorner']
+        xllcorner, yllcorner = self.corner_llref()
         xurcorner = xllcorner + self._hdr['nx'] * self._hdr['dx']
         yurcorner = yllcorner + self._hdr['ny'] * self._hdr['dy']
         nx = self._hdr['nx']
@@ -169,10 +187,10 @@ class RegularGrid(Grid):
         """ Return the region characteristics as a tuple, relative to either
         cell centers or the grid edges. """
         if reference == 'center':
-            x0, y0  = self.center_llref()
+            x0, y0 = self.center_llref()
             n = 0
         elif reference == 'edge':
-            x0, y0  = self._hdr['xllcorner'], self._hdr['yllcorner']
+            x0, y0 = self.corner_llref()
             n = 1
         else:
             raise GridError("`reference` must be 'center' or 'edge'")
@@ -308,8 +326,8 @@ class RegularGrid(Grid):
             self._hdr['ny'] = data_a.shape[0]
 
             self.data = data_a
-            self._hdr['xllcorner'] = xllcenter - 0.5*self._hdr['dx']
-            self._hdr['yllcorner'] = yllcenter - 0.5*self._hdr['dy']
+            self._hdr['xllcenter'] = xllcenter
+            self._hdr['yllcenter'] = yllcenter
 
         else:
             raise GridError("no data to resize")
@@ -364,9 +382,9 @@ class RegularGrid(Grid):
 
     def get_extents(self):
         hdr = self.get_hdr()
-        x1 = hdr["xllcorner"] + hdr["nx"] * hdr["dx"]
-        y1 = hdr["yllcorner"] + hdr["ny"] * hdr["dy"]
-        return (hdr["xllcorner"], x1, hdr["yllcorner"], y1)
+        xllcorner, yllcorner = self.corner_llref()
+        return (xllcorner, xllcorner + hdr["nx"] * hdr["dx"],
+                yllcorner, yllcorner + hdr["ny"] * hdr["dy"])
 
     def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as `segments`. Does not interpolate.
@@ -448,11 +466,12 @@ class RegularGrid(Grid):
             f.write("NROWS {0}\n".format(self._hdr['ny']))
             if reference == 'center':
                 d = self._hdr['dx']
-                f.write("XLLCENTER {0}\n".format(self._hdr['xllcorner']+0.5*d))
-                f.write("YLLCENTER {0}\n".format(self._hdr['yllcorner']+0.5*d))
+                f.write("XLLCENTER {0}\n".format(self._hdr['xllcenter']))
+                f.write("YLLCENTER {0}\n".format(self._hdr['yllcenter']))
             elif reference == 'corner':
-                f.write("XLLCORNER {0}\n".format(self._hdr['xllcorner']))
-                f.write("YLLCORNER {0}\n".format(self._hdr['yllcorner']))
+                xllcorner, yllcorner = self.corner_llref()
+                f.write("XLLCORNER {0}\n".format(xllcorner))
+                f.write("YLLCORNER {0}\n".format(yllcorner))
             f.write("CELLSIZE {0}\n".format(self._hdr['dx']))
             f.write("NODATA_VALUE {0}\n".format(nodata_value))
             f.writelines([str(row).replace(',','')[1:-1] +
