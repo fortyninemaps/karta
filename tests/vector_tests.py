@@ -330,6 +330,15 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(line0.intersections(line1), Multipoint([(1.5, 1.5)], data=[np.nan, np.nan]))
         return
 
+    def test_poly_clockwise(self):
+        p = Polygon([(0,0), (0,1), (1,1), (1,0)])
+        self.assertTrue(p.isclockwise())
+        return
+
+    def test_poly_counterclockwise(self):
+        p = Polygon([(0,0), (1,0), (1,1), (0,1)])
+        self.assertFalse(p.isclockwise())
+        return
 
     def test_poly_vertices(self):
         self.assertTrue((self.poly.get_vertices() ==
@@ -346,7 +355,7 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_poly_length(self):
-        self.assertEqual(self.poly.length(), 19.430647008220866)
+        self.assertEqual(self.poly.length, 19.430647008220866)
         return
 
     def test_poly_contains1(self):
@@ -399,16 +408,16 @@ class TestGuppy(unittest.TestCase):
         return
 
     def test_ringedpoly_perimeter(self):
-        self.assertEqual(round(self.ringed_poly.perimeter(), 3), 50.246)
+        self.assertEqual(round(self.ringed_poly.perimeter, 3), 50.246)
         return
 
     def test_ringedpoly_area(self):
-        self.assertEqual(self.ringed_poly.area(), 100 - self.ring.area())
+        self.assertEqual(self.ringed_poly.area, 100 - self.ring.area)
         return
 
     def test_segments(self):
         v = self.vertices
-        self.assertEqual([tuple(a.vertices) for a in self.line.segments()],
+        self.assertEqual([tuple(a.vertices) for a in self.line.segments],
                          [(v[i], v[i+1]) for i in range(len(self.vertices)-1)])
         return
 
