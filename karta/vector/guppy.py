@@ -13,8 +13,7 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
-from .. import crs as kcrs
-from ..crs import crsreg
+from ..crs import crsreg, CRSError
 from .metadata import Metadata
 from . import _vectorgeo
 
@@ -44,7 +43,7 @@ class Geometry(object):
             except NameError:
                 dist = greatcircle(pos0, pos1)
         else:
-            raise kcrs.CRSError("Positions must use the same CRS")
+            raise CRSError("Positions must use the same CRS")
         return dist
 
     @property
@@ -183,8 +182,8 @@ class Point(Geometry):
             return az1 * math.pi / 180.0
 
         else:
-            raise kcrs.CRSError("Azimuth undefined for points in CRS {0} and "
-                                "{1}".format(self._crs, other._crs))
+            raise CRSError("Azimuth undefined for points in CRS {0} and "
+                           "{1}".format(self._crs, other._crs))
 
     def walk(self, distance, direction):
         """ Returns the point reached when moving in a given direction for
@@ -216,7 +215,7 @@ class Point(Geometry):
         geographical and a third (z) coordinate exists, it is assumed to have
         the same units as the real-world horizontal distance (i.e. meters). """
         if self._crs != other._crs:
-            raise kcrs.CRSError("Points must share the same coordinate system.")
+            raise CRSError("Points must share the same coordinate system.")
         flat_dist = self._distance(self, other)
         if None in (self.z, other.z):
             return flat_dist
@@ -226,7 +225,7 @@ class Point(Geometry):
     def greatcircle(self, other):
         """ Return the great circle distance between two geographical points. """
         if not (self._crs == other._crs):
-            raise kcrs.CRSError("Both point have use the same CRS")
+            raise CRSError("Both point have use the same CRS")
         az1, az2, dist = self._crs.geod.inv(self.x, self.y, other.x, other.y,
                                             radians=False)
         return dist
@@ -634,7 +633,7 @@ class Multipoint(MultipointBase):
             crs = points[0]._crs
             rank = points[0].rank
             if len(points) != 1 and not all(pt._crs == crs for pt in points[1:]):
-                raise kcrs.CRSError("All points must share the same CRS")
+                raise CRSError("All points must share the same CRS")
             elif not all(rank == pt.rank for pt in points[1:]):
                 raise GInitError("Input must have consistent rank")
 
@@ -735,7 +734,7 @@ class ConnectedMultipoint(MultipointBase):
         boundary to *pt* (Point).
         """
         if self._crs != pt._crs:
-            raise kcrs.CRSError("Point must have matching CRS")
+            raise CRSError("Point must have matching CRS")
         elif self._crs == crsreg.CARTESIAN:
             func = _vecgeo.pt_nearest_planar
         else:
@@ -755,7 +754,7 @@ class ConnectedMultipoint(MultipointBase):
         pt (Point). If two points are equidistant, only one will be returned.
         """
         if self._crs != pt._crs:
-            raise kcrs.CRSError("Point must have matching CRS")
+            raise CRSError("Point must have matching CRS")
         elif self._crs == crsreg.CARTESIAN:
             func = _vecgeo.pt_nearest_planar
         else:
@@ -1120,7 +1119,7 @@ def points_to_multipoint(points):
     """
     crs = points[0]._crs
     if not all(pt._crs == crs for pt in points):
-        raise kcrs.CRSError("All points must share the same CRS")
+        raise CRSError("All points must share the same CRS")
 
     keys = list(points[0].properties.keys())
     for pt in points[1:]:
