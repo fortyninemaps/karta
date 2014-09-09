@@ -131,6 +131,10 @@ class RegularGrid(Grid):
     def shape(self):
         return self.Z.shape[:2]
 
+    @property
+    def layers(self):
+        return tuple(self.Z[:,:,i] for i in range(self.nbands))
+
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
         """
@@ -149,11 +153,11 @@ class RegularGrid(Grid):
 
     def center_coords(self):
         """ Return the cell-center coordinates. """
-        ii, jj = np.meshgrid(np.arange(self.Z.shape[0]),
-                             np.arange(self.Z.shape[1]))
+        ii, jj = np.meshgrid(np.arange(self.Z.shape[1]),
+                             np.arange(self.Z.shape[0]))
         t = self._transform
-        return (t[0] + ii * t[2] + jj * t[4],
-                t[1] + jj * t[3] + jj * t[5])
+        return (t[0] + ii * t[2] + jj[::-1] * t[4],
+                t[1] + jj[::-1] * t[3] + ii * t[5])
 
     def vertex_coords(self):
         """ Return the coordinates of vertices. """
