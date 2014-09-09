@@ -13,26 +13,27 @@ class RegularGrid(unittest.TestCase):
 
     def setUp(self):
         pe = karta.raster.peaks(n=49)
-        self.rast = karta.grid.RegularGrid(hdr={'nx': 49, 'ny': 49,
-                                                'xllcenter': 15.0,
-                                                'yllcenter': 15.0,
-                                                'dx': 30.0,
-                                                'dy': 30.0,
-                                                'nbands': 1}, Z=pe)
+        self.rast = karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 0.0, 0.0), Z=pe)
+        # self.rast = karta.grid.RegularGrid(hdr={'nx': 49, 'ny': 49,
+        #                                         'xllcenter': 15.0,
+        #                                         'yllcenter': 15.0,
+        #                                         'dx': 30.0,
+        #                                         'dy': 30.0,
+        #                                         'nbands': 1}, Z=pe)
         return
 
     def test_add_rgrid(self):
-        rast2 = karta.grid.RegularGrid(self.rast.get_hdr(),
-                                       Z=np.random.random(self.rast.data.shape)) 
+        rast2 = karta.grid.RegularGrid(self.rast.transform,
+                                       Z=np.random.random(self.rast.Z.shape)) 
         res = self.rast + rast2
-        self.assertTrue(np.all(res.data == self.rast.data+rast2.data))
+        self.assertTrue(np.all(res.Z == self.rast.Z+rast2.Z))
         return
 
     def test_sub_rgrid(self):
-        rast2 = karta.grid.RegularGrid(self.rast.get_hdr(),
-                                       Z=np.random.random(self.rast.data.shape)) 
+        rast2 = karta.grid.RegularGrid(self.rast.transform,
+                                       Z=np.random.random(self.rast.Z.shape)) 
         res = self.rast - rast2
-        self.assertTrue(np.all(res.data == self.rast.data-rast2.data))
+        self.assertTrue(np.all(res.Z == self.rast.Z-rast2.Z))
         return
 
     def test_center_coords(self):
@@ -49,31 +50,27 @@ class RegularGrid(unittest.TestCase):
             xx, yy = np.meshgrid(np.linspace(s, f, n),
                                  np.linspace(s, f, n))
             zz = 2.0*xx + -3.0*yy
-            return karta.grid.RegularGrid(hdr={'nx':n, 'ny':n,
-                                               'xllcorner':0.0,
-                                               'yllcorner':0.0,
-                                               'dx':30.0,
-                                               'dy':30.0,
-                                               'nbands':1}, Z=zz)
+            return karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 0.0, 0.0), Z=zz)
+
         g = makegrid(0.0, 1.0, 129)
         sol = makegrid(1.0/128.0, 1.0-1.0/128.0, 64)
         g.resample(60.0, 60.0)
-        residue = g.data - sol.data
+        residue = g.Z - sol.Z
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return
 
     def test_vertex_coords(self):
-        ans = np.meshgrid(np.arange(0.0, 1471.0, 30.0),
-                          np.arange(0.0, 1471.0, 30.0))
-        self.assertEqual(0.0, np.sum(self.rast.vertex_coords()[0] - ans[0]))
-        self.assertEqual(0.0, np.sum(self.rast.vertex_coords()[1] - ans[1]))
+        ans = np.meshgrid(np.arange(15.0, 1486.0, 30.0),
+                          np.arange(15.0, 1486.0, 30.0))
+        self.assertTrue(np.sum(self.rast.vertex_coords()[0] - ans[0]) < 1e-10)
+        self.assertTrue(np.sum(self.rast.vertex_coords()[1] - ans[1]) < 1e-10)
         return
 
-    def test_get_region(self):
-        creg = (15.0, 1485.0, 15.0, 1485.0)
-        ereg = (0.0, 1500.0, 0.0, 1500.0)
-        self.assertEqual(self.rast.get_region(reference='center'), creg)
-        self.assertEqual(self.rast.get_region(reference='edge'), ereg)
+    def test_get_extents(self):
+        creg = (15.0, 1455.0, 15.0, 1455.0)
+        ereg = (0.0, 1470.0, 0.0, 1470.0)
+        self.assertEqual(self.rast.get_extents(reference='center'), creg)
+        self.assertEqual(self.rast.get_extents(reference='edge'), ereg)
         return
 
     def test_minmax(self):
@@ -82,52 +79,52 @@ class RegularGrid(unittest.TestCase):
         return
 
     def test_get_indices(self):
-        ind = self.rast.get_indices(0.0, 0.0)
-        self.assertEqual(ind, (0, 48))
-        ind = self.rast.get_indices(1485.0, 1485.0)
-        self.assertEqual(ind, (48, 0))
+        ind = self.rast.get_indices(15.0, 15.0)
+        self.assertEqual(tuple(ind), (0, 0))
+        ind = self.rast.get_indices(1455.0, 1455.0)
+        self.assertEqual(tuple(ind), (48, 48))
         return
 
     def test_profile(self):
-        prof = self.rast.get_profile([(0.0, 0.0), (1485.0, 1485.0)],
+        prof = self.rast.get_profile([(0.0, 1470.0), (1470.0, 0.0)],
                                      resolution=30.0)
-        expected = np.array([3.22353596e-05, 3.22353596e-05, 1.12058629e-04,
-                             3.61838717e-04, 3.61838717e-04, 1.08395539e-03,
-                             3.00817013e-03, 3.00817013e-03, 7.72015842e-03,
-                             1.82832037e-02, 3.98497372e-02, 3.98497372e-02,
-                             7.96679278e-02, 1.45455904e-01, 1.45455904e-01,
-                             2.41123457e-01, 3.60000957e-01, 4.78441147e-01,
-                             4.78441147e-01, 5.55779901e-01, 5.47061156e-01,
-                             5.47061156e-01, 4.29133262e-01, 2.28899450e-01,
-                             2.28899450e-01, 3.21030706e-02, -4.58152669e-02,
-                             7.74741386e-02, 7.74741386e-02, 3.89805020e-01,
-                             7.72078470e-01, 7.72078470e-01, 1.05657945e+00,
-                             1.12541675e+00, 9.81011843e-01, 9.81011843e-01,
-                             7.35348921e-01, 5.25639991e-01, 5.25639991e-01,
-                             4.21139020e-01, 3.89628162e-01, 3.89628162e-01,
-                             3.40764035e-01, 2.03711858e-01, -2.20472642e-02,
-                             -2.20472642e-02, -2.72916549e-01, -4.67917982e-01,
-                             -4.67917982e-01, -5.56069225e-01, -5.35273179e-01,
-                             -4.40491855e-01, -4.40491855e-01, -3.18061354e-01,
-                             -2.04492912e-01, -2.04492912e-01, -1.18122152e-01,
-                             -6.16397937e-02, -2.91470271e-02, -2.91470271e-02,
-                             -1.25010468e-02, -4.85698059e-03, -4.85698059e-03,
-                             -1.70224503e-03, -5.33337096e-04, -5.33337096e-04,
-                             -1.46658120e-04, -3.39563401e-05, -5.86418787e-06,
-                             -5.86418787e-06, -5.86418787e-06])
+        expected = np.array([3.22353596e-05,   3.22353596e-05,   1.12058629e-04,
+                             3.61838717e-04,   3.61838717e-04,   1.08395539e-03,
+                             3.00817013e-03,   3.00817013e-03,   7.72015842e-03,
+                             1.82832037e-02,   3.98497372e-02,   3.98497372e-02,
+                             7.96679278e-02,   1.45455904e-01,   1.45455904e-01,
+                             2.41123457e-01,   3.60000957e-01,   4.78441147e-01,
+                             4.78441147e-01,   5.55779901e-01,   5.47061156e-01,
+                             5.47061156e-01,   4.29133262e-01,   2.28899450e-01,
+                             2.28899450e-01,   3.21030706e-02,  -4.58152669e-02,
+                             7.74741386e-02,   7.74741386e-02,   3.89805020e-01,
+                             7.72078470e-01,   7.72078470e-01,   1.05657945e+00,
+                             1.12541675e+00,   9.81011843e-01,   9.81011843e-01,
+                             7.35348921e-01,   5.25639991e-01,   5.25639991e-01,
+                             4.21139020e-01,   3.89628162e-01,   3.89628162e-01,
+                             3.40764035e-01,   2.03711858e-01,  -2.20472642e-02,
+                            -2.20472642e-02,  -2.72916549e-01,  -4.67917982e-01,
+                            -4.67917982e-01,  -5.56069225e-01,  -5.35273179e-01,
+                            -4.40491855e-01,  -4.40491855e-01,  -3.18061354e-01,
+                            -2.04492912e-01,  -2.04492912e-01,  -1.18122152e-01,
+                            -6.16397937e-02,  -2.91470271e-02,  -2.91470271e-02,
+                            -1.25010468e-02,  -4.85698059e-03,  -4.85698059e-03,
+                            -1.70224503e-03,  -5.33337096e-04,  -5.33337096e-04,
+                            -1.46658120e-04,  -3.39563401e-05,  -5.86418787e-06,
+                            -5.86418787e-06])
         self.assertTrue(np.allclose(prof, expected))
         return
 
-    def test_resize(self):
-        orig = self.rast.data.copy()
-        x0, x1, y0, y1 = self.rast.get_region()
-        self.rast.resize((x0, x1/2.0, y0, y1/2.0))
-        self.assertTrue(np.all(self.rast.data == orig[:25,:25]))
-        return
+    # def test_resize(self):
+    #     orig = self.rast.Z.copy()
+    #     x0, x1, y0, y1 = self.rast.get_extents()
+    #     self.rast.resize((x0, x1/2.0, y0, y1/2.0))
+    #     self.assertTrue(np.all(self.rast.Z == orig[:25,:25]))
+    #     return
 
     def test_aairead(self):
         grid = karta.grid.aairead(os.path.join(TESTDATA,'peaks49.asc'))
-        self.assertTrue(np.all(grid.data == self.rast.data))
+        self.assertTrue(np.all(grid.Z == self.rast.Z))
         return
 
 
@@ -141,25 +138,18 @@ class TestWarpedGrid(unittest.TestCase):
         Z = karta.raster.witch_of_agnesi(50, 50)
         self.rast = karta.grid.WarpedGrid(X=X, Y=Y, Z=Z)
 
-    def test_hdr(self):
-        hdr = self.rast.get_hdr()
-        self.assertEqual(hdr, {'xllcorner': 0.0,
-                               'yllcorner': -0.12533323356430465,
-                               'nbands':1})
-        return
-
     def test_add_sgrid(self):
         rast2 = karta.grid.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
-                                          Z=np.random.random(self.rast.data.shape))
+                                          Z=np.random.random(self.rast.Z.shape))
         res = self.rast + rast2
-        self.assertTrue(np.all(res.data == self.rast.data+rast2.data))
+        self.assertTrue(np.all(res.Z == self.rast.Z+rast2.Z))
         return
 
     def test_sub_sgrid(self):
         rast2 = karta.grid.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
-                                          Z=np.random.random(self.rast.data.shape))
+                                      Z=np.random.random(self.rast.Z.shape))
         res = self.rast - rast2
-        self.assertTrue(np.all(res.data == self.rast.data-rast2.data))
+        self.assertTrue(np.all(res.Z == self.rast.Z-rast2.Z))
         return
 
 class TestAAIGrid(unittest.TestCase):

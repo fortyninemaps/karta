@@ -141,7 +141,7 @@ class RegularGrid(Grid):
     def __add__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               Z=self.data+other.data,
+                               Z=self.Z+other.Z,
                                nbands=self.nbands)
         else:
             raise NonEquivalentGridError(self, other)
@@ -149,7 +149,7 @@ class RegularGrid(Grid):
     def __sub__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               Z=self.data-other.data,
+                               Z=self.Z-other.Z,
                                nbands=self.nbands)
         else:
             raise NonEquivalentGridError(self, other)
@@ -162,6 +162,10 @@ class RegularGrid(Grid):
     @property
     def transform(self):
         return self._transform
+
+    @property
+    def shape(self):
+        return self.Z.shape[:2]
 
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
@@ -341,7 +345,6 @@ class RegularGrid(Grid):
     def get_indices(self, x, y):
         """ Return the column and row indices for the point nearest
         geographical coordinates (x, y). """
-
         # Calculate this by forming matrices
         #       | dx sy |
         #   T = |       |
@@ -353,13 +356,14 @@ class RegularGrid(Grid):
         #
         # where the grid transform is t = (x0, y0, dx, dy, sy, sx)
         #
-        # Then the nearest indices come from
-        # ind = inv(T) * (vec(x) - S)
-
+        # Then the nearest indices J come from solving the system
+        # T J = X - S
+        ny, nx = self.shape
         t = self._transform
-        T = np.array([[t[2], t[4]], [t[3], t[5]]])
+        T = np.array([[t[2], t[4]], [t[5], t[3]]])
         S = np.array([t[0], t[1]])
-        ind = np.linalg.inv(T) * (np.array([x, y]) - S)
+        ind = np.linalg.solve(T, np.array([x, y])-S)
+        ind = ind.clip((0, 0), (nx-1, ny-1))
         return np.round(ind).astype(int)
 
     def sample_nearest(self, x, y):
@@ -371,7 +375,7 @@ class RegularGrid(Grid):
             np.any(yi < 0) or np.any(yi >= ny)):
             raise GridError("coordinates ({0}, {1}) are outside grid region "
                             "({2}, {3})".format(xi, yi, nx, ny))
-        return self.data[yi, xi]
+        return self.Z[yi, xi]
 
     def sample(self, x, y, method="nearest"):
         """ Return the values nearest (`x`, `y`), where `x` and `y` may be
@@ -381,12 +385,12 @@ class RegularGrid(Grid):
         elif method == "linear":
             from scipy.interpolate import griddata
             Xd, Yd = self.center_coords()
-            return griddata((Xd.flat, Yd.flat), self.data.flat,
+            return griddata((Xd.flat, Yd.flat), self.Z.flat,
                             (x,y), method="linear")
         else:
             raise ValueError("method \"{0}\" not understood".format(method))
 
-    def get_profile(self, segments, resolution=10.0):
+    def get_profile(self, segments, resolution=10.0, band=0):
         """ Sample along a line defined as `segments`. Does not interpolate.
 
         Parameters:
@@ -417,7 +421,7 @@ class RegularGrid(Grid):
                 fx = fd*xlen
                 fy = fd*ylen
                 xi, yi = self.get_indices(x0+fx, y0+fy)
-                z.append(self.data[yi, xi])
+                z.append(self.Z[yi, xi, band])
                 p += resolution
             p -= d
 
@@ -461,7 +465,7 @@ class RegularGrid(Grid):
             f = open(f, "w")
 
         try:
-            data_a = self.data.copy()
+            data_a = self.Z.copy()
             data_a[np.isnan(data_a)] = nodata_value
 
             f.write("NCOLS {0}\n".format(nx))
@@ -521,8 +525,8 @@ class WarpedGrid(Grid):
             raise NonEquivalentGridError(self, other)
 
     def _equivalent_structure(self, other):
-        return (self.X == other.X) and (self.Y == other.Y) and \
-                (self.Z.shape == other.Z.shape)
+        return np.all(self.X == other.X) and np.all(self.Y == other.Y) and \
+                np.all(self.Z.shape == other.Z.shape)
 
     def rotate(self, deg, origin=(0.0, 0.0)):
         """ Rotate grid by *deg* degrees counter-clockwise around *origin*. """
@@ -562,10 +566,12 @@ def aairead(fnm):
     instance.
     """
     Z, aschdr = _aai.aairead(fnm)
-    t = {'xllcorner'  : aschdr['xllcorner'],
-         'yllcorner'  : aschdr['yllcorner'],
-         'dx'         : aschdr['cellsize'],
-         'dy'         : aschdr['cellsize']}
+    t = {'xllcenter': aschdr['xllcorner'] + 0.5 * aschdr['cellsize'],
+         'yllcenter': aschdr['yllcorner'] + 0.5 * aschdr['cellsize'],
+         'dx'       : aschdr['cellsize'],
+         'dy'       : aschdr['cellsize'],
+         'xskew'    : 0.0,
+         'yskew'    : 0.0}
     Z[Z==aschdr['nodata_value']] = np.nan
     return RegularGrid(t, Z=Z, nbands=1)
 
