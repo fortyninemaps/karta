@@ -27,7 +27,7 @@ except ImportError:
 #    pass
 
 __all__ = ["grid", "aaigrid", "raster",
-           "RegularGrid", "WarpedGrid", "aairead",
+           "RegularGrid", "WarpedGrid", "aairead", "gtiffread",
            "AAIGrid",
            "pad", "slope", "aspect", "grad", "div", "normed_vector_field",
            "streamline2d",
