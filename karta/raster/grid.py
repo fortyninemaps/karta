@@ -5,6 +5,7 @@ import copy
 from math import sqrt
 import numpy as np
 from . import _aai          # Contains the ascread driver
+from ..crs import crsreg
 
 try:
     from . import _gtiff
@@ -67,7 +68,7 @@ class RegularGrid(Grid):
     rotation. In the usual case of an orthogonal grid with north "up", e = f =
     0.
     """
-    def __init__(self, transform, Z=None, nbands=None):
+    def __init__(self, transform, Z=None, nbands=None, crs=None):
         """ Create a RegularGrid instance with cells referenced according to *transform*, which is an iterable or dictionary consisting of
         (xllcenter, yllcenter, dx, dy, xrot, yrot).
 
@@ -93,50 +94,13 @@ class RegularGrid(Grid):
             self.Z = np.atleast_3d([np.nan] * nbands)
 
         self.nbands = self.Z.shape[2]
+
+        if crs is None:
+            self._crs = crsreg.CARTESIAN
+        else:
+            self._crs = crs
+
         return
-
-    # def __init__(self, hdr, Z=None):
-    #     """
-    #     Parameters:
-    #     -----------
-    #     hdr : dictionary of header fields, which must contain
-    #         - xllcenter (float)
-    #         - yllcenter (float)
-    #         - nx (int)
-    #         - ny (int)
-    #         - dx (float)
-    #         - dy (float)
-    #         - nbands (int)
-    #     Z : dependent m-dimensional quantity (nrows x ncols x m)
-    #     """
-    #     if ('nbands' not in hdr) and (Z is not None):
-    #         if Z.ndim >= 3:
-    #             hdr['nbands'] = Z.ndim[2]
-    #         else:
-    #             hdr['nbands'] = 1
-
-    #     if ('xllcenter' not in hdr):
-    #         if ('xllcorner' in hdr):
-    #             hdr['xllcenter'] = hdr['xllcorner'] + 0.5 * hdr['dx']
-    #         else:
-    #             raise KeyError("No xllcenter or xllcorner reference in header")
-
-    #     if ('yllcenter' not in hdr):
-    #         if ('yllcorner' in hdr):
-    #             hdr['yllcenter'] = hdr['yllcorner'] + 0.5 * hdr['dy']
-    #         else:
-    #             raise KeyError("No yllcenter or yllcorner reference in header")
-
-    #     self.set_hdr(hdr)
-
-    #     shape = (self._hdr['ny'], self._hdr['nx'])
-    #     if Z is None:
-    #         Z = np.empty(shape)
-    #     else:
-    #         if Z.shape[:2] != shape:
-    #             raise GridError('Data array `Z` has an invalid shape')
-    #     self.data = Z
-    #     return
 
     def __add__(self, other):
         if self._equivalent_structure(other):
