@@ -21,9 +21,11 @@ def read(fnm):
         transform = dataset.GetGeoTransform()
         if transform is not None:
             hdr["dx"] = transform[1]
-            hdr["dy"] = -transform[5]
-            hdr["xllcenter"] = transform[0]
-            hdr["yllcenter"] = transform[3] - hdr["ny"] * hdr["dy"]
+            hdr["dy"] = transform[5]
+            hdr["xulcorner"] = transform[0]
+            hdr["yulcorner"] = transform[3]
+            hdr["sx"] = transform[2]
+            hdr["sy"] = transform[4]
         else:
             raise AttributeError("No GeoTransform in geotiff file")
 

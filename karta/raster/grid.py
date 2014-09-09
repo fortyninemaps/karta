@@ -27,52 +27,24 @@ class Grid(object):
 
     def __len__(self):
         # Number of bands
-        return np.atleast_3d(self.data).shape[2]
-
-    def _equivalent_structure(self, other):
-        """ Test whether another object shares an equivalent grid layout. """
-        shdr = self.get_hdr()
-        ohdr = self.get_hdr()
-        for key in shdr:
-            if shdr[key] != ohdr[key]:
-                return False
-        return True
-
-    def _check_hdr(self, hdr):
-        """ Check that hdr contains required fields. Intended to be overloaded.
-        """
-        return
-
-    @property
-    def hdr(self):
-        return self._hdr
-
-    def get_hdr(self):
-        """ Return the header dictionary. """
-        return self._hdr
-
-    def set_hdr(self, hdr):
-        """ Set the header dictionary. """
-        self._check_hdr(hdr)
-        self._hdr = hdr
-        return
+        return self.nbands
 
     def clipz(self, bounds):
         """ Clip the z-range in place to bounds = [min, max]. """
-        self.data = self.data.clip(bounds[0], bounds[1])
+        self.Z = self.Z.clip(bounds[0], bounds[1])
         return
 
     def max(self):
         """ Return the maximum non-nan in self.data. """
-        return self.data[np.isnan(self.data)==False].max()
+        return np.nanmax(self.Z)
 
     def min(self):
         """ Return the minimum non-nan in self.data. """
-        return self.data[np.isnan(self.data)==False].min()
+        return np.nanmin(self.Z)
 
     def minmax(self):
         """ Return the minimum and maximum value of data array. """
-        return (np.nanmin(self.data), np.nanmax(self.data))
+        return (self.min(), self.max())
 
     def copy(self):
         """ Return a copy. """
@@ -83,119 +55,162 @@ class RegularGrid(Grid):
     """ Regular (structured) grid class. A RegularGrid contains a fixed number
     of rows and columns with a constant spacing and a scalar or vector field
     defined as `Z`.
+
+    Positions on a RegularGrid are referenced using an affine transform such
+    that
+    
+    X = a + j * c + i * e
+    Y = b + i * d + j * f
+
+    in which (a,b) define the grid origin, (c,d) define the resolution in the
+    horizontal and vertical directions, and (e,f) can be used to define a
+    rotation. In the usual case of an orthogonal grid with north "up", e = f =
+    0.
     """
-    def __init__(self, hdr, Z=None):
+    def __init__(self, transform, Z=None, nbands=None):
+        """ Create a RegularGrid instance with cells referenced according to *transform*, which is an iterable or dictionary consisting of
+        (xllcenter, yllcenter, dx, dy, xrot, yrot).
+
+        Optional parameters:
+        --------------------
+        Z : grid data (nrows x ncols x nbands) [default NaN]
+        nband : number of grid layers [default 1]
         """
-        Parameters:
-        -----------
-        hdr : dictionary of header fields, which must contain
-            - xllcenter (float)
-            - yllcenter (float)
-            - nx (int)
-            - ny (int)
-            - dx (float)
-            - dy (float)
-            - nbands (int)
-        Z : dependent m-dimensional quantity (nrows x ncols x m)
-        """
-        if ('nbands' not in hdr) and (Z is not None):
-            if Z.ndim >= 3:
-                hdr['nbands'] = Z.ndim[2]
-            else:
-                hdr['nbands'] = 1
-
-        if ('xllcenter' not in hdr):
-            if ('xllcorner' in hdr):
-                hdr['xllcenter'] = hdr['xllcorner'] + 0.5 * hdr['dx']
-            else:
-                raise KeyError("No xllcenter or xllcorner reference in header")
-
-        if ('yllcenter' not in hdr):
-            if ('yllcorner' in hdr):
-                hdr['yllcenter'] = hdr['yllcorner'] + 0.5 * hdr['dy']
-            else:
-                raise KeyError("No yllcenter or yllcorner reference in header")
-
-        self.set_hdr(hdr)
-
-        shape = (self._hdr['ny'], self._hdr['nx'])
-        if Z is None:
-            Z = np.empty(shape)
+        if hasattr(transform, "keys"):
+            self._transform = tuple([transform[f] for f in
+                            ("xllcenter", "yllcenter", "dx", "dy", "xskew", "yskew")])
+        elif len(transform) == 6:
+            self._transform = tuple(transform)
+        elif len(transform) == 4:
+            self._transform = (transform[0], transform[1],
+                               transform[2], transform[3], 0, 0)
         else:
-            if Z.shape[:2] != shape:
-                raise GridError('Data array `Z` has an invalid shape')
-        self.data = Z
+            raise GridError("RegularGrid must be initialized with a transform iterable or dictionary")
+
+        if Z is not None:
+            self.Z = np.atleast_3d(Z)
+        else:
+            self.Z = np.atleast_3d([np.nan] * nbands)
+
+        self.nbands = self.Z.shape[2]
         return
+
+    # def __init__(self, hdr, Z=None):
+    #     """
+    #     Parameters:
+    #     -----------
+    #     hdr : dictionary of header fields, which must contain
+    #         - xllcenter (float)
+    #         - yllcenter (float)
+    #         - nx (int)
+    #         - ny (int)
+    #         - dx (float)
+    #         - dy (float)
+    #         - nbands (int)
+    #     Z : dependent m-dimensional quantity (nrows x ncols x m)
+    #     """
+    #     if ('nbands' not in hdr) and (Z is not None):
+    #         if Z.ndim >= 3:
+    #             hdr['nbands'] = Z.ndim[2]
+    #         else:
+    #             hdr['nbands'] = 1
+
+    #     if ('xllcenter' not in hdr):
+    #         if ('xllcorner' in hdr):
+    #             hdr['xllcenter'] = hdr['xllcorner'] + 0.5 * hdr['dx']
+    #         else:
+    #             raise KeyError("No xllcenter or xllcorner reference in header")
+
+    #     if ('yllcenter' not in hdr):
+    #         if ('yllcorner' in hdr):
+    #             hdr['yllcenter'] = hdr['yllcorner'] + 0.5 * hdr['dy']
+    #         else:
+    #             raise KeyError("No yllcenter or yllcorner reference in header")
+
+    #     self.set_hdr(hdr)
+
+    #     shape = (self._hdr['ny'], self._hdr['nx'])
+    #     if Z is None:
+    #         Z = np.empty(shape)
+    #     else:
+    #         if Z.shape[:2] != shape:
+    #             raise GridError('Data array `Z` has an invalid shape')
+    #     self.data = Z
+    #     return
 
     def __add__(self, other):
         if self._equivalent_structure(other):
-            return RegularGrid(copy.copy(self.get_hdr()), Z=self.data + other.data)
+            return RegularGrid(copy.copy(self.transform),
+                               Z=self.data+other.data,
+                               nbands=self.nbands)
         else:
             raise NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
-            return RegularGrid(copy.copy(self.get_hdr()), Z=self.data-other.data)
+            return RegularGrid(copy.copy(self.transform),
+                               Z=self.data-other.data,
+                               nbands=self.nbands)
         else:
             raise NonEquivalentGridError(self, other)
 
-    def _check_hdr(self, hdr):
-        """ Check that the header contains the required fields. """
-        required_fields = ('xllcenter', 'yllcenter', 'nx', 'ny', 'dx', 'dy',
-                           'nbands')
-        for key in required_fields:
-            if key not in hdr:
-                raise GridError('Header missing {0}'.format(key))
-        assert isinstance(hdr['nx'], int)
-        assert isinstance(hdr['ny'], int)
+    def _equivalent_structure(self, other):
+        return (self._transform == other._transform) and \
+               (self.Z.shape == other.Z.shape) and \
+               (self.nbands == other.nbands)
+
+    @property
+    def transform(self):
+        return self._transform
+
+    def center_llref(self):
+        """ Return the 'lower-left' reference in terms of a center coordinate.
+        """
+        return self._transform[0], self._transform[1]
+
+    def corner_llref(self):
+        """ Return the 'lower-left' reference in terms of a center coordinate.
+        """
+        xllcorner = self._transform[0] - 0.5 * self._transform[2]
+        yllcorner = self._transform[1] - 0.5 * self._transform[3]
+        return (xllcorner, yllcorner)
 
     def coordmesh(self, *args, **kwargs):
         """ Alias for center_coords() """
         return self.center_coords(*args, **kwargs)
 
-    def center_llref(self):
-        """ Return the 'lower-left' reference in terms of a center coordinate.
-        """
-        return (self._hdr['xllcenter'], self._hdr['yllcenter'])
-
-    def corner_llref(self):
-        """ Return the 'lower-left' reference in terms of a center coordinate.
-        """
-        xllcorner = self._hdr['xllcenter'] - 0.5 * self._hdr['dx']
-        yllcorner = self._hdr['yllcenter'] - 0.5 * self._hdr['dy']
-        return (xllcorner, yllcorner)
-
     def center_coords(self):
         """ Return the cell-center coordinates. """
-        xllcenter, yllcenter = self.center_llref()
-        xurcenter = xllcenter + self._hdr['dx'] * (self._hdr['nx'] - 1)
-        yurcenter = yllcenter + self._hdr['dy'] * (self._hdr['ny'] - 1)
-        return np.meshgrid(np.linspace(xllcenter, xurcenter, self._hdr['nx']),
-                           np.linspace(yurcenter, yllcenter, self._hdr['ny']))
+        ii, jj = np.meshgrid(np.arange(self.Z.shape[0]),
+                             np.arange(self.Z.shape[1]))
+        t = self._transform
+        return (t[0] + ii * t[2] + jj * t[4],
+                t[1] + jj * t[3] + jj * t[5])
 
     def vertex_coords(self):
         """ Return the coordinates of vertices. """
         xllcorner, yllcorner = self.corner_llref()
-        xurcorner = xllcorner + self._hdr['nx'] * self._hdr['dx']
-        yurcorner = yllcorner + self._hdr['ny'] * self._hdr['dy']
-        nx = self._hdr['nx']
-        ny = self._hdr['ny']
+        t = self._transform
+        ny, nx = self.Z.shape[:2]
+        xurcorner = xllcorner + (nx+1) * t[2] + (ny+1) * t[4]
+        yurcorner = yllcorner + (ny+1) * t[3] + (nx+1) * t[5]
         return np.meshgrid(np.linspace(xllcorner, xurcorner, nx + 1),
                            np.linspace(yurcorner, yllcorner, ny + 1))
 
-    def get_region(self, reference='center'):
-        """ Return the region characteristics as a tuple, relative to either
-        cell centers or the grid edges. """
+    def get_extents(self, reference='center'):
+        """ Return the region characteristics as a tuple. *reference* may be
+        `center` or `edge`. """
         if reference == 'center':
             x0, y0 = self.center_llref()
-            n = 0
+            n = -1
         elif reference == 'edge':
             x0, y0 = self.corner_llref()
-            n = 1
+            n = 0
         else:
             raise GridError("`reference` must be 'center' or 'edge'")
-        return (x0, x0 + self._hdr['dx'] * (self._hdr['nx'] + n),
-                y0, y0 + self._hdr['dy'] * (self._hdr['ny'] + n))
+        ny, nx = self.Z.shape[:2]
+        dx, dy = self._transform[2:4]
+        return (x0, x0 + dx*(nx+n), y0, y0 + dy*(ny+n))
 
     def resample_griddata(self, dx, dy, method='nearest'):
         """ Resample array in-place to have spacing `dx`, `dy' using
@@ -211,25 +226,22 @@ class RegularGrid(Grid):
         method : interpolation method, string ('nearest', 'linear')
         """
         from scipy.interpolate import griddata
+        ny0, nx0 = self.Z.shape[:2]
+        dx0, dy0 = self._transform[2:4]
         xllcenter, yllcenter = self.center_llref()
-        xurcenter = xllcenter + self._hdr['dx'] * self._hdr['nx']
-        yurcenter = yllcenter + self._hdr['dy'] * self._hdr['ny']
+        xurcenter = xllcenter + dx0*nx0
+        yurcenter = yllcenter + dy0*ny0
         nx = int((xurcenter - xllcenter) // dx)
         ny = int((yurcenter - yllcenter) // dy)
 
-        xx, yy = self.coordmesh()
-        xxi, yyi = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
-                               np.linspace(yllcenter, yurcenter, ny))
-        idata = griddata((xx.flatten(), yy.flatten()), self.data.flatten(),
-                         (xxi.flatten(), yyi.flatten()), method=method)
-        self.data = idata.reshape(ny, nx)[::-1]
-
-        hdr = self.get_hdr()
-        hdr['dx'] = dx
-        hdr['dy'] = dy
-        hdr['nx'] = nx
-        hdr['ny'] = ny
-        self.set_hdr(hdr)
+        xx0, yy0 = self.coordmesh()
+        xx, yy = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
+                             np.linspace(yllcenter, yurcenter, ny))
+        idata = griddata((xx0.flatten(), yy0.flatten()), self.Z.flatten(),
+                         (xx.flatten(), yy.flatten()), method=method)
+        self.Z = idata.reshape(ny, nx)[::-1]
+        t = self._transform
+        self._transform = (t[0], t[1], dx, dy, t[4], t[5])
         return
 
     def resample(self, dx, dy, method='nearest'):
@@ -244,119 +256,117 @@ class RegularGrid(Grid):
 
         method : interpolation method, string ('nearest',)
         """
+        ny0, nx0 = self.Z.shape[:2]
+        dx0, dy0 = self._transform[2:4]
         xllcenter, yllcenter = self.center_llref()
-        xurcenter = xllcenter + self._hdr['dx'] * self._hdr['nx']
-        yurcenter = yllcenter + self._hdr['dy'] * self._hdr['ny']
-        nx = int((xurcenter - xllcenter) // dx)
-        ny = int((yurcenter - yllcenter) // dy)
 
         if method == 'nearest':
-            rx, ry = dx / self._hdr['dx'], dy / self._hdr['dy']
-            I = np.around(np.arange(ry/2, self.data.shape[0], ry)).astype(int)
-            J = np.around(np.arange(rx/2, self.data.shape[1], rx)).astype(int)
+            rx, ry = dx / dx0, dy / dy0
+            I = np.around(np.arange(ry/2, self.Z.shape[0], ry)).astype(int)
+            J = np.around(np.arange(rx/2, self.Z.shape[1], rx)).astype(int)
             JJ, II = np.meshgrid(J, I)
-            self.data = self.data[II, JJ]
+            self.Z = self.Z[II, JJ]
         else:
             raise NotImplementedError('method "{0}" not '
                                       'implemented'.format(method))
 
-        hdr = self.get_hdr()
-        hdr['dx'] = dx
-        hdr['dy'] = dy
-        hdr['nx'] = nx
-        hdr['ny'] = ny
-        self.set_hdr(hdr)
+        t = self._transform
+        self._transform = (t[0], t[1], dx, dy, t[4], t[5])
         return
 
-    def resize(self, te):
-        """ Resize array to fit within extents given by te. If the new
-        dimensions are smaller, the data is clipped. If they are larger,
-        nan padding is added.
+    # def resize(self, te):
+    #     """ Resize array to fit within extents given by te. If the new
+    #     dimensions are smaller, the data is clipped. If they are larger,
+    #     nan padding is added.
 
-        *te*        :   tuple of center coordinates in the form
-                        (xmin, xmax, ymin, ymax).
+    #     *te*        :   tuple of center coordinates in the form
+    #                     (xmin, xmax, ymin, ymax).
 
-        Returns None.
-        """
-        if self.data is not None:
-            xmin1, ymin1 = self.center_llref()
-            xmax1 = xmin1 + self._hdr['dx'] * (self._hdr['nx'] - 1)
-            ymax1 = ymin1 + self._hdr['dy'] * (self._hdr['ny'] - 1)
+    #     Returns None.
+    #     """
+    #     t = self._transform
+    #     ny, nx = self.Z.shape[:2]
+    #     xll1, yll1 = self.center_llref()
+    #     xur1 = xll1 + t[2] * (nx - 1)
+    #     yur1 = yll1 + t[3] * (ny - 1)
 
-            xmin2 = te[0]
-            xmax2 = te[1]
-            ymin2 = te[2]
-            ymax2 = te[3]
+    #     xmin2 = te[0]
+    #     xmax2 = te[1]
+    #     ymin2 = te[2]
+    #     ymax2 = te[3]
 
-            data_a = self.data.copy()
-            ny = data_a.shape[0]
+    #     data_a = self.data.copy()
+    #     ny = data_a.shape[0]
 
-            # The left side
-            Dx = int(np.floor((xmin2-xmin1) / float(self._hdr['dx'])))
-            if Dx < 0:
-                data_a = np.hstack([np.nan*np.ones([ny, Dx]), data_a])
-            elif Dx > 0:
-                data_a = data_a[:,Dx:]
-            xllcenter = xmin1 + self._hdr['dx'] * Dx
+    #     # The left side
+    #     Dx = int(np.floor((xmin2-xmin1) / float(self._hdr['dx'])))
+    #     if Dx < 0:
+    #         data_a = np.hstack([np.nan*np.ones([ny, Dx]), data_a])
+    #     elif Dx > 0:
+    #         data_a = data_a[:,Dx:]
+    #     xllcenter = xmin1 + self._hdr['dx'] * Dx
 
-            # The right side
-            Dx = int(np.floor((xmax2-xmax1) / float(self._hdr['dx'])))
-            if Dx > 0:
-                data_a = np.hstack([data_a, np.nan*np.ones([ny, Dx])])
-            elif Dx < 0:
-                data_a = data_a[:,:Dx]
-            self._hdr['nx'] = data_a.shape[1]
+    #     # The right side
+    #     Dx = int(np.floor((xmax2-xmax1) / float(self._hdr['dx'])))
+    #     if Dx > 0:
+    #         data_a = np.hstack([data_a, np.nan*np.ones([ny, Dx])])
+    #     elif Dx < 0:
+    #         data_a = data_a[:,:Dx]
+    #     self._hdr['nx'] = data_a.shape[1]
 
-            _, nx = data_a.shape
+    #     _, nx = data_a.shape
 
-            # The bottom
-            Dy = int(np.ceil((ymin2-ymin1) / float(self._hdr['dy'])))
-            if Dy < 0:
-                data_a = np.vstack([data_a, np.nan*np.ones([Dy, nx])])
-            elif Dy > 0:
-                data_a = data_a[Dy:,:]
-            yllcenter = ymin1 + self._hdr['dy'] * Dy
+    #     # The bottom
+    #     Dy = int(np.ceil((ymin2-ymin1) / float(self._hdr['dy'])))
+    #     if Dy < 0:
+    #         data_a = np.vstack([data_a, np.nan*np.ones([Dy, nx])])
+    #     elif Dy > 0:
+    #         data_a = data_a[Dy:,:]
+    #     yllcenter = ymin1 + self._hdr['dy'] * Dy
 
-            # The top
-            Dy = int(np.floor((ymax2-ymax1) / float(self._hdr['dy'])))
-            if Dy > 0:
-                data_a = np.vstack([np.nan*np.ones([Dy, nx]), data_a])
-            elif Dy < 0:
-                data_a = data_a[:Dy,:]
-            self._hdr['ny'] = data_a.shape[0]
+    #     # The top
+    #     Dy = int(np.floor((ymax2-ymax1) / float(self._hdr['dy'])))
+    #     if Dy > 0:
+    #         data_a = np.vstack([np.nan*np.ones([Dy, nx]), data_a])
+    #     elif Dy < 0:
+    #         data_a = data_a[:Dy,:]
+    #     self._hdr['ny'] = data_a.shape[0]
 
-            self.data = data_a
-            self._hdr['xllcenter'] = xllcenter
-            self._hdr['yllcenter'] = yllcenter
+    #     self.data = data_a
+    #     self._hdr['xllcenter'] = xllcenter
+    #     self._hdr['yllcenter'] = yllcenter
 
-        else:
-            raise GridError("no data to resize")
-        return
+    #     return
 
     def get_indices(self, x, y):
         """ Return the column and row indices for the point nearest
         geographical coordinates (x, y). """
-        if self.data is None:
-            raise GridError('No raster to query')
 
-        x0, y0 = self.center_llref()
-        dx = self._hdr['dx']
-        dy = self._hdr['dy']
-        nx = self._hdr['nx']
-        ny = self._hdr['ny']
+        # Calculate this by forming matrices
+        #       | dx sy |
+        #   T = |       |
+        #       | sx dy |
+        #
+        #       | x0 |
+        #   S = |    |
+        #       | y0 |
+        #
+        # where the grid transform is t = (x0, y0, dx, dy, sy, sx)
+        #
+        # Then the nearest indices come from
+        # ind = inv(T) * (vec(x) - S)
 
-        xi = np.clip((np.around((np.array(x) - x0) / dx)).astype(int),
-                     0, nx-1)
-        yi = np.clip(ny - (np.around((np.array(y)-y0) / dy)).astype(int) - 1,
-                     0, ny-1)
-        return xi, yi
+        t = self._transform
+        T = np.array([[t[2], t[4]], [t[3], t[5]]])
+        S = np.array([t[0], t[1]])
+        ind = np.linalg.inv(T) * (np.array([x, y]) - S)
+        return np.round(ind).astype(int)
 
     def sample_nearest(self, x, y):
         """ Return the value nearest to (`x`, `y`). Nearest grid center
         sampling scheme. """
         xi, yi = self.get_indices(x, y)
-        nx = self._hdr['nx']
-        ny = self._hdr['ny']
+        ny, nx = self.Z.shape[:2]
         if (np.any(xi < 0) or np.any(xi >= nx) or
             np.any(yi < 0) or np.any(yi >= ny)):
             raise GridError("coordinates ({0}, {1}) are outside grid region "
@@ -370,21 +380,11 @@ class RegularGrid(Grid):
             return self.sample_nearest(x, y)
         elif method == "linear":
             from scipy.interpolate import griddata
-            try:
-                Xd, Yd = self.center_coords()
-                return griddata((Xd.flat, Yd.flat), self.data.flat,
-                                (x,y), method="linear")
-            except ImportError:
-                raise NotImplementedError("linear resampling currently requires"
-                                          " scipy")
+            Xd, Yd = self.center_coords()
+            return griddata((Xd.flat, Yd.flat), self.data.flat,
+                            (x,y), method="linear")
         else:
             raise ValueError("method \"{0}\" not understood".format(method))
-
-    def get_extents(self):
-        hdr = self.get_hdr()
-        xllcorner, yllcorner = self.corner_llref()
-        return (xllcorner, xllcorner + hdr["nx"] * hdr["dx"],
-                yllcorner, yllcorner + hdr["ny"] * hdr["dy"])
 
     def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as `segments`. Does not interpolate.
@@ -425,14 +425,14 @@ class RegularGrid(Grid):
 
     def fill_sinks(self):
         """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
-        return RegularGrid(copy.copy(self._hdr), Z=fill_sinks(self.data))
+        return RegularGrid(self._transform, Z=fill_sinks(self.Z))
 
-    def as_structured(self):
+    def as_warpedgrid(self):
         """ Return a copy as a WarpedGrid instance. This is a more general
         grid class that has a larger memory footprint but can represent more
         flexible data layouts. """
-        Xv, Yv = self.vertex_coords()
-        return WarpedGrid(Xv, Yv, self.data.copy())
+        Xc, Yc = self.center_coords()
+        return WarpedGrid(Xc, Yc, self.Z.copy())
 
     def aaiwrite(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
@@ -445,14 +445,16 @@ class RegularGrid(Grid):
         reference : specify a header reference ("center" | "corner")
         nodata_value : specify how nans should be represented (int or float)
         """
-        if self.data is None:
-            raise GridError("no data to write!")
-
         if reference not in ('center', 'corner'):
             raise GridIOError("reference in AAIGrid.tofile() must be 'center' or "
                            "'corner'")
 
-        if self._hdr['dx'] != self._hdr['dy']:
+        if np.any(self._transform[4:] != 0.0):
+            raise GridIOError("ESRI ASCII grids do not support skewed grids")
+
+        ny, nx = self.Z.shape[:2]
+        x0, y0, dx, dy = self._transform[:4]
+        if dx != dy:
             raise GridIOError("ASCII grids require isometric grid cells")
 
         if not hasattr(f, 'read'):
@@ -462,22 +464,19 @@ class RegularGrid(Grid):
             data_a = self.data.copy()
             data_a[np.isnan(data_a)] = nodata_value
 
-            f.write("NCOLS {0}\n".format(self._hdr['nx']))
-            f.write("NROWS {0}\n".format(self._hdr['ny']))
+            f.write("NCOLS {0}\n".format(nx))
+            f.write("NROWS {0}\n".format(ny))
             if reference == 'center':
-                d = self._hdr['dx']
-                f.write("XLLCENTER {0}\n".format(self._hdr['xllcenter']))
-                f.write("YLLCENTER {0}\n".format(self._hdr['yllcenter']))
+                f.write("XLLCENTER {0}\n".format(x0))
+                f.write("YLLCENTER {0}\n".format(y0))
             elif reference == 'corner':
                 xllcorner, yllcorner = self.corner_llref()
                 f.write("XLLCORNER {0}\n".format(xllcorner))
                 f.write("YLLCORNER {0}\n".format(yllcorner))
-            f.write("CELLSIZE {0}\n".format(self._hdr['dx']))
+            f.write("CELLSIZE {0}\n".format(dx))
             f.write("NODATA_VALUE {0}\n".format(nodata_value))
             f.writelines([str(row).replace(',','')[1:-1] +
                             '\n' for row in data_a.tolist()])
-        except Exception as e:
-            raise e
         finally:
             f.close()
         return
@@ -488,17 +487,13 @@ class WarpedGrid(Grid):
     spacing is not necessarily constant.
     """
 
-    def __init__(self, X, Y, Z, hdr=None):
+    def __init__(self, X, Y, Z):
         """
         Parameters:
         -----------
-        X : first-dimension coordinates of grid nodes
-        Y : second-dimension coordinates of grid nodes
-        Z : dependent m-dimensional quantity (nrows x ncols x m)
-        hdr : (optional) dictionary of header fields, which must contain
-            - xllcenter (float)
-            - yllcenter (float)
-            - nbands (int)
+        X : first-dimension coordinates of grid centers
+        Y : second-dimension coordinates of grid centers
+        Z : dependent m-dimensional quantity (nrows x ncols x nbands)
         """
 
         if any(a is None for a in (X, Y, Z)):
@@ -506,43 +501,28 @@ class WarpedGrid(Grid):
 
         if not (X.shape == Y.shape == Z.shape[:2]):
             raise GridError('All of (X, Y, Z) must share the same '
-                            'two-dimensional size')
+                            'size over the first two dimensions')
 
-        if hdr is None:
-            hdr = {'xllcorner' : X[-1,0], 'yllcorner' : Y[-1,0]}
-            if Z.ndim == 2:
-                hdr['nbands'] = 1
-            elif Z.ndim == 3:
-                hdr['nbands'] = Z.shape[2]
-            else:
-                raise GridError('`Z` must be of dimension 2 or 3')
-            X -= X[-1,0]
-            Y -= Y[-1,0]
         self.X = X
         self.Y = Y
-        self.data = Z
-        self.set_hdr(hdr)
+        self.Z = Z
         return
 
     def __add__(self, other):
         if self._equivalent_structure(other):
-            return WarpedGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
-                                  Y=self.Y.copy(), Z=self.data + other.data)
+            return WarpedGrid(self.X.copy(), self.Y.copy(), self.Z+other.Z)
         else:
             raise NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
-            return WarpedGrid(hdr=copy.copy(self.get_hdr()), X=self.X.copy(),
-                                  Y=self.Y.copy(), Z=self.data-other.data)
+            return WarpedGrid(self.X.copy(), self.Y.copy(), self.Z-other.Z)
         else:
             raise NonEquivalentGridError(self, other)
 
-    def _check_hdr(self, hdr):
-        """ Check that the header contains the required fields. """
-        for key in ('xllcorner', 'yllcorner', 'nbands'):
-            if key not in hdr:
-                raise GridError('Header missing {0}'.format(key))
+    def _equivalent_structure(self, other):
+        return (self.X == other.X) and (self.Y == other.Y) and \
+                (self.Z.shape == other.Z.shape)
 
     def rotate(self, deg, origin=(0.0, 0.0)):
         """ Rotate grid by *deg* degrees counter-clockwise around *origin*. """
@@ -554,9 +534,7 @@ class WarpedGrid(Grid):
 
     def fill_sinks(self):
         """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
-        return WarpedGrid(copy.copy(self._hdr),
-                              X=self.X.copy(), Y=self.Y.copy(),
-                              Z=fill_sinks(self.data))
+        return WarpedGrid(self.X.copy(), self.Y.copy(), fill_sinks(self.Z))
 
 
 class GridError(Exception):
@@ -579,32 +557,17 @@ class NonEquivalentGridError(GridError):
         else:
             self.message = message
 
-
-def dummy_hdr(arr):
-    if len(arr.shape) > 2:
-        nbands = arr.shape[2]
-    else:
-        nbands = 1
-    hdr = {'xllcorner': 0.0, 'yllcorner': 0.0,
-           'nx': arr.shape[1], 'ny': arr.shape[0],
-           'dx': 1.0, 'dy': 1.0,
-           'nbands': nbands}
-    return hdr
-
 def aairead(fnm):
     """ Convenience function to open a ESRI ASCII grid and return a RegularGrid
     instance.
     """
     Z, aschdr = _aai.aairead(fnm)
-    hdr = {'xllcorner'  : aschdr['xllcorner'],
-           'yllcorner'  : aschdr['yllcorner'],
-           'nx'         : aschdr['ncols'],
-           'ny'         : aschdr['nrows'],
-           'dx'         : aschdr['cellsize'],
-           'dy'         : aschdr['cellsize'],
-           'nbands'     : 1}
+    t = {'xllcorner'  : aschdr['xllcorner'],
+         'yllcorner'  : aschdr['yllcorner'],
+         'dx'         : aschdr['cellsize'],
+         'dy'         : aschdr['cellsize']}
     Z[Z==aschdr['nodata_value']] = np.nan
-    return RegularGrid(hdr, Z=Z)
+    return RegularGrid(t, Z=Z, nbands=1)
 
 def gtiffread(fnm):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
@@ -613,5 +576,11 @@ def gtiffread(fnm):
     if not HAS_GDAL:
         raise NotImplementedError("Right now, loading GeoTiffs requires GDAL.")
     arr, hdr = _gtiff.read(fnm)
-    return RegularGrid(hdr, Z=arr.transpose((1,2,0)).squeeze())
+    t = {'xllcenter'  : hdr['xulcorner'] + 0.5 * (hdr['dx'] + hdr['sx']),
+         'yllcenter'  : hdr['yulcorner'] + (hdr['ny'] - 0.5) * hdr['dy'] - 0.5 * hdr['sy'],
+         'dx'         : hdr['dx'],
+         'dy'         : -hdr['dy'],
+         'xskew'      : hdr['sx'],
+         'yskew'      : hdr['sy']}
+    return RegularGrid(t, Z=arr.transpose((1,2,0)).squeeze())
 
