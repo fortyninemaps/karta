@@ -54,8 +54,8 @@ class RegularGrid(unittest.TestCase):
 
         g = makegrid(0.0, 1.0, 129)
         sol = makegrid(1.0/128.0, 1.0-1.0/128.0, 64)
-        g.resample(60.0, 60.0)
-        residue = g.Z - sol.Z
+        gnew = g.resample(60.0, 60.0)
+        residue = gnew.Z - sol.Z
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return
 

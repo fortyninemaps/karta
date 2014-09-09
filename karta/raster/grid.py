@@ -217,8 +217,7 @@ class RegularGrid(Grid):
         return (x0, x0 + dx*(nx+n), y0, y0 + dy*(ny+n))
 
     def resample_griddata(self, dx, dy, method='nearest'):
-        """ Resample array in-place to have spacing `dx`, `dy' using
-        *scipy.griddata*
+        """ Resample array to have spacing `dx`, `dy' using *scipy.griddata*
 
         Parameters
         ----------
@@ -243,13 +242,13 @@ class RegularGrid(Grid):
                              np.linspace(yllcenter, yurcenter, ny))
         idata = griddata((xx0.flatten(), yy0.flatten()), self.Z.flatten(),
                          (xx.flatten(), yy.flatten()), method=method)
-        self.Z = idata.reshape(ny, nx)[::-1]
+        Z = idata.reshape(ny, nx)[::-1]
         t = self._transform
-        self._transform = (t[0], t[1], dx, dy, t[4], t[5])
-        return
+        tnew = (t[0], t[1], dx, dy, t[4], t[5])
+        return RegularGrid(tnew, Z)
 
     def resample(self, dx, dy, method='nearest'):
-        """ Resample array in-place to have spacing `dx`, `dy'.
+        """ Resample array to have spacing `dx`, `dy'.
 
         Parameters
         ----------
@@ -269,14 +268,14 @@ class RegularGrid(Grid):
             I = np.around(np.arange(ry/2, self.Z.shape[0], ry)).astype(int)
             J = np.around(np.arange(rx/2, self.Z.shape[1], rx)).astype(int)
             JJ, II = np.meshgrid(J, I)
-            self.Z = self.Z[II, JJ]
+            Z = self.Z[II, JJ, :]
         else:
             raise NotImplementedError('method "{0}" not '
                                       'implemented'.format(method))
 
         t = self._transform
-        self._transform = (t[0], t[1], dx, dy, t[4], t[5])
-        return
+        tnew = (t[0], t[1], dx, dy, t[4], t[5])
+        return RegularGrid(tnew, Z)
 
     # def resize(self, te):
     #     """ Resize array to fit within extents given by te. If the new
