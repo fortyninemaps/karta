@@ -32,7 +32,7 @@ beginnings of a tutorial to introduce *Karta* are in the
     - stats:        Geostatistical functions (experimental)
 
 - raster
-    - grid:         Basic Grid types, including `StructuredGrid` and `RegularGrid`
+    - grid:         Basic Grid types, including `RegularGrid` and `WarpedGrid`
     - raster:       General purpose raster functions
     - aaigrid:      Grid subclass specifically for reading and writing ESRI ASCII grids
     - streamline:   Streamline calculation
