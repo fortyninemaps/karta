@@ -687,16 +687,19 @@ class Multipoint(MultipointBase):
 class ConnectedMultipoint(MultipointBase):
     """ Class for Multipoints in which vertices are assumed to be connected. """
 
+    @property
     def length(self):
         """ Returns the length of the line/boundary. """
         points = [Point(i, crs=self._crs) for i in self.vertices]
         distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
         return sum(distances)
 
+    @property
     def segments(self):
         """ Returns an generator of adjacent line segments. """
         return (self._subset((i,i+1)) for i in range(len(self)-1))
 
+    @property
     def segment_tuples(self):
         """ Returns an generator of adjacent line segments as coordinate tuples. """
         return ((self.vertices[i], self.vertices[i+1])
@@ -706,7 +709,7 @@ class ConnectedMultipoint(MultipointBase):
         """ Return whether an intersection exists with another geometry. """
         interxbool = (np.nan in _vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                                      a[0][1], a[1][1], b[0][1], b[1][1])
-                    for a in self.segments() for b in other.segments())
+                    for a in self.segments for b in other.segments)
         if self._bbox_overlap(other) and (True not in interxbool):
             return True
         else:
@@ -716,7 +719,7 @@ class ConnectedMultipoint(MultipointBase):
         """ Return the intersections with another geometry as a Multipoint. """
         interx = (_vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                           a[0][1], a[1][1], b[0][1], b[1][1])
-                     for a in self.segments() for b in other.segments())
+                     for a in self.segments for b in other.segments)
         if not keep_duplicates:
             interx = set(interx)
         interx_points = []
@@ -741,7 +744,7 @@ class ConnectedMultipoint(MultipointBase):
             geod = self._crs.geod
             func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args, tol=0.01)
 
-        segments = list(self.segments())
+        segments = list(self.segments)
         point_dist = map(func,
                          (pt.vertex for _ in segments),
                          (seg[0].vertex for seg in segments),
@@ -761,7 +764,7 @@ class ConnectedMultipoint(MultipointBase):
             geod = self._crs.geod
             func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args, tol=0.01)
 
-        segments = list(self.segments())
+        segments = list(self.segments)
         point_dist = list(map(func,
                               (pt.vertex for _ in segments),
                               (seg[0].vertex for seg in segments),
@@ -772,7 +775,7 @@ class ConnectedMultipoint(MultipointBase):
 
     def within_distance(self, pt, distance):
         """ Test whether a point is within *distance* of a ConnectedMultipoint. """
-        return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments())
+        return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments)
 
 
 class Line(ConnectedMultipoint):
@@ -836,7 +839,7 @@ class Line(ConnectedMultipoint):
 
     def subsection(self, n):
         """ Return *n* equally spaced Point instances along line. """
-        segments = self.segments()
+        segments = self.segments
         Ltotal = self.cumlength()[-1]
         step = Ltotal / float(n-1)
         step_remaining = step
@@ -956,11 +959,19 @@ class Polygon(ConnectedMultipoint):
                       crs=self._crs, copy_metadata=False)
         return subset
 
+    def isclockwise(self):
+        """ Return whether polygon winds clockwise around its interior. """
+        s = sum((seg[1][0] - seg[0][0]) * (seg[1][1] + seg[0][1])
+                for seg in self.segments)
+        return s > 0
+
+    @property
     def perimeter(self):
         """ Return the perimeter of the polygon. If there are sub-polygons,
         their perimeters are added recursively. """
-        return self.length() + sum([p.perimeter() for p in self.subs])
+        return self.length + sum([p.perimeter for p in self.subs])
 
+    @property
     def area(self):
         """ Return the two-dimensional area of the polygon. If there are
         sub-polygons, their areas are subtracted. """
@@ -968,7 +979,7 @@ class Polygon(ConnectedMultipoint):
         for i in range(len(self.vertices)-1):
             a += 0.5 * abs((self.vertices[i][0] + self.vertices[i+1][0])
                          * (self.vertices[i][1] - self.vertices[i+1][1]))
-        return a - sum(map(lambda p: p.area(), self.subs))
+        return a - sum(map(lambda p: p.area, self.subs))
 
     def contains(self, pt):
         """ Returns True if pt is inside or on the boundary of the
@@ -976,7 +987,7 @@ class Polygon(ConnectedMultipoint):
         """
         nintx = 0
         x, y = pt[0], pt[1]
-        for seg in self.segments():
+        for seg in self.segments:
             (a, b) = seg
             if _vecgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
                 nintx += 1
