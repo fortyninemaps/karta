@@ -3,6 +3,8 @@ from distutils.core import setup
 from distutils.extension import Extension
 import numpy
 
+VERSION = "0.4.0b"
+
 try:
     from Cython.Build import cythonize
     USE_CYTHON = True
@@ -38,7 +40,7 @@ for extension in extensions:
 
 setup(
     name = "karta",
-    version = "0.3.0",
+    version = VERSION,
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
