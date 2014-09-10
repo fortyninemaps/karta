@@ -149,14 +149,15 @@ def recordsasproperties(reader):
         proplist.append(properties)
     return proplist
 
-def read_shapefile(stem, crs=None):
-    """ Read a shapefile given `stem`, which is the name without an extension.
-    The geometry CRS must be specified, otherwise it is assumed to be
-    cartesian.
-    """
+def read_shapefile(name, crs=None):
+    """ Read a shapefile given `name`, which may include or exclude the .shp
+    extension. The CRS must be specified, otherwise it is assumed to be
+    cartesian. """
     if crs is None:
         crs = crsreg.CARTESIAN
-    fnms = get_filenames(stem, check=True)
+    if os.path.splitext(name) == ".shp":
+        name = name[:-4]
+    fnms = get_filenames(name, check=True)
 
     try:
         files = open_file_dict(fnms)
