@@ -56,8 +56,8 @@ class CRS(object):
                 return True
         return False
 
-    def __neq(self, other):
-        not self.__eq__(other)
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
 class CRSRegister(object):
     
@@ -103,11 +103,11 @@ CRSDict = {"CARTESIAN" : {"proj": None,
                              "crstype": "geographical",
                              "id": {"urn": "urn:ogc:def:crs:EPSG::4326"}},
            "LONLAT_NAD27" : {"proj": {"proj": "lonlat"},
-                             "geod": {"ellps":"NAD27"},
+                             "geod": {"ellps":"clrk66"},
                              "crstype": "geographical",
                              "id": {"urn": "urn:ogc:def:crs:EPSG::4267"}},
            "LONLAT_NAD83" : {"proj": {"proj": "lonlat"},
-                             "geod": {"ellps":"NAD83"},
+                             "geod": {"ellps":"GRS80"},
                              "crstype": "geographical",
                              "id": {"urn": "urn:ogc:def:crs:EPSG::4269"}},
 
