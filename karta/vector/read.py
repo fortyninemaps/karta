@@ -155,7 +155,7 @@ def read_shapefile(name, crs=None):
     cartesian. """
     if crs is None:
         crs = crsreg.CARTESIAN
-    if os.path.splitext(name) == ".shp":
+    if os.path.splitext(name)[1] == ".shp":
         name = name[:-4]
     fnms = get_filenames(name, check=True)
 
