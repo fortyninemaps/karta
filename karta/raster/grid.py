@@ -152,12 +152,24 @@ class RegularGrid(Grid):
         return self.center_coords(*args, **kwargs)
 
     def center_coords(self):
-        """ Return the cell-center coordinates. """
-        ii, jj = np.meshgrid(np.arange(self.Z.shape[1]),
-                             np.arange(self.Z.shape[0]))
         t = self._transform
-        return (t[0] + ii * t[2] + jj[::-1] * t[4],
-                t[1] + jj[::-1] * t[3] + ii * t[5])
+        xcoords = np.empty(self.Z.shape[:2])
+        ycoords = np.empty(self.Z.shape[:2])
+        irow = np.arange(self.Z.shape[1])
+        for i in range(self.Z.shape[0]):
+            xcoords[i,:] = t[0] + i*t[2] + irow*t[4]
+            ycoords[i,:] = t[1] + irow*t[3] + i*t[5]
+        return xcoords, ycoords
+
+    # This version is too space-ineffficient, and results in MemoryErrors on
+    # moderately-sized grids
+    # def center_coords(self):
+    #     """ Return the cell-center coordinates. """
+    #     ii, jj = np.meshgrid(np.arange(self.Z.shape[1]),
+    #                          np.arange(self.Z.shape[0]))
+    #     t = self._transform
+    #     return (t[0] + ii * t[2] + jj[::-1] * t[4],
+    #             t[1] + jj[::-1] * t[3] + ii * t[5])
 
     def vertex_coords(self):
         """ Return the coordinates of vertices. """
