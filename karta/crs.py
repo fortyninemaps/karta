@@ -32,7 +32,7 @@ class CRS(object):
         'crstype' : string
         Must be one of 'geographical', 'projected', or 'local'
 
-        'urn' : string
+        'id' : string
         Open Geospatial Consortium uniform resource name
         """
         if crstype in ("geographical", "projected", "local", "unknown"):
@@ -44,6 +44,9 @@ class CRS(object):
         self.geod = geod
         self.id = id
         return
+
+    def __repr__(self):
+        return "{0} CRS (urn: {1})".format(self.crstype, self.id)
 
     def __str__(self):
         return "{0} CRS (ID: {1}".format(self.crstype, self.id)
