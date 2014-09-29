@@ -155,10 +155,10 @@ class RegularGrid(Grid):
         t = self._transform
         xcoords = np.empty(self.Z.shape[:2])
         ycoords = np.empty(self.Z.shape[:2])
-        irow = np.arange(self.Z.shape[1])
-        for i in range(self.Z.shape[0]):
-            xcoords[i,:] = t[0] + i*t[2] + irow*t[4]
-            ycoords[i,:] = t[1] + irow*t[3] + i*t[5]
+        irow = np.arange(self.Z.shape[0])
+        for i in range(self.Z.shape[1]):
+            xcoords[:,i] = t[0] + i*t[2] + irow*t[4]
+            ycoords[:,i] = (t[1] + irow*t[3] + i*t[5])[::-1]
         return xcoords, ycoords
 
     # This version is too space-ineffficient, and results in MemoryErrors on
