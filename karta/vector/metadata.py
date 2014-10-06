@@ -87,9 +87,11 @@ class Metadata(Mapping):
 
     def __add__(self, other):
         if not isinstance(other, type(self)):
-            raise MetadataError("self and other must both be instances of {0}".format(type(self)))
+            raise MetadataError("self and other must both be instances of "
+                                "{0}".format(type(self)))
         if set(self.keys()) != set(other.keys()):
-            raise MetadataError("self and other do not have identical field names")
+            raise MetadataError("self and other do not have identical field "
+                                "names")
         res = Metadata({})
         res._len = self._len + other._len
         for k in self:
@@ -163,7 +165,7 @@ class Metadata(Mapping):
             raise IndexError("Field {0} not in Metadata".format(name))
         return self._data[name]
 
-    def extend(self, other):
+    def update(self, other):
         """ Extend collection in-place. """
         if isinstance(other, type(self)):
             for i, k in enumerate(self._data):

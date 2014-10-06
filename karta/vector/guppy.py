@@ -7,6 +7,7 @@ from __future__ import division
 
 import math
 import sys
+import itertools
 import traceback
 import numpy as np
 from . import vtk
@@ -908,7 +909,8 @@ class Line(ConnectedMultipoint):
 
     def to_polygon(self):
         """ Returns a polygon. """
-        return Polygon(self.vertices)
+        return Polygon(self.vertices, data=self.data, properties=self.properties,
+                       crs=self._crs)
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
@@ -938,8 +940,6 @@ class Polygon(ConnectedMultipoint):
         vertices = list(vertices)
         ConnectedMultipoint.__init__(self, vertices, data=data,
                                      properties=properties, **kwargs)
-        if vertices[0] != vertices[-1]:
-            self.vertices.append(vertices[0])
         self.subs = subs if subs is not None else []
         return
 
@@ -970,10 +970,24 @@ class Polygon(ConnectedMultipoint):
         return s > 0
 
     @property
+    def segments(self):
+        """ Returns an generator of adjacent line segments.
+        Unique to Polygon: appends a final segment to close the Polygon.
+        """
+        L = len(self.vertices)
+        return itertools.chain((self._subset((i,i+1)) for i in range(len(self)-1)),
+                               (self._subset((L-1,0)),))
+
+    @property
+    def length(self):
+        return self.perimeter
+
+    @property
     def perimeter(self):
         """ Return the perimeter of the polygon. If there are sub-polygons,
         their perimeters are added recursively. """
-        return self.length + sum([p.perimeter for p in self.subs])
+        return sum(seg.length for seg in self.segments) + \
+                sum([p.perimeter for p in self.subs])
 
     @property
     def area(self):

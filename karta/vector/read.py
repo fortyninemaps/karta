@@ -186,7 +186,9 @@ def read_shapefile(name, crs=None):
                 parts = list(shp.parts)
                 parts.append(len(shp.points))
                 for (i0, i1) in zip(parts[:-1], parts[1:]):
-                    points = shp.points[i0:i1]
+                    # Shapefile polygons are closed explicitly, while karta
+                    # polygons are closed implicitly
+                    points = shp.points[i0:i1-1]
                     geoms.append(guppy.Polygon(points, properties=prop, crs=crs))
 
         else:
