@@ -15,7 +15,6 @@ import karta.vector as vector
 from karta.vector.geojson import GeoJSONReader
 from karta.vector.guppy import Point, Multipoint, Line, Polygon
 from karta.vector.guppy import affine_matrix
-from karta.vector.metadata import Metadata
 from karta.crs import crsreg
 
 class TestGuppy(unittest.TestCase):
@@ -208,16 +207,6 @@ class TestGuppy(unittest.TestCase):
         self.assertEqual(sub, Multipoint(ans))
         return
 
-    def test_multipoint_from_points(self):
-        pts = [Point((x,y), data={"amount": x+y}) for x in range(3)
-                                                  for y in range(2)]
-        mp = Multipoint(pts)
-        verts = [Point((x,y), data={"amount": x+y}) for x in range(3)
-                                                    for y in range(2)]
-        ans = Multipoint(verts, data={"amount":[sum(v) for v in verts]})
-        self.assertEqual(mp, ans)
-        return
-
     def test_connected_multipoint_shortest_distance_to(self):
         line = Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
         dist = line.shortest_distance_to(Point((0.0, 2.0)))
@@ -338,16 +327,6 @@ class TestGuppy(unittest.TestCase):
     def test_poly_counterclockwise(self):
         p = Polygon([(0,0), (1,0), (1,1), (0,1)])
         self.assertFalse(p.isclockwise())
-        return
-
-    def test_poly_vertices(self):
-        self.assertTrue((self.poly.get_vertices() ==
-            np.array([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (0.0, 8.0)])).all())
-        return
-
-    def test_poly_coordinates(self):
-        self.assertEqual(self.poly.get_coordinate_lists(),
-                         ([0.0, 0.0, 6.0, 0.0], [8.0, 5.0, 1.0, 8.0]))
         return
 
     def test_poly_extents(self):
@@ -516,7 +495,7 @@ class TestGuppyGeoInterface(unittest.TestCase):
         self.assertEqual(poly.__geo_interface__,
                          {"type":"Polygon",
                           "bbox":(0, 0, 4, 16),
-                          "coordinates": list(zip(np.r_[x,x[0]], np.r_[y,y[0]]))})
+                          "coordinates": list(zip(x, y))})
 
     def test_line(self):
         x = np.arange(10)
@@ -600,7 +579,7 @@ class TestAffineTransforms(unittest.TestCase):
         self.assertTrue(np.allclose(M, Mans))
 
         translated_square = self.square.apply_affine_transform(M)
-        ans = np.array([[1, 0], [1, 1], [2, 1], [2, 0], [1, 0]])
+        ans = np.array([[1, 0], [1, 1], [2, 1], [2, 0]])
         self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
         return
 
@@ -612,7 +591,7 @@ class TestAffineTransforms(unittest.TestCase):
         self.assertTrue(np.allclose(M, Mans))
 
         translated_square = self.square.apply_affine_transform(M)
-        ans = np.array([[0, 0], [-s2, s2], [0, 2*s2], [s2, s2], [0, 0]])
+        ans = np.array([[0, 0], [-s2, s2], [0, 2*s2], [s2, s2]])
         self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
         return
 
@@ -623,7 +602,7 @@ class TestAffineTransforms(unittest.TestCase):
         self.assertTrue(np.allclose(M, Mans))
 
         translated_square = self.square.apply_affine_transform(M)
-        ans = np.array([[0, 0], [0, 2], [2, 2], [2, 0], [0, 0]])
+        ans = np.array([[0, 0], [0, 2], [2, 2], [2, 0]])
         self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
         return
 
@@ -644,69 +623,6 @@ class TestAffineTransforms(unittest.TestCase):
     #    #self.assertEqual(md5sum(s),
     #    #                 md5sum_file(os.path.join(TESTDATA, 'testmp2vtp.vtp')))
     #    return
-
-class TestMetadata(unittest.TestCase):
-
-    def setUp(self):
-        self.onefield = Metadata(data=np.arange(200), singleton=False)
-        self.multifield = Metadata(
-                            data={"a":np.arange(200), "b":np.arange(200,400), 
-                                  "c":np.arange(200)**2},
-                            singleton=False)
-        return
-
-    def test_indexing(self):
-        self.assertEqual(self.onefield[10], {"values": 10})
-        self.assertEqual(self.multifield[10], {"a":10, "b": 210, "c": 100})
-        return
-
-    def test_slicing(self):
-        self.assertTrue(np.all(self.onefield[5:15]["values"] == np.arange(5, 15)))
-        res = self.multifield[5:15]
-        self.assertTrue(np.all(res["a"] == np.arange(5, 15)))
-        self.assertTrue(np.all(res["b"] == np.arange(205, 215)))
-        self.assertTrue(np.all(res["c"] == np.arange(5, 15)**2))
-        return
-
-    def test_keys(self):
-        self.assertTrue(np.all(self.onefield["values"] == np.arange(200)))
-        self.assertTrue(np.all(self.multifield["a"] == np.arange(200)))
-        self.assertTrue(np.all(self.multifield["b"] == np.arange(200, 400)))
-        self.assertTrue(np.all(self.multifield["c"] == np.arange(200)**2))
-        return
-
-    def test_reference_vs_value_list(self):
-        # metadata objects should carry values rather than references
-        L = [1,2,3,4,5]
-        md = Metadata(L)
-        L[3] = -99
-        self.assertEqual(md["values"], [1,2,3,4,5])
-        return
-
-    def test_reference_vs_value_dict(self):
-        # metadata objects should carry values rather than references
-        D = {"A":[1,2,3,4,5],
-             "B":[6,7,8,9,10]}
-        md = Metadata(D)
-        D["A"][3] = -99
-        self.assertEqual(md["A"], [1,2,3,4,5])
-        return
-
-    def test_nan_values(self):
-        D = {"A":[1,np.nan,3,4,5],
-             "B":[6,7,8,np.nan,10]}
-        md = Metadata(D)
-        self.assertTrue(np.isnan(md["A"][1]))
-        self.assertEqual(md["A"], md["A"])
-        return
-
-    def test_none_values(self):
-        D = {"A":[1,None,3,4,5],
-             "B":[6,7,8,None,10]}
-        md = Metadata(D)
-        self.assertTrue(md["A"][1] is None)
-        self.assertEqual(md["A"], md["A"])
-        return
 
 if __name__ == "__main__":
     unittest.main()
