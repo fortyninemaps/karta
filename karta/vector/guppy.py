@@ -295,23 +295,50 @@ class MultipointBase(Geometry):
         vertices = list(vertices)
         if len(vertices) > 0:
 
-            def getrank(vertex):
-                try:
-                    return vertex.rank
-                except AttributeError:
-                    return len(vertex)
+            def ispoint(a):
+                return hasattr(a, "_geotype") and a._geotype == "Point"
 
-            self.rank = getrank(vertices[0])
-            try:
-                self._crs = vertices[0].crs
-            except AttributeError:
-                pass
+            if all(ispoint(a) for a in vertices):
 
-            if not 2 <= self.rank <= 3:
-                raise GInitError("Input must be doubles or triples")
-            elif not all(self.rank == getrank(v) for v in vertices):
-                raise GInitError("Input must have consistent rank")
+                # Consolidate a list of points
+                rank = vertices[0].rank
+                crs = vertices[0].crs
+                if len(vertices) != 1 and any(crs != pt._crs for pt in vertices[1:]):
+                    raise CRSError("All points must share the same CRS")
+                if len(vertices) != 1 and any(rank != pt.rank for pt in vertices[1:]):
+                    raise GInitError("Input must have consistent rank")
+
+                keys = list(vertices[0].data.keys())
+                if len(vertices) != 1:
+                    for pt in vertices[1:]:
+                        for key in keys:
+                            if key not in pt.data:
+                                keys.pop(keys.index(key))
+
+                ptdata = {}
+                for key in keys:
+                    ptdata[key] = [pt.data[key] for pt in vertices]
+
+                if data is None:
+                    data = ptdata
+                else:
+                    data.update(ptdata)
+
+                self.vertices = [pt.vertex for pt in vertices]
+                self.rank = rank
+                self._crs = crs
+
             else:
+
+                # Construct from a list of positions (tuples)
+
+                self.rank = len(vertices[0])
+
+                if not 2 <= self.rank <= 3:
+                    raise GInitError("Input must be doubles or triples")
+                if any(self.rank != len(v) for v in vertices):
+                    raise GInitError("Input must have consistent rank")
+
                 self.vertices = [tuple(v) for v in vertices]
 
         else:
@@ -625,49 +652,6 @@ class Multipoint(MultipointBase):
     *crs*           Coordinate reference system instance [default CARTESIAN]
     """
     _geotype = "Multipoint"
-
-    def __init__(self, vertices, data=None, properties=None, copy_metadata=True,
-                 **kwargs):
-        def ispoint(a):
-            return hasattr(a, "_geotype") and a._geotype == "Point"
-
-        vertices = list(vertices)
-
-        if len(vertices) != 0 and all(ispoint(a) for a in vertices):
-            points = vertices
-            crs = points[0]._crs
-            rank = points[0].rank
-            if len(points) != 1 and not all(pt._crs == crs for pt in points[1:]):
-                raise CRSError("All points must share the same CRS")
-            elif not all(rank == pt.rank for pt in points[1:]):
-                raise GInitError("Input must have consistent rank")
-
-            keys = list(points[0].data.keys())
-            if len(points) != 1:
-                for pt in points[1:]:
-                    for key in keys:
-                        if key not in pt.data:
-                            keys.pop(keys.index(key))
-
-            ptdata = {}
-            for key in keys:
-                ptdata[key] = [pt.data[key] for pt in points]
-
-            if data is not None:
-                ptdata.update(data)
-
-            self.data = Metadata(ptdata, copydata=copy_metadata)
-            self.vertices = [pt.vertex for pt in points]
-            self.properties = properties
-            self.rank = rank
-            self._crs = crs
-
-        else:
-            super(Multipoint, self).__init__(vertices,
-                                             data=data,
-                                             properties=properties,
-                                             **kwargs)
-        return
 
     @property
     def __geo_interface__(self):
