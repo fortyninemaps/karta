@@ -403,6 +403,10 @@ class MultipointBase(Geometry):
         bbox = (min(x), min(y), max(x), max(y))
         return bbox
 
+    @property
+    def coordinates(self):
+        return self.get_coordinate_lists()
+
     def print_vertices(self):
         """ Prints an enumerated list of indices. """
         for i, vertex in enumerate(self.vertices):
