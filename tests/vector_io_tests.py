@@ -8,14 +8,12 @@ try:
 except ImportError:
     from io import StringIO
 import json
-from test_helper import md5sum, md5sum_file, TESTDATA, TESTDIR
+from test_helper import TESTDATA
 
-import karta
 import karta.vector as vector
 import karta.vector.geojson as geojson
 from karta.vector.geojson import GeoJSONReader
 from karta.vector.guppy import Point, Multipoint, Line, Polygon
-from karta.vector.metadata import Metadata
 from karta.crs import crsreg
 
 

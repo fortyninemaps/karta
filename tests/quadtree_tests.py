@@ -1,9 +1,7 @@
 """ Unit tests for vector functions """
 
 import unittest
-import numpy as np
 
-import karta
 from karta.vector.quadtree import QuadTree, Node
 from karta.vector.quadtree import addpt, split, hashpt
 from karta.vector.quadtree import querypt_recursion, querypt_hash

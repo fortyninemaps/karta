@@ -2,9 +2,8 @@
 
 import unittest
 import os
-import sys
 import numpy as np
-from test_helper import md5sum, TESTDATA
+from test_helper import TESTDATA
 
 import karta
 from karta.raster import _dem

@@ -1,11 +1,8 @@
 import unittest
 import os
-import math
 import numpy as np
-from test_helper import md5sum, md5sum_file, TESTDATA, TESTDIR
-
+from test_helper import TESTDATA
 import datetime
-import numbers
 from copy import copy
 
 from karta.vector import shp, read_shapefile
