@@ -134,7 +134,7 @@ class RegularGrid(Grid):
         return self._transform
 
     @property
-    def shape(self):
+    def size(self):
         return self.Z.shape[:2]
 
     @property
@@ -343,7 +343,7 @@ class RegularGrid(Grid):
         #
         # Then the nearest indices J come from solving the system
         # T J = X - S
-        ny, nx = self.shape
+        ny, nx = self.size
         t = self._transform
         T = np.array([[t[2], t[4]], [t[5], t[3]]])
         S = np.array([t[0], t[1]])
