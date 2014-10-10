@@ -1,10 +1,16 @@
 """ IO interface to GeoTiffs using GDAL. """
 
-import gdal
-import gdalconst as gc
+from osgeo import gdal, osr
+import osgeo.gdalconst as gc
 import numpy as np
 
 gdal.UseExceptions()
+
+def SRS_from_WKT(s):
+    """ Return Proj.4 string, semimajor axis, and flattening """
+    sr = osr.SpatialReference()
+    sr.ImportFromWkt(s)
+    return sr
 
 def read(fnm):
     """ Read a GeoTiff file and return a numpy array and a dictionary of header
@@ -33,9 +39,10 @@ def read(fnm):
             band = dataset.GetRasterBand(i)
             arr[i-1,:,:] = band.ReadAsArray()
 
-        projstr = dataset.GetProjection()
-        hdr["crs"] = projstr
-
+        sr = SRS_from_WKT(dataset.GetProjectionRef())
+        hdr["srs"] = {"proj4": sr.ExportToProj4(),
+                      "semimajor": sr.GetSemiMajor(),
+                      "flattening": sr.GetInvFlattening()}
     finally:
         dataset = None
 

@@ -5,7 +5,7 @@ import copy
 from math import sqrt
 import numpy as np
 from . import _aai          # Contains the ascread driver
-from ..crs import crsreg
+from ..crs import crsreg, CRS, pyproj
 
 try:
     from . import _gtiff
@@ -73,7 +73,8 @@ class RegularGrid(Grid):
     0.
     """
     def __init__(self, transform, Z=None, nbands=None, crs=None):
-        """ Create a RegularGrid instance with cells referenced according to *transform*, which is an iterable or dictionary consisting of
+        """ Create a RegularGrid instance with cells referenced according to
+        *transform*, which is an iterable or dictionary consisting of
         (xllcenter, yllcenter, dx, dy, xrot, yrot).
 
         Optional parameters:
@@ -90,7 +91,8 @@ class RegularGrid(Grid):
             self._transform = (transform[0], transform[1],
                                transform[2], transform[3], 0, 0)
         else:
-            raise GridError("RegularGrid must be initialized with a transform iterable or dictionary")
+            raise GridError("RegularGrid must be initialized with a transform"
+                            "iterable or dictionary")
 
         if Z is not None:
             self.Z = np.atleast_3d(Z)
@@ -186,8 +188,8 @@ class RegularGrid(Grid):
                            np.linspace(yurcorner, yllcorner, ny + 1))
 
     def get_extents(self, reference='center'):
-        """ Return the region characteristics as a tuple. *reference* may be
-        `center` or `edge`. """
+        """ Return the region characteristics as a tuple (xmin, xmax, ymin,
+        ymax). *reference* may be `center` or `edge`. """
         if reference == 'center':
             x0, y0 = self.center_llref()
             n = -1
@@ -571,5 +573,15 @@ def gtiffread(fnm):
          'dy'         : -hdr['dy'],
          'xskew'      : hdr['sx'],
          'yskew'      : hdr['sy']}
-    return RegularGrid(t, Z=arr.transpose((1,2,0)).squeeze())
+
+    if "lonlat" in hdr["srs"]["proj4"]:
+        crstype = "geographical"
+    else:
+        crstype = "projected"
+
+    crs = CRS(proj=pyproj.Proj(hdr["srs"]["proj4"]),
+              geod=pyproj.Geod(a=hdr["srs"]["semimajor"],
+                               f=hdr["srs"]["flattening"]),
+              crstype=crstype)
+    return RegularGrid(t, Z=arr.transpose((1,2,0)).squeeze(), crs=crs)
 
