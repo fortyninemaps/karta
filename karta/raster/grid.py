@@ -30,6 +30,10 @@ class Grid(object):
         # Number of bands
         return self.nbands
 
+    @property
+    def crs(self):
+        return getattr(self, "_crs", None)
+
     def clipz(self, bounds):
         """ Clip the z-range in place to bounds = [min, max]. """
         self.Z = self.Z.clip(bounds[0], bounds[1])
