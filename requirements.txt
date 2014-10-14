@@ -2,3 +2,4 @@ pyproj >= 1.9
 pyshp >= 1.2
 cython >= 0.15
 numpy >= 1.6
+pyshp >= 1.2
