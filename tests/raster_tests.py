@@ -7,7 +7,6 @@ from test_helper import TESTDATA
 
 import karta
 from karta.raster import _dem
-from karta.raster import _gtiff
 
 class RegularGrid(unittest.TestCase):
 
@@ -281,20 +280,6 @@ class TestDEMDriver(unittest.TestCase):
 #                            6.58706897,  6.37686191,  6.24425398,  6.15677403,
 #                            6.09829941]))
 #        return
-
-class GdalTests(unittest.TestCase):
-    def test_numpy_type_coercion(self):
-        self.assertEqual(_gtiff.numpy_dtype(2), np.uint16)
-        self.assertEqual(_gtiff.numpy_dtype(3), np.int16)
-        self.assertEqual(_gtiff.numpy_dtype(4), np.uint32)
-        self.assertEqual(_gtiff.numpy_dtype(5), np.int32)
-        self.assertEqual(_gtiff.numpy_dtype(6), np.float32)
-        self.assertEqual(_gtiff.numpy_dtype(7), np.float64)
-        self.assertEqual(_gtiff.numpy_dtype(8), np.complex64)
-        self.assertEqual(_gtiff.numpy_dtype(9), np.complex64)
-        self.assertEqual(_gtiff.numpy_dtype(10), np.complex64)
-        self.assertEqual(_gtiff.numpy_dtype(11), np.complex64)
-        return
 
 if __name__ == "__main__":
     unittest.main()
