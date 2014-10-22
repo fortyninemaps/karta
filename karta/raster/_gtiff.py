@@ -12,6 +12,26 @@ def SRS_from_WKT(s):
     sr.ImportFromWkt(s)
     return sr
 
+def numpy_dtype(dt_int):
+    """ Return a numpy dtype that matches the band data type. """
+    name = gdal.GetDataTypeName(dt_int)
+    if name == "UInt16":
+        return np.uint16
+    elif name == "Int16":
+        return np.int16
+    elif name == "UInt32":
+        return np.uint32
+    elif name == "Int32":
+        return np.int32
+    elif name == "Float32":
+        return np.float32
+    elif name == "Float64":
+        return np.float64
+    elif name in ("CInt16", "CInt32", "CFloat32", "CFloat64"):
+        return np.complex64
+    else:
+        raise TypeError("GDAL data type {0} unknown to karta".format(dt_int))
+
 def read(fnm):
     """ Read a GeoTiff file and return a numpy array and a dictionary of header
     information. """
@@ -22,7 +42,6 @@ def read(fnm):
         hdr["nbands"] = dataset.RasterCount
         hdr["nx"] = dataset.RasterXSize
         hdr["ny"] = dataset.RasterYSize
-        arr = np.empty((hdr["nbands"], hdr["ny"], hdr["nx"]))
 
         transform = dataset.GetGeoTransform()
         if transform is not None:
@@ -35,14 +54,29 @@ def read(fnm):
         else:
             raise AttributeError("No GeoTransform in geotiff file")
 
-        for i in range(1, hdr["nbands"]+1):
-            band = dataset.GetRasterBand(i)
-            arr[i-1,:,:] = band.ReadAsArray()
-
         sr = SRS_from_WKT(dataset.GetProjectionRef())
         hdr["srs"] = {"proj4": sr.ExportToProj4(),
                       "semimajor": sr.GetSemiMajor(),
                       "flattening": sr.GetInvFlattening()}
+
+        max_dtype = 0
+        bands = []
+        for i in range(1, hdr["nbands"]+1):
+            band = dataset.GetRasterBand(i)
+            if band.DataType > max_dtype:
+                max_dtype = band.DataType
+            bands.append(band)
+
+        arr = np.empty((hdr["nbands"], hdr["ny"], hdr["nx"]),
+                       dtype=numpy_dtype(max_dtype))
+
+        for i, band in enumerate(bands):
+            nx = band.XSize
+            ny = band.YSize
+            dtype = numpy_dtype(band.DataType)
+            arr[i,:,:] = band.ReadAsArray(buf_obj=np.empty([ny, nx],
+                                                           dtype=dtype))
+
     finally:
         dataset = None
 
