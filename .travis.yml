@@ -5,9 +5,6 @@ python:
   - "3.2"
   - "3.3"
   - "3.4"
-branches:
-  only:
-    - master
 before_install:
   #- sudo apt-get update --quiet
   #- sudo apt-get install --assume-yes python-numpy cython python3-numpy
