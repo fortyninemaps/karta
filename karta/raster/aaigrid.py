@@ -15,7 +15,7 @@ import traceback
 class AAIGrid(grid.RegularGrid):
     """ Grid object built around the ESRI ASCII Grid format. """
 
-    _hdr = {'nbands': 1}
+    _hdr = {}
     aschdr = {}
     aschdr['ncols'] = None
     aschdr['nrows'] = None

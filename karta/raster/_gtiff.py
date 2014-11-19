@@ -32,14 +32,14 @@ def numpy_dtype(dt_int):
     else:
         raise TypeError("GDAL data type {0} unknown to karta".format(dt_int))
 
-def read(fnm):
+def read(fnm, band=1):
     """ Read a GeoTiff file and return a numpy array and a dictionary of header
     information. """
     hdr = dict()
     dataset = gdal.Open(fnm, gc.GA_ReadOnly)
 
     try:
-        hdr["nbands"] = dataset.RasterCount
+        nbands = dataset.RasterCount
         hdr["nx"] = dataset.RasterXSize
         hdr["ny"] = dataset.RasterYSize
 
@@ -60,25 +60,17 @@ def read(fnm):
                       "flattening": sr.GetInvFlattening()}
 
         max_dtype = 0
-        bands = []
-        for i in range(1, hdr["nbands"]+1):
-            band = dataset.GetRasterBand(i)
-            if band.DataType > max_dtype:
-                max_dtype = band.DataType
-            bands.append(band)
+        rasterband = dataset.GetRasterBand(band)
+        nx = rasterband.XSize
+        ny = rasterband.YSize
+        if rasterband.DataType > max_dtype:
+            max_dtype = rasterband.DataType
 
-        arr = np.empty((hdr["nbands"], hdr["ny"], hdr["nx"]),
-                       dtype=numpy_dtype(max_dtype))
-
-        for i, band in enumerate(bands):
-            nx = band.XSize
-            ny = band.YSize
-            dtype = numpy_dtype(band.DataType)
-            arr[i,:,:] = band.ReadAsArray(buf_obj=np.empty([ny, nx],
-                                                           dtype=dtype))
+        arr = np.empty((hdr["ny"], hdr["nx"]), dtype=numpy_dtype(max_dtype))
+        dtype = numpy_dtype(rasterband.DataType)
+        arr[:,:] = rasterband.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype))
 
     finally:
         dataset = None
-
     return arr, hdr
 

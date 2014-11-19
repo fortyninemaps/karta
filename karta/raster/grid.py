@@ -26,10 +26,6 @@ class Grid(object):
     data.
     """
 
-    def __len__(self):
-        # Number of bands
-        return self.nbands
-
     @property
     def crs(self):
         return getattr(self, "_crs", None)
@@ -72,15 +68,15 @@ class RegularGrid(Grid):
     rotation. In the usual case of an orthogonal grid with north "up", e = f =
     0.
     """
-    def __init__(self, transform, Z=None, nbands=None, crs=None):
+    def __init__(self, transform, Z=None, crs=None):
         """ Create a RegularGrid instance with cells referenced according to
         *transform*, which is an iterable or dictionary consisting of
         (xllcenter, yllcenter, dx, dy, xrot, yrot).
 
         Optional parameters:
         --------------------
-        Z : grid data (nrows x ncols x nbands) [default NaN]
-        nband : number of grid layers [default 1]
+        Z : grid data (nrows x ncols) [default NaN]
+        crs : Grid coordinate reference system [default None]
         """
         if hasattr(transform, "keys"):
             self._transform = tuple([transform[f] for f in
@@ -95,39 +91,33 @@ class RegularGrid(Grid):
                             "iterable or dictionary")
 
         if Z is not None:
-            self.Z = np.atleast_3d(Z)
+            self.Z = Z
         else:
-            self.Z = np.atleast_3d([np.nan] * nbands)
-
-        self.nbands = self.Z.shape[2]
+            self.Z = np.atleast_2d([np.nan])
 
         if crs is None:
             self._crs = crsreg.CARTESIAN
         else:
             self._crs = crs
-
         return
 
     def __add__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               Z=self.Z+other.Z,
-                               nbands=self.nbands)
+                               Z=self.Z+other.Z)
         else:
             raise NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               Z=self.Z-other.Z,
-                               nbands=self.nbands)
+                               Z=self.Z-other.Z)
         else:
             raise NonEquivalentGridError(self, other)
 
     def _equivalent_structure(self, other):
         return (self._transform == other._transform) and \
-               (self.Z.shape == other.Z.shape) and \
-               (self.nbands == other.nbands)
+               (self.Z.shape == other.Z.shape)
 
     @property
     def transform(self):
@@ -135,11 +125,7 @@ class RegularGrid(Grid):
 
     @property
     def size(self):
-        return self.Z.shape[:2]
-
-    @property
-    def layers(self):
-        return tuple(self.Z[:,:,i] for i in range(self.nbands))
+        return self.Z.shape
 
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
@@ -254,7 +240,7 @@ class RegularGrid(Grid):
             I = np.around(np.arange(ry/2, self.Z.shape[0], ry)).astype(int)
             J = np.around(np.arange(rx/2, self.Z.shape[1], rx)).astype(int)
             JJ, II = np.meshgrid(J, I)
-            Z = self.Z[II, JJ, :]
+            Z = self.Z[II, JJ]
         else:
             raise NotImplementedError('method "{0}" not '
                                       'implemented'.format(method))
@@ -375,7 +361,7 @@ class RegularGrid(Grid):
         else:
             raise ValueError("method \"{0}\" not understood".format(method))
 
-    def get_profile(self, segments, resolution=10.0, band=0):
+    def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as `segments`. Does not interpolate.
 
         Parameters:
@@ -406,7 +392,7 @@ class RegularGrid(Grid):
                 fx = fd*xlen
                 fy = fd*ylen
                 xi, yi = self.get_indices(x0+fx, y0+fy)
-                z.append(self.Z[yi, xi, band])
+                z.append(self.Z[yi, xi])
                 p += resolution
             p -= d
 
@@ -482,7 +468,7 @@ class WarpedGrid(Grid):
         -----------
         X : first-dimension coordinates of grid centers
         Y : second-dimension coordinates of grid centers
-        Z : dependent m-dimensional quantity (nrows x ncols x nbands)
+        Z : dependent m-dimensional quantity (nrows x ncols)
         """
 
         if any(a is None for a in (X, Y, Z)):
@@ -558,7 +544,7 @@ def aairead(fnm):
          'xskew'    : 0.0,
          'yskew'    : 0.0}
     Z[Z==aschdr['nodata_value']] = np.nan
-    return RegularGrid(t, Z=Z, nbands=1)
+    return RegularGrid(t, Z=Z)
 
 def gtiffread(fnm):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
