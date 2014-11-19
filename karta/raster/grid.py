@@ -569,5 +569,5 @@ def gtiffread(fnm):
               geod=pyproj.Geod(a=hdr["srs"]["semimajor"],
                                f=hdr["srs"]["flattening"]),
               crstype=crstype)
-    return RegularGrid(t, Z=arr.transpose((1,2,0)).squeeze(), crs=crs)
+    return RegularGrid(t, Z=arr.squeeze(), crs=crs)
 
