@@ -1,5 +1,5 @@
 include README.md
-include setup.py setup.cfg
+include setup.py setup.cfg ez_setup.py
 include requirements.txt
 include doc
 recursive-include karta *.py *.pyx *.c
