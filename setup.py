@@ -1,6 +1,7 @@
-import os
-from distutils.core import setup
-from distutils.extension import Extension
+from ez_setup import use_setuptools
+use_setuptools()
+from os.path import exists
+from setuptools import setup, Extension
 import numpy
 
 VERSION = "0.4.0b2"
@@ -31,7 +32,7 @@ if USE_CYTHON:
     extensions = cythonize(extensions)
 
 for extension in extensions:
-    if not all(os.path.exists(src) for src in extension.sources):
+    if not all(exists(src) for src in extension.sources):
         # C-extension sources missing, so don't try to build them
         extensions = []
         print("Warning: Extension source not found: {0}".format(extension.sources))
@@ -41,6 +42,7 @@ for extension in extensions:
 setup(
     name = "karta",
     version = VERSION,
+    install_requires = ["numpy>=1.6", "cython>=0.15", "pyproj>=1.9", "pyshp>=1.2"],
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
