@@ -5,6 +5,7 @@ python:
   - "3.3"
   - "3.4"
 install:
+  - "pip install -U setuptools"
   - "pip install coveralls"
   - "pip install -r requirements.txt"
   - "pip install ."

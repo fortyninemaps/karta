@@ -60,7 +60,10 @@ Currently partially-supported are:
 
 ## INSTALLATION
 
-The easiest way to install is to use `pip`.
+The easiest way to install is to use `pip`. Installation requires a
+version of `setuptools>=0.7.0`.
+
+    pip install -U setuptools
 
 To install the latest release from PyPI, run
 
@@ -76,7 +79,7 @@ To build from source,
 
 ### Required
 
-- Python 2.7+ or Python 3.2+
+- Python 2.7+ or Python 3.3+
 - numpy
 - pyshp
 - pyproj (for geodetic calculations)
