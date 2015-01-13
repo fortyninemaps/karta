@@ -57,16 +57,19 @@ class RegularGrid(Grid):
     of rows and columns with a constant spacing and a scalar or vector field
     defined as `Z`.
 
-    Positions on a RegularGrid are referenced using an affine transform such
-    that
+    Positions on a RegularGrid are referenced to their array indices *(i,j)*
+    using an affine transform *T* such that
     
+    (a, b, c, d, e, f) = T
+
     X = a + j * c + i * e
     Y = b + i * d + j * f
 
-    in which (a,b) define the grid origin, (c,d) define the resolution in the
-    horizontal and vertical directions, and (e,f) can be used to define a
-    rotation. In the usual case of an orthogonal grid with north "up", e = f =
-    0.
+    in which *(a,b)* defines the grid origin, *(c,d)* defines the resolution in
+    the horizontal and vertical directions, and *(e,f)* can be used to define a
+    rotation. In the common case of an orthogonal grid with north "up",
+
+    e = f = 0
     """
     def __init__(self, transform, Z=None, crs=None):
         """ Create a RegularGrid instance with cells referenced according to
