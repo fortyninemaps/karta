@@ -32,7 +32,7 @@ def numpy_dtype(dt_int):
     else:
         raise TypeError("GDAL data type {0} unknown to karta".format(dt_int))
 
-def read(fnm, band=1):
+def read(fnm, band):
     """ Read a GeoTiff file and return a numpy array and a dictionary of header
     information. """
     hdr = dict()

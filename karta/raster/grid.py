@@ -546,13 +546,20 @@ def aairead(fnm):
     Z[Z==aschdr['nodata_value']] = np.nan
     return RegularGrid(t, Z=Z)
 
-def gtiffread(fnm):
+def gtiffread(fnm, band=1):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
     instance.
+
+    Parameters
+    ----------
+
+    fnm : GeoTiff file path
+
+    band : band to open (default 1)
     """
     if not HAS_GDAL:
         raise NotImplementedError("Right now, loading GeoTiffs requires GDAL.")
-    arr, hdr = _gtiff.read(fnm)
+    arr, hdr = _gtiff.read(fnm, band)
     t = {'xllcenter'  : hdr['xulcorner'] + 0.5 * (hdr['dx'] + hdr['sx']),
          'yllcenter'  : hdr['yulcorner'] + (hdr['ny'] - 0.5) * hdr['dy'] - 0.5 * hdr['sy'],
          'dx'         : hdr['dx'],
