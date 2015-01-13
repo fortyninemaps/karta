@@ -21,145 +21,109 @@
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
   </head>
+
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>Karta</h1>
-        <p>A tidy Python package for geospatial computation</p>
 
-        <p class="view"><a href="https://github.com/njwilson23/karta">View the Project on GitHub <small>njwilson23/karta</small></a></p>
+  <section>
 
+  <h1 id="karta---tidy-python-package-for-geospatial-computation">Karta - tidy Python package for geospatial computation</h1>
 
-        <ul>
-          <li><a href="https://github.com/njwilson23/karta/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/njwilson23/karta/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/njwilson23/karta">View On <strong>GitHub</strong></a></li>
-        </ul>
+  <p><a href="https://travis-ci.org/njwilson23/karta"><embed src="https://travis-ci.org/njwilson23/karta.svg?branch=master" /></a></p>
 
-        <p class="center"><img src="images/map_small.png"></p>
+  <img src="images/map_small.png" align="right" width=33%>
 
-      </header>
-      <section>
+  <p><em>Karta</em> is a Python/Python3 package for geospatial data structures. <em>Karta</em> serves as a Leatherman for geographic analyses. It provides simple and clean vector and raster data types, a selection of geographical analysis methods, and the ability to read and write several formats, including GeoJSON, shapefiles, and ESRI ASCII.</p>
 
-        <p><em>Karta</em> is a Leatherman for geographic analyses.
-        <em>Karta</em> provides an lightweight interface for solving problems
-        in Python. It presents a simple and clean vector and raster data types,
-        a small selection of geographical analysis functions, and the ability
-        to read and write several useful formats.</p>
+  <p>The goals of <em>Karta</em> is to expose a simple and fast framework for spatial analysis.</p>
 
-        <p>Goals of <em>Karta</em> include exposing a simple and fast framework
-        for spatial analysis. <em>Karta</em> is under development and suggestions
-        and pull requests are welcome, particularly to improve format support and
-        test coverage.</p>
+  <p>Suggestions, bug reports, testcases, and pull requests are welcome, particularly to improve format support and test coverage.</p>
 
-        <h2 id="contents-at-a-glance">CONTENTS AT A GLANCE</h2>
-        <ul>
-        <li>vector
-        <ul>
-        <li>guppy: Vector geometry classes (e.g. <code>Point</code>, <code>Multipoint</code>, <code>Line</code>, <code>Polygon</code>)</li>
-        <li>gpx: GPX class for parsing and constructing GPX eXchange files</li>
-        <li>geojson: Classes and functions for reading and writing GeoJSON</li>
-        <li>shp: Shapefile-to-guppy conversions through <em>pyshp</em> interface</li>
-        <li>xyfile: ASCII table functions</li>
-        </ul></li>
-        <li>raster
-        <ul>
-        <li>grid: Basic Grid types, including <code>StructuredGrid</code> and <code>RegularGrid</code></li>
-        <li>raster: General purpose raster functions</li>
-        <li>aaigrid: Grid subclass specifically for reading and writing ESRI ASCII grids</li>
-        <li>streamline: Streamline calculation</li>
-        </ul></li>
-        <li>tests : unit tests</li>
-        </ul>
+  <h2 id="installation">INSTALLATION</h2>
+  <p>The easiest way to install is to use <code>pip</code>. Installation requires a version of <code>setuptools&gt;=0.7.0</code>.</p>
+  <pre><code>pip install -U setuptools</code></pre>
+  <p>To install the latest stable release from PyPI, run</p>
+  <pre><code>pip install karta</code></pre>
 
-        <h2 id="formats">FORMATS</h2>
+  <p>Alternatively, download <em>Karta</em> as a <a href="https://github.com/njwilson23/karta/zipball/master">zip file</a>, a <a href="https://github.com/njwilson23/karta/tarball/master">tarball</a>, or view the <a href="https://github.com/njwilson23/karta">development page on Github</a>.
 
-        <p><em>Karta</em> provides a basic working interface to several of common
-        file formats. Currently partially-supported are:</p>
-
-        <ul>
-        <li>vector
-        <ul>
-        <li>GeoJSON (r,w)</li>
-        <li>ESRI Shapefiles via pyshp (r,w)</li>
-        <li>GPS eXchange (GPX) (r,w)</li>
-        <li>ASCII tables (XYZ) (r,w)</li>
-        <li>VTK (w)</li>
-        </ul></li>
-        <li>raster
-        <ul>
-        <li>ESRI ASCII Grid (r,w)</li>
-        <li>GeoTiff through GDAL (r)</li>
-        <li>USGS DEM (WIP)</li>
-        </ul></li>
-        </ul>
-
-        <h2 id="installation">INSTALLATION</h2>
-        <p>The easiest way to install is to use <code>pip</code>.</p>
-        <p>To install the latest release from PyPI, run</p>
-        <pre><code>pip install karta</code></pre>
-        <p>To build from source,</p>
-        <pre><code>git clone https://github.com/njwilson23/karta.git
-pip install -r karta/requirements.txt
+  <p>To build from source,</p>
+  <pre><code>pip install -r karta/requirements.txt
 pip install karta/</code></pre>
 
-        <h2 id="dependencies">DEPENDENCIES</h2>
-        <h3 id="required">Required</h3>
-        <ul>
-        <li>Python 2.7+ or Python 3.2+</li>
-        <li>numpy</li>
-        <li>pyshp</li>
-        <li>pyproj (required for geodetic calculations)</li>
-        </ul>
-        <h3 id="optional">Optional</h3>
-        <ul>
-        <li>gdal</li>
-        <li>cython</li>
-        <li>scipy</li>
-        </ul>
+  <h2 id="dependencies">DEPENDENCIES</h2>
+  <h3 id="required">Required</h3>
+  <ul>
+  <li>Python 2.7+ or Python 3.3+</li>
+  <li>numpy</li>
+  <li>pyshp</li>
+  <li>pyproj (for geodetic calculations)</li>
+  </ul>
+  <h3 id="recommended">Recommended</h3>
+  <ul>
+  <li>cython</li>
+  <li>gdal (for geotiff I/O)</li>
+  <li>scipy</li>
+  </ul>
+  <p>When installing from PyPI, Cython-compiled C source code is provided and will be automatically compiled to improve performance if a suitable C compiler is available.</p>
 
-        <p>Cython is an optional dependency used to speed up select functions. In
-        general, enhanced-performance functions will then be called automatically
-        when available, otherwise <em>Karta</em> will fall back to numpy and
-        pure-Python versions.</p>
+  <h2 id="documentation">DOCUMENTATION</h2>
 
-        <p>When installing from PyPI, C source code is provided and will be
-        automatically compiled if a suitable compiler is available.</p>
+  <p>API documentation can be built by running <code>make</code> from the <code>doc/</code> directory. The beginnings of a tutorial to introduce <em>Karta</em> are in the <a href="https://github.com/njwilson23/karta/wiki/Tutorial">Wiki</a>.</p>
+  <h2 id="contents-at-a-glance">PACKAGE OVERVIEW</h2>
+  <ul>
+  <li>vector
+  <ul>
+  <li>guppy: Vector geometry classes (e.g. <code>Point</code>, <code>Multipoint</code>, <code>Line</code>, <code>Polygon</code>) supporting the <a href="https://gist.github.com/sgillies/2217756">Python __geo_interface__</a></li>
+  <li>gpx: GPX class for parsing and constructing GPX eXchange files</li>
+  <li>geojson: Classes and functions for reading and writing GeoJSON</li>
+  <li>shp_funcs: Shapefile-to-guppy conversions through <em>pyshp</em> interface</li>
+  <li>xyfile: ASCII table functions</li>
+  <li>quadtree: QuadTree implementation</li>
+  <li>stats: Geostatistical functions (experimental)</li>
+  </ul></li>
+  <li>raster
+  <ul>
+  <li>grid: Basic Grid types, including <code>RegularGrid</code> and <code>WarpedGrid</code></li>
+  <li>raster: General purpose raster functions</li>
+  <li>aaigrid: Grid subclass specifically for reading and writing ESRI ASCII grids</li>
+  <li>streamline: Streamline calculation</li>
+  <li>flow: Stream flow functions (experimental)</li>
+  </ul></li>
+  <li><p>crs : <code>CRS</code> and <code>CRSRegister</code> classes used throughout <em>Karta</em></p></li>
+  <li><p>tests : unit tests</p></li>
+  </ul>
+  <h2 id="formats">FORMATS</h2>
+  <p><em>Karta</em> provides a basic working interface to several of common file formats. Currently partially-supported are:</p>
+  <ul>
+  <li>vector
+  <ul>
+  <li>GeoJSON (r,w)</li>
+  <li>ESRI Shapefiles via pyshp (r,w)</li>
+  <li>GPS eXchange (GPX) (r,w)</li>
+  <li>ASCII tables (XYZ) (r,w)</li>
+  </ul></li>
+  <li>raster
+  <ul>
+  <li>ESRI ASCII Grid (r,w)</li>
+  <li>GeoTiff through GDAL (r)</li>
+  <li>USGS DEM (WIP)</li>
+  </ul></li>
+  </ul>
 
-        <h2 id="testing">TESTING</h2>
-        <p>To run all unit tests, execute</p>
-        <pre><code>python tests/runtests.py</code></pre>
-        <h2 id="license">LICENSE</h2>
-        <p>This software is provided under the MIT license.</p>
-        <h3 id="mit-license">MIT License:</h3>
+  <h2 id="testing">TESTING</h2>
+  <p>To run all unit tests, execute</p>
+  <pre><code>python tests/runtests.py</code></pre>
 
-        <p>Permission is hereby granted, free of charge, to any person obtaining
-        a copy of this software and associated documentation files (the
-        &quot;Software&quot;), to deal in the Software without restriction,
-        including without limitation the rights to use, copy, modify, merge,
-        publish, distribute, sublicense, and/or sell copies of the Software, and
-        to permit persons to whom the Software is furnished to do so, subject to
-        the following conditions:</p>
+  <h2 id="license">LICENSE</h2>
+  <p>This software is provided under the MIT license.</p>
+  <h3 id="mit-license">MIT License:</h3>
+  <p>Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the &quot;Software&quot;), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:</p>
+  <p>The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.</p>
+  <p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
 
-        <p>The above copyright notice and this permission notice shall be
-        included in all copies or substantial portions of the Software.</p>
+  <p class="center"><a href="http://www.ironicmtn.com"><img src="http://ironicmtn.com/images/mustache_mtn_bw_small.png"></p>
 
-        <p>THE SOFTWARE IS PROVIDED &quot;AS IS&quot;, WITHOUT WARRANTY OF ANY
-        KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-        MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
-        NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
-        DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
-        OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
-        USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
-
-
-      </section>
-      <footer>
-        <p>This project is maintained by <a href="https://github.com/njwilson23">njwilson23</a></p>
-        <p><small>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></small></p>
-      </footer>
-    </div>
-    <script src="javascripts/scale.fix.js"></script>
+  </section>
     
   </body>
 </html>
