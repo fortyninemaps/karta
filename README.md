@@ -2,18 +2,22 @@
 
 [![Build Status](https://travis-ci.org/njwilson23/karta.svg?branch=master)](https://travis-ci.org/njwilson23/karta)
 
-*Karta* is a Leatherman for geographic analyses. *Karta* provides an lightweight
-interface for solving problems in Python/Python3. It presents a simple and clean
-vector and raster data types, a small selection of geographical analysis
-functions, and the ability to read and write several useful formats.
+*Karta* is a Python/Python3 package for geospatial data structures. *Karta*
+serves as a Leatherman for geographic analyses. It provides simple and clean
+vector and raster data types, a selection of geographical analysis methods, and
+the ability to read and write several formats, including GeoJSON, shapefiles,
+and ESRI ASCII.
 
-Goals of *Karta* include exposing a simple and fast framework for spatial
-analysis. *Karta* is under development and suggestions and pull requests are
-welcome, particularly to improve format support and test coverage.
+The goals of *Karta* is to expose a simple and fast framework for spatial
+analysis.
 
-**Current projects:**
-- test coverage
+Suggestions, bug reports, testcases, and pull requests are welcome, particularly
+to improve format support and test coverage.
+
+**Current development focus:**
+
 - documentation
+- reprojections
 
 ## DOCUMENTATION
 API documentation can be built by running `make` from the `doc/` directory. The
@@ -41,7 +45,6 @@ beginnings of a tutorial to introduce *Karta* are in the
 - crs : `CRS` and `CRSRegister` classes used throughout *Karta*
 
 - tests : unit tests
-
 
 ##FORMATS
 
@@ -84,18 +87,15 @@ To build from source,
 - pyshp
 - pyproj (for geodetic calculations)
 
-### Optional
+### Recommended
 
 - cython
 - gdal (for geotiff I/O)
 - scipy
 
-Cython is an optional dependency used to speed up select functions. In general,
-enhanced-performance functions will then be called automatically when available,
-otherwise *Karta* will fall back to numpy and pure-Python versions.
-
-When installing from PyPI, C source code is provided and will be automatically
-compiled if a suitable compiler is available.
+When installing from PyPI, Cython-compiled C source code is provided and will be
+automatically compiled to improve performance if a suitable C compiler is
+available.
 
 ## TESTING
 
