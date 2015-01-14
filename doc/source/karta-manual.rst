@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Karta - Geospatial analysis in Python
-=====================================
+Geospatial analysis in Python
+=============================
 
 Contents:
 

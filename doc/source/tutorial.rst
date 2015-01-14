@@ -1,4 +1,3 @@
-.. _tutorial:
 Karta Tutorial
 ==============
 
