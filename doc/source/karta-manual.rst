@@ -3,8 +3,48 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Karta - tidy Python package for geospatial computation
-======================================================
+Karta - Geospatial analysis in Python
+=====================================
+
+Contents:
+
+.. toctree::
+   :maxdepth: 2
+
+   installation
+   tutorial
+   reference
+
+*Karta* is a Python/Python3 package for geospatial data structures. *Karta*
+serves as a Leatherman for geographic analyses. It provides simple and clean
+vector and raster data types, a selection of geographical analysis methods, and
+the ability to read and write several formats, including GeoJSON, shapefiles,
+and ESRI ASCII.
+
+The goals of *Karta* is to expose a simple and fast framework for spatial
+analysis.
+
+Suggestions, bug reports, testcases, and pull requests are welcome, particularly
+to improve format support and test coverage.
+
+Data Formats
+------------
+
+*Karta* provides a basic working interface to several of common file
+formats. Currently partially-supported are:
+
+-  vector
+
+   -  GeoJSON (r,w)
+   -  ESRI Shapefiles via pyshp (r,w)
+   -  ASCII tables (XYZ) (r,w)
+   -  GPS eXchange (GPX) (r,w)
+
+-  raster
+
+   -  ESRI ASCII Grid (r,w)
+   -  GeoTiff (through GDAL) (r)
+   -  USGS DEM (WIP)
 
 License
 -------
@@ -32,149 +72,6 @@ IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
 CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
 TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
-
-Contents:
-
-.. toctree::
-   :maxdepth: 2
-
-*Karta* is a Leatherman for geographic analyses. *Karta* provides an
-interface for solving problems in Python (2 or 3) that works nicely with
-existing packages. To this end, it provides simple and clean vector and
-raster data types, a selection of analysis functions, the ability to
-read and write a small number of useful formats, and interoperability
-with *numpy*.
-
-Goals of *Karta* include providing a simple, lightweight, and fast set
-of tools useful for "everyday" spatial analysis, as well as a flexible
-set of abstractions upon which to build more advanced routines. *Karta*
-should be considered a work in progress.
-
-Contents at a glance
---------------------
-
--  vector
-
-   -  guppy: Vector geometry classes (e.g. ``Point``, ``Multipoint``,
-      ``Line``, ``Polygon``)
-   -  gpx: GPX class for parsing and constructing GPX eXchange files
-   -  geojson: Classes and functions for reading and writing GeoJSON
-   -  vtk: XML-based VTK interface
-   -  shp\_funcs: Shapefile-to-guppy conversions through *pyshp*
-      interface
-   -  stats: Geostatistical functions
-   -  xyfile: ASCII table functions
-
--  raster
-
-   -  grid: Basic Grid types, including ``StructuredGrid`` and
-      ``RegularGrid``
-   -  aaigrid: Grid subclass specifically for reading, writing, and
-      manipulating ESRI ASCII grids
-   -  flow: Stream flow functions
-   -  raster: General purpose raster functions
-   -  streamline: Streamline calculation
-
--  tests : unit tests
-
-Formats
--------
-
-*Karta* provides a basic working interface to several of common file
-formats. Currently partially-supported are:
-
--  vector
-
-   -  ASCII tables (XYZ) (r,w)
-   -  GeoJSON (r,w)
-   -  GPS eXchange (GPX) (r,w)
-   -  VTK (w)
-   -  ESRI Shapefiles via pyshp (r,w)
-
--  raster
-
-   -  ESRI ASCII Grid (r,w)
-   -  USGS DEM (WIP)
-
-Installation
-------------
-
-The easiest way to install is to use ``pip``.
-
-::
-
-    cd karta/
-    pip install .
-
-Dependencies
-------------
-
-Required
-~~~~~~~~
-
--  pyshp
--  Python 2.6+ or Python 3.2+
--  numpy
-
-Optional
-~~~~~~~~
-
--  pyproj (required for geodetic calculations)
--  scipy
--  Cython
-
-Cython is an optional dependency used to speed up select functions. In
-general, enhanced-performance functions will then be called
-automatically when available, otherwise *Karta* will fall back to numpy
-and pure-Python versions.
-
-Testing
--------
-
-To run all unit tests, execute
-
-::
-
-    python tests/runtests.py
-
-.. include:: tutorial.rst
-
-Package reference
-=================
-
-The following sections describe the full library API.
-
-Vector package
-~~~~~~~~~~~~~~
-
-.. automodule:: karta.vector.guppy
-    :members:
-
-.. automodule:: karta.vector.geojson
-    :members:
-
-.. automodule:: karta.vector.gpx
-    :members:
-
-.. automodule:: karta.vector.xyfile
-    :members:
-
-.. automodule:: karta.vector.metadata
-    :members:
-
-Raster package
-~~~~~~~~~~~~~~
-
-.. automodule:: karta.raster.grid
-    :members:
-
-.. automodule:: karta.raster.raster
-    :members:
-
-.. automodule:: karta.raster.aaigrid
-    :members:
-
 
 Indices and tables
 ==================
