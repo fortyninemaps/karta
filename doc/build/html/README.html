@@ -1,0 +1,205 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Karta - tidy Python package for geospatial computation &mdash; karta 0.4.0b5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.0b5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="karta 0.4.0b5 documentation" href="index.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>karta 0.4.0b5 documentation</span></a></h1>
+        <h2 class="heading"><span>Karta - tidy Python package for geospatial computation</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        <a class="uplink" href="karta-manual.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="karta-tidy-python-package-for-geospatial-computation">
+<h1>Karta - tidy Python package for geospatial computation<a class="headerlink" href="#karta-tidy-python-package-for-geospatial-computation" title="Permalink to this headline">¶</a></h1>
+<p><a class="reference external" href="https://travis-ci.org/njwilson23/karta"><img alt="Build Status" src="https://travis-ci.org/njwilson23/karta.svg?branch=master" /></a></p>
+<p><em>Karta</em> is a Python/Python3 package for geospatial data structures.
+<em>Karta</em> serves as a Leatherman for geographic analyses. It provides
+simple and clean vector and raster data types, a selection of
+geographical analysis methods, and the ability to read and write several
+formats, including GeoJSON, shapefiles, and ESRI ASCII.</p>
+<p>The goals of <em>Karta</em> is to expose a simple and fast framework for
+spatial analysis.</p>
+<p>Suggestions, bug reports, testcases, and pull requests are welcome,
+particularly to improve format support and test coverage.</p>
+<p><strong>Current development focus:</strong></p>
+<ul class="simple">
+<li>documentation</li>
+<li>reprojections</li>
+</ul>
+<div class="section" id="documentation">
+<h2>DOCUMENTATION<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h2>
+<p>API documentation can be built by running <tt class="docutils literal"><span class="pre">make</span></tt> from the <tt class="docutils literal"><span class="pre">doc/</span></tt>
+directory. The beginnings of a tutorial to introduce <em>Karta</em> are in the
+<a class="reference external" href="https://github.com/njwilson23/karta/wiki/Tutorial">Wiki</a>.</p>
+</div>
+<div class="section" id="contents-at-a-glance">
+<h2>CONTENTS AT A GLANCE<a class="headerlink" href="#contents-at-a-glance" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>vector<ul>
+<li>guppy: Vector geometry classes (e.g. <tt class="docutils literal"><span class="pre">Point</span></tt>, <tt class="docutils literal"><span class="pre">Multipoint</span></tt>,
+<tt class="docutils literal"><span class="pre">Line</span></tt>, <tt class="docutils literal"><span class="pre">Polygon</span></tt>) supporting the <a class="reference external" href="https://gist.github.com/sgillies/2217756">Python
+__geo_interface__</a></li>
+<li>gpx: GPX class for parsing and constructing GPX eXchange files</li>
+<li>geojson: Classes and functions for reading and writing GeoJSON</li>
+<li>shp_funcs: Shapefile-to-guppy conversions through <em>pyshp</em>
+interface</li>
+<li>xyfile: ASCII table functions</li>
+<li>quadtree: QuadTree implementation</li>
+<li>stats: Geostatistical functions (experimental)</li>
+</ul>
+</li>
+<li>raster<ul>
+<li>grid: Basic Grid types, including <tt class="docutils literal"><span class="pre">RegularGrid</span></tt> and
+<tt class="docutils literal"><span class="pre">WarpedGrid</span></tt></li>
+<li>raster: General purpose raster functions</li>
+<li>aaigrid: Grid subclass specifically for reading and writing ESRI
+ASCII grids</li>
+<li>streamline: Streamline calculation</li>
+<li>flow: Stream flow functions (experimental)</li>
+</ul>
+</li>
+<li>crs : <tt class="docutils literal"><span class="pre">CRS</span></tt> and <tt class="docutils literal"><span class="pre">CRSRegister</span></tt> classes used throughout <em>Karta</em></li>
+<li>tests : unit tests</li>
+</ul>
+</div>
+<div class="section" id="formats">
+<h2>FORMATS<a class="headerlink" href="#formats" title="Permalink to this headline">¶</a></h2>
+<p><em>Karta</em> provides a basic working interface to several of common file
+formats. Currently partially-supported are:</p>
+<ul class="simple">
+<li>vector<ul>
+<li>GeoJSON (r,w)</li>
+<li>ESRI Shapefiles via pyshp (r,w)</li>
+<li>GPS eXchange (GPX) (r,w)</li>
+<li>ASCII tables (XYZ) (r,w)</li>
+</ul>
+</li>
+<li>raster<ul>
+<li>ESRI ASCII Grid (r,w)</li>
+<li>GeoTiff through GDAL (r)</li>
+<li>USGS DEM (WIP)</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="installation">
+<h2>INSTALLATION<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<p>The easiest way to install is to use <tt class="docutils literal"><span class="pre">pip</span></tt>. Installation requires a
+version of <tt class="docutils literal"><span class="pre">setuptools&gt;=0.7.0</span></tt>.</p>
+<div class="highlight-python"><div class="highlight"><pre>pip install -U setuptools
+</pre></div>
+</div>
+<p>To install the latest release from PyPI, run</p>
+<div class="highlight-python"><div class="highlight"><pre>pip install karta
+</pre></div>
+</div>
+<p>To build from source,</p>
+<div class="highlight-python"><div class="highlight"><pre>git clone https://github.com/njwilson23/karta.git
+pip install -r karta/requirements.txt
+pip install karta/
+</pre></div>
+</div>
+</div>
+<div class="section" id="dependencies">
+<h2>DEPENDENCIES<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="required">
+<h3>Required<a class="headerlink" href="#required" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Python 2.7+ or Python 3.3+</li>
+<li>numpy</li>
+<li>pyshp</li>
+<li>pyproj (for geodetic calculations)</li>
+</ul>
+</div>
+<div class="section" id="recommended">
+<h3>Recommended<a class="headerlink" href="#recommended" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>cython</li>
+<li>gdal (for geotiff I/O)</li>
+<li>scipy</li>
+</ul>
+<p>When installing from PyPI, Cython-compiled C source code is provided and
+will be automatically compiled to improve performance if a suitable C
+compiler is available.</p>
+</div>
+</div>
+<div class="section" id="testing">
+<h2>TESTING<a class="headerlink" href="#testing" title="Permalink to this headline">¶</a></h2>
+<p>To run all unit tests, execute</p>
+<div class="highlight-python"><div class="highlight"><pre>python tests/runtests.py
+</pre></div>
+</div>
+</div>
+<div class="section" id="license">
+<h2>LICENSE<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>This software is provided under the MIT license.</p>
+<div class="section" id="mit-license">
+<h3>MIT License:<a class="headerlink" href="#mit-license" title="Permalink to this headline">¶</a></h3>
+<p>Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+&#8220;Software&#8221;), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &#8220;AS IS&#8221;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        <a class="uplink" href="karta-manual.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2015, Nat Wilson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

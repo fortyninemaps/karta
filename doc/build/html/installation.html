@@ -1,0 +1,111 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Installation &mdash; karta 0.4.0b5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.0b5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="karta 0.4.0b5 documentation" href="index.html" />
+    <link rel="next" title="Karta Tutorial" href="tutorial.html" />
+    <link rel="prev" title="Geospatial analysis in Python" href="karta-manual.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>karta 0.4.0b5 documentation</span></a></h1>
+        <h2 class="heading"><span>Installation</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="karta-manual.html">Geospatial analysis in Python</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="karta-manual.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="tutorial.html">Karta Tutorial</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>The easiest way to install is to use <tt class="docutils literal"><span class="pre">pip</span></tt>. Installation requires a
+version of <tt class="docutils literal"><span class="pre">setuptools&gt;=0.7.0</span></tt>.</p>
+<div class="highlight-python"><div class="highlight"><pre>pip install -U setuptools
+</pre></div>
+</div>
+<p>To install the latest release from PyPI, run</p>
+<div class="highlight-python"><div class="highlight"><pre>pip install karta
+</pre></div>
+</div>
+<p>To build from source,</p>
+<div class="highlight-python"><div class="highlight"><pre>git clone https://github.com/njwilson23/karta.git
+pip install -r karta/requirements.txt
+pip install karta/
+</pre></div>
+</div>
+<div class="section" id="dependencies">
+<h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="required">
+<h3>Required<a class="headerlink" href="#required" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>Python 2.7+ or Python 3.3+</li>
+<li>numpy</li>
+<li>pyshp</li>
+<li>pyproj (for geodetic calculations)</li>
+</ul>
+</div>
+<div class="section" id="recommended">
+<h3>Recommended<a class="headerlink" href="#recommended" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li>cython</li>
+<li>gdal (for geotiff I/O)</li>
+<li>scipy</li>
+</ul>
+<p>When installing from PyPI, Cython-compiled C source code is provided and
+will be automatically compiled to improve performance if a suitable C
+compiler is available.</p>
+</div>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="karta-manual.html">Geospatial analysis in Python</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="karta-manual.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="tutorial.html">Karta Tutorial</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2015, Nat Wilson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

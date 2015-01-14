@@ -1,0 +1,149 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Geospatial analysis in Python &mdash; karta 0.4.0b5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.0b5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="karta 0.4.0b5 documentation" href="index.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>karta 0.4.0b5 documentation</span></a></h1>
+        <h2 class="heading"><span>Geospatial analysis in Python</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        <a class="uplink" href="#">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="installation.html">Installation</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="geospatial-analysis-in-python">
+<h1>Geospatial analysis in Python<a class="headerlink" href="#geospatial-analysis-in-python" title="Permalink to this headline">¶</a></h1>
+<p>Contents:</p>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="installation.html#dependencies">Dependencies</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Karta Tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#definitions">Definitions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#vector-data">Vector data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#raster">Raster</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Package reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#coordinate-reference-systems">Coordinate reference systems</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#module-karta.vector.guppy">Vector package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="reference.html#module-karta.raster.grid">Raster package</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<p><em>Karta</em> is a Python/Python3 package for geospatial data structures. <em>Karta</em>
+serves as a Leatherman for geographic analyses. It provides simple and clean
+vector and raster data types, a selection of geographical analysis methods, and
+the ability to read and write several formats, including GeoJSON, shapefiles,
+and ESRI ASCII.</p>
+<p>The goals of <em>Karta</em> is to expose a simple and fast framework for spatial
+analysis.</p>
+<p>Suggestions, bug reports, testcases, and pull requests are welcome, particularly
+to improve format support and test coverage.</p>
+<div class="section" id="data-formats">
+<h2>Data Formats<a class="headerlink" href="#data-formats" title="Permalink to this headline">¶</a></h2>
+<p><em>Karta</em> provides a basic working interface to several of common file
+formats. Currently partially-supported are:</p>
+<ul class="simple">
+<li>vector<ul>
+<li>GeoJSON (r,w)</li>
+<li>ESRI Shapefiles via pyshp (r,w)</li>
+<li>ASCII tables (XYZ) (r,w)</li>
+<li>GPS eXchange (GPX) (r,w)</li>
+</ul>
+</li>
+<li>raster<ul>
+<li>ESRI ASCII Grid (r,w)</li>
+<li>GeoTiff (through GDAL) (r)</li>
+<li>USGS DEM (WIP)</li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>This software is provided under the MIT license.</p>
+<div class="section" id="mit-license">
+<h3>MIT License:<a class="headerlink" href="#mit-license" title="Permalink to this headline">¶</a></h3>
+<p>Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+&#8220;Software&#8221;), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &#8220;AS IS&#8221;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</div>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h1>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h1>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><em>Index</em></a></li>
+<li><a class="reference internal" href="search.html"><em>Search Page</em></a></li>
+</ul>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        <a class="uplink" href="#">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="installation.html">Installation</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2015, Nat Wilson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

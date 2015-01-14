@@ -1,0 +1,139 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>karta.vector.xyfile &mdash; karta 0.4.0b5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.4.0b5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="karta 0.4.0b5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../../../index.html">
+          <span>karta 0.4.0b5 documentation</span></a></h1>
+        <h2 class="heading"><span>karta.vector.xyfile</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        <a class="uplink" href="../../../karta-manual.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for karta.vector.xyfile</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot; Convenience functions for XY(Z) tables. &quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="nb">reduce</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="distance_xy"><a class="viewcode-back" href="../../../reference.html#karta.vector.xyfile.distance_xy">[docs]</a><span class="k">def</span> <span class="nf">distance_xy</span><span class="p">(</span><span class="n">A</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Calculate the cumulative distance at each coordinate pair in *A*. &quot;&quot;&quot;</span>
+    <span class="n">d_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">A</span><span class="p">[</span><span class="mi">1</span><span class="p">:,:]</span> <span class="o">-</span> <span class="n">A</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:])</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">d_</span><span class="p">:</span>
+        <span class="n">d</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">+</span><span class="n">a</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">d</span><span class="p">)</span>
+</div>
+<span class="n">contains</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">,</span> <span class="n">S</span><span class="p">:</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">S</span>
+
+<div class="viewcode-block" id="read_xy"><a class="viewcode-back" href="../../../reference.html#karta.vector.xyfile.read_xy">[docs]</a><span class="k">def</span> <span class="nf">read_xy</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">,</span> <span class="n">header_rows</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Load a flowline file and return a size-2 array of coordinates. &quot;&quot;&quot;</span>
+    <span class="n">notblank</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">s</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">strip</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fnm</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="n">notblank</span><span class="p">,</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()[</span><span class="n">header_rows</span><span class="p">:])</span>
+
+    <span class="k">if</span> <span class="n">delimiter</span> <span class="o">==</span> <span class="s">&#39;&#39;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">delimiter</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&#39;,&#39;</span><span class="p">,</span> <span class="s">&#39;</span><span class="se">\t</span><span class="s">&#39;</span><span class="p">,</span> <span class="s">&#39; &#39;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">contains</span><span class="p">(</span><span class="n">delimiter</span><span class="p">,</span> <span class="n">lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]):</span>
+                <span class="k">break</span>
+            <span class="n">delimiter</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">data</span> <span class="o">=</span> <span class="p">[[</span><span class="nb">float</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="k">for</span> <span class="n">num</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">delimiter</span><span class="p">)]</span>
+                <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">lines</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+</div>
+<span class="n">loadxy</span> <span class="o">=</span> <span class="n">read_xy</span>
+<span class="n">load_xy</span> <span class="o">=</span> <span class="n">read_xy</span>
+
+<div class="viewcode-block" id="write_xy"><a class="viewcode-back" href="../../../reference.html#karta.vector.xyfile.write_xy">[docs]</a><span class="k">def</span> <span class="nf">write_xy</span><span class="p">(</span><span class="n">dat</span><span class="p">,</span> <span class="n">fnm</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s">&#39; &#39;</span><span class="p">,</span> <span class="n">header</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Write table data in array *dat* as a delimited ASCII text file. &quot;&quot;&quot;</span>
+    <span class="n">cat</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="n">delimiter</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">header</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">header</span><span class="o">+</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">dat</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="nb">reduce</span><span class="p">(</span><span class="n">cat</span><span class="p">,</span> <span class="n">line</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+    <span class="k">return</span>
+</div>
+<div class="viewcode-block" id="xyz2array_reg"><a class="viewcode-back" href="../../../reference.html#karta.vector.xyfile.xyz2array_reg">[docs]</a><span class="k">def</span> <span class="nf">xyz2array_reg</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">Z</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return an array from X,Y,Z vectors, assuming gridding is</span>
+<span class="sd">    regular. &quot;&quot;&quot;</span>
+    <span class="n">xmin</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+    <span class="n">ymin</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">Y</span><span class="p">)</span>
+
+    <span class="n">nx</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">y</span><span class="o">==</span><span class="n">ymin</span> <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">Y</span><span class="p">])</span>
+    <span class="n">ny</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">x</span><span class="o">==</span><span class="n">xmin</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X</span><span class="p">])</span>
+
+    <span class="n">XYZ</span> <span class="o">=</span> <span class="p">[(</span><span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span><span class="p">,</span><span class="n">y</span><span class="p">,</span><span class="n">z</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="n">Y</span><span class="p">,</span><span class="n">Z</span><span class="p">)]</span>
+    <span class="n">XYZ</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">XYZ</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="n">a</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">Zs</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">XYZ</span><span class="p">]</span>
+
+    <span class="n">A</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">([</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">])</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">ny</span><span class="p">):</span>
+        <span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">Zs</span><span class="p">[</span><span class="n">i</span><span class="o">*</span><span class="n">nx</span><span class="p">:(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">nx</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">A</span>
+
+</div>
+<div class="viewcode-block" id="array2xyz"><a class="viewcode-back" href="../../../reference.html#karta.vector.xyfile.array2xyz">[docs]</a><span class="k">def</span> <span class="nf">array2xyz</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; There are a few occasions when an XYZ list is the proper data</span>
+<span class="sd">    format. This function converts from an array *A* with coordinates</span>
+<span class="sd">    defined by *X* and *Y* to a list of (x,y,z) tuples.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xyz</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">m</span><span class="p">,</span> <span class="n">n</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+    <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span> <span class="p">(</span><span class="n">m</span><span class="p">):</span>
+            <span class="n">xyz</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">Y</span><span class="p">[</span><span class="n">j</span><span class="p">],</span> <span class="n">A</span><span class="p">[</span><span class="n">i</span><span class="p">,</span><span class="n">j</span><span class="p">])</span> <span class="p">)</span>
+    <span class="k">return</span> <span class="n">xyz</span>
+</pre></div></div>
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        <a class="uplink" href="../../../karta-manual.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2015, Nat Wilson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

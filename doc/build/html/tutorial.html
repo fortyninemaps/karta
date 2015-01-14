@@ -1,0 +1,241 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Karta Tutorial &mdash; karta 0.4.0b5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.0b5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="karta 0.4.0b5 documentation" href="index.html" />
+    <link rel="next" title="Package reference" href="reference.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>karta 0.4.0b5 documentation</span></a></h1>
+        <h2 class="heading"><span>Karta Tutorial</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="installation.html">Installation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="karta-manual.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="reference.html">Package reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="karta-tutorial">
+<h1>Karta Tutorial<a class="headerlink" href="#karta-tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p>Karta provides a lightweight set of tools for performing analyses of
+geographical data. The organization of karta is around a set of
+container classes for vector and raster data with builtin methods for
+common tasks. This tutorial provides a brief introduction to some of the
+main parts of karta.</p>
+<p>Should you come across any mistakes, I would very much appreciate if you
+could let me know, or even better, provide a pull request on
+<a class="reference external" href="https://github.com/njwilson23/karta">Github</a>!</p>
+</div>
+<div class="section" id="definitions">
+<h2>Definitions<a class="headerlink" href="#definitions" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><strong>vector data</strong> refers to data can is treated as a set of connected
+or disconnected vertices. Examples might be road networks, a set of
+borders, geophysical survey lines, or the path taken by a bottle
+floating in an ocean current. In karta, these data are classified as
+belonging to <em>Point</em>, <em>Multipoint</em>, <em>Line</em> or <em>Polygon</em> classes. Some
+questions that might be asked of vector data include</li>
+<li>which of these points are contained in this polygon?</li>
+<li>how many times and where do these lines intersect each other?</li>
+<li>what is the average distance travelled by a particle?</li>
+<li><strong>raster data</strong>, in contrast, is data that are typically thought of
+in terms of pixels or a grid of values covering a surface. Examples
+might be an elevation map, satellite image, or an upstream area map.
+Operations on raster data might include slope, aspect, and curvature
+calculations, up and downsampling, and interpolation.</li>
+<li><strong>Coordinate reference system</strong> refers to a system of relating
+measurements on a coordinate system to actual positions in space,
+e.g. on the curved surface of the Earth. karta includes very basic
+support of projected and geographical coordinates, but extending this
+system through <em>pyproj</em> is something I would like to accomplish in
+the future.</li>
+</ul>
+</div>
+<div class="section" id="vector-data">
+<h2>Vector data<a class="headerlink" href="#vector-data" title="Permalink to this headline">¶</a></h2>
+<p>Let&#8217;s experiment with some vector data.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">karta.vector</span> <span class="kn">as</span> <span class="nn">kv</span>
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">Point</span></tt>, <tt class="docutils literal"><span class="pre">Multipoint</span></tt>, <tt class="docutils literal"><span class="pre">Line</span></tt>, and <tt class="docutils literal"><span class="pre">Polygon</span></tt> classes can all
+be instantiated by providing vertices, and optionally, associated data
+and metadata.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">karta.vector</span> <span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Multipoint</span><span class="p">,</span> <span class="n">Line</span><span class="p">,</span> <span class="n">Polygon</span>
+
+<span class="n">pt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">123.1</span><span class="p">,</span> <span class="mf">49.25</span><span class="p">))</span>
+
+<span class="n">mp</span> <span class="o">=</span> <span class="n">Multipoint</span><span class="p">([(</span><span class="o">-</span><span class="mf">122.93</span><span class="p">,</span> <span class="mf">48.62</span><span class="p">),</span>
+                 <span class="p">(</span><span class="o">-</span><span class="mf">123.10</span><span class="p">,</span> <span class="mf">48.54</span><span class="p">),</span>
+                 <span class="p">(</span><span class="o">-</span><span class="mf">122.90</span><span class="p">,</span> <span class="mf">48.49</span><span class="p">),</span>
+                 <span class="p">(</span><span class="o">-</span><span class="mf">122.81</span><span class="p">,</span> <span class="mf">48.56</span><span class="p">)])</span>
+
+<span class="n">line</span> <span class="o">=</span> <span class="n">Line</span><span class="p">([(</span><span class="o">-</span><span class="mf">124.35713</span><span class="p">,</span> <span class="mf">49.31437</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.37857</span><span class="p">,</span> <span class="mf">49.31720</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.39442</span><span class="p">,</span> <span class="mf">49.31833</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.40311</span><span class="p">,</span> <span class="mf">49.31942</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.41052</span><span class="p">,</span> <span class="mf">49.32203</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.41681</span><span class="p">,</span> <span class="mf">49.32477</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.42278</span><span class="p">,</span> <span class="mf">49.32588</span><span class="p">)])</span>
+
+<span class="n">poly</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">([(</span><span class="o">-</span><span class="mf">25.41</span><span class="p">,</span> <span class="mf">67.03</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">24.83</span><span class="p">,</span> <span class="mf">62.92</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">12.76</span><span class="p">,</span> <span class="mf">63.15</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">11.44</span><span class="p">,</span> <span class="mf">66.82</span><span class="p">)])</span>
+</pre></div>
+</div>
+<p>Each geometrical object now contains a vertex/vertices in a cartesian
+plane.</p>
+<p>We may be interested in determining whether our point is within our
+polygon</p>
+<div class="highlight-python"><div class="highlight"><pre>poly.contains(pt)
+
+&gt;&gt; False
+</pre></div>
+</div>
+<p>or whether our line crosses the polygon</p>
+<div class="highlight-python"><div class="highlight"><pre>line.intersects(poly)
+
+&gt;&gt; False
+</pre></div>
+</div>
+<p>The vertices of multiple vertex objects can be iterated through and
+sliced:</p>
+<div class="highlight-python"><div class="highlight"><pre>subline = line[2:-2]
+for pt_ in subline:
+    print(pt_.vertex)
+
+&gt;&gt; (-124.39442, 49.31833)
+   (-124.40311, 49.31942)
+   (-124.41052, 49.32203)
+</pre></div>
+</div>
+<p>We could have instantiated the objects by passing the <tt class="docutils literal"><span class="pre">crs</span></tt> keyword
+argument a CRS instance, as in</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">pt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">123.1</span><span class="p">,</span> <span class="mf">49.25</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">kv</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>to indicate geographical coordinates. Having done do, we could calculate
+the great circle distance from our point to another point:</p>
+<div class="highlight-python"><div class="highlight"><pre>pt2 = Point((-70.66, 41.52), crs=kv.LONLAT)
+pt.greatcircle(pt2)
+
+&gt;&gt; 4109559.587727985
+</pre></div>
+</div>
+<p><strong>TODO: describe other geometries</strong></p>
+<div class="section" id="associated-data">
+<h3>Associated data<a class="headerlink" href="#associated-data" title="Permalink to this headline">¶</a></h3>
+<p>By using the <tt class="docutils literal"><span class="pre">data</span></tt> keyword argument, additional data can be
+associated with a vector geometry.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">mp</span> <span class="o">=</span> <span class="n">Multipoint</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)],</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;species&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s">&quot;T. officianale&quot;</span><span class="p">,</span> <span class="s">&quot;C. tectorum&quot;</span><span class="p">,</span>
+                                  <span class="s">&quot;M. alba&quot;</span><span class="p">,</span> <span class="s">&quot;V. cracca&quot;</span><span class="p">]})</span>
+</pre></div>
+</div>
+<p>The data can be a list or a dictionary of lists, and are propogated
+through subsequent operations.</p>
+<div class="highlight-python"><div class="highlight"><pre>pt = mp[2]
+pt
+
+&gt;&gt; Point((4, 3))
+
+pt.data[&quot;species&quot;]
+
+&gt;&gt; &#39;M. alba&#39;
+</pre></div>
+</div>
+<p>Metadata at the geometry level rather than the point level can be
+provided using the <tt class="docutils literal"><span class="pre">properties</span></tt> keyword argument, which accepts a
+dictionary.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">poly</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">([(</span><span class="o">-</span><span class="mf">25.41</span><span class="p">,</span> <span class="mf">67.03</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">24.83</span><span class="p">,</span> <span class="mf">62.92</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">12.76</span><span class="p">,</span> <span class="mf">63.15</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">11.44</span><span class="p">,</span> <span class="mf">66.82</span><span class="p">)],</span>
+               <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;geology&quot;</span><span class="p">:</span> <span class="s">&quot;volcanic&quot;</span><span class="p">,</span>
+                           <span class="s">&quot;alcohol&quot;</span><span class="p">:</span> <span class="s">&quot;brennivin&quot;</span><span class="p">})</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="visualizing-and-importing-exporting-data">
+<h3>Visualizing and importing/exporting data<a class="headerlink" href="#visualizing-and-importing-exporting-data" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">get_coordinate_lists</span></tt> method provides lists of coordinates, which
+make is easy to visualize a geometry.</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">line</span><span class="o">.</span><span class="n">get_coordinate_lists</span><span class="p">())</span>
+</pre></div>
+</div>
+<p>Data can be read from several common formats, including ESRI shapefiles
+(through bindings to the <em>pyshp</em> module), GeoJSON, GPX, comma separated
+value tables. Convenience functions are kept in the
+<tt class="docutils literal"><span class="pre">karta.vector.read</span></tt> namespace.</p>
+<p>Saving data happens as</p>
+<div class="highlight-python"><div class="highlight"><pre><span class="n">mp</span><span class="o">.</span><span class="n">to_vtk</span><span class="p">(</span><span class="s">&quot;my_vtk.vtk&quot;</span><span class="p">)</span>
+
+<span class="n">line</span><span class="o">.</span><span class="n">to_shapefile</span><span class="p">(</span><span class="s">&quot;my_shapefile&quot;</span><span class="p">)</span>
+
+<span class="n">poly</span><span class="o">.</span><span class="n">to_geojson</span><span class="p">(</span><span class="s">&quot;my_json.json&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><em>Note: Support for various file formats is of varying quality, and I
+tend to rely on GeoJSON the most.</em></p>
+</div>
+</div>
+<div class="section" id="raster">
+<h2>Raster<a class="headerlink" href="#raster" title="Permalink to this headline">¶</a></h2>
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="installation.html">Installation</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="karta-manual.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="reference.html">Package reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2015, Nat Wilson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

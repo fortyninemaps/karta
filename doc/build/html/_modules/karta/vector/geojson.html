@@ -1,0 +1,426 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>karta.vector.geojson &mdash; karta 0.4.0b5 documentation</title>
+    
+    <link rel="stylesheet" href="../../../_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../../',
+        VERSION:     '0.4.0b5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="karta 0.4.0b5 documentation" href="../../../index.html" />
+    <link rel="up" title="Module code" href="../../index.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="../../../index.html">
+          <span>karta 0.4.0b5 documentation</span></a></h1>
+        <h2 class="heading"><span>karta.vector.geojson</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        <a class="uplink" href="../../../karta-manual.html">Contents</a>
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <h1>Source code for karta.vector.geojson</h1><div class="highlight"><pre>
+<span class="sd">&quot;&quot;&quot; This module includes the `GeoJSON` class and convenience functions for</span>
+<span class="sd">dealing with GeoJSON data. The `GeoJSON` class uses the builtin json module and</span>
+<span class="sd">enforces GeoJSON standards. &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">isnan</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="nb">reduce</span>
+
+<span class="n">Point</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Point&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">,</span> <span class="s">&#39;crs&#39;</span><span class="p">])</span>
+<span class="n">MultiPoint</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;MultiPoint&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">,</span> <span class="s">&#39;crs&#39;</span><span class="p">])</span>
+<span class="n">LineString</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;LineString&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">,</span> <span class="s">&#39;crs&#39;</span><span class="p">])</span>
+<span class="n">MultiLineString</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;MultiLineString&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">,</span> <span class="s">&#39;crs&#39;</span><span class="p">])</span>
+<span class="n">Polygon</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Polygon&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">,</span> <span class="s">&#39;crs&#39;</span><span class="p">])</span>
+<span class="n">MultiPolygon</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;MultiPolygon&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">,</span> <span class="s">&#39;crs&#39;</span><span class="p">])</span>
+<span class="n">GeometryCollection</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;GeometryCollection&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;geometries&#39;</span><span class="p">])</span>
+<span class="n">Feature</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;Feature&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;geometry&#39;</span><span class="p">,</span> <span class="s">&#39;properties&#39;</span><span class="p">,</span> <span class="s">&#39;id&#39;</span><span class="p">,</span> <span class="s">&#39;crs&#39;</span><span class="p">])</span>
+<span class="n">FeatureCollection</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s">&#39;FeatureCollection&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s">&#39;features&#39;</span><span class="p">,</span> <span class="s">&#39;crs&#39;</span><span class="p">])</span>
+
+<span class="n">DEFAULTCRS</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;type&#39;</span><span class="p">:</span> <span class="s">&#39;name&#39;</span><span class="p">,</span>
+              <span class="s">&#39;properties&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="s">&#39;urn:ogc:def:crs:EPSG::4326&#39;</span><span class="p">}}</span>
+
+<div class="viewcode-block" id="ExtendedJSONEncoder"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.ExtendedJSONEncoder">[docs]</a><span class="k">class</span> <span class="nc">ExtendedJSONEncoder</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Numpy-specific numbers prior to 1.9 don&#39;t inherit from Python numeric</span>
+<span class="sd">    ABCs. This class is a hack to coerce numpy values into Python types for</span>
+<span class="sd">    JSON serialization. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">o</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;int8&quot;</span><span class="p">,</span> <span class="s">&quot;int16&quot;</span><span class="p">,</span> <span class="s">&quot;int32&quot;</span><span class="p">,</span> <span class="s">&quot;int64&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;float16&quot;</span><span class="p">,</span> <span class="s">&quot;float32&quot;</span><span class="p">,</span> <span class="s">&quot;float64&quot;</span><span class="p">,</span> <span class="s">&quot;float128&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">o</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s">&quot;complex64&quot;</span><span class="p">,</span> <span class="s">&quot;complex128&quot;</span><span class="p">,</span> <span class="s">&quot;complex256&quot;</span><span class="p">):</span>
+                <span class="k">return</span> <span class="nb">complex</span><span class="p">(</span><span class="n">o</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;not a recognized type&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">AttributeError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONEncoder</span><span class="o">.</span><span class="n">default</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">)</span>
+
+</div>
+<div class="viewcode-block" id="GeoJSONWriter"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.GeoJSONWriter">[docs]</a><span class="k">class</span> <span class="nc">GeoJSONWriter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Class for converting guppy objects to GeoJSON strings. Multipoint-based</span>
+<span class="sd">    opbjects are written as &#39;Features&#39;.</span>
+
+<span class="sd">    CRS defaults to be named. A linked CRS can be used by passing</span>
+<span class="sd">    `linkedcrs=True`.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">    ------</span>
+<span class="sd">    Does not handle &#39;FeatureCollection&#39; types (see printFeatureCollection()</span>
+<span class="sd">    function).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gpobj</span><span class="p">,</span> <span class="n">linkedcrs</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="n">type_equiv</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;Point&#39;</span>       <span class="p">:</span> <span class="s">&#39;Point&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;Multipoint&#39;</span>  <span class="p">:</span> <span class="s">&#39;MultiPoint&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;Line&#39;</span>        <span class="p">:</span> <span class="s">&#39;LineString&#39;</span><span class="p">,</span>
+                      <span class="s">&#39;Polygon&#39;</span>     <span class="p">:</span> <span class="s">&#39;Polygon&#39;</span><span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">gpobj</span><span class="o">.</span><span class="n">_geotype</span> <span class="ow">in</span> <span class="n">type_equiv</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">typestr</span> <span class="o">=</span> <span class="n">type_equiv</span><span class="p">[</span><span class="n">gpobj</span><span class="o">.</span><span class="n">_geotype</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&#39;Input object not a recognized geometry&#39;</span><span class="p">)</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">gpobj</span><span class="o">.</span><span class="n">_crs</span>
+        <span class="n">bbox</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;bbox&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span> <span class="o">=</span> <span class="n">gpobj</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_crs</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="n">linkedcrs</span><span class="o">=</span><span class="n">linkedcrs</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">typestr</span> <span class="o">!=</span> <span class="s">&#39;Point&#39;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Feature&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_bbox</span><span class="p">(</span><span class="n">bbox</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_geometry</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span><span class="p">[</span><span class="s">&#39;type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s">&#39;Point&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_coordinates</span><span class="p">()</span>
+        <span class="k">return</span>
+
+<div class="viewcode-block" id="GeoJSONWriter.add_crs"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.GeoJSONWriter.add_crs">[docs]</a>    <span class="k">def</span> <span class="nf">add_crs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">crs</span><span class="p">,</span> <span class="n">linkedcrs</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Tag the JSON object with coordinate reference system metadata using</span>
+<span class="sd">        a CRS instance, which is expected the have the interface of crs.CRS.</span>
+
+<span class="sd">        If True, `linkedcrs` indicates a web-referenced linked CRS. If False,</span>
+<span class="sd">        the CRS is taked to be named.</span>
+
+<span class="sd">        In the case of a linked CRS, the link address and type can be specified</span>
+<span class="sd">        using the `href` and `linktype` keyword arguments. If not supplied,</span>
+<span class="sd">        then it is assumed that crs.id[&quot;urn&quot;] contains the *href* and the</span>
+<span class="sd">        *type* is &quot;name&quot;.</span>
+
+<span class="sd">        For more details, see the GeoJSON specification at:</span>
+<span class="sd">        http://geojson.org/geojson-spec.html#coordinate-reference-system-objects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">linkedcrs</span><span class="p">:</span>
+            <span class="n">href</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;href&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="n">linktype</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&#39;linktype&#39;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span><span class="p">[</span><span class="s">&#39;crs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;type&#39;</span><span class="p">:</span> <span class="s">&#39;link&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;properties&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;href&#39;</span><span class="p">:</span> <span class="n">href</span><span class="p">,</span> <span class="s">&#39;type&#39;</span><span class="p">:</span> <span class="n">linktype</span><span class="p">}}</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span><span class="p">[</span><span class="s">&#39;crs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;type&#39;</span><span class="p">:</span> <span class="s">&#39;name&#39;</span><span class="p">,</span>
+                                  <span class="s">&#39;properties&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s">&#39;name&#39;</span><span class="p">:</span> <span class="n">crs</span><span class="o">.</span><span class="n">id</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;urn&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)}}</span>
+        <span class="k">return</span>
+</div>
+<div class="viewcode-block" id="GeoJSONWriter.add_bbox"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.GeoJSONWriter.add_bbox">[docs]</a>    <span class="k">def</span> <span class="nf">add_bbox</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bbox</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Tag the JSON object with a bounding box. If *bbox* is None</span>
+<span class="sd">        (default), the bounds will be calculated from the data. Otherwise,</span>
+<span class="sd">        *bbox* should be in the form (xmin, xmax, ....) for all dimensions.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">bbox</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="p">,</span> <span class="s">&#39;get_extents&#39;</span><span class="p">):</span>
+                <span class="n">bbox</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">get_extents</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&quot;Type {0} has no &#39;get_extents&#39; &quot;</span>
+                                     <span class="s">&quot;method&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span><span class="p">[</span><span class="s">&#39;bbox&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">bbox</span>
+        <span class="k">return</span>
+</div>
+<div class="viewcode-block" id="GeoJSONWriter.add_geometry"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.GeoJSONWriter.add_geometry">[docs]</a>    <span class="k">def</span> <span class="nf">add_geometry</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add geometry subobject. This should be called for writing</span>
+<span class="sd">        Multipoint-derived classes. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span><span class="p">[</span><span class="s">&#39;geometry&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;type&#39;</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">typestr</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supobj</span><span class="p">[</span><span class="s">&#39;geometry&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_id</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_properties</span><span class="p">()</span>
+        <span class="k">return</span>
+</div>
+<div class="viewcode-block" id="GeoJSONWriter.add_coordinates"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.GeoJSONWriter.add_coordinates">[docs]</a>    <span class="k">def</span> <span class="nf">add_coordinates</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add coordinates. Behaviour depends on the type of the geometry</span>
+<span class="sd">        object. Target must be None (default) or a dictionary member of the</span>
+<span class="sd">        JSON object. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">_geotype</span> <span class="o">==</span> <span class="s">&#39;Polygon&#39;</span><span class="p">:</span>
+            <span class="n">target</span><span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">list_rec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">get_vertices</span><span class="p">())]</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="p">,</span> <span class="s">&quot;subs&quot;</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">poly</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">subs</span><span class="p">:</span>
+                    <span class="n">target</span><span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">list_rec</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">get_vertices</span><span class="p">()))</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="p">,</span> <span class="s">&#39;get_vertices&#39;</span><span class="p">):</span>
+            <span class="n">target</span><span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">list_rec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">get_vertices</span><span class="p">())</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="p">,</span> <span class="s">&#39;get_vertex&#39;</span><span class="p">):</span>
+            <span class="n">target</span><span class="p">[</span><span class="s">&#39;coordinates&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">list_rec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">get_vertex</span><span class="p">())</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s">&#39;Geometry object has no vertex method&#39;</span><span class="p">)</span>
+        <span class="k">return</span>
+</div>
+<div class="viewcode-block" id="GeoJSONWriter.add_properties"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.GeoJSONWriter.add_properties">[docs]</a>    <span class="k">def</span> <span class="nf">add_properties</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add the data from the geometry object&#39;s data dictionary. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span>
+        <span class="n">target</span><span class="p">[</span><span class="s">&#39;properties&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="bp">False</span> <span class="ow">in</span> <span class="p">(</span><span class="n">a</span> <span class="ow">is</span> <span class="bp">None</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">data</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s">&#39;keys&#39;</span><span class="p">):</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">data</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;point_data&#39;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">data</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                <span class="n">nan2none</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">a</span><span class="p">:</span> <span class="bp">None</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="ow">and</span> <span class="n">isnan</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">else</span> <span class="n">a</span>
+                <span class="n">target</span><span class="p">[</span><span class="s">&#39;properties&#39;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">nan2none</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">getfield</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+        <span class="k">return</span>
+</div>
+<div class="viewcode-block" id="GeoJSONWriter.add_id"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.GeoJSONWriter.add_id">[docs]</a>    <span class="k">def</span> <span class="nf">add_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add an index field. &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">supobj</span>
+        <span class="n">target</span><span class="p">[</span><span class="s">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">gpobj</span><span class="o">.</span><span class="n">get_vertices</span><span class="p">())))</span>
+        <span class="k">return</span>
+</div>
+<div class="viewcode-block" id="GeoJSONWriter.print_json"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.GeoJSONWriter.print_json">[docs]</a>    <span class="k">def</span> <span class="nf">print_json</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Print GeoJSON representation. &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supobj</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="n">ExtendedJSONEncoder</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="GeoJSONWriter.write_json"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.GeoJSONWriter.write_json">[docs]</a>    <span class="k">def</span> <span class="nf">write_json</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fout</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Dump internal dict-object to JSON using the builtin `json` module.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">supobj</span><span class="p">,</span> <span class="n">fout</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cls</span><span class="o">=</span><span class="n">ExtendedJSONEncoder</span><span class="p">)</span>
+        <span class="k">return</span>
+</div></div>
+<span class="k">class</span> <span class="nc">GeoJSONReader</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">finput</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a reader-object for a GeoJSON-containing file or StreamIO</span>
+<span class="sd">        object. Use as::</span>
+
+<span class="sd">            with open(`fnm`, &#39;r&#39;) as f:</span>
+<span class="sd">                reader = GeoJSONReader(f)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">finput</span><span class="p">,</span> <span class="s">&#39;read&#39;</span><span class="p">):</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">finput</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">jsondict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">jsondict</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">finput</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parsePoint</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Point</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s">&quot;coordinates&quot;</span><span class="p">],</span> <span class="n">crs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parseMultiPoint</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultiPoint</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s">&quot;coordinates&quot;</span><span class="p">],</span> <span class="n">crs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parseLineString</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">LineString</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s">&quot;coordinates&quot;</span><span class="p">],</span> <span class="n">crs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parseMultiLineString</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultiLineString</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s">&quot;coordinates&quot;</span><span class="p">],</span> <span class="n">crs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parsePolygon</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Polygon</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s">&quot;coordinates&quot;</span><span class="p">],</span> <span class="n">crs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parseMultiPolygon</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">MultiPolygon</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s">&quot;coordinates&quot;</span><span class="p">],</span> <span class="n">crs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parseGeometry</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">o</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="s">&quot;Point&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsePoint</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="s">&quot;MultiPoint&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parseMultiPoint</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="s">&quot;LineString&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parseLineString</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="s">&quot;MultiLineString&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parseMultiLineString</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="s">&quot;Polygon&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parsePolygon</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="s">&quot;MultiPolygon&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">parseMultiPolygon</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s">&quot;Unrecognized type {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">t</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">parseGeometryCollection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="n">geoms</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parseGeometry</span><span class="p">(</span><span class="n">g</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">o</span><span class="p">[</span><span class="s">&quot;geometries&quot;</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">GeometryCollection</span><span class="p">(</span><span class="n">geoms</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parseFeature</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parseGeometry</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s">&quot;geometry&quot;</span><span class="p">],</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="n">prop</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">parseProperties</span><span class="p">(</span><span class="n">o</span><span class="p">[</span><span class="s">&quot;properties&quot;</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coordinates</span><span class="p">))</span>
+        <span class="n">fid</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;id&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Feature</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">prop</span><span class="p">,</span> <span class="n">fid</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">parseFeatureCollection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">):</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">defaultcrs</span><span class="p">)</span>
+        <span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">parseFeature</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">o</span><span class="p">[</span><span class="s">&quot;features&quot;</span><span class="p">]]</span>
+        <span class="k">return</span> <span class="n">FeatureCollection</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">parseProperties</span><span class="p">(</span><span class="n">prop</span><span class="p">,</span> <span class="n">geomlen</span><span class="p">):</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;scalar&quot;</span><span class="p">:{},</span>
+             <span class="s">&quot;vector&quot;</span><span class="p">:{}}</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">prop</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">geomlen</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s">&quot;__iter__&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">geomlen</span><span class="p">:</span>
+                <span class="n">d</span><span class="p">[</span><span class="s">&quot;vector&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">d</span><span class="p">[</span><span class="s">&quot;scalar&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span> <span class="n">d</span>
+
+    <span class="k">def</span> <span class="nf">items</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">o</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">o</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">o</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">jsondict</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">o</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s">&quot;crs&quot;</span><span class="p">,</span> <span class="n">DEFAULTCRS</span><span class="p">)</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">o</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;GeometryCollection&quot;</span><span class="p">:</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parseGeometryCollection</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">o</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;FeatureCollection&quot;</span><span class="p">:</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parseFeatureCollection</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="n">o</span><span class="p">[</span><span class="s">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s">&quot;Feature&quot;</span><span class="p">:</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parseFeature</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">items</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">parseGeometry</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="n">crs</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">items</span>
+
+
+<div class="viewcode-block" id="list_rec"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.list_rec">[docs]</a><span class="k">def</span> <span class="nf">list_rec</span><span class="p">(</span><span class="n">A</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Recursively convert nested iterables to nested lists &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="s">&#39;__iter__&#39;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">list_rec</span><span class="p">(</span><span class="n">el</span><span class="p">)</span> <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">A</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">A</span>
+</div>
+<div class="viewcode-block" id="printGeometryCollection"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.printGeometryCollection">[docs]</a><span class="k">def</span> <span class="nf">printGeometryCollection</span><span class="p">(</span><span class="n">gpobj_list</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Given an iterable that returns guppy objects, construct a GeoJSON</span>
+<span class="sd">    FeatureCollection string.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">geometrylist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">gpobj_list</span><span class="p">:</span>
+        <span class="n">writer</span> <span class="o">=</span> <span class="n">GeoJSONWriter</span><span class="p">(</span><span class="n">gp</span><span class="p">)</span>
+        <span class="n">geometrylist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">writer</span><span class="o">.</span><span class="n">supobj</span><span class="p">))</span>
+    <span class="n">geometry_coll</span> <span class="o">=</span> <span class="p">{</span><span class="s">&#39;type&#39;</span> <span class="p">:</span> <span class="s">&#39;GeometryCollection&#39;</span><span class="p">,</span>
+                    <span class="s">&#39;geometries&#39;</span> <span class="p">:</span> <span class="n">geometrylist</span><span class="p">}</span>
+    <span class="n">kwargs</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s">&quot;indent&quot;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">geometry_coll</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+</div>
+<div class="viewcode-block" id="geojson2csv"><a class="viewcode-back" href="../../../reference.html#karta.vector.geojson.geojson2csv">[docs]</a><span class="k">def</span> <span class="nf">geojson2csv</span><span class="p">(</span><span class="n">fin</span><span class="p">,</span> <span class="n">fout</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Convert a JSON file to a CSV. Only properties (attributes) common to</span>
+<span class="sd">    all features are retained. The arguments `fin` and `fout` may be either</span>
+<span class="sd">    filenames or file-like objects.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fin</span><span class="p">,</span> <span class="s">&#39;read&#39;</span><span class="p">):</span>
+        <span class="n">jsdat</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fin</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fin</span><span class="p">,</span> <span class="s">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">jsdat</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="c"># Load coordinates and properties</span>
+    <span class="n">X</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">Y</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">PROP</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">jsdat</span><span class="p">[</span><span class="s">&#39;features&#39;</span><span class="p">]:</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">feat</span><span class="p">[</span><span class="s">&#39;geometry&#39;</span><span class="p">][</span><span class="s">&#39;coordinates&#39;</span><span class="p">]</span>
+        <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">Y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">PROP</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">feat</span><span class="p">[</span><span class="s">&#39;properties&#39;</span><span class="p">])</span>
+
+    <span class="c"># Find subset of properties that exist in all features</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">PROP</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">PROP</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">common_props</span> <span class="o">=</span> <span class="n">s</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="nb">set</span><span class="p">(</span><span class="n">p</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">PROP</span><span class="p">[</span><span class="mi">1</span><span class="p">:]])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">common_props</span> <span class="o">=</span> <span class="n">PROP</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+
+
+    <span class="c"># Output</span>
+    <span class="n">outstr</span> <span class="o">=</span> <span class="s">&#39;x,y&#39;</span> <span class="o">+</span> \
+             <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">:</span> <span class="n">a</span><span class="o">+</span><span class="s">&#39;,&#39;</span><span class="o">+</span><span class="n">b</span><span class="p">,</span> <span class="n">common_props</span><span class="p">)</span> <span class="o">+</span> \
+             <span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span>   <span class="c"># Construct header</span>
+
+    <span class="n">outstr</span> <span class="o">+=</span> <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="n">a</span><span class="o">+</span><span class="s">&#39;</span><span class="se">\n</span><span class="s">&#39;</span><span class="o">+</span><span class="n">b</span><span class="p">,</span>                         <span class="c"># Combine lines</span>
+                <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">p</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;,&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;,&#39;</span> <span class="o">+</span>   <span class="c"># Construct lines</span>
+                    <span class="nb">reduce</span><span class="p">(</span><span class="k">lambda</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="o">+</span> <span class="s">&#39;,&#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="p">),</span>      <span class="c"># Construct properties</span>
+                        <span class="p">[</span><span class="n">p</span><span class="p">[</span><span class="n">cp</span><span class="p">]</span> <span class="k">for</span> <span class="n">cp</span> <span class="ow">in</span> <span class="n">common_props</span><span class="p">]),</span>            <span class="c"># Filter spurious props</span>
+                    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span><span class="p">,</span> <span class="n">PROP</span><span class="p">))</span>                                    <span class="c"># Args for line lambda</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fout</span><span class="p">,</span> <span class="s">&#39;read&#39;</span><span class="p">):</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="n">fout</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fout</span><span class="p">,</span> <span class="s">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">outstr</span><span class="p">)</span>
+
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">fout</span><span class="p">,</span> <span class="s">&#39;read&#39;</span><span class="p">):</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">return</span>
+</pre></div></div>
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        <a class="uplink" href="../../../karta-manual.html">Contents</a>
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2015, Nat Wilson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>

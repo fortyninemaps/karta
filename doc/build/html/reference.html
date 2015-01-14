@@ -1,0 +1,1601 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Package reference &mdash; karta 0.4.0b5 documentation</title>
+    
+    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.4.0b5',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="top" title="karta 0.4.0b5 documentation" href="index.html" />
+    <link rel="next" title="Package reference" href="" />
+    <link rel="prev" title="Karta Tutorial" href="tutorial.html" /> 
+  </head>
+  <body>
+      <div class="header"><h1 class="heading"><a href="index.html">
+          <span>karta 0.4.0b5 documentation</span></a></h1>
+        <h2 class="heading"><span>Package reference</span></h2>
+      </div>
+      <div class="topnav">
+      
+        <p>
+        «&#160;&#160;<a href="tutorial.html">Karta Tutorial</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="karta-manual.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="">Package reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+      <div class="content">
+        
+        
+  <div class="section" id="package-reference">
+<h1>Package reference<a class="headerlink" href="#package-reference" title="Permalink to this headline">¶</a></h1>
+<div class="toctree-wrapper compound">
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="">Package reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#coordinate-reference-systems">Coordinate reference systems</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-karta.vector.guppy">Vector package</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-karta.raster.grid">Raster package</a></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="coordinate-reference-systems">
+<h2>Coordinate reference systems<a class="headerlink" href="#coordinate-reference-systems" title="Permalink to this headline">¶</a></h2>
+<p>Found in <tt class="docutils literal"><span class="pre">karta.crs</span></tt></p>
+<span class="target" id="module-karta.crs"></span><p>Creates a database of CRS IDs. The CRSRegister class tracks a dictionary of
+CRS instances. When a new CRS is requested, it is returned from the dictionary
+or created on the fly.</p>
+<p>Customized reference systems may be added at runtime as follows:</p>
+<blockquote>
+<div><p>from karta.crs import crsreg</p>
+<dl class="docutils">
+<dt>crsreg.add_CRS(&#8220;my_CRS&#8221;, proj=[projection parameters],</dt>
+<dd>geod=[geod parameters],
+crstype=[one of &#8216;projected&#8217;, &#8216;local&#8217;, or &#8216;geographical&#8217;],
+id=[OGC URN (string)])</dd>
+</dl>
+</div></blockquote>
+<p>For example, to add a CRS for handling data in the European Terrestrial
+Reference System of 1989, use:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>crsreg.add_CRS(&#8220;ETRS89&#8221;, proj={&#8220;proj&#8221;: &#8220;lonlat&#8221;, &#8220;towgs84&#8221;: [0,0,0,0,0,0,0]},</dt>
+<dd>geod={&#8220;ellps&#8221;: &#8220;GRS80&#8221;},
+crstype=&#8221;geographical&#8221;,
+id=&#8221;<a class="reference external" href="urn:ogc:def:crs:EPSG::4258">urn:ogc:def:crs:EPSG::4258</a>&#8221;)</dd>
+</dl>
+</div></blockquote>
+<dl class="class">
+<dt id="karta.crs.CRS">
+<em class="property">class </em><tt class="descclassname">karta.crs.</tt><tt class="descname">CRS</tt><big>(</big><em>proj=None</em>, <em>geod=None</em>, <em>crstype='unkown'</em>, <em>id=None</em><big>)</big><a class="reference internal" href="_modules/karta/crs.html#CRS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.CRS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Encapsulated a coordinate reference system.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="karta.crs.CRSError">
+<em class="property">exception </em><tt class="descclassname">karta.crs.</tt><tt class="descname">CRSError</tt><big>(</big><em>message=''</em><big>)</big><a class="reference internal" href="_modules/karta/crs.html#CRSError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.CRSError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception to raise for invalid geodetic operations.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-karta.vector.guppy">
+<span id="vector-package"></span><h2>Vector package<a class="headerlink" href="#module-karta.vector.guppy" title="Permalink to this headline">¶</a></h2>
+<p>Geographical measurement and simple analysis module for Python. Provides
+Point, Multipoint, Line, and Polygon classes, with methods for simple
+measurements such as distance, area, and bearing.</p>
+<dl class="class">
+<dt id="karta.vector.guppy.ConnectedMultipoint">
+<em class="property">class </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">ConnectedMultipoint</tt><big>(</big><em>vertices</em>, <em>data=None</em>, <em>properties=None</em>, <em>copy_metadata=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#ConnectedMultipoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ConnectedMultipoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for Multipoints in which vertices are assumed to be connected.</p>
+<dl class="method">
+<dt id="karta.vector.guppy.ConnectedMultipoint.intersections">
+<tt class="descname">intersections</tt><big>(</big><em>other</em>, <em>keep_duplicates=False</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#ConnectedMultipoint.intersections"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ConnectedMultipoint.intersections" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the intersections with another geometry as a Multipoint.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.ConnectedMultipoint.intersects">
+<tt class="descname">intersects</tt><big>(</big><em>other</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#ConnectedMultipoint.intersects"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ConnectedMultipoint.intersects" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether an intersection exists with another geometry.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.guppy.ConnectedMultipoint.length">
+<tt class="descname">length</tt><a class="reference internal" href="_modules/karta/vector/guppy.html#ConnectedMultipoint.length"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ConnectedMultipoint.length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the length of the line/boundary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.ConnectedMultipoint.nearest_on_boundary">
+<tt class="descname">nearest_on_boundary</tt><big>(</big><em>pt</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#ConnectedMultipoint.nearest_on_boundary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ConnectedMultipoint.nearest_on_boundary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the position on the Multipoint boundary that is nearest to
+pt (Point). If two points are equidistant, only one will be returned.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.guppy.ConnectedMultipoint.segment_tuples">
+<tt class="descname">segment_tuples</tt><a class="reference internal" href="_modules/karta/vector/guppy.html#ConnectedMultipoint.segment_tuples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ConnectedMultipoint.segment_tuples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an generator of adjacent line segments as coordinate tuples.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.guppy.ConnectedMultipoint.segments">
+<tt class="descname">segments</tt><a class="reference internal" href="_modules/karta/vector/guppy.html#ConnectedMultipoint.segments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ConnectedMultipoint.segments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an generator of adjacent line segments.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.ConnectedMultipoint.shortest_distance_to">
+<tt class="descname">shortest_distance_to</tt><big>(</big><em>pt</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#ConnectedMultipoint.shortest_distance_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ConnectedMultipoint.shortest_distance_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the shortest distance from any position on the Multipoint
+boundary to <em>pt</em> (Point).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.ConnectedMultipoint.within_distance">
+<tt class="descname">within_distance</tt><big>(</big><em>pt</em>, <em>distance</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#ConnectedMultipoint.within_distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ConnectedMultipoint.within_distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test whether a point is within <em>distance</em> of a ConnectedMultipoint.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="karta.vector.guppy.GGeoError">
+<em class="property">exception </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">GGeoError</tt><big>(</big><em>message=''</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#GGeoError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.GGeoError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception to raise when a guppy object attempts an invalid transform.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="karta.vector.guppy.GInitError">
+<em class="property">exception </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">GInitError</tt><big>(</big><em>message=''</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#GInitError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.GInitError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception to raise when a guppy object fails to initialize.</p>
+</dd></dl>
+
+<dl class="exception">
+<dt id="karta.vector.guppy.GUnitError">
+<em class="property">exception </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">GUnitError</tt><big>(</big><em>message=''</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#GUnitError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.GUnitError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exception to raise there is a projected unit problem.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.guppy.Geometry">
+<em class="property">class </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">Geometry</tt><big>(</big><em>crs=local CRS (urn: {'urn': 'urn:ogc:def:crs:EPSG::5806'})</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Geometry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Geometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is the abstract base class for all geometry types</p>
+<dl class="method">
+<dt id="karta.vector.guppy.Geometry.add_property">
+<tt class="descname">add_property</tt><big>(</big><em>name</em>, <em>value</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Geometry.add_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Geometry.add_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>Insert a property (name -&gt; value) into the properties dict, raising
+a NameError if the property already exists. Compared to directly
+manipulating the properties dict, this avoids accidents.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Geometry.delete_property">
+<tt class="descname">delete_property</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Geometry.delete_property"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Geometry.delete_property" title="Permalink to this definition">¶</a></dt>
+<dd><p>Equivalent to</p>
+<p>del self.properties[name]</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="exception">
+<dt id="karta.vector.guppy.GuppyError">
+<em class="property">exception </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">GuppyError</tt><big>(</big><em>message=''</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#GuppyError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.GuppyError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for guppy module errors.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.guppy.Line">
+<em class="property">class </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">Line</tt><big>(</big><em>vertices</em>, <em>data=None</em>, <em>properties=None</em>, <em>copy_metadata=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Line"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Line" title="Permalink to this definition">¶</a></dt>
+<dd><p>Line composed of connected vertices.</p>
+<p><em>coords</em>        List of 2-tuples or 3-tuples
+<em>data</em>          List, dictionary, or Metadata object for point-specific</p>
+<blockquote>
+<div>data [default None]</div></blockquote>
+<p><em>properties</em>    Dictionary of geometry specific data [default None]
+<em>crs</em>           Coordinate reference system instance [default CARTESIAN]</p>
+<dl class="method">
+<dt id="karta.vector.guppy.Line.add_vertex">
+<tt class="descname">add_vertex</tt><big>(</big><em>vertex</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Line.add_vertex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Line.add_vertex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a vertex to self.vertices.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Line.cumlength">
+<tt class="descname">cumlength</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Line.cumlength"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Line.cumlength" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the cumulative length by segment, prefixed by zero.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Line.displacement">
+<tt class="descname">displacement</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Line.displacement"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Line.displacement" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the distance between the first and last vertex.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Line.extend">
+<tt class="descname">extend</tt><big>(</big><em>other</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Line.extend"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Line.extend" title="Permalink to this definition">¶</a></dt>
+<dd><p>Combine two lines, provided that that the data formats are similar.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Line.remove_vertex">
+<tt class="descname">remove_vertex</tt><big>(</big><em>index</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Line.remove_vertex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Line.remove_vertex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Removes a vertex from the register by index.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Line.subsection">
+<tt class="descname">subsection</tt><big>(</big><em>n</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Line.subsection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Line.subsection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return <em>n</em> equally spaced Point instances along line.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Line.to_polygon">
+<tt class="descname">to_polygon</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Line.to_polygon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Line.to_polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a polygon.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Line.to_shapefile">
+<tt class="descname">to_shapefile</tt><big>(</big><em>fstem</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Line.to_shapefile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Line.to_shapefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save line to a shapefile</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.guppy.Multipoint">
+<em class="property">class </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">Multipoint</tt><big>(</big><em>vertices</em>, <em>data=None</em>, <em>properties=None</em>, <em>copy_metadata=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Multipoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Multipoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Point cloud with associated attributes. This is a base class for the
+polyline and polygon classes.</p>
+<p><em>coords</em>        List of 2-tuples or 3-tuples
+<em>data</em>          List, dictionary, or Metadata object for point-specific</p>
+<blockquote>
+<div>data [default None]</div></blockquote>
+<p><em>properties</em>    Dictionary of geometry specific data [default None]
+<em>crs</em>           Coordinate reference system instance [default CARTESIAN]</p>
+<dl class="method">
+<dt id="karta.vector.guppy.Multipoint.within_bbox">
+<tt class="descname">within_bbox</tt><big>(</big><em>bbox</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Multipoint.within_bbox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Multipoint.within_bbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Multipoint subset that is within a square bounding box
+given by (xmin, xmax, ymin, ymax).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Multipoint.within_radius">
+<tt class="descname">within_radius</tt><big>(</big><em>pt</em>, <em>radius</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Multipoint.within_radius"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Multipoint.within_radius" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return Multipoint of subset that is within <em>radius</em> of <em>pt</em>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.guppy.MultipointBase">
+<em class="property">class </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">MultipointBase</tt><big>(</big><em>vertices</em>, <em>data=None</em>, <em>properties=None</em>, <em>copy_metadata=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase" title="Permalink to this definition">¶</a></dt>
+<dd><p>Point cloud with associated attributes. This is a base class for the
+polyline and polygon classes.</p>
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.any_within_poly">
+<tt class="descname">any_within_poly</tt><big>(</big><em>poly</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.any_within_poly"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.any_within_poly" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether any vertices are inside <em>poly</em></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.apply_affine_transform">
+<tt class="descname">apply_affine_transform</tt><big>(</big><em>M</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.apply_affine_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.apply_affine_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply an affine transform given by matrix <em>M</em> to data and return a
+new geometry.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.as_geojson">
+<tt class="descname">as_geojson</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.as_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.as_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print representation of internal data as a GeoJSON string.</p>
+<p>crs : coordinate reference system
+crs_fmt : format of <cite>crs</cite>; may be one of (&#8216;epsg&#8217;,&#8217;ogc_crs_urn&#8217;)
+bbox : an optional bounding box tuple in the form (w,e,s,n)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.guppy.MultipointBase.bbox">
+<tt class="descname">bbox</tt><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.bbox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.bbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the extents of a bounding box as
+(xmin, ymin, xmax, ymax)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.distances_to">
+<tt class="descname">distances_to</tt><big>(</big><em>pt</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.distances_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.distances_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the distance from each vertex to a point.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.flat_distances_to">
+<tt class="descname">flat_distances_to</tt><big>(</big><em>pt</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.flat_distances_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.flat_distances_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the &#8220;flat Earth&#8221; distance from each vertex to a point.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.get_coordinate_lists">
+<tt class="descname">get_coordinate_lists</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.get_coordinate_lists"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.get_coordinate_lists" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return X, Y, and Z lists. If self.rank == 2, Z will be
+zero-filled.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.get_extents">
+<tt class="descname">get_extents</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.get_extents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.get_extents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate a bounding box.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.get_vertices">
+<tt class="descname">get_vertices</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.get_vertices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.get_vertices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return vertices as a list of tuples.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.greatcircles_to">
+<tt class="descname">greatcircles_to</tt><big>(</big><em>pt</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.greatcircles_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.greatcircles_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the great circle distances from each vertex to a point.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.nearest_point_to">
+<tt class="descname">nearest_point_to</tt><big>(</big><em>pt</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.nearest_point_to"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.nearest_point_to" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the internal Point that is nearest to <em>pt</em>. If two points
+are equidistant, only one will be returned.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.print_vertices">
+<tt class="descname">print_vertices</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.print_vertices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.print_vertices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Prints an enumerated list of indices.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.rotate2d">
+<tt class="descname">rotate2d</tt><big>(</big><em>thetad</em>, <em>origin=(0</em>, <em>0)</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.rotate2d"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.rotate2d" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate rank 2 Multipoint around <em>origin</em> counter-clockwise by
+<em>thetad</em> degrees.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.shift">
+<tt class="descname">shift</tt><big>(</big><em>shift_vector</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.shift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.shift" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shift feature by the amount given by a vector. Operation
+occurs in-place</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.to_geojson">
+<tt class="descname">to_geojson</tt><big>(</big><em>f</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.to_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.to_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<p>f : file-like object to recieve the GeoJSON string</p>
+<p><em>kwargs</em> include:
+crs : coordinate reference system
+crs_fmt : format of <cite>crs</cite>; may be one of (&#8216;epsg&#8217;,&#8217;ogc_crs_urn&#8217;)
+bbox : an optional bounding box tuple in the form (w,e,s,n)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.to_shapefile">
+<tt class="descname">to_shapefile</tt><big>(</big><em>fstem</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.to_shapefile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.to_shapefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save line to a shapefile</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.to_vtk">
+<tt class="descname">to_vtk</tt><big>(</big><em>f</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.to_vtk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.to_vtk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data to an ASCII VTK .vtp file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.MultipointBase.to_xyfile">
+<tt class="descname">to_xyfile</tt><big>(</big><em>fnm</em>, <em>fields=None</em>, <em>delimiter=' '</em>, <em>header=None</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#MultipointBase.to_xyfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.MultipointBase.to_xyfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data to a delimited ASCII table.</p>
+<p>fnm         :   filename to write to</p>
+<p>kwargs:
+fields      :   specify the fields to be written (default all)</p>
+<p>Additional kwargs are passed to <cite>xyfile.write_xy</cite>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.guppy.Point">
+<em class="property">class </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">Point</tt><big>(</big><em>coords</em>, <em>data=None</em>, <em>properties=None</em>, <em>copy_metadata=True</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Point object instantiated with:</p>
+<p><em>coords</em>        2-tuple or 3-tuple
+<em>data</em>          List, dictionary, or Metadata object for point-specific</p>
+<blockquote>
+<div>data [default None]</div></blockquote>
+<p><em>properties</em>    Dictionary of geometry specific data [default None]
+<em>crs</em>           Coordinate reference system instance [default CARTESIAN]</p>
+<dl class="method">
+<dt id="karta.vector.guppy.Point.as_geojson">
+<tt class="descname">as_geojson</tt><big>(</big><em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.as_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.as_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<p>f : file-like object to recieve the GeoJSON string</p>
+<p><em>kwargs</em> include:
+crs : coordinate reference system
+crs_fmt : format of <cite>crs</cite>; may be one of (&#8216;epsg&#8217;,&#8217;ogc_crs_urn&#8217;)
+bbox : an optional bounding box tuple in the form (w,e,s,n)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Point.azimuth">
+<tt class="descname">azimuth</tt><big>(</big><em>other</em>, <em>spherical=False</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.azimuth"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.azimuth" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the compass azimuth from self to other in radians (i.e.
+clockwise, with north at 0). Returns NaN if points are coincident.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Point.coordsxy">
+<tt class="descname">coordsxy</tt><big>(</big><em>convert_to=False</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.coordsxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.coordsxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the x,y coordinates. Convert_to may be set to &#8216;deg&#8217;
+or &#8216;rad&#8217; for convenience.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Point.distance">
+<tt class="descname">distance</tt><big>(</big><em>other</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.distance"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.distance" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a distance to another Point. If the coordinate system is
+geographical and a third (z) coordinate exists, it is assumed to have
+the same units as the real-world horizontal distance (i.e. meters).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Point.get_vertex">
+<tt class="descname">get_vertex</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.get_vertex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.get_vertex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the Point vertex as a tuple.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Point.greatcircle">
+<tt class="descname">greatcircle</tt><big>(</big><em>other</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.greatcircle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.greatcircle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the great circle distance between two geographical points.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Point.isat">
+<tt class="descname">isat</tt><big>(</big><em>other</em>, <em>tol=0.001</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.isat"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.isat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Test whether point vertices are the same, regardless of properties or data.
+Tolarance is not geodetic.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Point.shift">
+<tt class="descname">shift</tt><big>(</big><em>shift_vector</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.shift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.shift" title="Permalink to this definition">¶</a></dt>
+<dd><p>Shift point by the amount given by a vector. Operation occurs
+in-place</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Point.to_geojson">
+<tt class="descname">to_geojson</tt><big>(</big><em>f</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.to_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.to_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<p>f : file-like object to recieve the GeoJSON string</p>
+<p><em>kwargs</em> include:
+crs : coordinate reference system
+crs_fmt : format of <cite>crs</cite>; may be one of (&#8216;epsg&#8217;,&#8217;ogc_crs_urn&#8217;)
+bbox : an optional bounding box tuple in the form (w,e,s,n)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Point.walk">
+<tt class="descname">walk</tt><big>(</big><em>distance</em>, <em>direction</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Point.walk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Point.walk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the point reached when moving in a given direction for
+a given distance from a specified starting location.</p>
+<blockquote>
+<div>distance (float): distance to walk
+direction (float): horizontal walk direction in radians</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.guppy.Polygon">
+<em class="property">class </em><tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">Polygon</tt><big>(</big><em>vertices</em>, <em>data=None</em>, <em>properties=None</em>, <em>subs=None</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Polygon"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Polygon, composed of a closed sequence of vertices.</p>
+<p><em>coords</em>        List of 2-tuples or 3-tuples
+<em>data</em>          List, dictionary, or Metadata object for point-specific</p>
+<blockquote>
+<div>data [default None]</div></blockquote>
+<p><em>properties</em>    Dictionary of geometry specific data [default None]
+<em>subs</em>          List of sub-polygons [default None]
+<em>crs</em>           Coordinate reference system instance [default CARTESIAN]</p>
+<dl class="attribute">
+<dt id="karta.vector.guppy.Polygon.area">
+<tt class="descname">area</tt><a class="reference internal" href="_modules/karta/vector/guppy.html#Polygon.area"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Polygon.area" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the two-dimensional area of the polygon. If there are
+sub-polygons, their areas are subtracted.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Polygon.contains">
+<tt class="descname">contains</tt><big>(</big><em>pt</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Polygon.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Polygon.contains" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns True if pt is inside or on the boundary of the
+polygon, and False otherwise. Uses a crossing number scheme.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Polygon.isclockwise">
+<tt class="descname">isclockwise</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Polygon.isclockwise"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Polygon.isclockwise" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return whether polygon winds clockwise around its interior.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.guppy.Polygon.perimeter">
+<tt class="descname">perimeter</tt><a class="reference internal" href="_modules/karta/vector/guppy.html#Polygon.perimeter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Polygon.perimeter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the perimeter of the polygon. If there are sub-polygons,
+their perimeters are added recursively.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.guppy.Polygon.segments">
+<tt class="descname">segments</tt><a class="reference internal" href="_modules/karta/vector/guppy.html#Polygon.segments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Polygon.segments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns an generator of adjacent line segments.
+Unique to Polygon: appends a final segment to close the Polygon.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Polygon.to_polyline">
+<tt class="descname">to_polyline</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Polygon.to_polyline"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Polygon.to_polyline" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a self-closing polyline. Discards sub-polygons.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.guppy.Polygon.to_shapefile">
+<tt class="descname">to_shapefile</tt><big>(</big><em>fstem</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#Polygon.to_shapefile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.Polygon.to_shapefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save line to a shapefile</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.guppy.affine_matrix">
+<tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">affine_matrix</tt><big>(</big><em>mpa</em>, <em>mpb</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#affine_matrix"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.affine_matrix" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute the affine transformation matrix that projects Multipoint mpa
+to Multipoint mpb using a least squares fit.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.guppy.greatcircle">
+<tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">greatcircle</tt><big>(</big><em>pta</em>, <em>ptb</em>, <em>method='vicenty'</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#greatcircle"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.greatcircle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the great circle distance between n point pairs on a
+sphere. Returns a list of length (n-1)</p>
+<p>[pntlist] contains a list of point objects</p>
+<p>[method] may be &#8220;vicenty&#8221; (default) or &#8220;haversine&#8221;. The Haversine
+method is roughly 20% faster, but may yield rounding errors when
+coordinates are antipodal.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.guppy.points_to_multipoint">
+<tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">points_to_multipoint</tt><big>(</big><em>points</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#points_to_multipoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.points_to_multipoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge <em>points</em> into a Multipoint instance. Point properties are stored
+as Multipoint data. All points must use the same CRS.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.guppy.ray_intersection">
+<tt class="descclassname">karta.vector.guppy.</tt><tt class="descname">ray_intersection</tt><big>(</big><em>pt</em>, <em>endpt1</em>, <em>endpt2</em>, <em>direction=0.0</em><big>)</big><a class="reference internal" href="_modules/karta/vector/guppy.html#ray_intersection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.guppy.ray_intersection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determines whether a ray intersects a line segment. If yes,
+returns the point of intersection. If no, return None. Input
+&#8220;points&#8221; should be tuples or similar. Input direction is in
+radians, and defines the ray path from pt.</p>
+</dd></dl>
+
+<span class="target" id="module-karta.vector.geojson"></span><p>This module includes the <cite>GeoJSON</cite> class and convenience functions for
+dealing with GeoJSON data. The <cite>GeoJSON</cite> class uses the builtin json module and
+enforces GeoJSON standards.</p>
+<dl class="class">
+<dt id="karta.vector.geojson.ExtendedJSONEncoder">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">ExtendedJSONEncoder</tt><big>(</big><em>skipkeys=False</em>, <em>ensure_ascii=True</em>, <em>check_circular=True</em>, <em>allow_nan=True</em>, <em>sort_keys=False</em>, <em>indent=None</em>, <em>separators=None</em>, <em>default=None</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#ExtendedJSONEncoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.ExtendedJSONEncoder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Numpy-specific numbers prior to 1.9 don&#8217;t inherit from Python numeric
+ABCs. This class is a hack to coerce numpy values into Python types for
+JSON serialization.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.Feature">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">Feature</tt><a class="headerlink" href="#karta.vector.geojson.Feature" title="Permalink to this definition">¶</a></dt>
+<dd><p>Feature(geometry, properties, id, crs)</p>
+<dl class="attribute">
+<dt id="karta.vector.geojson.Feature.crs">
+<tt class="descname">crs</tt><a class="headerlink" href="#karta.vector.geojson.Feature.crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.Feature.geometry">
+<tt class="descname">geometry</tt><a class="headerlink" href="#karta.vector.geojson.Feature.geometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.Feature.id">
+<tt class="descname">id</tt><a class="headerlink" href="#karta.vector.geojson.Feature.id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.Feature.properties">
+<tt class="descname">properties</tt><a class="headerlink" href="#karta.vector.geojson.Feature.properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.FeatureCollection">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">FeatureCollection</tt><a class="headerlink" href="#karta.vector.geojson.FeatureCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>FeatureCollection(features, crs)</p>
+<dl class="attribute">
+<dt id="karta.vector.geojson.FeatureCollection.crs">
+<tt class="descname">crs</tt><a class="headerlink" href="#karta.vector.geojson.FeatureCollection.crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.FeatureCollection.features">
+<tt class="descname">features</tt><a class="headerlink" href="#karta.vector.geojson.FeatureCollection.features" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.GeoJSONWriter">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">GeoJSONWriter</tt><big>(</big><em>gpobj</em>, <em>linkedcrs=False</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONWriter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONWriter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for converting guppy objects to GeoJSON strings. Multipoint-based
+opbjects are written as &#8216;Features&#8217;.</p>
+<p>CRS defaults to be named. A linked CRS can be used by passing
+<cite>linkedcrs=True</cite>.</p>
+<p>Does not handle &#8216;FeatureCollection&#8217; types (see printFeatureCollection()
+function).</p>
+<dl class="method">
+<dt id="karta.vector.geojson.GeoJSONWriter.add_bbox">
+<tt class="descname">add_bbox</tt><big>(</big><em>bbox=None</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONWriter.add_bbox"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONWriter.add_bbox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tag the JSON object with a bounding box. If <em>bbox</em> is None
+(default), the bounds will be calculated from the data. Otherwise,
+<em>bbox</em> should be in the form (xmin, xmax, ....) for all dimensions.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.geojson.GeoJSONWriter.add_coordinates">
+<tt class="descname">add_coordinates</tt><big>(</big><em>target=None</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONWriter.add_coordinates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONWriter.add_coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add coordinates. Behaviour depends on the type of the geometry
+object. Target must be None (default) or a dictionary member of the
+JSON object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.geojson.GeoJSONWriter.add_crs">
+<tt class="descname">add_crs</tt><big>(</big><em>crs</em>, <em>linkedcrs</em>, <em>**kw</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONWriter.add_crs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONWriter.add_crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Tag the JSON object with coordinate reference system metadata using
+a CRS instance, which is expected the have the interface of crs.CRS.</p>
+<p>If True, <cite>linkedcrs</cite> indicates a web-referenced linked CRS. If False,
+the CRS is taked to be named.</p>
+<p>In the case of a linked CRS, the link address and type can be specified
+using the <cite>href</cite> and <cite>linktype</cite> keyword arguments. If not supplied,
+then it is assumed that crs.id[&#8220;urn&#8221;] contains the <em>href</em> and the
+<em>type</em> is &#8220;name&#8221;.</p>
+<p>For more details, see the GeoJSON specification at:
+<a class="reference external" href="http://geojson.org/geojson-spec.html#coordinate-reference-system-objects">http://geojson.org/geojson-spec.html#coordinate-reference-system-objects</a></p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.geojson.GeoJSONWriter.add_geometry">
+<tt class="descname">add_geometry</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONWriter.add_geometry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONWriter.add_geometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add geometry subobject. This should be called for writing
+Multipoint-derived classes.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.geojson.GeoJSONWriter.add_id">
+<tt class="descname">add_id</tt><big>(</big><em>target=None</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONWriter.add_id"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONWriter.add_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an index field.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.geojson.GeoJSONWriter.add_properties">
+<tt class="descname">add_properties</tt><big>(</big><em>target=None</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONWriter.add_properties"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONWriter.add_properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add the data from the geometry object&#8217;s data dictionary.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.geojson.GeoJSONWriter.print_json">
+<tt class="descname">print_json</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONWriter.print_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONWriter.print_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Print GeoJSON representation.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.geojson.GeoJSONWriter.write_json">
+<tt class="descname">write_json</tt><big>(</big><em>fout</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONWriter.write_json"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONWriter.write_json" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dump internal dict-object to JSON using the builtin <cite>json</cite> module.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.GeometryCollection">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">GeometryCollection</tt><a class="headerlink" href="#karta.vector.geojson.GeometryCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>GeometryCollection(geometries,)</p>
+<dl class="attribute">
+<dt id="karta.vector.geojson.GeometryCollection.geometries">
+<tt class="descname">geometries</tt><a class="headerlink" href="#karta.vector.geojson.GeometryCollection.geometries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.LineString">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">LineString</tt><a class="headerlink" href="#karta.vector.geojson.LineString" title="Permalink to this definition">¶</a></dt>
+<dd><p>LineString(coordinates, crs)</p>
+<dl class="attribute">
+<dt id="karta.vector.geojson.LineString.coordinates">
+<tt class="descname">coordinates</tt><a class="headerlink" href="#karta.vector.geojson.LineString.coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.LineString.crs">
+<tt class="descname">crs</tt><a class="headerlink" href="#karta.vector.geojson.LineString.crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.MultiLineString">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">MultiLineString</tt><a class="headerlink" href="#karta.vector.geojson.MultiLineString" title="Permalink to this definition">¶</a></dt>
+<dd><p>MultiLineString(coordinates, crs)</p>
+<dl class="attribute">
+<dt id="karta.vector.geojson.MultiLineString.coordinates">
+<tt class="descname">coordinates</tt><a class="headerlink" href="#karta.vector.geojson.MultiLineString.coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.MultiLineString.crs">
+<tt class="descname">crs</tt><a class="headerlink" href="#karta.vector.geojson.MultiLineString.crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.MultiPoint">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">MultiPoint</tt><a class="headerlink" href="#karta.vector.geojson.MultiPoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>MultiPoint(coordinates, crs)</p>
+<dl class="attribute">
+<dt id="karta.vector.geojson.MultiPoint.coordinates">
+<tt class="descname">coordinates</tt><a class="headerlink" href="#karta.vector.geojson.MultiPoint.coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.MultiPoint.crs">
+<tt class="descname">crs</tt><a class="headerlink" href="#karta.vector.geojson.MultiPoint.crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.MultiPolygon">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">MultiPolygon</tt><a class="headerlink" href="#karta.vector.geojson.MultiPolygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>MultiPolygon(coordinates, crs)</p>
+<dl class="attribute">
+<dt id="karta.vector.geojson.MultiPolygon.coordinates">
+<tt class="descname">coordinates</tt><a class="headerlink" href="#karta.vector.geojson.MultiPolygon.coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.MultiPolygon.crs">
+<tt class="descname">crs</tt><a class="headerlink" href="#karta.vector.geojson.MultiPolygon.crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.Point">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">Point</tt><a class="headerlink" href="#karta.vector.geojson.Point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Point(coordinates, crs)</p>
+<dl class="attribute">
+<dt id="karta.vector.geojson.Point.coordinates">
+<tt class="descname">coordinates</tt><a class="headerlink" href="#karta.vector.geojson.Point.coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.Point.crs">
+<tt class="descname">crs</tt><a class="headerlink" href="#karta.vector.geojson.Point.crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.geojson.Polygon">
+<em class="property">class </em><tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">Polygon</tt><a class="headerlink" href="#karta.vector.geojson.Polygon" title="Permalink to this definition">¶</a></dt>
+<dd><p>Polygon(coordinates, crs)</p>
+<dl class="attribute">
+<dt id="karta.vector.geojson.Polygon.coordinates">
+<tt class="descname">coordinates</tt><a class="headerlink" href="#karta.vector.geojson.Polygon.coordinates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.geojson.Polygon.crs">
+<tt class="descname">crs</tt><a class="headerlink" href="#karta.vector.geojson.Polygon.crs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.geojson.geojson2csv">
+<tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">geojson2csv</tt><big>(</big><em>fin</em>, <em>fout</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#geojson2csv"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.geojson2csv" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert a JSON file to a CSV. Only properties (attributes) common to
+all features are retained. The arguments <cite>fin</cite> and <cite>fout</cite> may be either
+filenames or file-like objects.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.geojson.list_rec">
+<tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">list_rec</tt><big>(</big><em>A</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#list_rec"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.list_rec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Recursively convert nested iterables to nested lists</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.geojson.printGeometryCollection">
+<tt class="descclassname">karta.vector.geojson.</tt><tt class="descname">printGeometryCollection</tt><big>(</big><em>gpobj_list</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/geojson.html#printGeometryCollection"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.printGeometryCollection" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given an iterable that returns guppy objects, construct a GeoJSON
+FeatureCollection string.</p>
+</dd></dl>
+
+<span class="target" id="module-karta.vector.gpx"></span><p>GPX IO and manipulation (UNDER DEVELOPMENT)</p>
+<p>This is a rewrite of gpxparser.py, designed to fit better with guppy types.</p>
+<dl class="docutils">
+<dt>To do:</dt>
+<dd><ul class="first last simple">
+<li>XML namespaces aren&#8217;t really handled properly</li>
+<li>metadata node not addressed</li>
+</ul>
+</dd>
+</dl>
+<dl class="class">
+<dt id="karta.vector.gpx.GPX">
+<em class="property">class </em><tt class="descclassname">karta.vector.gpx.</tt><tt class="descname">GPX</tt><big>(</big><em>f=None</em>, <em>waypoints=None</em>, <em>tracks=None</em>, <em>routes=None</em><big>)</big><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Represents a GPX document, with an internal representation of
+waypoints, tracks, and route that loosely approximates the XML structure.
+Provides methods to easily add Point-like and Line-like objects as GPX
+types.</p>
+<dl class="method">
+<dt id="karta.vector.gpx.GPX.add_route">
+<tt class="descname">add_route</tt><big>(</big><em>route</em><big>)</big><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.add_route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.add_route" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a list of Line-like objects as a route. Properties and
+extension types for the route are taken from the <cite>properties</cite> attribute
+of the Line-like object.</p>
+<p>Properties and extensions types for each route point are taken from the
+<cite>data</cite> attribute of each Line-like object.</p>
+<p>INCOMPLETE:</p>
+<p>Needs to distinguish between properties and extensions at the trkseg
+and trkpt levels</p>
+<p>Needs to properly add and &lt;ele&gt; property for Lines of rank 3</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.gpx.GPX.add_track">
+<tt class="descname">add_track</tt><big>(</big><em>track</em>, <em>attributes=None</em><big>)</big><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.add_track"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.add_track" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a list of Line-like objects as a track. Dictionaries of
+properties and extension types for the track are accepted as keyword
+arguments.</p>
+<p>Properties and extension types for the track segments are taken from
+the <cite>properties</cite> attribute of each Line-like object.</p>
+<p>Properties and extensions types for each track point are taken from the
+<cite>data</cite> attribute of each Line-like object.</p>
+<p>INCOMPLETE:</p>
+<p>Needs to distinguish between properties and extensions at the trkseg
+and trkpt levels</p>
+<p>Needs to properly add and &lt;ele&gt; property for Lines of rank 3</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.gpx.GPX.add_waypoint">
+<tt class="descname">add_waypoint</tt><big>(</big><em>waypoint</em><big>)</big><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.add_waypoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.add_waypoint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a Point-like object as a waypoint. Properties and extension
+types are taken from waypoint.properties attribute.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.gpx.GPX.fromfile">
+<tt class="descname">fromfile</tt><big>(</big><em>f</em><big>)</big><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.fromfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.fromfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read a GPX document from <em>f</em>, which may be a filename or a
+file-like object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.gpx.GPX.parse_trk">
+<tt class="descname">parse_trk</tt><big>(</big><em>trk</em><big>)</big><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.parse_trk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.parse_trk" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a &lt;trk&gt; node, updating self.tracks.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.gpx.GPX.parse_wpt">
+<tt class="descname">parse_wpt</tt><big>(</big><em>wpt</em><big>)</big><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.parse_wpt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.parse_wpt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Parse a &lt;wpt&gt; node, updating self.waypoints.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.gpx.GPX.writefile">
+<tt class="descname">writefile</tt><big>(</big><em>fnm</em>, <em>waypts=True</em>, <em>tracks=True</em>, <em>routes=True</em><big>)</big><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.writefile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.writefile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write GPX object to a GPX file. Writes all waypoints, tracks, and
+routes by default, which can be changed by changing the kwargs to
+False.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.gpx.Point">
+<em class="property">class </em><tt class="descclassname">karta.vector.gpx.</tt><tt class="descname">Point</tt><a class="headerlink" href="#karta.vector.gpx.Point" title="Permalink to this definition">¶</a></dt>
+<dd><p>Point(lonlat, properties, extensions)</p>
+<dl class="attribute">
+<dt id="karta.vector.gpx.Point.extensions">
+<tt class="descname">extensions</tt><a class="headerlink" href="#karta.vector.gpx.Point.extensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.gpx.Point.lonlat">
+<tt class="descname">lonlat</tt><a class="headerlink" href="#karta.vector.gpx.Point.lonlat" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.gpx.Point.properties">
+<tt class="descname">properties</tt><a class="headerlink" href="#karta.vector.gpx.Point.properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.gpx.Route">
+<em class="property">class </em><tt class="descclassname">karta.vector.gpx.</tt><tt class="descname">Route</tt><a class="headerlink" href="#karta.vector.gpx.Route" title="Permalink to this definition">¶</a></dt>
+<dd><p>Route(rtepts, properties, extensions)</p>
+<dl class="attribute">
+<dt id="karta.vector.gpx.Route.extensions">
+<tt class="descname">extensions</tt><a class="headerlink" href="#karta.vector.gpx.Route.extensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.gpx.Route.properties">
+<tt class="descname">properties</tt><a class="headerlink" href="#karta.vector.gpx.Route.properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.gpx.Route.rtepts">
+<tt class="descname">rtepts</tt><a class="headerlink" href="#karta.vector.gpx.Route.rtepts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.gpx.Track">
+<em class="property">class </em><tt class="descclassname">karta.vector.gpx.</tt><tt class="descname">Track</tt><a class="headerlink" href="#karta.vector.gpx.Track" title="Permalink to this definition">¶</a></dt>
+<dd><p>Track(trksegs, properties, extensions)</p>
+<dl class="attribute">
+<dt id="karta.vector.gpx.Track.extensions">
+<tt class="descname">extensions</tt><a class="headerlink" href="#karta.vector.gpx.Track.extensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.gpx.Track.properties">
+<tt class="descname">properties</tt><a class="headerlink" href="#karta.vector.gpx.Track.properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.gpx.Track.trksegs">
+<tt class="descname">trksegs</tt><a class="headerlink" href="#karta.vector.gpx.Track.trksegs" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.vector.gpx.Trkseg">
+<em class="property">class </em><tt class="descclassname">karta.vector.gpx.</tt><tt class="descname">Trkseg</tt><a class="headerlink" href="#karta.vector.gpx.Trkseg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Trkseg(trkpts, properties, extensions)</p>
+<dl class="attribute">
+<dt id="karta.vector.gpx.Trkseg.extensions">
+<tt class="descname">extensions</tt><a class="headerlink" href="#karta.vector.gpx.Trkseg.extensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.gpx.Trkseg.properties">
+<tt class="descname">properties</tt><a class="headerlink" href="#karta.vector.gpx.Trkseg.properties" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="karta.vector.gpx.Trkseg.trkpts">
+<tt class="descname">trkpts</tt><a class="headerlink" href="#karta.vector.gpx.Trkseg.trkpts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-karta.vector.xyfile"></span><p>Convenience functions for XY(Z) tables.</p>
+<dl class="function">
+<dt id="karta.vector.xyfile.array2xyz">
+<tt class="descclassname">karta.vector.xyfile.</tt><tt class="descname">array2xyz</tt><big>(</big><em>A</em>, <em>X</em>, <em>Y</em><big>)</big><a class="reference internal" href="_modules/karta/vector/xyfile.html#array2xyz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.xyfile.array2xyz" title="Permalink to this definition">¶</a></dt>
+<dd><p>There are a few occasions when an XYZ list is the proper data
+format. This function converts from an array <em>A</em> with coordinates
+defined by <em>X</em> and <em>Y</em> to a list of (x,y,z) tuples.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.xyfile.distance_xy">
+<tt class="descclassname">karta.vector.xyfile.</tt><tt class="descname">distance_xy</tt><big>(</big><em>A</em><big>)</big><a class="reference internal" href="_modules/karta/vector/xyfile.html#distance_xy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.xyfile.distance_xy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the cumulative distance at each coordinate pair in <em>A</em>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.xyfile.load_xy">
+<tt class="descclassname">karta.vector.xyfile.</tt><tt class="descname">load_xy</tt><big>(</big><em>fnm</em>, <em>delimiter=''</em>, <em>header_rows=0</em><big>)</big><a class="headerlink" href="#karta.vector.xyfile.load_xy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a flowline file and return a size-2 array of coordinates.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.xyfile.loadxy">
+<tt class="descclassname">karta.vector.xyfile.</tt><tt class="descname">loadxy</tt><big>(</big><em>fnm</em>, <em>delimiter=''</em>, <em>header_rows=0</em><big>)</big><a class="headerlink" href="#karta.vector.xyfile.loadxy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a flowline file and return a size-2 array of coordinates.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.xyfile.read_xy">
+<tt class="descclassname">karta.vector.xyfile.</tt><tt class="descname">read_xy</tt><big>(</big><em>fnm</em>, <em>delimiter=''</em>, <em>header_rows=0</em><big>)</big><a class="reference internal" href="_modules/karta/vector/xyfile.html#read_xy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.xyfile.read_xy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load a flowline file and return a size-2 array of coordinates.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.xyfile.write_xy">
+<tt class="descclassname">karta.vector.xyfile.</tt><tt class="descname">write_xy</tt><big>(</big><em>dat</em>, <em>fnm</em>, <em>delimiter=' '</em>, <em>header=None</em><big>)</big><a class="reference internal" href="_modules/karta/vector/xyfile.html#write_xy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.xyfile.write_xy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write table data in array <em>dat</em> as a delimited ASCII text file.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.vector.xyfile.xyz2array_reg">
+<tt class="descclassname">karta.vector.xyfile.</tt><tt class="descname">xyz2array_reg</tt><big>(</big><em>X</em>, <em>Y</em>, <em>Z</em><big>)</big><a class="reference internal" href="_modules/karta/vector/xyfile.html#xyz2array_reg"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.xyfile.xyz2array_reg" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return an array from X,Y,Z vectors, assuming gridding is
+regular.</p>
+</dd></dl>
+
+<span class="target" id="module-karta.vector.metadata"></span><p>Vector geospatial metadata management</p>
+<dl class="class">
+<dt id="karta.vector.metadata.Metadata">
+<em class="property">class </em><tt class="descclassname">karta.vector.metadata.</tt><tt class="descname">Metadata</tt><big>(</big><em>data</em>, <em>singleton=False</em>, <em>copydata=True</em><big>)</big><a class="reference internal" href="_modules/karta/vector/metadata.html#Metadata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.metadata.Metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Class for handling collections of metadata. Data are organized similar
+to a Python dict, however different values must all have the same length
+and be of uniform type.</p>
+<p>Data are accessed either by field name (returning the entire series for
+that field) for by index (returning the value within eather field at that
+index).</p>
+<dl class="method">
+<dt id="karta.vector.metadata.Metadata.getfield">
+<tt class="descname">getfield</tt><big>(</big><em>name</em><big>)</big><a class="reference internal" href="_modules/karta/vector/metadata.html#Metadata.getfield"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.metadata.Metadata.getfield" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all values from field <em>name</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.metadata.Metadata.keys">
+<tt class="descname">keys</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/metadata.html#Metadata.keys"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.metadata.Metadata.keys" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return internal dictionary keys.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.metadata.Metadata.sub">
+<tt class="descname">sub</tt><big>(</big><em>idxs</em><big>)</big><a class="reference internal" href="_modules/karta/vector/metadata.html#Metadata.sub"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.metadata.Metadata.sub" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a Metadata instance with values from idxs.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.metadata.Metadata.update">
+<tt class="descname">update</tt><big>(</big><em>other</em><big>)</big><a class="reference internal" href="_modules/karta/vector/metadata.html#Metadata.update"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.metadata.Metadata.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extend collection in-place.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.metadata.Metadata.values">
+<tt class="descname">values</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/vector/metadata.html#Metadata.values"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.metadata.Metadata.values" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return internal dictionary values.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="module-karta.raster.grid">
+<span id="raster-package"></span><h2>Raster package<a class="headerlink" href="#module-karta.raster.grid" title="Permalink to this headline">¶</a></h2>
+<p>Classes for basic grid types</p>
+<dl class="class">
+<dt id="karta.raster.grid.Grid">
+<em class="property">class </em><tt class="descclassname">karta.raster.grid.</tt><tt class="descname">Grid</tt><a class="reference internal" href="_modules/karta/raster/grid.html#Grid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Grid baseclass. Don&#8217;t use this directly except to implement subclasses.
+The primary attributes defined by all Grid-derived classed are _hdr and
+data.</p>
+<dl class="method">
+<dt id="karta.raster.grid.Grid.clipz">
+<tt class="descname">clipz</tt><big>(</big><em>bounds</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#Grid.clipz"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid.clipz" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clip the z-range in place to bounds = [min, max].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.Grid.copy">
+<tt class="descname">copy</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#Grid.copy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid.copy" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a copy.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.Grid.max">
+<tt class="descname">max</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#Grid.max"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the maximum non-nan in self.data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.Grid.min">
+<tt class="descname">min</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#Grid.min"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the minimum non-nan in self.data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.Grid.minmax">
+<tt class="descname">minmax</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#Grid.minmax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid.minmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the minimum and maximum value of data array.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.raster.grid.RegularGrid">
+<em class="property">class </em><tt class="descclassname">karta.raster.grid.</tt><tt class="descname">RegularGrid</tt><big>(</big><em>transform</em>, <em>Z=None</em>, <em>crs=None</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Regular (structured) grid class. A RegularGrid contains a fixed number
+of rows and columns with a constant spacing and a scalar or vector field
+defined as <cite>Z</cite>.</p>
+<p>Positions on a RegularGrid are referenced to their array indices <em>(i,j)</em>
+using an affine transform <em>T</em> such that</p>
+<p>(a, b, c, d, e, f) = T</p>
+<p>X = a + j * c + i * e
+Y = b + i * d + j * f</p>
+<p>in which <em>(a,b)</em> defines the grid origin, <em>(c,d)</em> defines the resolution in
+the horizontal and vertical directions, and <em>(e,f)</em> can be used to define a
+rotation. In the common case of an orthogonal grid with north &#8220;up&#8221;,</p>
+<p>e = f = 0</p>
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.aaiwrite">
+<tt class="descname">aaiwrite</tt><big>(</big><em>f</em>, <em>reference='corner'</em>, <em>nodata_value=-9999</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.aaiwrite"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.aaiwrite" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save internal data as an ASCII grid. Based on the ESRI standard,
+only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]</cite> can be saved,
+otherwise <cite>GridIOError</cite> is thrown.</p>
+<p>f : either a file-like object or a filename
+reference : specify a header reference (&#8220;center&#8221; | &#8220;corner&#8221;)
+nodata_value : specify how nans should be represented (int or float)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.as_warpedgrid">
+<tt class="descname">as_warpedgrid</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.as_warpedgrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.as_warpedgrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a copy as a WarpedGrid instance. This is a more general
+grid class that has a larger memory footprint but can represent more
+flexible data layouts.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.center_llref">
+<tt class="descname">center_llref</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.center_llref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.center_llref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the &#8216;lower-left&#8217; reference in terms of a center coordinate.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.coordmesh">
+<tt class="descname">coordmesh</tt><big>(</big><em>*args</em>, <em>**kwargs</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.coordmesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.coordmesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for center_coords()</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.corner_llref">
+<tt class="descname">corner_llref</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.corner_llref"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.corner_llref" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the &#8216;lower-left&#8217; reference in terms of a center coordinate.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.fill_sinks">
+<tt class="descname">fill_sinks</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.fill_sinks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.fill_sinks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fill depressions. Use the algorithm of Wang and Liu (2006).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.get_extents">
+<tt class="descname">get_extents</tt><big>(</big><em>reference='center'</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.get_extents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.get_extents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the region characteristics as a tuple (xmin, xmax, ymin,
+ymax). <em>reference</em> may be <cite>center</cite> or <cite>edge</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.get_indices">
+<tt class="descname">get_indices</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.get_indices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.get_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the column and row indices for the point nearest
+geographical coordinates (x, y).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.get_profile">
+<tt class="descname">get_profile</tt><big>(</big><em>segments</em>, <em>resolution=10.0</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.get_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.get_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample along a line defined as <cite>segments</cite>. Does not interpolate.</p>
+<p>segments : iterable containing (x,y) pairs
+resolution : sample spacing</p>
+<p>profile : ndarray</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.resample">
+<tt class="descname">resample</tt><big>(</big><em>dx</em>, <em>dy</em>, <em>method='nearest'</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.resample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.resample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resample array to have spacing <cite>dx</cite>, <a href="#id1"><span class="problematic" id="id2">`</span></a>dy&#8217;.</p>
+<p>dx : cell dimension, float</p>
+<p>dy : cell dimension, float</p>
+<p>method : interpolation method, string (&#8216;nearest&#8217;,)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.resample_griddata">
+<tt class="descname">resample_griddata</tt><big>(</big><em>dx</em>, <em>dy</em>, <em>method='nearest'</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.resample_griddata"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.resample_griddata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resample array to have spacing <cite>dx</cite>, <a href="#id3"><span class="problematic" id="id4">`</span></a>dy&#8217; using <em>scipy.griddata</em></p>
+<p>dx : cell dimension, float</p>
+<p>dy : cell dimension, float</p>
+<p>method : interpolation method, string (&#8216;nearest&#8217;, &#8216;linear&#8217;)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.sample">
+<tt class="descname">sample</tt><big>(</big><em>x</em>, <em>y</em>, <em>method='nearest'</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the values nearest (<cite>x</cite>, <cite>y</cite>), where <cite>x</cite> and <cite>y</cite> may be
+equal length vectors. <em>method</em> may be one of <cite>nearest</cite>, <cite>linear</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.sample_nearest">
+<tt class="descname">sample_nearest</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.sample_nearest"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.sample_nearest" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the value nearest to (<cite>x</cite>, <cite>y</cite>). Nearest grid center
+sampling scheme.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.RegularGrid.vertex_coords">
+<tt class="descname">vertex_coords</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.vertex_coords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.vertex_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the coordinates of vertices.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.raster.grid.WarpedGrid">
+<em class="property">class </em><tt class="descclassname">karta.raster.grid.</tt><tt class="descname">WarpedGrid</tt><big>(</big><em>X</em>, <em>Y</em>, <em>Z</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#WarpedGrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.WarpedGrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Warped Grid class. A WarpedGrid contains a fixed number of rows
+and columns and a scalar or vector field defined on the z-axis. Grid
+spacing is not necessarily constant.</p>
+<dl class="method">
+<dt id="karta.raster.grid.WarpedGrid.fill_sinks">
+<tt class="descname">fill_sinks</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#WarpedGrid.fill_sinks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.WarpedGrid.fill_sinks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fill depressions. Use the algorithm of Wang and Liu (2006).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.WarpedGrid.resample">
+<tt class="descname">resample</tt><big>(</big><em>X</em>, <em>Y</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#WarpedGrid.resample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.WarpedGrid.resample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resample internal grid to the points defined by <cite>X</cite>, <cite>Y</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.grid.WarpedGrid.rotate">
+<tt class="descname">rotate</tt><big>(</big><em>deg</em>, <em>origin=(0.0</em>, <em>0.0)</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#WarpedGrid.rotate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.WarpedGrid.rotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate grid by <em>deg</em> degrees counter-clockwise around <em>origin</em>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.grid.aairead">
+<tt class="descclassname">karta.raster.grid.</tt><tt class="descname">aairead</tt><big>(</big><em>fnm</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#aairead"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.aairead" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience function to open a ESRI ASCII grid and return a RegularGrid
+instance.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.grid.gtiffread">
+<tt class="descclassname">karta.raster.grid.</tt><tt class="descname">gtiffread</tt><big>(</big><em>fnm</em>, <em>band=1</em><big>)</big><a class="reference internal" href="_modules/karta/raster/grid.html#gtiffread"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.gtiffread" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience function to open a GeoTIFF and return a RegularGrid
+instance.</p>
+<p>fnm : GeoTiff file path</p>
+<p>band : band to open (default 1)</p>
+</dd></dl>
+
+<span class="target" id="module-karta.raster.raster"></span><p>2D raster functions</p>
+<dl class="function">
+<dt id="karta.raster.raster.aspect">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">aspect</tt><big>(</big><em>D</em>, <em>res=(30.0</em>, <em>30.0)</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#aspect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.aspect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the slope aspect for each pixel.
+<a class="reference external" href="http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Aspect%20works">http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Aspect%20works</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.raster.div">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">div</tt><big>(</big><em>U</em>, <em>V</em>, <em>res=(30.0</em>, <em>30.0)</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#div"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.div" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the divergence of a vector field.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.raster.grad">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">grad</tt><big>(</big><em>D</em>, <em>res=(30.0</em>, <em>30.0)</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#grad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.grad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes the gradient of potential D. Return a tuple (dx, dy).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.raster.hillshade">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">hillshade</tt><big>(</big><em>D</em>, <em>res=(30.0</em>, <em>30.0)</em>, <em>bearing=330.0</em>, <em>azimuth=60.0</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#hillshade"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.hillshade" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a hillshade raster for field D. Testing version.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.raster.normed_vector_field">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">normed_vector_field</tt><big>(</big><em>D</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#normed_vector_field"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.normed_vector_field" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a U,V vector field of potential D. Scalar components of
+U,V are normalized to max(<a href="#id7"><span class="problematic" id="id8">|U, V|</span></a>).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.raster.pad">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">pad</tt><big>(</big><em>A</em>, <em>width=1</em>, <em>edges='all'</em>, <em>value=0.0</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#pad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.pad" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply padding to a 2D array.
+<em>A</em>         :   array to pad
+<em>width</em>     :   thickness of padding
+<em>edges</em>     :   &#8220;all&#8221;, &#8220;left&#8221;, &#8220;right&#8221;, &#8220;top&#8221;, &#8220;bottom&#8221;
+<a href="#id5"><span class="problematic" id="id6">*</span></a>value&#8221;     :   0.0, value to pad with</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.raster.peaks">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">peaks</tt><big>(</big><em>n=49</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#peaks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.peaks" title="Permalink to this definition">¶</a></dt>
+<dd><p>2d peaks function of MATLAB logo fame.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.raster.slope">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">slope</tt><big>(</big><em>D</em>, <em>res=(30.0</em>, <em>30.0)</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#slope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.slope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the scalar slope at each pixel. Use the neighbourhood
+method.
+<a class="reference external" href="http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works">http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works</a></p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.raster.viewshed">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">viewshed</tt><big>(</big><em>D</em>, <em>i</em>, <em>j</em>, <em>r=-1</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#viewshed"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.viewshed" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the viewshed on <em>D</em> at (i,j).</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.raster.witch_of_agnesi">
+<tt class="descclassname">karta.raster.raster.</tt><tt class="descname">witch_of_agnesi</tt><big>(</big><em>nx=100</em>, <em>ny=100</em>, <em>a=4.0</em><big>)</big><a class="reference internal" href="_modules/karta/raster/raster.html#witch_of_agnesi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.raster.witch_of_agnesi" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="docutils">
+<dt>Return a raster field defined by the equation</dt>
+<dd><blockquote class="first">
+<div>8 a^3</div></blockquote>
+<dl class="last docutils">
+<dt>Z = &#8212;&#8212;&#8212;&#8212;&#8211;</dt>
+<dd>d^2 + 4 a*2</dd>
+</dl>
+</dd>
+</dl>
+<p>where d is the distance from the center.</p>
+</dd></dl>
+
+<span class="target" id="module-karta.raster.aaigrid"></span><p>Python ESRI ASCII grid driver</p>
+<p>The primary class is AAIGrid, which can be called with a filename
+argument to open a grid, or can read data from a numpy array.</p>
+<p>Written by Nat Wilson</p>
+<dl class="exception">
+<dt id="karta.raster.aaigrid.AAIError">
+<em class="property">exception </em><tt class="descclassname">karta.raster.aaigrid.</tt><tt class="descname">AAIError</tt><big>(</big><em>value</em>, <em>detail=None</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Exceptions related to ESRI ASCII grid driver.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="karta.raster.aaigrid.AAIGrid">
+<em class="property">class </em><tt class="descclassname">karta.raster.aaigrid.</tt><tt class="descname">AAIGrid</tt><big>(</big><em>incoming=None</em>, <em>hdr=None</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid" title="Permalink to this definition">¶</a></dt>
+<dd><p>Grid object built around the ESRI ASCII Grid format.</p>
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.clip">
+<tt class="descname">clip</tt><big>(</big><em>bounds</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.clip"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.clip" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clip the z-range in place to bounds = [min, max].</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.coordmesh">
+<tt class="descname">coordmesh</tt><big>(</big><em>grid_registration='center'</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.coordmesh"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.coordmesh" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a pair of arrays containing the <em>X</em> and <em>Y</em> coordinates of
+the grid.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.fromarray">
+<tt class="descname">fromarray</tt><big>(</big><em>A</em>, <em>hdr</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.fromarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.fromarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read data from a 2d numpy array. The hdr argument is a dictionary
+of header information, including:</p>
+<blockquote>
+<div>ncols: [int]
+nrows: [int]
+cellsize: [float]
+nodata_value: [float]
+xllcenter OR xllcorner: [float]
+yllcenter OR yllcorner: [float]</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.fromfile">
+<tt class="descname">fromfile</tt><big>(</big><em>fnm</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.fromfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.fromfile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read an existing ASCII grid file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.get_indices">
+<tt class="descname">get_indices</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.get_indices"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.get_indices" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the column and row indices for the point nearest
+geographical coordinates (x, y).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.get_profile">
+<tt class="descname">get_profile</tt><big>(</big><em>segments</em>, <em>resolution=10.0</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.get_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.get_profile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sample along a line defined as <cite>segments</cite>. Does not interpolate.</p>
+<p>segments : iterable containing (x,y) pairs
+resolution : sample spacing</p>
+<p>profile : ndarray</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.get_region">
+<tt class="descname">get_region</tt><big>(</big><em>reference='center'</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.get_region"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.get_region" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the region characteristics as a tuple, relative to either
+cell centers or the grid edges.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.max">
+<tt class="descname">max</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.max"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the maximum non-nan in self.data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.min">
+<tt class="descname">min</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.min"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the minimum non-nan in self.data.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.minmax">
+<tt class="descname">minmax</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.minmax"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.minmax" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the minimum and maximum value of data array.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.read">
+<tt class="descname">read</tt><big>(</big><em>fnm</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.read"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.read" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read an existing ASCII grid file.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.resample">
+<tt class="descname">resample</tt><big>(</big><em>cellsize</em>, <em>method='nearest'</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.resample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.resample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resample array to have <cite>cellsize</cite>. Modify header in-place.</p>
+<p>cellsize : cell dimension, float</p>
+<p>method : interpolation method, string (&#8216;nearest&#8217;, &#8216;linear&#8217;)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.resize">
+<tt class="descname">resize</tt><big>(</big><em>te</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.resize"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.resize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Resize array to fit within extents given by te. If the new
+dimensions are smaller, the data is clipped. If they are larger,
+nan padding is added.</p>
+<dl class="docutils">
+<dt><em>te</em> <span class="classifier-delimiter">:</span> <span class="classifier">tuple of center coordinates in the form</span></dt>
+<dd>(xmin, xmax, ymin, ymax).</dd>
+</dl>
+<p>Returns None.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.sample">
+<tt class="descname">sample</tt><big>(</big><em>x</em>, <em>y</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.sample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.sample" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the value nearest to x, y.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.toarray">
+<tt class="descname">toarray</tt><big>(</big><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.toarray"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.toarray" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a 2d array with internal data. Header information can be
+obtained with AAIGrid.hdr.
+This is just a nicer way of calling AAIGrid.data.copy().</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.aaigrid.AAIGrid.tofile">
+<tt class="descname">tofile</tt><big>(</big><em>f</em>, <em>reference='center'</em><big>)</big><a class="reference internal" href="_modules/karta/raster/aaigrid.html#AAIGrid.tofile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.aaigrid.AAIGrid.tofile" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save internal data to f, either a file-like object or a
+filename.</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>reference: specify a header reference</dt>
+<dd>&#8220;center&#8221; | &#8220;corner&#8221;</dd>
+</dl>
+</div></blockquote>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+      </div>
+      <div class="bottomnav">
+      
+        <p>
+        «&#160;&#160;<a href="tutorial.html">Karta Tutorial</a>
+        &#160;&#160;::&#160;&#160;
+        <a class="uplink" href="karta-manual.html">Contents</a>
+        &#160;&#160;::&#160;&#160;
+        <a href="">Package reference</a>&#160;&#160;»
+        </p>
+
+      </div>
+
+    <div class="footer">
+        &copy; Copyright 2015, Nat Wilson.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+    </div>
+  </body>
+</html>
