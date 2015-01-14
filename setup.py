@@ -46,29 +46,29 @@ setup(
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
-    url = "http://njwilson23.github.io/karta/",
-    description = "A tidy Python package for geospatial computation",
+    url = "http://www.ironicmtn.com/karta/",
+    description = "Geospatial analysis in Python",
     long_description = """
 Karta - tidy Python package for geospatial computation
 ======================================================
 
-*Karta* is a Leatherman for geographic analyses. *Karta* provides an
-lightweight interface for solving problems in Python/Python3. It
-presents a simple and clean vector and raster data types, a small
-selection of geographical analysis functions, and the ability to read
-and write several useful formats.
+*Karta* is a Python/Python3 package for geospatial data structures. *Karta*
+serves as a Leatherman for geographic analyses. It provides simple and clean
+vector and raster data types, a selection of geographical analysis methods, and
+the ability to read and write several formats, including GeoJSON, shapefiles,
+and ESRI ASCII.
 
-Goals of *Karta* include exposing a simple and fast framework for
-spatial analysis. *Karta* is under development and suggestions and pull
-requests are welcome, particularly to improve format support and test
-coverage.
+The goals of *Karta* is to expose a simple and fast framework for spatial
+analysis.
 
 DOCUMENTATION
 -------------
 
-API documentation can be built by running ``make`` from the ``doc/``
-directory. The beginnings of a tutorial to introduce *Karta* are in the
-`Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`__.
+See the `online manual` <http://www.ironicmtn.com/karta/doc/manual/karta-manual.html>__.
+
+The manual can also be built offline using Sphinx by running ``make`` from the
+``doc/`` directory. The documentation is built from source code docstrings and
+information in the `Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`__.
 
 CONTENTS AT A GLANCE
 --------------------
