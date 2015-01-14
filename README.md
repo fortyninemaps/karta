@@ -22,9 +22,11 @@ to improve format support and test coverage.
 ## DOCUMENTATION
 See the [online manual](http://www.ironicmtn.com/karta/doc/manual/karta-manual.html).
 
-The manual can also be built offline using Sphinx by running make from the doc/
-directory. The documentation is built from source code docstrings and
+The manual can also be built offline using Sphinx by running `make` from the
+`doc/` subdirectory. The documentation is built from source code docstrings and
 information in the [Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
+Building the documentation requires [Sphinx](http://sphinx-doc.org/) and
+[numpydoc](https://github.com/numpy/numpydoc).
 
 ##CONTENTS AT A GLANCE
 
