@@ -1,4 +1,5 @@
-Karta Tutorial
+
+Karta tutorial
 ==============
 
 Introduction
@@ -14,11 +15,14 @@ Should you come across any mistakes, I would very much appreciate if you
 could let me know, or even better, provide a pull request on
 `Github <https://github.com/njwilson23/karta>`__!
 
+The following exmaples are shown using Python 3, however *karta* is
+supported on both Python 2.7+ and Python 3.2+.
+
 Definitions
 -----------
 
--  **vector data** refers to data can is treated as a set of connected
-   or disconnected vertices. Examples might be road networks, a set of
+-  **Vector data** in data can is treated as a set of connected or
+   disconnected vertices. Examples might be road networks, a set of
    borders, geophysical survey lines, or the path taken by a bottle
    floating in an ocean current. In karta, these data are classified as
    belonging to *Point*, *Multipoint*, *Line* or *Polygon* classes. Some
@@ -27,43 +31,41 @@ Definitions
 -  how many times and where do these lines intersect each other?
 -  what is the average distance travelled by a particle?
 
--  **raster data**, in contrast, is data that are typically thought of
+-  **Raster data**, in contrast, is data that are typically thought of
    in terms of pixels or a grid of values covering a surface. Examples
    might be an elevation map, satellite image, or an upstream area map.
    Operations on raster data might include slope, aspect, and curvature
    calculations, up and downsampling, and interpolation.
 
--  **Coordinate reference system** refers to a system of relating
-   measurements on a coordinate system to actual positions in space,
-   e.g. on the curved surface of the Earth. karta includes very basic
-   support of projected and geographical coordinates, but extending this
-   system through *pyproj* is something I would like to accomplish in
-   the future.
+-  The term **coordinate reference system** refers to a system of
+   relating measurements on a coordinate system to actual positions in
+   space, e.g. on the curved surface of the Earth. karta includes very
+   basic support of projected and geographical coordinates, but
+   extending this system through *pyproj* is something I would like to
+   accomplish in the future.
 
 Vector data
 -----------
 
 Let's experiment with some vector data.
 
-::
+.. code:: python
 
-    import karta.vector as kv
-
+    import karta
+    from karta.vector import Point, Multipoint, Line, Polygon
 The ``Point``, ``Multipoint``, ``Line``, and ``Polygon`` classes can all
 be instantiated by providing vertices, and optionally, associated data
 and metadata.
 
-::
-
-    from karta.vector import Point, Multipoint, Line, Polygon
+.. code:: python
 
     pt = Point((-123.1, 49.25))
-
-    mp = Multipoint([(-122.93, 48.62),
-                     (-123.10, 48.54),
-                     (-122.90, 48.49),
-                     (-122.81, 48.56)])
-
+    
+    mpt = Multipoint([(-122.93, 48.62),
+                      (-123.10, 48.54),
+                      (-122.90, 48.49),
+                      (-122.81, 48.56)])
+    
     line = Line([(-124.35713, 49.31437),
                  (-124.37857, 49.31720),
                  (-124.39442, 49.31833),
@@ -71,11 +73,24 @@ and metadata.
                  (-124.41052, 49.32203),
                  (-124.41681, 49.32477),
                  (-124.42278, 49.32588)])
-
+    
     poly = Polygon([(-25.41, 67.03),
                     (-24.83, 62.92),
                     (-12.76, 63.15),
                     (-11.44, 66.82)])
+    
+    print(pt)
+    print(mpt)
+    print(line)
+    print(poly)
+
+.. parsed-literal::
+
+    Point((-123.1, 49.25))
+    <class 'karta.vector.guppy.Multipoint'([(-122.93, 48.62), (-123.1, 48.54), (-122.9, 48.49), (-122.81, 48.56)])>
+    <class 'karta.vector.guppy.Line'([(-124.35713, 49.31437), (-124.37857, 49.3172)...(-124.41681, 49.32477), (-124.42278, 49.32588)])>
+    <class 'karta.vector.guppy.Polygon'([(-25.41, 67.03), (-24.83, 62.92), (-12.76, 63.15), (-11.44, 66.82)])>
+
 
 Each geometrical object now contains a vertex/vertices in a cartesian
 plane.
@@ -83,49 +98,177 @@ plane.
 We may be interested in determining whether our point is within our
 polygon
 
-::
+.. code:: python
 
-    poly.contains(pt)
+    print(poly.contains(pt))       # False
+    
+    pt2 = Point((-25, 65))
+    print(poly.contains(pt2))      # True
 
-    >> False
+.. parsed-literal::
+
+    False
+    True
+
 
 or whether our line crosses the polygon
 
-::
+.. code:: python
 
-    line.intersects(poly)
+    print(line.intersects(poly))   # False
 
-    >> False
+.. parsed-literal::
+
+    False
+
+
+There are methods for computing the nearest vertex to an external point,
+or the nearest point on an edge to an external point:
+
+.. code:: python
+
+    pt = Point((0.0, 60.0))
+    print(poly.nearest_point_to(pt))
+    print(poly.nearest_on_boundary(pt))
+
+.. parsed-literal::
+
+    Point((-12.76, 63.15))
+    Point((-12.301580009598124, 64.42454648846582))
+
 
 The vertices of multiple vertex objects can be iterated through and
 sliced:
 
-::
+.. code:: python
 
     subline = line[2:-2]
     for pt_ in subline:
         print(pt_.vertex)
 
-    >> (-124.39442, 49.31833)
-       (-124.40311, 49.31942)
-       (-124.41052, 49.32203)
+.. parsed-literal::
 
-We could have instantiated the objects by passing the ``crs`` keyword
-argument a CRS instance, as in
+    (-124.39442, 49.31833)
+    (-124.40311, 49.31942)
+    (-124.41052, 49.32203)
 
-::
 
-    pt = Point((-123.1, 49.25), crs=kv.LONLAT)
+A slice that takes part of a polygon returns a line.
 
-to indicate geographical coordinates. Having done do, we could calculate
-the great circle distance from our point to another point:
+.. code:: python
 
-::
+    print(poly[:2])
 
-    pt2 = Point((-70.66, 41.52), crs=kv.LONLAT)
-    pt.greatcircle(pt2)
+.. parsed-literal::
 
-    >> 4109559.587727985
+    <class 'karta.vector.guppy.Line'([(-25.41, 67.03), (-24.83, 62.92)])>
+
+
+Points have a ``distance`` that calculates the distance to another
+point. However, if we do
+
+.. code:: python
+
+    pt = Point((-123.1, 49.25))
+    pt2 = Point((-70.66, 41.52))
+    print(pt.distance(pt2))
+
+.. parsed-literal::
+
+    53.00666508061746
+
+
+this probably isn't what we wanted. Be default, geometries in Karta use
+a planar cartesian coordinate system. If our positions are meant to be
+geographical coordinates, then we can provide the ``crs`` argument to
+each geometry at creation, as in
+
+.. code:: python
+
+    pt = Point((-123.1, 49.25), crs=karta.crs.LONLAT)
+    pt2 = Point((-70.66, 41.52), crs=karta.crs.LONLAT)
+    pt.distance(pt2)
+
+
+
+.. parsed-literal::
+
+    4109559.587727985
+
+
+
+which now gives the great circle distance between point on the Earth, in
+meters.
+
+When the coordinate system is specified, all geometrical methods obey
+that coordinate system. We can use this to perform queries, such which
+American state capitols are within 4000 km of Mexico City?
+
+.. code:: python
+
+    
+    capitols = [Point((33.57, 112.1), properties={"n": "Phoenix, Arizona, United States"}, crs=karta.crs.LONLAT),
+                Point((38.57, 121.5), properties={"n": "Sacramento, California, United States"}, crs=karta.crs.LONLAT),
+                Point((33.76, 84.42), properties={"n": "Atlanta, Georgia, United States"}, crs=karta.crs.LONLAT),
+                Point((39.78, 86.15), properties={"n": "Indianapolis, Indiana, United States"}, crs=karta.crs.LONLAT),
+                Point((46.6, 112.0) , properties={"n": "Helena, Montana, United States"}, crs=karta.crs.LONLAT),
+                Point((39.98, 82.99), properties={"n": "Columbus, Ohio, United States"}, crs=karta.crs.LONLAT),
+                Point((37.53, 77.48), properties={"n": "Richmond, Virginia, United States"}, crs=karta.crs.LONLAT),
+                Point((39.04, 95.69), properties={"n": "Topeka, Kansas, United States"}, crs=karta.crs.LONLAT),
+                Point((42.33, 71.02), properties={"n": "Boston, Massachusetts, United States"}, crs=karta.crs.LONLAT),
+                Point((40.81, 96.68), properties={"n": "Lincoln, Nebraska, United States"}, crs=karta.crs.LONLAT),
+                Point((35.47, 97.51), properties={"n": "Oklahoma City, Oklahoma, United States"}, crs=karta.crs.LONLAT),
+                Point((58.37, 134.2), properties={"n": "Juneau, Alaska, United States"}, crs=karta.crs.LONLAT),
+                Point((44.38, 100.3), properties={"n": "Pierre, South Dakota, United States"}, crs=karta.crs.LONLAT),
+                Point((21.31, 157.8), properties={"n": "Honolulu, Hawaii, United States"}, crs=karta.crs.LONLAT),
+                Point((32.35, 86.27), properties={"n": "Montgomery, Alabama, United States"}, crs=karta.crs.LONLAT),
+                Point((34.73, 92.36), properties={"n": "Little Rock, Arkansas, United States"}, crs=karta.crs.LONLAT),
+                Point((39.76, 104.9), properties={"n": "Denver, Colorado, United States"}, crs=karta.crs.LONLAT),
+                Point((41.77, 72.68), properties={"n": "Hartford, Connecticut, United States"}, crs=karta.crs.LONLAT),
+                Point((39.16, 75.52), properties={"n": "Dover, Delaware, United States"}, crs=karta.crs.LONLAT),
+                Point((38.9, 77.02) , properties={"n": "Washington, District of Columbia, United States"}, crs=karta.crs.LONLAT),
+                Point((30.46, 84.25), properties={"n": "Tallahassee, Florida, United States"}, crs=karta.crs.LONLAT),
+                Point((43.6, 116.2) , properties={"n": "Boise, Idaho, United States"}, crs=karta.crs.LONLAT),
+                Point((39.76, 89.67), properties={"n": "Springfield, Illinois, United States"}, crs=karta.crs.LONLAT),
+                Point((41.57, 93.62), properties={"n": "Des Moines, Iowa, United States"}, crs=karta.crs.LONLAT),
+                Point((38.19, 84.87), properties={"n": "Frankfort, Kentucky, United States"}, crs=karta.crs.LONLAT),
+                Point((30.45, 91.13), properties={"n": "Baton Rouge, Louisiana, United States"}, crs=karta.crs.LONLAT),
+                Point((44.33, 69.73), properties={"n": "Augusta, Maine, United States"}, crs=karta.crs.LONLAT),
+                Point((38.97, 76.51), properties={"n": "Annapolis, Maryland, United States"}, crs=karta.crs.LONLAT),
+                Point((42.71, 84.56), properties={"n": "Lansing, Michigan, United States"}, crs=karta.crs.LONLAT),
+                Point((44.95, 93.1) , properties={"n": "Saint Paul, Minnesota, United States"}, crs=karta.crs.LONLAT),
+                Point((32.32, 90.21), properties={"n": "Jackson, Mississippi, United States"}, crs=karta.crs.LONLAT),
+                Point((38.57, 92.18), properties={"n": "Jefferson City, Missouri, United States"}, crs=karta.crs.LONLAT),
+                Point((39.15, 119.7), properties={"n": "Carson City, Nevada, United States"}, crs=karta.crs.LONLAT),
+                Point((43.23, 71.56), properties={"n": "Concord, New Hampshire, United States"}, crs=karta.crs.LONLAT),
+                Point((40.22, 74.76), properties={"n": "Trenton, New Jersey, United States"}, crs=karta.crs.LONLAT),
+                Point((35.67, 106.0), properties={"n": "Santa Fe, New Mexico, United States"}, crs=karta.crs.LONLAT),
+                Point((42.67, 73.8) , properties={"n": "Albany, New York, United States"}, crs=karta.crs.LONLAT),
+                Point((35.83, 78.64), properties={"n": "Raleigh, North Carolina, United States"}, crs=karta.crs.LONLAT),
+                Point((46.81, 100.8), properties={"n": "Bismarck, North Dakota, United States"}, crs=karta.crs.LONLAT),
+                Point((44.92, 123.0), properties={"n": "Salem, Oregon, United States"}, crs=karta.crs.LONLAT),
+                Point((40.28, 76.89), properties={"n": "Harrisburg, Pennsylvania, United States"}, crs=karta.crs.LONLAT),
+                Point((41.82, 71.42), properties={"n": "Providence, Rhode Island, United States"}, crs=karta.crs.LONLAT),
+                Point((34.02, 81.01), properties={"n": "Columbia, South Carolina, United States"}, crs=karta.crs.LONLAT),
+                Point((36.17, 86.78), properties={"n": "Nashville, Tennessee, United States"}, crs=karta.crs.LONLAT),
+                Point((30.31, 97.76), properties={"n": "Austin, Texas, United States"}, crs=karta.crs.LONLAT),
+                Point((40.78, 111.9), properties={"n": "Salt Lake City, Utah, United States"}, crs=karta.crs.LONLAT),
+                Point((44.27, 72.57), properties={"n": "Montpelier, Vermont, United States"}, crs=karta.crs.LONLAT),
+                Point((47.04, 122.9), properties={"n": "Olympia, Washington, United States"}, crs=karta.crs.LONLAT),
+                Point((38.35, 81.63), properties={"n": "Charleston, West Virginia, United States"}, crs=karta.crs.LONLAT),
+                Point((43.09, 89.43), properties={"n": "Madison, Wisconsin, United States"}, crs=karta.crs.LONLAT),
+                Point((41.15, 104.8), properties={"n": "Cheyenne, Wyoming, United States"}, crs=karta.crs.LONLAT)]
+.. code:: python
+
+    capitols[0].data + capitols[1].data
+
+
+
+.. parsed-literal::
+
+    D[]
+
+
 
 **TODO: describe other geometries**
 
@@ -135,31 +278,33 @@ Associated data
 By using the ``data`` keyword argument, additional data can be
 associated with a vector geometry.
 
-::
+.. code:: python
 
     mp = Multipoint([(1, 1), (3, 1), (4, 3), (2, 2)],
                     data={"species": ["T. officianale", "C. tectorum",
                                       "M. alba", "V. cracca"]})
-
 The data can be a list or a dictionary of lists, and are propogated
 through subsequent operations.
 
-::
+.. code:: python
 
     pt = mp[2]
-    pt
+    
+    print(pt)
+    print(pt.data["species"])
 
-    >> Point((4, 3))
+.. parsed-literal::
 
-    pt.data["species"]
+    Point((4, 3))
+    M. alba
 
-    >> 'M. alba'
 
 Metadata at the geometry level rather than the point level can be
 provided using the ``properties`` keyword argument, which accepts a
-dictionary.
+dictionary. Derived geometries carry the properties of their parent
+geometry.
 
-::
+.. code:: python
 
     poly = Polygon([(-25.41, 67.03),
                     (-24.83, 62.92),
@@ -167,6 +312,13 @@ dictionary.
                     (-11.44, 66.82)],
                    properties={"geology": "volcanic",
                                "alcohol": "brennivin"})
+    
+    print(poly[0:3])
+
+.. parsed-literal::
+
+    <class 'karta.vector.guppy.Line'([(-25.41, 67.03), (-24.83, 62.92), (-12.76, 63.15)])>
+
 
 Visualizing and importing/exporting data
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -174,29 +326,41 @@ Visualizing and importing/exporting data
 The ``get_coordinate_lists`` method provides lists of coordinates, which
 make is easy to visualize a geometry.
 
-::
+.. code:: python
 
     import matplotlib.pyplot as plt
+    %matplotlib qt
     plt.plot(*line.get_coordinate_lists())
 
+
+
+.. parsed-literal::
+
+    [<matplotlib.lines.Line2D at 0x7f0b978bd3c8>]
+
+
+
 Data can be read from several common formats, including ESRI shapefiles
-(through bindings to the *pyshp* module), GeoJSON, GPX, comma separated
-value tables. Convenience functions are kept in the
+(through bindings to the *pyshp* module), GeoJSON, GPX, and comma
+separated value tables. Convenience functions are kept in the
 ``karta.vector.read`` namespace.
 
-Saving data happens as
+Each geometry has appropriate methods to save data:
 
-::
+.. code:: python
 
     mp.to_vtk("my_vtk.vtk")
-
     line.to_shapefile("my_shapefile")
-
     poly.to_geojson("my_json.json")
 
-*Note: Support for various file formats is of varying quality, and I
-tend to rely on GeoJSON the most.*
 
-Raster
-------
+
+.. parsed-literal::
+
+    <karta.vector.geojson.GeoJSONWriter at 0x7f0b978f0c18>
+
+
+
+Raster data
+-----------
 
