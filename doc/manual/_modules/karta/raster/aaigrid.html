@@ -25,7 +25,7 @@
     <script type="text/javascript" src="../../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="karta 0.4.0b5 documentation" href="../../../index.html" />
-    <link rel="up" title="Module code" href="../../index.html" /> 
+    <link rel="up" title="karta" href="../../karta.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../../../index.html">
@@ -58,8 +58,7 @@
 <span class="kn">import</span> <span class="nn">traceback</span>
 
 <div class="viewcode-block" id="AAIGrid"><a class="viewcode-back" href="../../../reference.html#karta.raster.aaigrid.AAIGrid">[docs]</a><span class="k">class</span> <span class="nc">AAIGrid</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">RegularGrid</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Grid object built around the ESRI ASCII Grid format. &quot;&quot;&quot;</span>
-
+    <span class="sd">&quot;&quot;&quot; Grid class designed to read and emit ESRI ASCII grid files. &quot;&quot;&quot;</span>
     <span class="n">_hdr</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">aschdr</span> <span class="o">=</span> <span class="p">{}</span>
     <span class="n">aschdr</span><span class="p">[</span><span class="s">&#39;ncols&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
@@ -74,12 +73,13 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">incoming</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">hdr</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Contains the table of data from an ESRI ASCII raster file.</span>
 
-<span class="sd">        *incoming*  : either a filename or an ndarray containing the</span>
-<span class="sd">                      raster data. If incoming is not provided, then</span>
-<span class="sd">                      read() must be called later with a suitable</span>
-<span class="sd">                      filename.</span>
-
-<span class="sd">        *hdr*       : dictionary containing AAIGrid header information</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        incoming : either a filename or an ndarray containing the</span>
+<span class="sd">                   raster data. If incoming is not provided, then</span>
+<span class="sd">                   read() must be called later with a suitable</span>
+<span class="sd">                   filename.</span>
+<span class="sd">        hdr : dictionary containing AAIGrid header information</span>
 
 <span class="sd">        Header dictionaries contain the following keys:</span>
 <span class="sd">            ncols           (int)</span>
@@ -371,13 +371,25 @@
 </div>
 <div class="viewcode-block" id="AAIGrid.fromarray"><a class="viewcode-back" href="../../../reference.html#karta.raster.aaigrid.AAIGrid.fromarray">[docs]</a>    <span class="k">def</span> <span class="nf">fromarray</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">hdr</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Read data from a 2d numpy array. The hdr argument is a dictionary</span>
-<span class="sd">        of header information, including:</span>
-<span class="sd">            ncols: [int]</span>
-<span class="sd">            nrows: [int]</span>
-<span class="sd">            cellsize: [float]</span>
-<span class="sd">            nodata_value: [float]</span>
-<span class="sd">            xllcenter OR xllcorner: [float]</span>
-<span class="sd">            yllcenter OR yllcorner: [float]</span>
+<span class="sd">        of header information.</span>
+
+<span class="sd">        ncols : int</span>
+<span class="sd">            Number of columns</span>
+
+<span class="sd">        nrows : int</span>
+<span class="sd">            Number of rows</span>
+
+<span class="sd">        cellsize : float</span>
+<span class="sd">            Cell dimension</span>
+
+<span class="sd">        nodata_value : float</span>
+<span class="sd">            Value for missing data</span>
+
+<span class="sd">        xllcenter OR xllcorner : float</span>
+<span class="sd">            Lower left cell *x*-registration</span>
+
+<span class="sd">        yllcenter OR yllcorner : float</span>
+<span class="sd">            Lower left cell *y*-registration</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="c"># Should add sanity checks</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">aschdr</span> <span class="o">=</span> <span class="n">hdr</span>
@@ -385,10 +397,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">copy</span><span class="p">()[:,:]</span>
 </div>
 <div class="viewcode-block" id="AAIGrid.tofile"><a class="viewcode-back" href="../../../reference.html#karta.raster.aaigrid.AAIGrid.tofile">[docs]</a>    <span class="k">def</span> <span class="nf">tofile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="s">&#39;center&#39;</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Save internal data to f, either a file-like object or a</span>
-<span class="sd">        filename.</span>
-<span class="sd">            reference: specify a header reference</span>
-<span class="sd">                       &quot;center&quot; | &quot;corner&quot;</span>
+        <span class="sd">&quot;&quot;&quot; Save internal data to *f*, either a file-like object or a filename.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        f : filename or file handle</span>
+<span class="sd">        reference : grid registration (&quot;center&quot; or &quot;corner&quot;)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="n">AAIError</span><span class="p">(</span><span class="s">&quot;no data to write!&quot;</span><span class="p">)</span>
@@ -430,7 +444,6 @@
 <div class="viewcode-block" id="AAIGrid.toarray"><a class="viewcode-back" href="../../../reference.html#karta.raster.aaigrid.AAIGrid.toarray">[docs]</a>    <span class="k">def</span> <span class="nf">toarray</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Return a 2d array with internal data. Header information can be</span>
 <span class="sd">        obtained with AAIGrid.hdr.</span>
-<span class="sd">        This is just a nicer way of calling AAIGrid.data.copy().</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">,:]</span>
 </div>
@@ -440,7 +453,7 @@
         <span class="k">return</span> <span class="p">(</span><span class="n">A</span><span class="o">.</span><span class="n">min</span><span class="p">(),</span> <span class="n">A</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
 </div>
 <div class="viewcode-block" id="AAIGrid.sample"><a class="viewcode-back" href="../../../reference.html#karta.raster.aaigrid.AAIGrid.sample">[docs]</a>    <span class="k">def</span> <span class="nf">sample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot; Return the value nearest to x, y. &quot;&quot;&quot;</span>
+        <span class="sd">&quot;&quot;&quot; Return the value nearest to *x*, *y*. &quot;&quot;&quot;</span>
         <span class="n">xi</span><span class="p">,</span> <span class="n">yi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_indices</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
         <span class="n">ncols</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aschdr</span><span class="p">[</span><span class="s">&#39;ncols&#39;</span><span class="p">]</span>
         <span class="n">nrows</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aschdr</span><span class="p">[</span><span class="s">&#39;nrows&#39;</span><span class="p">]</span>
@@ -455,16 +468,15 @@
 <div class="viewcode-block" id="AAIGrid.get_profile"><a class="viewcode-back" href="../../../reference.html#karta.raster.aaigrid.AAIGrid.get_profile">[docs]</a>    <span class="k">def</span> <span class="nf">get_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">segments</span><span class="p">,</span> <span class="n">resolution</span><span class="o">=</span><span class="mf">10.0</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Sample along a line defined as `segments`. Does not interpolate.</span>
 
-<span class="sd">        Parameters:</span>
-<span class="sd">        -----------</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
 <span class="sd">        segments : iterable containing (x,y) pairs</span>
 <span class="sd">        resolution : sample spacing</span>
 
-<span class="sd">        Returns:</span>
-<span class="sd">        --------</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
 <span class="sd">        profile : ndarray</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-
         <span class="n">z</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">p</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">f</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">segments</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">segments</span><span class="p">[</span><span class="mi">1</span><span class="p">:]):</span>
@@ -499,9 +511,7 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-
 <span class="sd">        cellsize : cell dimension, float</span>
-
 <span class="sd">        method : interpolation method, string (&#39;nearest&#39;, &#39;linear&#39;)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">xllcenter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aschdr</span><span class="p">[</span><span class="s">&#39;xllcenter&#39;</span><span class="p">]</span>
@@ -538,8 +548,9 @@
 <span class="sd">        dimensions are smaller, the data is clipped. If they are larger,</span>
 <span class="sd">        nan padding is added.</span>
 
-<span class="sd">        *te*        :   tuple of center coordinates in the form</span>
-<span class="sd">                        (xmin, xmax, ymin, ymax).</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        te : tuple of center coordinates in the form (xmin, xmax, ymin, ymax).</span>
 
 <span class="sd">        Returns None.</span>
 <span class="sd">        &quot;&quot;&quot;</span>

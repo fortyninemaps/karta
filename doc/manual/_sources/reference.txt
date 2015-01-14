@@ -7,16 +7,38 @@ Package reference
 Coordinate reference systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Found in ``karta.crs``
-
 .. automodule:: karta.crs
+
+.. autoclass:: karta.crs.CRSRegister
+    :members:
+
+.. autoclass:: karta.crs.CRS
     :members:
 
 Vector package
 ~~~~~~~~~~~~~~
 
 .. automodule:: karta.vector.guppy
+
+.. autoclass:: karta.vector.Geometry
     :members:
+    :inherited-members:
+
+.. autoclass:: karta.vector.Point
+    :members:
+    :inherited-members:
+
+.. autoclass:: karta.vector.Multipoint
+    :members:
+    :inherited-members:
+
+.. autoclass:: karta.vector.Line
+    :members:
+    :inherited-members:
+
+.. autoclass:: karta.vector.Polygon
+    :members:
+    :inherited-members:
 
 .. automodule:: karta.vector.geojson
     :members:

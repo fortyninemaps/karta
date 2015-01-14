@@ -25,7 +25,7 @@
     <script type="text/javascript" src="../../_static/doctools.js"></script>
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="karta 0.4.0b5 documentation" href="../../index.html" />
-    <link rel="up" title="Module code" href="../index.html" /> 
+    <link rel="up" title="karta" href="../karta.html" /> 
   </head>
   <body>
       <div class="header"><h1 class="heading"><a href="../../index.html">
@@ -49,6 +49,8 @@
 
 <span class="sd">Customized reference systems may be added at runtime as follows:</span>
 
+<span class="sd">::</span>
+
 <span class="sd">    from karta.crs import crsreg</span>
 
 <span class="sd">    crsreg.add_CRS(&quot;my_CRS&quot;, proj=[projection parameters],</span>
@@ -59,6 +61,8 @@
 <span class="sd">For example, to add a CRS for handling data in the European Terrestrial</span>
 <span class="sd">Reference System of 1989, use:</span>
 
+<span class="sd">::</span>
+
 <span class="sd">    crsreg.add_CRS(&quot;ETRS89&quot;, proj={&quot;proj&quot;: &quot;lonlat&quot;, &quot;towgs84&quot;: [0,0,0,0,0,0,0]},</span>
 <span class="sd">                             geod={&quot;ellps&quot;: &quot;GRS80&quot;},</span>
 <span class="sd">                             crstype=&quot;geographical&quot;,</span>
@@ -68,7 +72,19 @@
 <span class="kn">import</span> <span class="nn">pyproj</span>
 
 <div class="viewcode-block" id="CRS"><a class="viewcode-back" href="../../reference.html#karta.crs.CRS">[docs]</a><span class="k">class</span> <span class="nc">CRS</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot; Encapsulated a coordinate reference system. &quot;&quot;&quot;</span>
+
+    <span class="sd">&quot;&quot;&quot; The `CRS` class represents a specific coordinate reference systems.</span>
+<span class="sd">    Each `CRS` instance has a `crstype`, which is one of:</span>
+
+<span class="sd">        - &quot;geographical&quot;</span>
+<span class="sd">        - &quot;projected&quot;</span>
+<span class="sd">        - &quot;local&quot;</span>
+
+<span class="sd">    and an `id` string, which is intended to be an Open Geospatial Consortium</span>
+<span class="sd">    uniform resource name (&#39;uri&#39;). Also, a `CRS` may have a callable `proj`</span>
+<span class="sd">    method that projects between the `CRS` and geographical longitude and</span>
+<span class="sd">    latitude, and a callable `geod` attribute that computes geodetic distances.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">geod</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">crstype</span><span class="o">=</span><span class="s">&quot;unkown&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;&#39;proj&#39; : pyproj.Proj or None</span>
 
@@ -107,7 +123,13 @@
     <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
         <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
 </div>
-<span class="k">class</span> <span class="nc">CRSRegister</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+<div class="viewcode-block" id="CRSRegister"><a class="viewcode-back" href="../../reference.html#karta.crs.CRSRegister">[docs]</a><span class="k">class</span> <span class="nc">CRSRegister</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; The `CRSRegister` is a database of known and initialized coordinate</span>
+<span class="sd">    systems. Individual `CRS` instances can be accessed as attributes of the</span>
+<span class="sd">    `CRSRegister`. If they are already in use, a reference to the existing</span>
+<span class="sd">    `CRS` is returned to avoid duplication of thousands of `CRS` instances.</span>
+<span class="sd">    Otherwise, known references systems are initialized and returned.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
     
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register</span> <span class="o">=</span> <span class="p">{}</span>
@@ -115,10 +137,14 @@
     <span class="k">def</span> <span class="nf">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_CRS</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">add_CRS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="viewcode-block" id="CRSRegister.add_CRS"><a class="viewcode-back" href="../../reference.html#karta.crs.CRSRegister.add_CRS">[docs]</a>    <span class="k">def</span> <span class="nf">add_CRS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a ``crs.CRS`` instance with `**kwargs` with the identifier</span>
+<span class="sd">        `name`. &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">CRS</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">get_CRS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+</div>
+<div class="viewcode-block" id="CRSRegister.get_CRS"><a class="viewcode-back" href="../../reference.html#karta.crs.CRSRegister.get_CRS">[docs]</a>    <span class="k">def</span> <span class="nf">get_CRS</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Get a reference to a ``crs.CRS`` with identifier `name`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">crs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">register</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">crs</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">CRSDict</span><span class="p">:</span>
@@ -139,7 +165,7 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="n">CRSLookupError</span><span class="p">(</span><span class="s">&quot;CRS &#39;{0}&#39; not defined&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">crs</span>
-
+</div></div>
 <span class="n">CRSDict</span> <span class="o">=</span> <span class="p">{</span><span class="s">&quot;CARTESIAN&quot;</span> <span class="p">:</span> <span class="p">{</span><span class="s">&quot;proj&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
                           <span class="s">&quot;geod&quot;</span><span class="p">:</span> <span class="bp">None</span><span class="p">,</span>
                           <span class="s">&quot;crstype&quot;</span><span class="p">:</span> <span class="s">&quot;local&quot;</span><span class="p">,</span>
@@ -348,12 +374,12 @@
 <span class="c">#UTM60N = CRS(&quot;UTM Zone 60 North (WGS 84)&quot;, &quot;projected&quot;, &quot;urn:ogc:def:crs:EPSG::32660&quot;)</span>
 <span class="c">#UTM60S = CRS(&quot;UTM Zone 60 South (WGS 84)&quot;, &quot;projected&quot;, &quot;urn:ogc:def:crs:EPSG::32760&quot;)</span>
 
-<div class="viewcode-block" id="CRSError"><a class="viewcode-back" href="../../reference.html#karta.crs.CRSError">[docs]</a><span class="k">class</span> <span class="nc">CRSError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">CRSError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Exception to raise for invalid geodetic operations. &quot;&quot;&quot;</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
 
- </div>
+ 
 <span class="k">class</span> <span class="nc">CRSLookupError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s">&#39;&#39;</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
