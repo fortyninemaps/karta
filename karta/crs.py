@@ -4,6 +4,8 @@ or created on the fly.
 
 Customized reference systems may be added at runtime as follows:
 
+::
+
     from karta.crs import crsreg
 
     crsreg.add_CRS("my_CRS", proj=[projection parameters],
@@ -14,6 +16,8 @@ Customized reference systems may be added at runtime as follows:
 For example, to add a CRS for handling data in the European Terrestrial
 Reference System of 1989, use:
 
+::
+
     crsreg.add_CRS("ETRS89", proj={"proj": "lonlat", "towgs84": [0,0,0,0,0,0,0]},
                              geod={"ellps": "GRS80"},
                              crstype="geographical",
@@ -23,7 +27,19 @@ Reference System of 1989, use:
 import pyproj
 
 class CRS(object):
-    """ Encapsulated a coordinate reference system. """
+
+    """ The `CRS` class represents a specific coordinate reference systems.
+    Each `CRS` instance has a `crstype`, which is one of:
+
+        - "geographical"
+        - "projected"
+        - "local"
+
+    and an `id` string, which is intended to be an Open Geospatial Consortium
+    uniform resource name ('uri'). Also, a `CRS` may have a callable `proj`
+    method that projects between the `CRS` and geographical longitude and
+    latitude, and a callable `geod` attribute that computes geodetic distances.
+    """
     def __init__(self, proj=None, geod=None, crstype="unkown", id=None):
         """'proj' : pyproj.Proj or None
 
@@ -63,6 +79,12 @@ class CRS(object):
         return not self.__eq__(other)
 
 class CRSRegister(object):
+    """ The `CRSRegister` is a database of known and initialized coordinate
+    systems. Individual `CRS` instances can be accessed as attributes of the
+    `CRSRegister`. If they are already in use, a reference to the existing
+    `CRS` is returned to avoid duplication of thousands of `CRS` instances.
+    Otherwise, known references systems are initialized and returned.
+    """
     
     def __init__(self):
         self.register = {}
@@ -71,9 +93,13 @@ class CRSRegister(object):
         return self.get_CRS(name)
 
     def add_CRS(self, name, **kwargs):
+        """ Add a ``crs.CRS`` instance with `**kwargs` with the identifier
+        `name`. """
         self.register[name] = CRS(**kwargs)
 
     def get_CRS(self, name):
+        """ Get a reference to a ``crs.CRS`` with identifier `name`.
+        """
         crs = self.register.get(name, None)
         if crs is None:
             if name in CRSDict:

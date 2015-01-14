@@ -13,8 +13,7 @@ from . import grid
 import traceback
 
 class AAIGrid(grid.RegularGrid):
-    """ Grid object built around the ESRI ASCII Grid format. """
-
+    """ Grid class designed to read and emit ESRI ASCII grid files. """
     _hdr = {}
     aschdr = {}
     aschdr['ncols'] = None
@@ -29,12 +28,13 @@ class AAIGrid(grid.RegularGrid):
     def __init__(self, incoming=None, hdr=None):
         """ Contains the table of data from an ESRI ASCII raster file.
 
-        *incoming*  : either a filename or an ndarray containing the
-                      raster data. If incoming is not provided, then
-                      read() must be called later with a suitable
-                      filename.
-
-        *hdr*       : dictionary containing AAIGrid header information
+        Parameters
+        ----------
+        incoming : either a filename or an ndarray containing the
+                   raster data. If incoming is not provided, then
+                   read() must be called later with a suitable
+                   filename.
+        hdr : dictionary containing AAIGrid header information
 
         Header dictionaries contain the following keys:
             ncols           (int)
@@ -326,13 +326,25 @@ class AAIGrid(grid.RegularGrid):
 
     def fromarray(self, A, hdr):
         """ Read data from a 2d numpy array. The hdr argument is a dictionary
-        of header information, including:
-            ncols: [int]
-            nrows: [int]
-            cellsize: [float]
-            nodata_value: [float]
-            xllcenter OR xllcorner: [float]
-            yllcenter OR yllcorner: [float]
+        of header information.
+
+        ncols : int
+            Number of columns
+
+        nrows : int
+            Number of rows
+
+        cellsize : float
+            Cell dimension
+
+        nodata_value : float
+            Value for missing data
+
+        xllcenter OR xllcorner : float
+            Lower left cell *x*-registration
+
+        yllcenter OR yllcorner : float
+            Lower left cell *y*-registration
         """
         # Should add sanity checks
         self.aschdr = hdr
@@ -340,10 +352,12 @@ class AAIGrid(grid.RegularGrid):
         self.data = A.copy()[:,:]
 
     def tofile(self, f, reference='center'):
-        """ Save internal data to f, either a file-like object or a
-        filename.
-            reference: specify a header reference
-                       "center" | "corner"
+        """ Save internal data to *f*, either a file-like object or a filename.
+
+        Parameters
+        ----------
+        f : filename or file handle
+        reference : grid registration ("center" or "corner")
         """
         if self.data is None:
             raise AAIError("no data to write!")
@@ -385,7 +399,6 @@ class AAIGrid(grid.RegularGrid):
     def toarray(self):
         """ Return a 2d array with internal data. Header information can be
         obtained with AAIGrid.hdr.
-        This is just a nicer way of calling AAIGrid.data.copy().
         """
         return self.data.copy()[::-1,:]
 
@@ -395,7 +408,7 @@ class AAIGrid(grid.RegularGrid):
         return (A.min(), A.max())
 
     def sample(self, x, y):
-        """ Return the value nearest to x, y. """
+        """ Return the value nearest to *x*, *y*. """
         xi, yi = self.get_indices(x, y)
         ncols = self.aschdr['ncols']
         nrows = self.aschdr['nrows']
@@ -410,16 +423,15 @@ class AAIGrid(grid.RegularGrid):
     def get_profile(self, segments, resolution=10.0):
         """ Sample along a line defined as `segments`. Does not interpolate.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         segments : iterable containing (x,y) pairs
         resolution : sample spacing
 
-        Returns:
-        --------
+        Returns
+        -------
         profile : ndarray
         """
-
         z = []
         p = 0
         for s, f in zip(segments[:-1], segments[1:]):
@@ -454,9 +466,7 @@ class AAIGrid(grid.RegularGrid):
 
         Parameters
         ----------
-
         cellsize : cell dimension, float
-
         method : interpolation method, string ('nearest', 'linear')
         """
         xllcenter = self.aschdr['xllcenter']
@@ -493,8 +503,9 @@ class AAIGrid(grid.RegularGrid):
         dimensions are smaller, the data is clipped. If they are larger,
         nan padding is added.
 
-        *te*        :   tuple of center coordinates in the form
-                        (xmin, xmax, ymin, ymax).
+        Parameters
+        ----------
+        te : tuple of center coordinates in the form (xmin, xmax, ymin, ymax).
 
         Returns None.
         """
