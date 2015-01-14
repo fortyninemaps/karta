@@ -20,9 +20,11 @@ to improve format support and test coverage.
 - reprojections
 
 ## DOCUMENTATION
-API documentation can be built by running `make` from the `doc/` directory. The
-beginnings of a tutorial to introduce *Karta* are in the
-[Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
+See the [online manual](http://www.ironicmtn.com/karta/doc/build/html/karta-manual.html).
+
+The manual can also be built offline using Sphinx by running make from the doc/
+directory. The documentation is built from source code docstrings and
+information in the [Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
 
 ##CONTENTS AT A GLANCE
 
