@@ -8,7 +8,7 @@
     
     <title>Karta tutorial &mdash; karta 0.4.0b5 documentation</title>
     
-    <link rel="stylesheet" href="_static/haiku.css" type="text/css" />
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     
     <script type="text/javascript">
@@ -26,40 +26,51 @@
     <script type="text/javascript" src="http://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="top" title="karta 0.4.0b5 documentation" href="index.html" />
     <link rel="next" title="Package reference" href="reference.html" />
-    <link rel="prev" title="Installation" href="installation.html" /> 
+    <link rel="prev" title="Installation" href="installation.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9">
+
   </head>
   <body>
-      <div class="header"><h1 class="heading"><a href="index.html">
-          <span>karta 0.4.0b5 documentation</span></a></h1>
-        <h2 class="heading"><span>Karta tutorial</span></h2>
-      </div>
-      <div class="topnav">
-      
-        <p>
-        «&#160;&#160;<a href="installation.html">Installation</a>
-        &#160;&#160;::&#160;&#160;
-        <a class="uplink" href="karta-manual.html">Contents</a>
-        &#160;&#160;::&#160;&#160;
-        <a href="reference.html">Package reference</a>&#160;&#160;»
-        </p>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="right" >
+          <a href="reference.html" title="Package reference"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="installation.html" title="Installation"
+             accesskey="P">previous</a> |</li>
+        <li><a href="karta-manual.html">karta 0.4.0b5 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
 
-      </div>
-      <div class="content">
-        
-        
-  <div class="section" id="karta-tutorial">
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <p><a class="reference external" href="../karta-manual.html">Back to manual</a></p>
+<div class="section" id="karta-tutorial">
 <h1>Karta tutorial<a class="headerlink" href="#karta-tutorial" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
-<p>Karta provides a lightweight set of tools for performing analyses of
+<p><em>Karta</em> provides a lightweight set of tools for performing analyses of
 geographical data. The organization of karta is around a set of
 container classes for vector and raster data with builtin methods for
 common tasks. This tutorial provides a brief introduction to some of the
 main parts of karta.</p>
-<p>Should you come across any mistakes, I would very much appreciate if you
-could let me know, or even better, provide a pull request on
+<p>Should you come across any mistakes, let me know, or even better,
+provide a pull request on
 <a class="reference external" href="https://github.com/njwilson23/karta">Github</a>!</p>
-<p>The following exmaples are shown using Python 3, however <em>karta</em> is
+<p>The following exmaples are shown using Python 3, however <em>Karta</em> is
 supported on both Python 2.7+ and Python 3.2+.</p>
 </div>
 <div class="section" id="definitions">
@@ -90,8 +101,7 @@ accomplish in the future.</li>
 <div class="section" id="vector-data">
 <h2>Vector data<a class="headerlink" href="#vector-data" title="Permalink to this headline">¶</a></h2>
 <p>Let&#8217;s experiment with some vector data.</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">import</span> <span class="nn">karta</span>
-<span class="kn">from</span> <span class="nn">karta.vector</span> <span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Multipoint</span><span class="p">,</span> <span class="n">Line</span><span class="p">,</span> <span class="n">Polygon</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">karta.vector</span> <span class="kn">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Multipoint</span><span class="p">,</span> <span class="n">Line</span><span class="p">,</span> <span class="n">Polygon</span>
 </pre></div>
 </div>
 <p>The <tt class="docutils literal"><span class="pre">Point</span></tt>, <tt class="docutils literal"><span class="pre">Multipoint</span></tt>, <tt class="docutils literal"><span class="pre">Line</span></tt>, and <tt class="docutils literal"><span class="pre">Polygon</span></tt> classes can all
@@ -194,8 +204,11 @@ point. However, if we do</p>
 a planar cartesian coordinate system. If our positions are meant to be
 geographical coordinates, then we can provide the <tt class="docutils literal"><span class="pre">crs</span></tt> argument to
 each geometry at creation, as in</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">pt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">123.1</span><span class="p">,</span> <span class="mf">49.25</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">)</span>
-<span class="n">pt2</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">70.66</span><span class="p">,</span> <span class="mf">41.52</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">)</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">karta</span> <span class="kn">import</span> <span class="n">crs</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">pt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">123.1</span><span class="p">,</span> <span class="mf">49.25</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">)</span>
+<span class="n">pt2</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">70.66</span><span class="p">,</span> <span class="mf">41.52</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">)</span>
 <span class="n">pt</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">pt2</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -206,64 +219,170 @@ each geometry at creation, as in</p>
 meters.</p>
 <p>When the coordinate system is specified, all geometrical methods obey
 that coordinate system. We can use this to perform queries, such which
-American state capitols are within 4000 km of Mexico City?</p>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">capitols</span> <span class="o">=</span> <span class="p">[</span><span class="n">Point</span><span class="p">((</span><span class="mf">33.57</span><span class="p">,</span> <span class="mf">112.1</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Phoenix, Arizona, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">38.57</span><span class="p">,</span> <span class="mf">121.5</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Sacramento, California, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">33.76</span><span class="p">,</span> <span class="mf">84.42</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Atlanta, Georgia, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">39.78</span><span class="p">,</span> <span class="mf">86.15</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Indianapolis, Indiana, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">46.6</span><span class="p">,</span> <span class="mf">112.0</span><span class="p">)</span> <span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Helena, Montana, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">39.98</span><span class="p">,</span> <span class="mf">82.99</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Columbus, Ohio, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">37.53</span><span class="p">,</span> <span class="mf">77.48</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Richmond, Virginia, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">39.04</span><span class="p">,</span> <span class="mf">95.69</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Topeka, Kansas, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">42.33</span><span class="p">,</span> <span class="mf">71.02</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Boston, Massachusetts, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">40.81</span><span class="p">,</span> <span class="mf">96.68</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Lincoln, Nebraska, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">35.47</span><span class="p">,</span> <span class="mf">97.51</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Oklahoma City, Oklahoma, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">58.37</span><span class="p">,</span> <span class="mf">134.2</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Juneau, Alaska, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">44.38</span><span class="p">,</span> <span class="mf">100.3</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Pierre, South Dakota, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">21.31</span><span class="p">,</span> <span class="mf">157.8</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Honolulu, Hawaii, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">32.35</span><span class="p">,</span> <span class="mf">86.27</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Montgomery, Alabama, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">34.73</span><span class="p">,</span> <span class="mf">92.36</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Little Rock, Arkansas, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">39.76</span><span class="p">,</span> <span class="mf">104.9</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Denver, Colorado, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">41.77</span><span class="p">,</span> <span class="mf">72.68</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Hartford, Connecticut, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">39.16</span><span class="p">,</span> <span class="mf">75.52</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Dover, Delaware, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">38.9</span><span class="p">,</span> <span class="mf">77.02</span><span class="p">)</span> <span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Washington, District of Columbia, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">30.46</span><span class="p">,</span> <span class="mf">84.25</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Tallahassee, Florida, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">43.6</span><span class="p">,</span> <span class="mf">116.2</span><span class="p">)</span> <span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Boise, Idaho, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">39.76</span><span class="p">,</span> <span class="mf">89.67</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Springfield, Illinois, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">41.57</span><span class="p">,</span> <span class="mf">93.62</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Des Moines, Iowa, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">38.19</span><span class="p">,</span> <span class="mf">84.87</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Frankfort, Kentucky, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">30.45</span><span class="p">,</span> <span class="mf">91.13</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Baton Rouge, Louisiana, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">44.33</span><span class="p">,</span> <span class="mf">69.73</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Augusta, Maine, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">38.97</span><span class="p">,</span> <span class="mf">76.51</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Annapolis, Maryland, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">42.71</span><span class="p">,</span> <span class="mf">84.56</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Lansing, Michigan, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">44.95</span><span class="p">,</span> <span class="mf">93.1</span><span class="p">)</span> <span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Saint Paul, Minnesota, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">32.32</span><span class="p">,</span> <span class="mf">90.21</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Jackson, Mississippi, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">38.57</span><span class="p">,</span> <span class="mf">92.18</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Jefferson City, Missouri, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">39.15</span><span class="p">,</span> <span class="mf">119.7</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Carson City, Nevada, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">43.23</span><span class="p">,</span> <span class="mf">71.56</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Concord, New Hampshire, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">40.22</span><span class="p">,</span> <span class="mf">74.76</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Trenton, New Jersey, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">35.67</span><span class="p">,</span> <span class="mf">106.0</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Santa Fe, New Mexico, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">42.67</span><span class="p">,</span> <span class="mf">73.8</span><span class="p">)</span> <span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Albany, New York, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">35.83</span><span class="p">,</span> <span class="mf">78.64</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Raleigh, North Carolina, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">46.81</span><span class="p">,</span> <span class="mf">100.8</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Bismarck, North Dakota, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">44.92</span><span class="p">,</span> <span class="mf">123.0</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Salem, Oregon, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">40.28</span><span class="p">,</span> <span class="mf">76.89</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Harrisburg, Pennsylvania, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">41.82</span><span class="p">,</span> <span class="mf">71.42</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Providence, Rhode Island, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">34.02</span><span class="p">,</span> <span class="mf">81.01</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Columbia, South Carolina, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">36.17</span><span class="p">,</span> <span class="mf">86.78</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Nashville, Tennessee, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">30.31</span><span class="p">,</span> <span class="mf">97.76</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Austin, Texas, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">40.78</span><span class="p">,</span> <span class="mf">111.9</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Salt Lake City, Utah, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">44.27</span><span class="p">,</span> <span class="mf">72.57</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Montpelier, Vermont, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">47.04</span><span class="p">,</span> <span class="mf">122.9</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Olympia, Washington, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">38.35</span><span class="p">,</span> <span class="mf">81.63</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Charleston, West Virginia, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">43.09</span><span class="p">,</span> <span class="mf">89.43</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Madison, Wisconsin, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">),</span>
-            <span class="n">Point</span><span class="p">((</span><span class="mf">41.15</span><span class="p">,</span> <span class="mf">104.8</span><span class="p">),</span> <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s">&quot;n&quot;</span><span class="p">:</span> <span class="s">&quot;Cheyenne, Wyoming, United States&quot;</span><span class="p">},</span> <span class="n">crs</span><span class="o">=</span><span class="n">karta</span><span class="o">.</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">)]</span>
+American state capitols are within 2000 km of Mexico City?</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="kn">from</span> <span class="nn">karta.examples</span> <span class="kn">import</span> <span class="n">us_capitols</span>
+<span class="n">mexico_city</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">99.13</span><span class="p">,</span> <span class="mf">19.43</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="code python highlight-python"><div class="highlight"><pre><span class="n">capitols</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="n">capitols</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># List all US state capitols</span>
+<span class="k">for</span> <span class="n">capitol</span> <span class="ow">in</span> <span class="n">us_capitols</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">capitol</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s">&quot;n&quot;</span><span class="p">],</span> <span class="n">capitol</span><span class="o">.</span><span class="n">vertex</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-python"><div class="highlight"><pre>D[]
+<div class="highlight-python"><div class="highlight"><pre>Phoenix, Arizona, United States (-112.1, 33.57)
+Sacramento, California, United States (-121.5, 38.57)
+Atlanta, Georgia, United States (-84.42, 33.76)
+Indianapolis, Indiana, United States (-86.15, 39.78)
+Helena, Montana, United States (-112.0, 46.6)
+Columbus, Ohio, United States (-82.99, 39.98)
+Richmond, Virginia, United States (-77.48, 37.53)
+Topeka, Kansas, United States (-95.69, 39.04)
+Boston, Massachusetts, United States (-71.02, 42.33)
+Lincoln, Nebraska, United States (-96.68, 40.81)
+Oklahoma City, Oklahoma, United States (-97.51, 35.47)
+Juneau, Alaska, United States (-134.2, 58.37)
+Pierre, South Dakota, United States (-100.3, 44.38)
+Honolulu, Hawaii, United States (-157.8, 21.31)
+Montgomery, Alabama, United States (-86.27, 32.35)
+Little Rock, Arkansas, United States (-92.36, 34.73)
+Denver, Colorado, United States (-104.9, 39.76)
+Hartford, Connecticut, United States (-72.68, 41.77)
+Dover, Delaware, United States (-75.52, 39.16)
+Washington, District of Columbia, United States (-77.02, 38.9)
+Tallahassee, Florida, United States (-84.25, 30.46)
+Boise, Idaho, United States (-116.2, 43.6)
+Springfield, Illinois, United States (-89.67, 39.76)
+Des Moines, Iowa, United States (-93.62, 41.57)
+Frankfort, Kentucky, United States (-84.87, 38.19)
+Baton Rouge, Louisiana, United States (-91.13, 30.45)
+Augusta, Maine, United States (-69.73, 44.33)
+Annapolis, Maryland, United States (-76.51, 38.97)
+Lansing, Michigan, United States (-84.56, 42.71)
+Saint Paul, Minnesota, United States (-93.1, 44.95)
+Jackson, Mississippi, United States (-90.21, 32.32)
+Jefferson City, Missouri, United States (-92.18, 38.57)
+Carson City, Nevada, United States (-119.7, 39.15)
+Concord, New Hampshire, United States (-71.56, 43.23)
+Trenton, New Jersey, United States (-74.76, 40.22)
+Santa Fe, New Mexico, United States (-106.0, 35.67)
+Albany, New York, United States (-73.8, 42.67)
+Raleigh, North Carolina, United States (-78.64, 35.83)
+Bismarck, North Dakota, United States (-100.8, 46.81)
+Salem, Oregon, United States (-123.0, 44.92)
+Harrisburg, Pennsylvania, United States (-76.89, 40.28)
+Providence, Rhode Island, United States (-71.42, 41.82)
+Columbia, South Carolina, United States (-81.01, 34.02)
+Nashville, Tennessee, United States (-86.78, 36.17)
+Austin, Texas, United States (-97.76, 30.31)
+Salt Lake City, Utah, United States (-111.9, 40.78)
+Montpelier, Vermont, United States (-72.57, 44.27)
+Olympia, Washington, United States (-122.9, 47.04)
+Charleston, West Virginia, United States (-81.63, 38.35)
+Madison, Wisconsin, United States (-89.43, 43.09)
+Cheyenne, Wyoming, United States (-104.8, 41.15)
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># Filter those within 2000 km of Mexico City</span>
+<span class="n">nearby</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pt</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">mexico_city</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">2000e3</span><span class="p">,</span> <span class="n">us_capitols</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">capitol</span> <span class="ow">in</span> <span class="n">nearby</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="n">capitol</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s">&quot;n&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>Oklahoma City, Oklahoma, United States
+Montgomery, Alabama, United States
+Little Rock, Arkansas, United States
+Tallahassee, Florida, United States
+Baton Rouge, Louisiana, United States
+Jackson, Mississippi, United States
+Santa Fe, New Mexico, United States
+Austin, Texas, United States
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="c"># Or, list capitols from nearest to furthest from Mexico City</span>
+<span class="n">distances</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pt</span><span class="p">:</span> <span class="n">mexico_city</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">pt</span><span class="p">),</span> <span class="n">us_capitols</span><span class="p">)</span>
+<span class="n">distances_capitols</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">us_capitols</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">distances_capitols</span><span class="p">:</span>
+    <span class="k">print</span><span class="p">(</span><span class="s">&quot;{km:.0f} km, {name}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">km</span><span class="o">=</span><span class="n">d</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">pt</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s">&quot;n&quot;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>1213 km, Austin, Texas, United States
+1463 km, Baton Rouge, Louisiana, United States
+1683 km, Jackson, Mississippi, United States
+1785 km, Oklahoma City, Oklahoma, United States
+1822 km, Little Rock, Arkansas, United States
+1922 km, Santa Fe, New Mexico, United States
+1923 km, Montgomery, Alabama, United States
+1933 km, Tallahassee, Florida, United States
+2027 km, Phoenix, Arizona, United States
+2155 km, Atlanta, Georgia, United States
+2199 km, Topeka, Kansas, United States
+2214 km, Nashville, Tennessee, United States
+2225 km, Jefferson City, Missouri, United States
+2320 km, Denver, Colorado, United States
+2382 km, Lincoln, Nebraska, United States
+2414 km, Columbia, South Carolina, United States
+2429 km, Springfield, Illinois, United States
+2467 km, Cheyenne, Wyoming, United States
+2495 km, Frankfort, Kentucky, United States
+2510 km, Des Moines, Iowa, United States
+2576 km, Indianapolis, Indiana, United States
+2661 km, Salt Lake City, Utah, United States
+2694 km, Charleston, West Virginia, United States
+2708 km, Raleigh, North Carolina, United States
+2752 km, Columbus, Ohio, United States
+2769 km, Pierre, South Dakota, United States
+2777 km, Madison, Wisconsin, United States
+2885 km, Saint Paul, Minnesota, United States
+2904 km, Richmond, Virginia, United States
+2922 km, Lansing, Michigan, United States
+2947 km, Carson City, Nevada, United States
+3025 km, Sacramento, California, United States
+3030 km, Washington, District of Columbia, United States
+3041 km, Bismarck, North Dakota, United States
+3070 km, Annapolis, Maryland, United States
+3118 km, Boise, Idaho, United States
+3137 km, Harrisburg, Pennsylvania, United States
+3150 km, Dover, Delaware, United States
+3235 km, Helena, Montana, United States
+3274 km, Trenton, New Jersey, United States
+3506 km, Albany, New York, United States
+3517 km, Hartford, Connecticut, United States
+3585 km, Salem, Oregon, United States
+3605 km, Providence, Rhode Island, United States
+3665 km, Boston, Massachusetts, United States
+3688 km, Concord, New Hampshire, United States
+3696 km, Montpelier, Vermont, United States
+3748 km, Olympia, Washington, United States
+3879 km, Augusta, Maine, United States
+5172 km, Juneau, Alaska, United States
+6093 km, Honolulu, Hawaii, United States
+</pre></div>
+</div>
+<p>All of the above calculations are performed on a geoid. The
+<tt class="docutils literal"><span class="pre">crs.LONLAT</span></tt> coordinate system is just a <em>Karta</em> shorthand for WGS 84
+with geographical coordinates.</p>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT_WGS84</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>geographical CRS (urn: {&#39;urn&#39;: &#39;urn:ogc:def:crs:EPSG::4326&#39;})
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre>geographical CRS (urn: {&#39;urn&#39;: &#39;urn:ogc:def:crs:EPSG::4326&#39;})
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span> <span class="o">==</span> <span class="n">crs</span><span class="o">.</span><span class="n">LONLAT_WGS84</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="bp">True</span>
+</pre></div>
+</div>
+<div class="code python highlight-python"><div class="highlight"><pre><span class="n">crs</span><span class="o">.</span><span class="n">LONLAT</span> <span class="o">==</span> <span class="n">crs</span><span class="o">.</span><span class="n">LONLAT_NAD83</span>
+</pre></div>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span class="bp">False</span>
 </pre></div>
 </div>
 <p><strong>TODO: describe other geometries</strong></p>
@@ -335,26 +454,73 @@ separated value tables. Convenience functions are kept in the
 </div>
 <div class="section" id="raster-data">
 <h2>Raster data<a class="headerlink" href="#raster-data" title="Permalink to this headline">¶</a></h2>
+<p><strong>WIP</strong></p>
 </div>
 </div>
 
 
+          </div>
+        </div>
       </div>
-      <div class="bottomnav">
-      
-        <p>
-        «&#160;&#160;<a href="installation.html">Installation</a>
-        &#160;&#160;::&#160;&#160;
-        <a class="uplink" href="karta-manual.html">Contents</a>
-        &#160;&#160;::&#160;&#160;
-        <a href="reference.html">Package reference</a>&#160;&#160;»
-        </p>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="karta-manual.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Karta tutorial</a><ul>
+<li><a class="reference internal" href="#introduction">Introduction</a></li>
+<li><a class="reference internal" href="#definitions">Definitions</a></li>
+<li><a class="reference internal" href="#vector-data">Vector data</a><ul>
+<li><a class="reference internal" href="#associated-data">Associated data</a></li>
+<li><a class="reference internal" href="#visualizing-and-importing-exporting-data">Visualizing and importing/exporting data</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#raster-data">Raster data</a></li>
+</ul>
+</li>
+</ul>
 
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="installation.html"
+                        title="previous chapter">Installation</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="reference.html"
+                        title="next chapter">Package reference</a></p>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/tutorial.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
       </div>
-
-    <div class="footer">
-        &copy; Copyright 2015, Nat Wilson.
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.2.3.
+      <div class="clearer"></div>
     </div>
+    <div class="footer">
+      &copy;2015, Nat Wilson.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.2.3</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.6.2</a>
+      
+      |
+      <a href="_sources/tutorial.txt"
+          rel="nofollow">Page source</a></li>
+    </div>
+
+    
+
+    
   </body>
 </html>
