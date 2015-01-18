@@ -1,21 +1,23 @@
 
+`Back to manual <../karta-manual.html>`__
+
 Karta tutorial
 ==============
 
 Introduction
 ------------
 
-Karta provides a lightweight set of tools for performing analyses of
+*Karta* provides a lightweight set of tools for performing analyses of
 geographical data. The organization of karta is around a set of
 container classes for vector and raster data with builtin methods for
 common tasks. This tutorial provides a brief introduction to some of the
 main parts of karta.
 
-Should you come across any mistakes, I would very much appreciate if you
-could let me know, or even better, provide a pull request on
+Should you come across any mistakes, let me know, or even better,
+provide a pull request on
 `Github <https://github.com/njwilson23/karta>`__!
 
-The following exmaples are shown using Python 3, however *karta* is
+The following exmaples are shown using Python 3, however *Karta* is
 supported on both Python 2.7+ and Python 3.2+.
 
 Definitions
@@ -51,7 +53,6 @@ Let's experiment with some vector data.
 
 .. code:: python
 
-    import karta
     from karta.vector import Point, Multipoint, Line, Polygon
 The ``Point``, ``Multipoint``, ``Line``, and ``Polygon`` classes can all
 be instantiated by providing vertices, and optionally, associated data
@@ -185,8 +186,11 @@ each geometry at creation, as in
 
 .. code:: python
 
-    pt = Point((-123.1, 49.25), crs=karta.crs.LONLAT)
-    pt2 = Point((-70.66, 41.52), crs=karta.crs.LONLAT)
+    from karta import crs
+.. code:: python
+
+    pt = Point((-123.1, 49.25), crs=crs.LONLAT)
+    pt2 = Point((-70.66, 41.52), crs=crs.LONLAT)
     pt.distance(pt2)
 
 
@@ -202,71 +206,204 @@ meters.
 
 When the coordinate system is specified, all geometrical methods obey
 that coordinate system. We can use this to perform queries, such which
-American state capitols are within 4000 km of Mexico City?
+American state capitols are within 2000 km of Mexico City?
 
 .. code:: python
 
-    
-    capitols = [Point((33.57, 112.1), properties={"n": "Phoenix, Arizona, United States"}, crs=karta.crs.LONLAT),
-                Point((38.57, 121.5), properties={"n": "Sacramento, California, United States"}, crs=karta.crs.LONLAT),
-                Point((33.76, 84.42), properties={"n": "Atlanta, Georgia, United States"}, crs=karta.crs.LONLAT),
-                Point((39.78, 86.15), properties={"n": "Indianapolis, Indiana, United States"}, crs=karta.crs.LONLAT),
-                Point((46.6, 112.0) , properties={"n": "Helena, Montana, United States"}, crs=karta.crs.LONLAT),
-                Point((39.98, 82.99), properties={"n": "Columbus, Ohio, United States"}, crs=karta.crs.LONLAT),
-                Point((37.53, 77.48), properties={"n": "Richmond, Virginia, United States"}, crs=karta.crs.LONLAT),
-                Point((39.04, 95.69), properties={"n": "Topeka, Kansas, United States"}, crs=karta.crs.LONLAT),
-                Point((42.33, 71.02), properties={"n": "Boston, Massachusetts, United States"}, crs=karta.crs.LONLAT),
-                Point((40.81, 96.68), properties={"n": "Lincoln, Nebraska, United States"}, crs=karta.crs.LONLAT),
-                Point((35.47, 97.51), properties={"n": "Oklahoma City, Oklahoma, United States"}, crs=karta.crs.LONLAT),
-                Point((58.37, 134.2), properties={"n": "Juneau, Alaska, United States"}, crs=karta.crs.LONLAT),
-                Point((44.38, 100.3), properties={"n": "Pierre, South Dakota, United States"}, crs=karta.crs.LONLAT),
-                Point((21.31, 157.8), properties={"n": "Honolulu, Hawaii, United States"}, crs=karta.crs.LONLAT),
-                Point((32.35, 86.27), properties={"n": "Montgomery, Alabama, United States"}, crs=karta.crs.LONLAT),
-                Point((34.73, 92.36), properties={"n": "Little Rock, Arkansas, United States"}, crs=karta.crs.LONLAT),
-                Point((39.76, 104.9), properties={"n": "Denver, Colorado, United States"}, crs=karta.crs.LONLAT),
-                Point((41.77, 72.68), properties={"n": "Hartford, Connecticut, United States"}, crs=karta.crs.LONLAT),
-                Point((39.16, 75.52), properties={"n": "Dover, Delaware, United States"}, crs=karta.crs.LONLAT),
-                Point((38.9, 77.02) , properties={"n": "Washington, District of Columbia, United States"}, crs=karta.crs.LONLAT),
-                Point((30.46, 84.25), properties={"n": "Tallahassee, Florida, United States"}, crs=karta.crs.LONLAT),
-                Point((43.6, 116.2) , properties={"n": "Boise, Idaho, United States"}, crs=karta.crs.LONLAT),
-                Point((39.76, 89.67), properties={"n": "Springfield, Illinois, United States"}, crs=karta.crs.LONLAT),
-                Point((41.57, 93.62), properties={"n": "Des Moines, Iowa, United States"}, crs=karta.crs.LONLAT),
-                Point((38.19, 84.87), properties={"n": "Frankfort, Kentucky, United States"}, crs=karta.crs.LONLAT),
-                Point((30.45, 91.13), properties={"n": "Baton Rouge, Louisiana, United States"}, crs=karta.crs.LONLAT),
-                Point((44.33, 69.73), properties={"n": "Augusta, Maine, United States"}, crs=karta.crs.LONLAT),
-                Point((38.97, 76.51), properties={"n": "Annapolis, Maryland, United States"}, crs=karta.crs.LONLAT),
-                Point((42.71, 84.56), properties={"n": "Lansing, Michigan, United States"}, crs=karta.crs.LONLAT),
-                Point((44.95, 93.1) , properties={"n": "Saint Paul, Minnesota, United States"}, crs=karta.crs.LONLAT),
-                Point((32.32, 90.21), properties={"n": "Jackson, Mississippi, United States"}, crs=karta.crs.LONLAT),
-                Point((38.57, 92.18), properties={"n": "Jefferson City, Missouri, United States"}, crs=karta.crs.LONLAT),
-                Point((39.15, 119.7), properties={"n": "Carson City, Nevada, United States"}, crs=karta.crs.LONLAT),
-                Point((43.23, 71.56), properties={"n": "Concord, New Hampshire, United States"}, crs=karta.crs.LONLAT),
-                Point((40.22, 74.76), properties={"n": "Trenton, New Jersey, United States"}, crs=karta.crs.LONLAT),
-                Point((35.67, 106.0), properties={"n": "Santa Fe, New Mexico, United States"}, crs=karta.crs.LONLAT),
-                Point((42.67, 73.8) , properties={"n": "Albany, New York, United States"}, crs=karta.crs.LONLAT),
-                Point((35.83, 78.64), properties={"n": "Raleigh, North Carolina, United States"}, crs=karta.crs.LONLAT),
-                Point((46.81, 100.8), properties={"n": "Bismarck, North Dakota, United States"}, crs=karta.crs.LONLAT),
-                Point((44.92, 123.0), properties={"n": "Salem, Oregon, United States"}, crs=karta.crs.LONLAT),
-                Point((40.28, 76.89), properties={"n": "Harrisburg, Pennsylvania, United States"}, crs=karta.crs.LONLAT),
-                Point((41.82, 71.42), properties={"n": "Providence, Rhode Island, United States"}, crs=karta.crs.LONLAT),
-                Point((34.02, 81.01), properties={"n": "Columbia, South Carolina, United States"}, crs=karta.crs.LONLAT),
-                Point((36.17, 86.78), properties={"n": "Nashville, Tennessee, United States"}, crs=karta.crs.LONLAT),
-                Point((30.31, 97.76), properties={"n": "Austin, Texas, United States"}, crs=karta.crs.LONLAT),
-                Point((40.78, 111.9), properties={"n": "Salt Lake City, Utah, United States"}, crs=karta.crs.LONLAT),
-                Point((44.27, 72.57), properties={"n": "Montpelier, Vermont, United States"}, crs=karta.crs.LONLAT),
-                Point((47.04, 122.9), properties={"n": "Olympia, Washington, United States"}, crs=karta.crs.LONLAT),
-                Point((38.35, 81.63), properties={"n": "Charleston, West Virginia, United States"}, crs=karta.crs.LONLAT),
-                Point((43.09, 89.43), properties={"n": "Madison, Wisconsin, United States"}, crs=karta.crs.LONLAT),
-                Point((41.15, 104.8), properties={"n": "Cheyenne, Wyoming, United States"}, crs=karta.crs.LONLAT)]
+    from karta.examples import us_capitols
+    mexico_city = Point((-99.13, 19.43), crs=crs.LONLAT)
 .. code:: python
 
-    capitols[0].data + capitols[1].data
+    # List all US state capitols
+    for capitol in us_capitols:
+        print(capitol.properties["n"], capitol.vertex)
+
+.. parsed-literal::
+
+    Phoenix, Arizona, United States (-112.1, 33.57)
+    Sacramento, California, United States (-121.5, 38.57)
+    Atlanta, Georgia, United States (-84.42, 33.76)
+    Indianapolis, Indiana, United States (-86.15, 39.78)
+    Helena, Montana, United States (-112.0, 46.6)
+    Columbus, Ohio, United States (-82.99, 39.98)
+    Richmond, Virginia, United States (-77.48, 37.53)
+    Topeka, Kansas, United States (-95.69, 39.04)
+    Boston, Massachusetts, United States (-71.02, 42.33)
+    Lincoln, Nebraska, United States (-96.68, 40.81)
+    Oklahoma City, Oklahoma, United States (-97.51, 35.47)
+    Juneau, Alaska, United States (-134.2, 58.37)
+    Pierre, South Dakota, United States (-100.3, 44.38)
+    Honolulu, Hawaii, United States (-157.8, 21.31)
+    Montgomery, Alabama, United States (-86.27, 32.35)
+    Little Rock, Arkansas, United States (-92.36, 34.73)
+    Denver, Colorado, United States (-104.9, 39.76)
+    Hartford, Connecticut, United States (-72.68, 41.77)
+    Dover, Delaware, United States (-75.52, 39.16)
+    Washington, District of Columbia, United States (-77.02, 38.9)
+    Tallahassee, Florida, United States (-84.25, 30.46)
+    Boise, Idaho, United States (-116.2, 43.6)
+    Springfield, Illinois, United States (-89.67, 39.76)
+    Des Moines, Iowa, United States (-93.62, 41.57)
+    Frankfort, Kentucky, United States (-84.87, 38.19)
+    Baton Rouge, Louisiana, United States (-91.13, 30.45)
+    Augusta, Maine, United States (-69.73, 44.33)
+    Annapolis, Maryland, United States (-76.51, 38.97)
+    Lansing, Michigan, United States (-84.56, 42.71)
+    Saint Paul, Minnesota, United States (-93.1, 44.95)
+    Jackson, Mississippi, United States (-90.21, 32.32)
+    Jefferson City, Missouri, United States (-92.18, 38.57)
+    Carson City, Nevada, United States (-119.7, 39.15)
+    Concord, New Hampshire, United States (-71.56, 43.23)
+    Trenton, New Jersey, United States (-74.76, 40.22)
+    Santa Fe, New Mexico, United States (-106.0, 35.67)
+    Albany, New York, United States (-73.8, 42.67)
+    Raleigh, North Carolina, United States (-78.64, 35.83)
+    Bismarck, North Dakota, United States (-100.8, 46.81)
+    Salem, Oregon, United States (-123.0, 44.92)
+    Harrisburg, Pennsylvania, United States (-76.89, 40.28)
+    Providence, Rhode Island, United States (-71.42, 41.82)
+    Columbia, South Carolina, United States (-81.01, 34.02)
+    Nashville, Tennessee, United States (-86.78, 36.17)
+    Austin, Texas, United States (-97.76, 30.31)
+    Salt Lake City, Utah, United States (-111.9, 40.78)
+    Montpelier, Vermont, United States (-72.57, 44.27)
+    Olympia, Washington, United States (-122.9, 47.04)
+    Charleston, West Virginia, United States (-81.63, 38.35)
+    Madison, Wisconsin, United States (-89.43, 43.09)
+    Cheyenne, Wyoming, United States (-104.8, 41.15)
+
+
+.. code:: python
+
+    # Filter those within 2000 km of Mexico City
+    nearby = list(filter(lambda pt: pt.distance(mexico_city) < 2000e3, us_capitols))
+    for capitol in nearby:
+        print(capitol.properties["n"])
+
+.. parsed-literal::
+
+    Oklahoma City, Oklahoma, United States
+    Montgomery, Alabama, United States
+    Little Rock, Arkansas, United States
+    Tallahassee, Florida, United States
+    Baton Rouge, Louisiana, United States
+    Jackson, Mississippi, United States
+    Santa Fe, New Mexico, United States
+    Austin, Texas, United States
+
+
+.. code:: python
+
+    # Or, list capitols from nearest to furthest from Mexico City
+    distances = map(lambda pt: mexico_city.distance(pt), us_capitols)
+    distances_capitols = sorted(zip(distances, us_capitols))
+    for d, pt in distances_capitols:
+        print("{km:.0f} km, {name}".format(km=d/1e3, name=pt.properties["n"]))
+
+.. parsed-literal::
+
+    1213 km, Austin, Texas, United States
+    1463 km, Baton Rouge, Louisiana, United States
+    1683 km, Jackson, Mississippi, United States
+    1785 km, Oklahoma City, Oklahoma, United States
+    1822 km, Little Rock, Arkansas, United States
+    1922 km, Santa Fe, New Mexico, United States
+    1923 km, Montgomery, Alabama, United States
+    1933 km, Tallahassee, Florida, United States
+    2027 km, Phoenix, Arizona, United States
+    2155 km, Atlanta, Georgia, United States
+    2199 km, Topeka, Kansas, United States
+    2214 km, Nashville, Tennessee, United States
+    2225 km, Jefferson City, Missouri, United States
+    2320 km, Denver, Colorado, United States
+    2382 km, Lincoln, Nebraska, United States
+    2414 km, Columbia, South Carolina, United States
+    2429 km, Springfield, Illinois, United States
+    2467 km, Cheyenne, Wyoming, United States
+    2495 km, Frankfort, Kentucky, United States
+    2510 km, Des Moines, Iowa, United States
+    2576 km, Indianapolis, Indiana, United States
+    2661 km, Salt Lake City, Utah, United States
+    2694 km, Charleston, West Virginia, United States
+    2708 km, Raleigh, North Carolina, United States
+    2752 km, Columbus, Ohio, United States
+    2769 km, Pierre, South Dakota, United States
+    2777 km, Madison, Wisconsin, United States
+    2885 km, Saint Paul, Minnesota, United States
+    2904 km, Richmond, Virginia, United States
+    2922 km, Lansing, Michigan, United States
+    2947 km, Carson City, Nevada, United States
+    3025 km, Sacramento, California, United States
+    3030 km, Washington, District of Columbia, United States
+    3041 km, Bismarck, North Dakota, United States
+    3070 km, Annapolis, Maryland, United States
+    3118 km, Boise, Idaho, United States
+    3137 km, Harrisburg, Pennsylvania, United States
+    3150 km, Dover, Delaware, United States
+    3235 km, Helena, Montana, United States
+    3274 km, Trenton, New Jersey, United States
+    3506 km, Albany, New York, United States
+    3517 km, Hartford, Connecticut, United States
+    3585 km, Salem, Oregon, United States
+    3605 km, Providence, Rhode Island, United States
+    3665 km, Boston, Massachusetts, United States
+    3688 km, Concord, New Hampshire, United States
+    3696 km, Montpelier, Vermont, United States
+    3748 km, Olympia, Washington, United States
+    3879 km, Augusta, Maine, United States
+    5172 km, Juneau, Alaska, United States
+    6093 km, Honolulu, Hawaii, United States
+
+
+All of the above calculations are performed on a geoid. The
+``crs.LONLAT`` coordinate system is just a *Karta* shorthand for WGS 84
+with geographical coordinates.
+
+.. code:: python
+
+    crs.LONLAT_WGS84
 
 
 
 .. parsed-literal::
 
-    D[]
+    geographical CRS (urn: {'urn': 'urn:ogc:def:crs:EPSG::4326'})
+
+
+
+.. code:: python
+
+    crs.LONLAT
+
+
+
+.. parsed-literal::
+
+    geographical CRS (urn: {'urn': 'urn:ogc:def:crs:EPSG::4326'})
+
+
+
+.. code:: python
+
+    crs.LONLAT == crs.LONLAT_WGS84
+
+
+
+.. parsed-literal::
+
+    True
+
+
+
+.. code:: python
+
+    crs.LONLAT == crs.LONLAT_NAD83
+
+
+
+.. parsed-literal::
+
+    False
 
 
 
@@ -363,4 +500,6 @@ Each geometry has appropriate methods to save data:
 
 Raster data
 -----------
+
+**WIP**
 
