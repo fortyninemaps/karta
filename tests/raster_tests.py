@@ -134,7 +134,7 @@ class RegularGrid(unittest.TestCase):
 
     def test_aairead(self):
         grid = karta.grid.aairead(os.path.join(TESTDATA,'peaks49.asc'))
-        self.assertTrue(np.all(grid.Z == self.rast.Z))
+        self.assertTrue(np.all(grid.Z[::-1] == self.rast.Z))
         return
 
 
