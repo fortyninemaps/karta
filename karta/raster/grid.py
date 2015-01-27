@@ -3,9 +3,12 @@
 import sys
 import copy
 from math import sqrt
+import numbers
 import numpy as np
 from . import _aai          # Contains the ascread driver
 from ..crs import crsreg, CRS, pyproj
+
+IntegerType = (numbers.Integral, np.int32, np.int64)
 
 try:
     from . import _gtiff
@@ -29,6 +32,10 @@ class Grid(object):
     @property
     def crs(self):
         return getattr(self, "_crs", None)
+
+    @property
+    def nodata(self):
+        return self._nodata
 
     def clipz(self, bounds):
         """ Clip the z-range in place to bounds = [min, max]. """
@@ -71,7 +78,7 @@ class RegularGrid(Grid):
 
     e = f = 0
     """
-    def __init__(self, transform, Z=None, crs=None):
+    def __init__(self, transform, Z=None, crs=None, nodata_value=None):
         """ Create a RegularGrid instance with cells referenced according to
         *transform*, which is an iterable or dictionary consisting of
         (xllcenter, yllcenter, dx, dy, xrot, yrot).
@@ -102,6 +109,11 @@ class RegularGrid(Grid):
             self._crs = crsreg.CARTESIAN
         else:
             self._crs = crs
+
+        if nodata_value is None:
+            self._nodata = get_nodata(self.Z.dtype.type)
+        else:
+            self._nodata = nodata_value
         return
 
     def __add__(self, other):
@@ -215,11 +227,7 @@ class RegularGrid(Grid):
             j += 1
 
         Z = self.Z.copy()[i0:i1, j0:j1]
-        try:
-            Z[~mask[i0:i1, j0:j1]] = np.nan
-        except ValueError:
-            # TODO: this should use a local nodata
-            Z[~mask[i0:i1, j0:j1]] = -999
+        Z[~mask[i0:i1, j0:j1]] = get_nodata(Z.dtype.type)
         told = self.transform
         tnew = (X[i0,j0], Y[i0, j0], told[2], told[3], told[4], told[5])
         return RegularGrid(tnew, Z)
@@ -498,7 +506,7 @@ class WarpedGrid(Grid):
     spacing is not necessarily constant.
     """
 
-    def __init__(self, X, Y, Z):
+    def __init__(self, X, Y, Z, nodata_value=None):
         """
         Parameters:
         -----------
@@ -517,6 +525,11 @@ class WarpedGrid(Grid):
         self.X = X
         self.Y = Y
         self.Z = Z
+
+        if nodata_value is None:
+            self._nodata = get_nodata(self.Z.dtype.type)
+        else:
+            self._nodata = nodata_value
         return
 
     def __add__(self, other):
@@ -613,4 +626,15 @@ def gtiffread(fnm, band=1):
                                f=hdr["srs"]["flattening"]),
               crstype=crstype)
     return RegularGrid(t, Z=arr.squeeze()[::-1], crs=crs)
+
+def get_nodata(T):
+    """ Return a default value for NODATA given a type (e.g. int, float,
+    complex).
+    """
+    if issubclass(T, IntegerType):
+        return -9999
+    elif issubclass(T, (numbers.Real, numbers.Complex)):
+        return np.nan
+    else:
+        raise ValueError("No default NODATA value for type {0}".format(T))
 
