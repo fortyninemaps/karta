@@ -215,7 +215,11 @@ class RegularGrid(Grid):
             j += 1
 
         Z = self.Z.copy()[i0:i1, j0:j1]
-        Z[~mask[i0:i1, j0:j1]] = np.nan
+        try:
+            Z[~mask[i0:i1, j0:j1]] = np.nan
+        except ValueError:
+            # TODO: this should use a local nodata
+            Z[~mask[i0:i1, j0:j1]] = -999
         told = self.transform
         tnew = (X[i0,j0], Y[i0, j0], told[2], told[3], told[4], told[5])
         return RegularGrid(tnew, Z)
@@ -576,7 +580,7 @@ def aairead(fnm):
          'xrot'     : 0.0,
          'yrot'     : 0.0}
     Z[Z==aschdr['nodata_value']] = np.nan
-    return RegularGrid(t, Z=Z)
+    return RegularGrid(t, Z=Z[::-1])
 
 def gtiffread(fnm, band=1):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
@@ -608,5 +612,5 @@ def gtiffread(fnm, band=1):
               geod=pyproj.Geod(a=hdr["srs"]["semimajor"],
                                f=hdr["srs"]["flattening"]),
               crstype=crstype)
-    return RegularGrid(t, Z=arr.squeeze(), crs=crs)
+    return RegularGrid(t, Z=arr.squeeze()[::-1], crs=crs)
 
