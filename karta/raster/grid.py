@@ -181,6 +181,45 @@ class RegularGrid(Grid):
         dx, dy = self._transform[2:4]
         return (x0, x0 + dx*(nx+n), y0, y0 + dy*(ny+n))
 
+    def clip(self, xmin, xmax, ymin, ymax, crs=None):
+        """ Return a clipped version of grid constrained to a bounding box. """
+        if crs is not None:
+            raise NotImplementedError("grid clipping in other coordinate "
+                                      "systems not yet supported")
+        # obvious impl.
+        # TODO: this could be better implemented by precomputing the Z array
+        # bounds and size and therefore avoiding allocating X and Y arrays
+        X, Y = self.center_coords()
+        mask = (xmin <= X) & (X <= xmax) & (ymin <= Y) & (Y <= ymax)
+
+        i0, i1 = -1, -1
+        j0, j1 = -1, -1
+        i, j = 0, 0
+
+        while i1 == -1:
+            if i0 == -1 and np.any(mask[i,:]):
+                i0 = i
+            elif i0 != -1 and np.all(~mask[i,:]):
+                i1 = i
+            elif i == mask.shape[0]-1:
+                i1 = i
+            i += 1
+
+        while j1 == -1:
+            if j0 == -1 and np.any(mask[:,j]):
+                j0 = j
+            elif j0 != -1 and np.all(~mask[:,j]):
+                j1 = j
+            elif j == mask.shape[1]-1:
+                j1 = j
+            j += 1
+
+        Z = self.Z.copy()[i0:i1, j0:j1]
+        Z[~mask[i0:i1, j0:j1]] = np.nan
+        told = self.transform
+        tnew = (X[i0,j0], Y[i0, j0], told[2], told[3], told[4], told[5])
+        return RegularGrid(tnew, Z)
+
     def resample_griddata(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy' using *scipy.griddata*
 

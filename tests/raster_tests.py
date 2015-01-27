@@ -77,6 +77,17 @@ class RegularGrid(unittest.TestCase):
         self.assertEqual(minmax, (-6.5466445243204294, 8.075173545159231))
         return
 
+    def test_clip(self):
+        clipped = self.rast.clip(500, 900, 500, 900)
+        self.assertEqual(clipped.size, (13, 13))
+        self.assertEqual(clipped.transform, (525, 525, 30, 30, 0, 0))
+        X, Y = clipped.center_coords()
+        self.assertEqual(X[0,0], 525)
+        self.assertEqual(X[0,-1], 885)
+        self.assertEqual(Y[0,0], 525)
+        self.assertEqual(Y[-1,0], 885)
+        return
+
     def test_get_indices(self):
         ind = self.rast.get_indices(15.0, 15.0)
         self.assertEqual(tuple(ind), (0, 0))
