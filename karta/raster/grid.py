@@ -83,7 +83,7 @@ class RegularGrid(Grid):
         """
         if hasattr(transform, "keys"):
             self._transform = tuple([transform[f] for f in
-                            ("xllcenter", "yllcenter", "dx", "dy", "xskew", "yskew")])
+                    ("xllcenter", "yllcenter", "dx", "dy", "xrot", "yrot")])
         elif len(transform) == 6:
             self._transform = tuple(transform)
         elif len(transform) == 4:
@@ -153,18 +153,8 @@ class RegularGrid(Grid):
         irow = np.arange(self.Z.shape[0])
         for i in range(self.Z.shape[1]):
             xcoords[:,i] = t[0] + i*t[2] + irow*t[4]
-            ycoords[:,i] = (t[1] + irow*t[3] + i*t[5])[::-1]
+            ycoords[:,i] = (t[1] + irow*t[3] + i*t[5])
         return xcoords, ycoords
-
-    # This version is too space-ineffficient, and results in MemoryErrors on
-    # moderately-sized grids
-    # def center_coords(self):
-    #     """ Return the cell-center coordinates. """
-    #     ii, jj = np.meshgrid(np.arange(self.Z.shape[1]),
-    #                          np.arange(self.Z.shape[0]))
-    #     t = self._transform
-    #     return (t[0] + ii * t[2] + jj[::-1] * t[4],
-    #             t[1] + jj[::-1] * t[3] + ii * t[5])
 
     def vertex_coords(self):
         """ Return the coordinates of vertices. """
@@ -217,7 +207,7 @@ class RegularGrid(Grid):
                              np.linspace(yllcenter, yurcenter, ny))
         idata = griddata((xx0.flatten(), yy0.flatten()), self.Z.flatten(),
                          (xx.flatten(), yy.flatten()), method=method)
-        Z = idata.reshape(ny, nx)[::-1]
+        Z = idata.reshape(ny, nx)
         t = self._transform
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
         return RegularGrid(tnew, Z)
@@ -544,8 +534,8 @@ def aairead(fnm):
          'yllcenter': aschdr['yllcorner'] + 0.5 * aschdr['cellsize'],
          'dx'       : aschdr['cellsize'],
          'dy'       : aschdr['cellsize'],
-         'xskew'    : 0.0,
-         'yskew'    : 0.0}
+         'xrot'     : 0.0,
+         'yrot'     : 0.0}
     Z[Z==aschdr['nodata_value']] = np.nan
     return RegularGrid(t, Z=Z)
 
@@ -567,8 +557,8 @@ def gtiffread(fnm, band=1):
          'yllcenter'  : hdr['yulcorner'] + (hdr['ny'] - 0.5) * hdr['dy'] - 0.5 * hdr['sy'],
          'dx'         : hdr['dx'],
          'dy'         : -hdr['dy'],
-         'xskew'      : hdr['sx'],
-         'yskew'      : hdr['sy']}
+         'xrot'       : hdr['sx'],
+         'yrot'       : hdr['sy']}
 
     if "lonlat" in hdr["srs"]["proj4"]:
         crstype = "geographical"
