@@ -88,7 +88,8 @@ class Point(Geometry):
             raise ValueError("Point coordinates must be a sequence")
         super(Point, self).__init__(**kwargs)
         self.vertex = coords
-        self._setxyz()
+        self.rank = 2 if len(coords) == 2 else 3
+
         self.data = Metadata(data, singleton=True, copydata=copy_metadata)
         if hasattr(properties, "keys"):
             self.properties = properties
@@ -114,18 +115,17 @@ class Point(Geometry):
     def __geo_interface__(self):
         return {"type" : "Point", "coordinates" : self.vertex}
 
-    def _setxyz(self):
-        """ Create convenience *x*, *y* (, *z*) attributes from vertices. """
-        vertex = self.vertex
-        self.x = vertex[0]
-        self.y = vertex[1]
-        if len(vertex) == 2:
-            self.rank = 2
-            self.z = None
-        else:
-            self.rank = 3
-            self.z = vertex[2]
-        return
+    @property
+    def x(self):
+        return self.vertex[0]
+
+    @property
+    def y(self):
+        return self.vertex[1]
+
+    @property
+    def z(self):
+        return self.vertex[2]
 
     def isat(self, other, tol=0.001):
         """ Test whether point vertices are the same, regardless of properties or data.
@@ -218,7 +218,7 @@ class Point(Geometry):
         if self._crs != other._crs:
             raise CRSError("Points must share the same coordinate system.")
         flat_dist = self._distance(self, other)
-        if None in (self.z, other.z):
+        if 2 == self.rank == other.rank:
             return flat_dist
         else:
             return math.sqrt(flat_dist**2. + (self.z-other.z)**2.)
@@ -238,7 +238,6 @@ class Point(Geometry):
             raise GGeoError('Shift vector length must equal geometry rank.')
 
         self.vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
-        self._setxyz()
         return self
 
     def as_geojson(self, **kwargs):
