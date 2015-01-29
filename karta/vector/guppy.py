@@ -983,10 +983,34 @@ class Polygon(ConnectedMultipoint):
                          * (self.vertices[i][1] - self.vertices[i+1][1]))
         return a - sum(map(lambda p: p.area, self.subs))
 
-    def contains(self, pt):
-        """ Returns True if pt is inside or on the boundary of the
-        polygon, and False otherwise. Uses a crossing number scheme.
-        """
+    @staticmethod
+    def _signcross(a, b):
+        """ Return sign of 2D cross product a x b """
+        c = (a[0]*b[1]) - (a[1]*b[0])
+        return c/abs(c)
+
+    def _contains_cartesian(self, pt):
+        """ Fast `contains` for 2D data on cartesian plane """
+        a = np.array(self.vertices[-1])
+        b = np.array(self.vertices[0])
+        p = np.array(pt.vertex)
+        s = self._signcross(b-p, b-a)
+        i = 0
+        while True:
+            a = np.array(self.vertices[i])
+            b = np.array(self.vertices[i+1])
+            s_ = self._signcross(b-p, b-a)
+            i += 1
+            if s_ != s:
+                # Point is outside
+                return False
+            elif i == len(self.vertices)-1:
+                # Point in inside, so check subpolys
+                return not any(contains_new(p, pt) for p in self.subs)
+
+    def _contains_projected(self, pt):
+        """ Slower `contains` for projected data based on counting
+        intersections. """
         nintx = 0
         x, y = pt[0], pt[1]
         for seg in self.segments:
@@ -996,6 +1020,15 @@ class Polygon(ConnectedMultipoint):
 
         # If odd, point is inside so check subpolys
         return nintx % 2 == 1 and not any(p.contains(pt) for p in self.subs)
+
+    def contains(self, pt):
+        """ Returns True if pt is inside or on the boundary of the
+        polygon, and False otherwise. Uses a crossing number scheme.
+        """
+        if self.crs is crsreg.CARTESIAN:
+            return self._contains_cartesian(pt)
+        else:
+            return self._contains_projected(pt)
 
     def to_polyline(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
