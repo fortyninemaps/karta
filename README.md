@@ -31,10 +31,10 @@ Building the documentation requires [Sphinx](http://sphinx-doc.org/) and
 ##CONTENTS AT A GLANCE
 
 - vector
-    - guppy:        Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`) supporting the [Python \_\_geo\_interface\_\_](https://gist.github.com/sgillies/2217756)
+    - geometry:     Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`) supporting the [Python \_\_geo\_interface\_\_](https://gist.github.com/sgillies/2217756)
     - gpx:          GPX class for parsing and constructing GPX eXchange files
     - geojson:      Classes and functions for reading and writing GeoJSON
-    - shp\_funcs:   Shapefile-to-guppy conversions through _pyshp_ interface
+    - shp\_funcs:   Shapefile interface through _pyshp_
     - xyfile:       ASCII table functions
     - quadtree:     QuadTree implementation
     - stats:        Geostatistical functions (experimental)

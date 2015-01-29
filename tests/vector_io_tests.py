@@ -13,7 +13,7 @@ from test_helper import TESTDATA
 import karta.vector as vector
 import karta.vector.geojson as geojson
 from karta.vector.geojson import GeoJSONReader
-from karta.vector.guppy import Point, Multipoint, Line, Polygon
+from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.crs import crsreg
 
 
@@ -90,12 +90,12 @@ class TestGeoJSONInput(unittest.TestCase):
         return
 
 
-class TestGuppyGeoJSON(unittest.TestCase):
+class TestGeoJSON(unittest.TestCase):
     """ While the test cases TestGeoJSONInput and TestGeoJSONOutput test the
-    low level geojson module, this test case focuses on the bindings with guppy.
+    low level geojson module, this test case focuses on the bindings with geometry.
     """
 
-    def test_featurecollection2guppy(self):
+    def test_featurecollection2geometry(self):
         path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
         features = vector.read_geojson(path)
 

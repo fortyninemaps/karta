@@ -4,11 +4,11 @@ import unittest
 import math
 import numpy as np
 
-from karta.vector.guppy import Point, Multipoint, Line, Polygon
-from karta.vector.guppy import affine_matrix
+from karta.vector.geometry import Point, Multipoint, Line, Polygon
+from karta.vector.geometry import affine_matrix
 from karta.crs import crsreg
 
-class TestGuppy(unittest.TestCase):
+class TestGeometry(unittest.TestCase):
 
     def setUp(self):
         self.point = Point((1.0, 2.0, 3.0), data={"color":(43,67,10)},
@@ -452,7 +452,7 @@ class TestGuppy(unittest.TestCase):
             self.assertEqual(len(line.subsection(n)), n)
         return
 
-class TestGuppyGeoInterface(unittest.TestCase):
+class TestGeoInterface(unittest.TestCase):
 
     def test_point(self):
         pt = Point((1,2))
@@ -483,7 +483,7 @@ class TestGuppyGeoInterface(unittest.TestCase):
                           "bbox":(0, 0, 4, 16),
                           "coordinates": list(zip(x[:5],y[:5]))})
 
-class TestGuppyProj(unittest.TestCase):
+class TestGeometryProj(unittest.TestCase):
 
     def setUp(self):
         self.vancouver = Point((-123.1, 49.25), crs=crsreg.LONLAT)
@@ -517,7 +517,7 @@ class TestGuppyProj(unittest.TestCase):
         return
 
 
-class TestGuppyOutput(unittest.TestCase):
+class TestGeometryOutput(unittest.TestCase):
 
     def setUp(self):
 

@@ -1,5 +1,5 @@
 """ Provides functions for reading and writing ESRI shapefiles and returning a
-guppy object. """
+geometry object. """
 
 import datetime
 import numbers

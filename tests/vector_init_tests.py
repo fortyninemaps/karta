@@ -1,4 +1,4 @@
-""" Test constructing guppy geometry instances """
+""" Test constructing geometry instances """
 
 import unittest
 import numpy as np
@@ -7,7 +7,7 @@ from karta import Point, Multipoint, Line, Polygon
 
 LONLAT = karta.crs.LONLAT
 
-class TestGuppy(unittest.TestCase):
+class TestVectorGeometry(unittest.TestCase):
 
     def setUp(self):
         x = range(-5, 5)

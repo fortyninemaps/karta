@@ -3,7 +3,7 @@
 import os
 from numbers import Number
 import shapefile
-from . import guppy
+from . import geometry
 from . import geojson
 from . import xyfile
 from ..crs import crsreg
@@ -33,13 +33,13 @@ def read_geojson(f):
     def convert_geometry(geom, defaultcrs=None, **kw):
         coordsys = _parsegeojsoncrs(geom.crs, default=defaultcrs)
         if isinstance(geom, geojson.Point):
-            return guppy.Point(geom.coordinates, crs=coordsys, **kw)
+            return geometry.Point(geom.coordinates, crs=coordsys, **kw)
         elif isinstance(geom, geojson.MultiPoint):
-            return guppy.Multipoint(geom.coordinates, crs=coordsys, **kw)
+            return geometry.Multipoint(geom.coordinates, crs=coordsys, **kw)
         elif isinstance(geom, geojson.LineString):
-            return guppy.Line(geom.coordinates, crs=coordsys, **kw)
+            return geometry.Line(geom.coordinates, crs=coordsys, **kw)
         elif isinstance(geom, geojson.Polygon):
-            return guppy.Polygon(geom.coordinates[0],
+            return geometry.Polygon(geom.coordinates[0],
                                  subs=geom.coordinates[1:],
                                  crs=coordsys, **kw)
         else:
@@ -67,7 +67,7 @@ def read_geojson(f):
             gplist.append(convert_geometry(item))
     return gplist
 
-def _geojson_properties2guppy(properties, n):
+def _geojson_properties2karta(properties, n):
     """ Takes a dictionary (derived from a GeoJSON properties object) and
     divides it into singleton properties and *n*-degree data. """
     props = {}
@@ -82,8 +82,8 @@ def _geojson_properties2guppy(properties, n):
             props[key] = value
     return props, data
 
-def read_xyfile(f, delimiter='', header_rows=0, astype=guppy.Multipoint, coordrank=2):
-    """ Read an ASCII delimited table and return a guppy object given by *astype*.
+def read_xyfile(f, delimiter='', header_rows=0, astype=geometry.Multipoint, coordrank=2):
+    """ Read an ASCII delimited table and return a geometry object given by *astype*.
     """
     dat = xyfile.load_xy(f, delimiter=delimiter, header_rows=header_rows)
     ncols = dat.shape[1]
@@ -167,7 +167,7 @@ def read_shapefile(name, crs=None):
         if reader.shapeType == 1:       # Points
             verts = [shp.points[0] for shp in reader.shapes()]
             d = recordsasdata(reader)
-            geoms = [guppy.Multipoint(verts, data=d, crs=crs)]
+            geoms = [geometry.Multipoint(verts, data=d, crs=crs)]
 
         elif reader.shapeType == 3:     # Lines
             plist = recordsasproperties(reader)
@@ -177,7 +177,7 @@ def read_shapefile(name, crs=None):
                 parts.append(len(shp.points))
                 for (i0, i1) in zip(parts[:-1], parts[1:]):
                     points = shp.points[i0:i1]
-                    geoms.append(guppy.Line(points, properties=prop, crs=crs))
+                    geoms.append(geometry.Line(points, properties=prop, crs=crs))
 
         elif reader.shapeType == 5:     # Polygon
             plist = recordsasproperties(reader)
@@ -189,7 +189,7 @@ def read_shapefile(name, crs=None):
                     # Shapefile polygons are closed explicitly, while karta
                     # polygons are closed implicitly
                     points = shp.points[i0:i1-1]
-                    geoms.append(guppy.Polygon(points, properties=prop, crs=crs))
+                    geoms.append(geometry.Polygon(points, properties=prop, crs=crs))
 
         else:
             raise NotImplementedError("Shapefile shape type {0} not "

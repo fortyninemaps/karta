@@ -18,7 +18,7 @@ Coordinate reference systems
 Vector package
 ~~~~~~~~~~~~~~
 
-.. automodule:: karta.vector.guppy
+.. automodule:: karta.vector.geometry
 
 .. autoclass:: karta.vector.Geometry
     :members:

@@ -1044,28 +1044,28 @@ class Polygon(ConnectedMultipoint):
         return
 
 
-class GuppyError(Exception):
-    """ Base class for guppy module errors. """
+class GeometryError(Exception):
+    """ Base class for geometry module errors. """
     def __init__(self, message=''):
         self.message = message
     def __str__(self):
         return self.message
 
 
-class GInitError(GuppyError):
-    """ Exception to raise when a guppy object fails to initialize. """
+class GInitError(GeometryError):
+    """ Exception to raise when a geometry object fails to initialize. """
     def __init__(self, message=''):
         self.message = message
 
 
-class GUnitError(GuppyError):
+class GUnitError(GeometryError):
     """ Exception to raise there is a projected unit problem. """
     def __init__(self, message=''):
         self.message = message
 
 
-class GGeoError(GuppyError):
-    """ Exception to raise when a guppy object attempts an invalid transform. """
+class GGeoError(GeometryError):
+    """ Exception to raise when a geometry object attempts an invalid transform. """
     def __init__(self, message=''):
         self.message = message
 
@@ -1184,7 +1184,7 @@ def affine_matrix(mpa, mpb):
     """ Compute the affine transformation matrix that projects Multipoint mpa
     to Multipoint mpb using a least squares fit. """
     if len(mpa) != len(mpb):
-        raise GuppyError("Input geometries must have identical length")
+        raise GeometryError("Input geometries must have identical length")
     vecp = np.asarray(mpb.get_vertices()).ravel()
     A = np.empty([2*len(mpa), 6], dtype=np.float64)
     for i, (x, y) in enumerate(mpa.get_vertices()):

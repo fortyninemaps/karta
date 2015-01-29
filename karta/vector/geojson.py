@@ -43,7 +43,7 @@ class ExtendedJSONEncoder(json.JSONEncoder):
 
 
 class GeoJSONWriter(object):
-    """ Class for converting guppy objects to GeoJSON strings. Multipoint-based
+    """ Class for converting geometry objects to GeoJSON strings. Multipoint-based
     opbjects are written as 'Features'.
 
     CRS defaults to be named. A linked CRS can be used by passing
@@ -297,7 +297,7 @@ def list_rec(A):
         return A
 
 def printGeometryCollection(gpobj_list, **kwargs):
-    """ Given an iterable that returns guppy objects, construct a GeoJSON
+    """ Given an iterable that returns geometry objects, construct a GeoJSON
     FeatureCollection string.
     """
     geometrylist = []

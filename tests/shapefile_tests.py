@@ -6,7 +6,7 @@ import datetime
 from copy import copy
 
 from karta.vector import shp, read_shapefile
-from karta.vector.guppy import Point, Multipoint, Line, Polygon
+from karta.vector.geometry import Point, Multipoint, Line, Polygon
 
 class TestShapefile(unittest.TestCase):
 

@@ -1,7 +1,7 @@
 """
 GPX IO and manipulation (UNDER DEVELOPMENT)
 
-This is a rewrite of gpxparser.py, designed to fit better with guppy types.
+This is a rewrite of gpxparser.py, designed to fit better with karta types.
 
 To do:
     - XML namespaces aren't really handled properly
