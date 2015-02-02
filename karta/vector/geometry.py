@@ -986,7 +986,10 @@ class Polygon(ConnectedMultipoint):
     def _signcross(a, b):
         """ Return sign of 2D cross product a x b """
         c = (a[0]*b[1]) - (a[1]*b[0])
-        return c/abs(c)
+        if c != 0:
+            return c/abs(c)
+        else:
+            return 0
 
     def _contains_cartesian(self, pt):
         """ Fast `contains` for 2D data on cartesian plane """
@@ -1000,7 +1003,7 @@ class Polygon(ConnectedMultipoint):
             b = np.array(self.vertices[i+1])
             s_ = self._signcross(b-p, b-a)
             i += 1
-            if s_ != s:
+            if s_ == -s:
                 # Point is outside
                 return False
             elif i == len(self.vertices)-1:
