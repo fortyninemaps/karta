@@ -1,5 +1,6 @@
 import unittest
 import os
+from os.path import exists, join
 import numpy as np
 from test_helper import TESTDATA
 import datetime
@@ -7,29 +8,36 @@ from copy import copy
 
 from karta.vector import shp, read_shapefile
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
+from karta.crs2 import LonLatWGS84
 
 class TestShapefile(unittest.TestCase):
 
     def setUp(self):
-        self.points = [Point((1, 1), data={"species": "T. officianale"}),
-                       Point((3, 1), data={"species": "C. tectorum"}),
-                       Point((4, 3), data={"species": "M. alba"}),
-                       Point((2, 2), data={"species": "V. cracca"})]
+        self.points = [Point((1, 1), data={"species": "T. officianale"}, crs=LonLatWGS84),
+                       Point((3, 1), data={"species": "C. tectorum"}, crs=LonLatWGS84),
+                       Point((4, 3), data={"species": "M. alba"}, crs=LonLatWGS84),
+                       Point((2, 2), data={"species": "V. cracca"}, crs=LonLatWGS84)]
+
         self.multipoint = Multipoint([(1,1), (3,1), (4,3), (2,2)],
                                      data={"species": ["T. officianale", "C. tectorum",
-                                                       "M. alba", "V. cracca"]})
-        self.line = Line([(1.0,5.0),(5.0,5.0),(5.0,1.0),(3.0,3.0),(1.0,1.0)])
-        self.polygon = Polygon([(1.0,5.0),(5.0,5.0),(5.0,1.0),(3.0,3.0),(1.0,1.0)])
+                                                       "M. alba", "V. cracca"]},
+                                     crs=LonLatWGS84)
 
-        self.points3 = [Point((1, 1, 0)),
-                       Point((3, 1, 3)),
-                       Point((4, 3, 2)),
-                       Point((2, 2, -1))]
-        self.line3 = Line([(1,5,2),(5,5,-1),(5,1,3),(3,3,1),(1,1,0)])
-        self.polygon3 = Polygon([(1,5,2),(5,5,-1),(5,1,3),(3,3,1),(1,1,0)])
+        self.line = Line([(1.0,5.0),(5.0,5.0),(5.0,1.0),(3.0,3.0),(1.0,1.0)],
+                         crs=LonLatWGS84)
 
-        exists = os.path.exists
-        join = os.path.join
+        self.polygon = Polygon([(1.0,5.0),(5.0,5.0),(5.0,1.0),(3.0,3.0),(1.0,1.0)],
+                               crs=LonLatWGS84)
+
+        self.points3 = [Point((1, 1, 0), crs=LonLatWGS84),
+                       Point((3, 1, 3), crs=LonLatWGS84),
+                       Point((4, 3, 2), crs=LonLatWGS84),
+                       Point((2, 2, -1), crs=LonLatWGS84)]
+
+        self.line3 = Line([(1,5,2),(5,5,-1),(5,1,3),(3,3,1),(1,1,0)], crs=LonLatWGS84)
+
+        self.polygon3 = Polygon([(1,5,2),(5,5,-1),(5,1,3),(3,3,1),(1,1,0)], crs=LonLatWGS84)
+
         testfiles = ["points.shp", "line.shp", "polygon.shp"]
         if any(not exists(join(TESTDATA, "shapefiles/", fnm)) for fnm in testfiles):
             self.saveTestData()
