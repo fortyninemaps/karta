@@ -14,7 +14,7 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
-from ..crs import crsreg, CRSError
+from ..crs2 import Cartesian
 from .metadata import Metadata
 from . import _vectorgeo
 
@@ -28,7 +28,7 @@ class Geometry(object):
     """ This is the abstract base class for all geometry types """
     _geotype = None
 
-    def __init__(self, crs=crsreg.CARTESIAN):
+    def __init__(self, crs=Cartesian):
         self.properties = {}
         self._crs = crs
         return
@@ -36,7 +36,7 @@ class Geometry(object):
     def _distance(self, pos0, pos1):
         """ Generic method for calculating distance between positions that
         respects CRS """
-        if self._crs == crsreg.CARTESIAN:
+        if self._crs == Cartesian:
             dist = _vecgeo.distance((pos0.x, pos0.y), (pos1.x, pos1.y))
         elif pos0._crs == pos1._crs:
             try:
@@ -154,7 +154,7 @@ class Point(Geometry):
         if self.coordsxy() == other.coordsxy():
             return np.nan
 
-        if self._crs == self._crs == crsreg.CARTESIAN:
+        if self._crs == self._crs == Cartesian:
             dx = other.x - self.x
             dy = other.y - self.y
 
@@ -193,7 +193,7 @@ class Point(Geometry):
             distance (float): distance to walk
             direction (float): horizontal walk direction in radians
         """
-        if self._crs == crsreg.CARTESIAN:
+        if self._crs == Cartesian:
             dx = distance * math.sin(direction)
             dy = distance * math.cos(direction)
 
@@ -726,7 +726,7 @@ class ConnectedMultipoint(MultipointBase):
         """
         if self._crs != pt._crs:
             raise CRSError("Point must have matching CRS")
-        elif self._crs == crsreg.CARTESIAN:
+        elif self._crs == Cartesian:
             func = _vecgeo.pt_nearest_planar
         else:
             geod = self._crs.geod
@@ -746,7 +746,7 @@ class ConnectedMultipoint(MultipointBase):
         """
         if self._crs != pt._crs:
             raise CRSError("Point must have matching CRS")
-        elif self._crs == crsreg.CARTESIAN:
+        elif self._crs == Cartesian:
             func = _vecgeo.pt_nearest_planar
         else:
             geod = self._crs.geod
@@ -1027,7 +1027,7 @@ class Polygon(ConnectedMultipoint):
         """ Returns True if pt is inside or on the boundary of the
         polygon, and False otherwise. Uses a crossing number scheme.
         """
-        if self.crs is crsreg.CARTESIAN:
+        if self.crs is Cartesian:
             return self._contains_cartesian(pt)
         else:
             return self._contains_projected(pt)

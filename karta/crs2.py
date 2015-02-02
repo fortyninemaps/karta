@@ -37,7 +37,7 @@ Desired interface:
     crs = CustomCRS(epsg=3413)
 """
 
-import numpy
+import numpy as np
 import pyproj
 
 # A CRS class needs to have pyproj Proj and Geod instances. Exceptions are
@@ -61,7 +61,7 @@ class _cartesian_geod(object):
         else:
             az = np.array(az) / 180 * np.pi
 
-        backaz = az + 180.0
+        backaz = az + np.pi
         lons2 = lons + dist * np.cos(az)
         lats2 = lats + dist * np.sin(az)
 
@@ -129,8 +129,9 @@ class Cartesian(CRS):
     name = "Cartesian (flat-earth)"
     geod = _cartesian_geod
 
-    def proj(self, *args, inverse=False):
-        return args
+    @staticmethod
+    def proj(x, y, inverse=False):
+        return x, y
 
 class Spherical(CRS):
     """ Spherical (θ, φ) coordinate system. """
