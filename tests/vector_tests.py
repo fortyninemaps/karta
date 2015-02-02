@@ -6,7 +6,7 @@ import numpy as np
 
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.vector.geometry import affine_matrix
-from karta.crs import crsreg
+from karta.crs2 import Cartesian, LonLatWGS84
 
 class TestGeometry(unittest.TestCase):
 
@@ -95,7 +95,7 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_empty_multipoint(self):
-        mp = Multipoint([], crs=crsreg.LONLAT_WGS84)
+        mp = Multipoint([], crs=LonLatWGS84)
         self.assertEqual(len(mp), 0)
         return
 
@@ -186,8 +186,8 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_connected_multipoint_shortest_distance_to2(self):
-        line = Line([(127.0, -35.0), (132.0, -28.0), (142.0, -29.0)], crs=crsreg.LONLAT)
-        dist = line.shortest_distance_to(Point((98.0, -7.0), crs=crsreg.LONLAT))
+        line = Line([(127.0, -35.0), (132.0, -28.0), (142.0, -29.0)], crs=LonLatWGS84)
+        dist = line.shortest_distance_to(Point((98.0, -7.0), crs=LonLatWGS84))
         self.assertAlmostEqual(dist, 4257313.5324397, places=6)
         return
 
@@ -206,22 +206,22 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_connected_multipoint_nearest_on_boundary2(self):
-        line = Line([(-40, 0.0), (35, 0.0)], crs=crsreg.LONLAT)
-        npt = line.nearest_on_boundary(Point((30.0, 80.0), crs=crsreg.LONLAT))
-        self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=crsreg.LONLAT))
+        line = Line([(-40, 0.0), (35, 0.0)], crs=LonLatWGS84)
+        npt = line.nearest_on_boundary(Point((30.0, 80.0), crs=LonLatWGS84))
+        self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=LonLatWGS84))
         return
 
     # def test_connected_multipoint_nearest_on_boundary3(self):
     #     # This is the test that tends to break naive root finding schemes
-    #     line = Line([(-40, 0.0), (35, 0.0)], crs=crsreg.LONLAT)
-    #     npt = line.nearest_on_boundary(Point((30.0, 1e-8), crs=crsreg.LONLAT))
-    #     self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=crsreg.LONLAT))
+    #     line = Line([(-40, 0.0), (35, 0.0)], crs=LonLatWGS84)
+    #     npt = line.nearest_on_boundary(Point((30.0, 1e-8), crs=LonLatWGS84))
+    #     self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=LonLatWGS84))
     #     return
 
     # def test_connected_multipoint_nearest_on_boundary4(self):
-    #     line = Line([(-20.0, 32.0), (-26.0, 43.0), (-38.0, 39.0)], crs=crsreg.LONLAT)
-    #     npt = line.nearest_on_boundary(Point((-34.0, 52.0), crs=crsreg.LONLAT))
-    #     self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=crsreg.LONLAT))
+    #     line = Line([(-20.0, 32.0), (-26.0, 43.0), (-38.0, 39.0)], crs=LonLatWGS84)
+    #     npt = line.nearest_on_boundary(Point((-34.0, 52.0), crs=LonLatWGS84))
+    #     self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=LonLatWGS84))
     #     return
 
     def test_line_add_vertex2d(self):
@@ -321,9 +321,9 @@ class TestGeometry(unittest.TestCase):
         # trivial but more interesting case
         x = np.arange(-4, 5)
         y = (x)**2
-        line = Line([(x_,y_) for x_,y_ in zip(x, y)], crs=crsreg.CARTESIAN)
+        line = Line([(x_,y_) for x_,y_ in zip(x, y)], crs=Cartesian)
         bbox = Polygon([(-2.5, 2.5), (2.5, 2.5), (2.5, -2.5), (-2.5, -2.5)],
-                             crs=crsreg.CARTESIAN)
+                             crs=Cartesian)
 
         self.assertEqual(list(filter(bbox.contains, line)),
                          [Point((-1, 1)), Point((0, 0)), Point((1, 1))])
@@ -387,7 +387,7 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_walk_cartesian(self):
-        start = Point((-3, -4), crs=crsreg.CARTESIAN)
+        start = Point((-3, -4), crs=Cartesian)
         dest = start.walk(5.0, math.atan(3.0/4.0))
         self.assertAlmostEqual(dest.x, 0.0)
         self.assertAlmostEqual(dest.y, 0.0)
@@ -421,9 +421,9 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_subsection_lonlat(self):
-        line = Line([(0, 40), (120, 40)], crs=crsreg.LONLAT)
+        line = Line([(0, 40), (120, 40)], crs=LonLatWGS84)
         points = line.subsection(20)
-        ans = [Point(v, crs=crsreg.LONLAT) for v in [(0, 40),
+        ans = [Point(v, crs=LonLatWGS84) for v in [(0, 40),
                                   (4.006549675732082, 43.200316625343305),
                                   (8.44359845345209, 46.2434129228378),
                                   (13.382442375999254, 49.09308515921458),
@@ -453,7 +453,7 @@ class TestGeometry(unittest.TestCase):
             (-19.13705, 80.048567), (-18.680467, 80.089333), (-17.451917,
                 80.14405), (-16.913233, 80.02715), (-16.631367, 80.022933),
             (-16.194067, 80.0168), (-15.915983, 80.020267), (-15.7763,
-                80.021283)], crs=crsreg.LONLAT)
+                80.021283)], crs=LonLatWGS84)
 
         for n in range(2, 30):
             self.assertEqual(len(line.subsection(n)), n)
@@ -493,9 +493,9 @@ class TestGeoInterface(unittest.TestCase):
 class TestGeometryProj(unittest.TestCase):
 
     def setUp(self):
-        self.vancouver = Point((-123.1, 49.25), crs=crsreg.LONLAT)
-        self.ottawa = Point((-75.69, 45.42), crs=crsreg.LONLAT)
-        self.whitehorse = Point((-135.05, 60.72), crs=crsreg.LONLAT)
+        self.vancouver = Point((-123.1, 49.25), crs=LonLatWGS84)
+        self.ottawa = Point((-75.69, 45.42), crs=LonLatWGS84)
+        self.whitehorse = Point((-135.05, 60.72), crs=LonLatWGS84)
         return
 
     def test_greatcircle(self):
@@ -517,7 +517,7 @@ class TestGeometryProj(unittest.TestCase):
         return
 
     def test_walk_lonlat(self):
-        start = Point((-132.14, 54.01), crs=crsreg.LONLAT_WGS84)
+        start = Point((-132.14, 54.01), crs=LonLatWGS84)
         dest = start.walk(5440.0, 106.8*math.pi/180.0)
         self.assertAlmostEqual(dest.x, -132.0605910876)
         self.assertAlmostEqual(dest.y, 53.99584742821)
@@ -548,7 +548,7 @@ class TestAffineTransforms(unittest.TestCase):
         self.square = Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])
         #self.line_geo = Line([(6.5, 45), (6.8, 45.2), (6.9, 45.1), (6.8, 45.6),
         #                      (6.6, 45.5)],
-        #                     crs=crsreg.LONLAT_WGS84)
+        #                     crs=LonLatWGS84)
         return
 
     def test_translate(self):
