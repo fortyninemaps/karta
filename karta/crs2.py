@@ -5,7 +5,7 @@ Desired interface:
 
     from karta.crs import Cartesian
     from karta.crs import Spherical
-    from karta.crs import LonLat_WGS84
+    from karta.crs import LonLatWGS84
 
     from karta.crs import CustomCRS
 
@@ -171,6 +171,13 @@ class CustomCRS(CRS):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+class CRSError(Exception):
+    """ Exception to raise for invalid geodetic operations. """
+    def __init__(self, message=''):
+        self.message = message
+
+############ Predefined CRS instances ############
 
 LonLatWGS84 = CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs", geod="+ellps=WGS84", name="WGS84 (Geographical)")
 s = "+proj=longlat +datum=WGS84 +no_defs"

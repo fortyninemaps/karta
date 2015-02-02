@@ -6,23 +6,25 @@ import shapefile
 from . import geometry
 from . import geojson
 from . import xyfile
-from ..crs import crsreg
+from ..crs2 import LonLatWGS84, CustomCRS, CRSError
 from .metadata import Metadata
 
-def _parsegeojsoncrs(jsoncrs, default=crsreg.LONLAT_WGS84):
+def _parsegeojsoncrs(jsoncrs, default=LonLatWGS84):
     """ From a tuple representing a GeoJSON (name,None) or (href,type) pair,
     return an appropriate karta crs instance. """
     if jsoncrs is None:
         return default
     elif jsoncrs["type"] == "name":
-        for c in crsreg.register.values():
-            if c.id.get("urn", None) == jsoncrs["properties"]["name"]:
-                return c
-        return crsreg.UNKNOWN
+        try:
+            crs = CustomCRS(urn=jsoncrs["properties"]["name"])
+        except CRSError:
+            sys.stderr.write("JSON CRS {0} could not be "
+                             "found".format(jsoncrs["properties"]["name"]))
+            crs = default
+        finally:
+            return crs
     elif jsoncrs["type"] == "link":
-        crs = CRS(proj=None, geod=None,
-                  crstype=jsoncrs["properties"]["type"],
-                  id={"link": jsoncrs["properties"]["href"]})
+        crs = CustomCRS(link=jsoncrs["properties"]["href"])
         return crs
     else:
         raise TypeError("Invalid GeoJSON CRS type")
@@ -149,12 +151,10 @@ def recordsasproperties(reader):
         proplist.append(properties)
     return proplist
 
-def read_shapefile(name, crs=None):
+def read_shapefile(name, crs=LonLatWGS84):
     """ Read a shapefile given `name`, which may include or exclude the .shp
     extension. The CRS must be specified, otherwise it is assumed to be
     cartesian. """
-    if crs is None:
-        crs = crsreg.CARTESIAN
     if os.path.splitext(name)[1] == ".shp":
         name = name[:-4]
     fnms = get_filenames(name, check=True)

@@ -103,7 +103,7 @@ class GeoJSONWriter(object):
 
         else:
             self.supobj['crs'] = {'type': 'name',
-                                  'properties': {'name': crs.id.get("urn", None)}}
+                                  'properties': {'name': urn(crs)}}
         return
 
     def add_bbox(self, bbox=None):
@@ -287,6 +287,12 @@ class GeoJSONReader(object):
         else:
             items.append(self.parseGeometry(o, crs))
         return items
+
+def urn(crs):
+    """ Return a urn string for *crs* """
+    print("Warning: CRS URN lookup not implemented")
+    print("returning CRS name instead")
+    return crs.name
 
 
 def list_rec(A):
