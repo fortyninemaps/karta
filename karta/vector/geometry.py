@@ -249,7 +249,6 @@ class Point(Geometry):
 
         *kwargs* include:
         crs : coordinate reference system
-        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
         writer = geojson.GeoJSONWriter(self, **kwargs)
@@ -264,7 +263,6 @@ class Point(Geometry):
 
         *kwargs* include:
         crs : coordinate reference system
-        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
         try:
@@ -588,11 +586,9 @@ class MultipointBase(Geometry):
         Parameters
         ----------
         crs : coordinate reference system
-        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
-        writer = geojson.GeoJSONWriter(self, crs=self._crs,
-                    crs_fmt="ogc_crs_urn", **kwargs)
+        writer = geojson.GeoJSONWriter(self, crs=self._crs, **kwargs)
         return writer.print_json()
 
     def to_geojson(self, f, **kwargs):
@@ -604,7 +600,6 @@ class MultipointBase(Geometry):
 
         *kwargs* include:
         crs : coordinate reference system
-        crs_fmt : format of `crs`; may be one of ('epsg','ogc_crs_urn')
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
         try:
@@ -612,8 +607,7 @@ class MultipointBase(Geometry):
                 fobj = open(f, "w")
             else:
                 fobj = f
-            writer = geojson.GeoJSONWriter(self, crs=self._crs,
-                        crs_fmt="ogc_crs_urn", **kwargs)
+            writer = geojson.GeoJSONWriter(self, crs=self._crs, **kwargs)
             writer.write_json(fobj)
         finally:
             if not hasattr(f, "write"):
