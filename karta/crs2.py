@@ -44,9 +44,14 @@ import pyproj
 # `Cartesian` and `Spherical` which are implemented specially.
 
 class CRS(object):
-    """ Base class for coordinate system instances """
+    """ Base class for coordinate system instances
+    
+    Subclasses should at a minimum define a *name* attribute. Providing *proj*
+    and *geod* methods permits a geometry associated with a CRS subclass to be
+    used in analyses.
+    """
     def __str__(self):
-        return "<CRS \"self.name\">"
+        return "<CRS {0}>".format(self.name)
 
 class _cartesian_geod(object):
     """ Static class that substitutes for a pyrproj.Geod instance for
@@ -147,7 +152,7 @@ SphericalEarth = Spherical(6370.0)
 
 class CustomCRS(CRS):
 
-    def __init__(self, epsg=None, proj=None, geod=None, wkt=None, name=None):
+    def __init__(self, epsg=None, proj=None, geod=None, wkt=None, urn=None, name=None):
         if epsg is not None:
             raise NotImplementedError("EPSG lookup not implemented")
         elif None not in (proj, geod):
@@ -155,6 +160,8 @@ class CustomCRS(CRS):
             self.geod = pyproj.Geod(geod)
         elif wkt is not None:
             raise NotImplementedError("WKT lookup not implemented")
+        elif urn is not None:
+            raise NotImplementedError("URN lookup not implemented")
 
         if name is not None:
             self.name = name

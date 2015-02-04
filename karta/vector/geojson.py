@@ -9,6 +9,7 @@ import itertools
 from numbers import Number
 from math import isnan
 from functools import reduce
+from ..crs2 import CRS
 
 Point = namedtuple('Point', ['coordinates', 'crs'])
 MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])
@@ -20,8 +21,18 @@ GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
 Feature = namedtuple('Feature', ['geometry', 'properties', 'id', 'crs'])
 FeatureCollection = namedtuple('FeatureCollection', ['features', 'crs'])
 
-DEFAULTCRS = {'type': 'name',
-              'properties': {'name': 'urn:ogc:def:crs:EPSG::4326'}}
+class GeoJSONNamedCRS(CRS):
+    def __init__(self, name):
+        self.name = name
+        self.jsonname = name
+
+class GeoJSONLinkedCRS(CRS):
+    def __init__(self, href, linktype):
+        self.name = href
+        self.jsonhref = href
+        self.jsontype = linktype
+
+DEFAULTCRS = GeoJSONNamedCRS("urn:ogc:def:crs:epsg::4326")
 
 class ExtendedJSONEncoder(json.JSONEncoder):
     """ Numpy-specific numbers prior to 1.9 don't inherit from Python numeric
@@ -46,15 +57,12 @@ class GeoJSONWriter(object):
     """ Class for converting geometry objects to GeoJSON strings. Multipoint-based
     opbjects are written as 'Features'.
 
-    CRS defaults to be named. A linked CRS can be used by passing
-    `linkedcrs=True`.
-
     Notes:
     ------
     Does not handle 'FeatureCollection' types (see printFeatureCollection()
     function).
     """
-    def __init__(self, gpobj, linkedcrs=False, **kwargs):
+    def __init__(self, gpobj, **kwargs):
         type_equiv = {'Point'       : 'Point',
                       'Multipoint'  : 'MultiPoint',
                       'Line'        : 'LineString',
@@ -70,7 +78,7 @@ class GeoJSONWriter(object):
         self.gpobj = gpobj
         self.supobj = {}
         if crs is not None:
-            self.add_crs(crs, linkedcrs=linkedcrs)
+            self.add_crs(crs)
         if self.typestr != 'Point':
             self.supobj['type'] = 'Feature'
             self.add_bbox(bbox)
@@ -80,12 +88,9 @@ class GeoJSONWriter(object):
             self.add_coordinates()
         return
 
-    def add_crs(self, crs, linkedcrs, **kw):
+    def add_crs(self, crs, **kw):
         """ Tag the JSON object with coordinate reference system metadata using
         a CRS instance, which is expected the have the interface of crs.CRS.
-
-        If True, `linkedcrs` indicates a web-referenced linked CRS. If False,
-        the CRS is taked to be named.
 
         In the case of a linked CRS, the link address and type can be specified
         using the `href` and `linktype` keyword arguments. If not supplied,
@@ -95,15 +100,17 @@ class GeoJSONWriter(object):
         For more details, see the GeoJSON specification at:
         http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
         """
-        if linkedcrs:
-            href = kw.get('href', None)
-            linktype = kw.get('linktype', None)
+        if hasattr(crs, "jsonhref") and hasattr(crs, "jsontype"):
             self.supobj['crs'] = {'type': 'link',
-                                  'properties': {'href': href, 'type': linktype}}
-
-        else:
+                                  'properties': {'href': crs.jsonname,
+                                                 'type': crs.jsontype}}
+        elif hasattr(crs, "jsonname"):
             self.supobj['crs'] = {'type': 'name',
-                                  'properties': {'name': urn(crs)}}
+                                  'properties': {'name': crs.jsonname}}
+        else:
+            urn = kw.get("urn", geturn(crs))
+            self.supobj['crs'] = {'type': 'name',
+                                  'properties': {'name': urn}}
         return
 
     def add_bbox(self, bbox=None):
@@ -288,9 +295,10 @@ class GeoJSONReader(object):
             items.append(self.parseGeometry(o, crs))
         return items
 
-def urn(crs):
+def geturn(crs):
     """ Return a urn string for *crs* """
     print("Warning: CRS URN lookup not implemented")
+    print(crs)
     print("returning CRS name instead")
     return crs.name
 

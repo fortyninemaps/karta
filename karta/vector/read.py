@@ -9,41 +9,20 @@ from . import xyfile
 from ..crs2 import LonLatWGS84, CustomCRS, CRSError
 from .metadata import Metadata
 
-def _parsegeojsoncrs(jsoncrs, default=LonLatWGS84):
-    """ From a tuple representing a GeoJSON (name,None) or (href,type) pair,
-    return an appropriate karta crs instance. """
-    if jsoncrs is None:
-        return default
-    elif jsoncrs["type"] == "name":
-        try:
-            crs = CustomCRS(urn=jsoncrs["properties"]["name"])
-        except CRSError:
-            sys.stderr.write("JSON CRS {0} could not be "
-                             "found".format(jsoncrs["properties"]["name"]))
-            crs = default
-        finally:
-            return crs
-    elif jsoncrs["type"] == "link":
-        crs = CustomCRS(link=jsoncrs["properties"]["href"])
-        return crs
-    else:
-        raise TypeError("Invalid GeoJSON CRS type")
-
 def read_geojson(f):
     """ Read a GeoJSON object file and return a list of geometries """
 
     def convert_geometry(geom, defaultcrs=None, **kw):
-        coordsys = _parsegeojsoncrs(geom.crs, default=defaultcrs)
         if isinstance(geom, geojson.Point):
-            return geometry.Point(geom.coordinates, crs=coordsys, **kw)
+            return geometry.Point(geom.coordinates, crs=geom.crs, **kw)
         elif isinstance(geom, geojson.MultiPoint):
-            return geometry.Multipoint(geom.coordinates, crs=coordsys, **kw)
+            return geometry.Multipoint(geom.coordinates, crs=geom.crs, **kw)
         elif isinstance(geom, geojson.LineString):
-            return geometry.Line(geom.coordinates, crs=coordsys, **kw)
+            return geometry.Line(geom.coordinates, crs=geom.crs, **kw)
         elif isinstance(geom, geojson.Polygon):
             return geometry.Polygon(geom.coordinates[0],
                                  subs=geom.coordinates[1:],
-                                 crs=coordsys, **kw)
+                                 crs=geom.crs, **kw)
         else:
             raise TypeError("Argument to convert_geometry is a not a JSON geometry")
 
