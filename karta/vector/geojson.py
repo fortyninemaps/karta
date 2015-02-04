@@ -74,11 +74,12 @@ class GeoJSONWriter(object):
             raise TypeError('Input object not a recognized geometry')
         crs = gpobj._crs
         bbox = kwargs.get('bbox', None)
+        urn = kwargs.get('urn', None)
 
         self.gpobj = gpobj
         self.supobj = {}
         if crs is not None:
-            self.add_crs(crs)
+            self.add_crs(crs, urn=urn)
         if self.typestr != 'Point':
             self.supobj['type'] = 'Feature'
             self.add_bbox(bbox)
