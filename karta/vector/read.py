@@ -6,7 +6,7 @@ import shapefile
 from . import geometry
 from . import geojson
 from . import xyfile
-from ..crs2 import LonLatWGS84, CustomCRS, CRSError
+from ..crs import LonLatWGS84, CustomCRS, CRSError
 from .metadata import Metadata
 
 def read_geojson(f):

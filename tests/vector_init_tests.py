@@ -4,8 +4,7 @@ import unittest
 import numpy as np
 import karta
 from karta import Point, Multipoint, Line, Polygon
-
-LONLAT = karta.crs.LONLAT
+from karta.crs import LonLatWGS84
 
 class TestVectorGeometry(unittest.TestCase):
 
@@ -17,29 +16,29 @@ class TestVectorGeometry(unittest.TestCase):
         return
 
     def test_multipoint_from_points(self):
-        pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LONLAT)
+        pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
 
         mp = Multipoint(pts)
-        ans = Multipoint(self.vertices, data={"d":self.data}, crs=LONLAT)
+        ans = Multipoint(self.vertices, data={"d":self.data}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)
         return
 
     def test_line_from_points(self):
-        pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LONLAT)
+        pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
 
         mp = Line(pts)
-        ans = Line(self.vertices, data={"d":self.data}, crs=LONLAT)
+        ans = Line(self.vertices, data={"d":self.data}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)
         return
 
     def test_polygon_from_points(self):
-        pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LONLAT)
+        pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
 
         mp = Polygon(pts)
-        ans = Polygon(self.vertices, data={"d":self.data}, crs=LONLAT)
+        ans = Polygon(self.vertices, data={"d":self.data}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)
         return
 

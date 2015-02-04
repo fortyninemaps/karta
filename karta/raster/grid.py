@@ -6,7 +6,7 @@ from math import sqrt
 import numbers
 import numpy as np
 from . import _aai          # Contains the ascread driver
-from ..crs import crsreg, CRS, pyproj
+from ..crs import CRS, pyproj, Cartesian
 
 IntegerType = (numbers.Integral, np.int32, np.int64)
 
@@ -106,7 +106,7 @@ class RegularGrid(Grid):
             self.Z = np.atleast_2d([np.nan])
 
         if crs is None:
-            self._crs = crsreg.CARTESIAN
+            self._crs = Cartesian
         else:
             self._crs = crs
 
@@ -623,8 +623,7 @@ def gtiffread(fnm, band=1):
 
     crs = CRS(proj=pyproj.Proj(hdr["srs"]["proj4"]),
               geod=pyproj.Geod(a=hdr["srs"]["semimajor"],
-                               f=hdr["srs"]["flattening"]),
-              crstype=crstype)
+                               f=hdr["srs"]["flattening"]))
     return RegularGrid(t, Z=arr.squeeze()[::-1], crs=crs)
 
 def get_nodata(T):
