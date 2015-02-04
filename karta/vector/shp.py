@@ -50,7 +50,7 @@ def addfields(writer, properties):
     for key in properties:
         value = properties[key]
         typ = property_field_type(value)
-        dec = 0 if t not in ("N", "F", "O", "I") else 16
+        dec = 0 if typ not in ("N", "F", "O", "I") else 16
         writer.field(key.upper(), fieldType=typ, size="100", decimal=dec)
         values.append(value)
     writer.record("0", *values)

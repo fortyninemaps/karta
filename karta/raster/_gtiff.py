@@ -39,7 +39,6 @@ def read(fnm, band):
     dataset = gdal.Open(fnm, gc.GA_ReadOnly)
 
     try:
-        nbands = dataset.RasterCount
         hdr["nx"] = dataset.RasterXSize
         hdr["ny"] = dataset.RasterYSize
 

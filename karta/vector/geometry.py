@@ -14,7 +14,7 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
-from ..crs import Cartesian
+from ..crs import Cartesian, CRSError
 from .metadata import Metadata
 from . import _vectorgeo
 
@@ -1002,7 +1002,7 @@ class Polygon(ConnectedMultipoint):
                 return False
             elif i == len(self.vertices)-1:
                 # Point in inside, so check subpolys
-                return not any(contains_new(p, pt) for p in self.subs)
+                return not any(self._contains_cartesiah(p, pt) for p in self.subs)
 
     def _contains_projected(self, pt):
         """ Slower `contains` for projected data based on counting
