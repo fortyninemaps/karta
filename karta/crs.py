@@ -143,9 +143,12 @@ class Spherical(CRS):
     def __init__(self, radius):
         self.radius = radius
 
-    def proj(self, *args, inverse=False):
-        raise NotImplementedError()
-        return
+    @staticmethod
+    def proj(x, y, inverse=False, radians=False):
+        if radians:
+            return x, y
+        else:
+            return np.array(x)/180 * np.pi, np.array(y)/180 * np.pi
 
 SphericalEarth = Spherical(6370.0)
 
