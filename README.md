@@ -46,7 +46,7 @@ Building the documentation requires [Sphinx](http://sphinx-doc.org/) and
     - streamline:   Streamline calculation
     - flow:         Stream flow functions (experimental)
 
-- crs : `CRS` and `CRSRegister` classes used throughout *Karta*
+- crs : Coordinate reference systems and geodetic calculations employed throughout *Karta*
 
 - tests : unit tests
 
