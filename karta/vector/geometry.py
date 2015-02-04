@@ -14,7 +14,7 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
-from ..crs2 import Cartesian
+from ..crs import Cartesian
 from .metadata import Metadata
 from . import _vectorgeo
 

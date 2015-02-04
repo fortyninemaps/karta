@@ -14,7 +14,7 @@ import karta.vector as vector
 import karta.vector.geojson as geojson
 from karta.vector.geojson import GeoJSONReader
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
-from karta.crs2 import LonLatWGS84
+from karta.crs import LonLatWGS84
 
 
 class TestGeoJSONInput(unittest.TestCase):

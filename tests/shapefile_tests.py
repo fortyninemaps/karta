@@ -8,7 +8,7 @@ from copy import copy
 
 from karta.vector import shp, read_shapefile
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
-from karta.crs2 import LonLatWGS84
+from karta.crs import LonLatWGS84
 
 class TestShapefile(unittest.TestCase):
 

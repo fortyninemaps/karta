@@ -6,7 +6,7 @@ import numpy as np
 
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.vector.geometry import affine_matrix
-from karta.crs2 import Cartesian, LonLatWGS84
+from karta.crs import Cartesian, LonLatWGS84
 
 class TestGeometry(unittest.TestCase):
 

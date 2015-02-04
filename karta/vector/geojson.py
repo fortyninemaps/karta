@@ -9,7 +9,7 @@ import itertools
 from numbers import Number
 from math import isnan
 from functools import reduce
-from ..crs2 import CRS
+from ..crs import CRS
 
 Point = namedtuple('Point', ['coordinates', 'crs'])
 MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])
