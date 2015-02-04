@@ -15,13 +15,25 @@ class TestCRS(unittest.TestCase):
     def test_CartesianGeodFwd(self):
         az = math.atan(0.75) * 180 / math.pi
         lons, lats, backaz = crs2.Cartesian.geod.fwd(0.0, 0.0, az, 5)
-        self.assertEqual(lons, 4.0)
-        self.assertEqual(lats, 3.0)
-        self.assertEqual(backaz, az+180.0)
+        self.assertAlmostEqual(lons, 4.0, places=12)
+        self.assertAlmostEqual(lats, 3.0, places=12)
+        self.assertAlmostEqual(backaz, az+180.0, places=12)
         return
 
     def test_CartesianGeodInv(self):
-        raise NotImplementedError()
+        lon0 = 367
+        lat0 = 78
+        lon1 = 732
+        lat1 = 23
+        a1 = lon1-lon0
+        a2 = lat1-lat0
+        d_ = math.sqrt(a1**2 + a2**2)
+        az_ = math.atan(a2/a1) + 2*math.pi
+        baz_ = az_ - math.pi
+        az, baz, d = crs2.Cartesian.geod.inv(lon0, lat0, lon1, lat1, radians=True)
+        self.assertAlmostEqual(d_, d, places=12)
+        self.assertAlmostEqual(az_, az, places=12)
+        self.assertAlmostEqual(baz_, baz, places=12)
         return
 
     def test_equal1(self):

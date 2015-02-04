@@ -66,7 +66,7 @@ class _cartesian_geod(object):
         else:
             az = np.array(az) / 180 * np.pi
 
-        backaz = az + np.pi
+        backaz = _unrollrad(az + np.pi)
         lons2 = lons + dist * np.cos(az)
         lats2 = lats + dist * np.sin(az)
 
@@ -75,7 +75,6 @@ class _cartesian_geod(object):
             lats2 = np.array(lats2) / 180 * np.pi
         else:
             backaz = np.array(backaz) * 180 / np.pi
-
         return lons2, lats2, backaz
 
     @staticmethod
@@ -84,16 +83,15 @@ class _cartesian_geod(object):
         dy = np.array(lats2) - np.array(lats1)
         dx = np.array(lons2) - np.array(lons1)
 
-        az = np.atan(dy/dx)
+        dist = np.sqrt(dx**2 + dy**2)
+        az = _unrollrad(np.arctan(dy/dx))
         if dx < 0.0:
             az += np.pi
-        backaz = az + np.pi
-        dist = np.sqrt(dx**2 + dy**2)
+        backaz = _unrollrad(az + np.pi)
 
         if not radians:
             az = az * 180 / np.pi
             backaz = backaz * 180 / np.pi
-
         return az, backaz, dist
 
 class _spherical_geod(object):
@@ -183,6 +181,14 @@ class CRSError(Exception):
     """ Exception to raise for invalid geodetic operations. """
     def __init__(self, message=''):
         self.message = message
+
+def _unrollrad(angle):
+    """ Wrap angle to the range [0,2pi) """
+    while angle >= 2*np.pi:
+        angle -= 2*np.pi
+    if angle < 0:
+        angle += 2*np.pi
+    return angle
 
 ############ Predefined CRS instances ############
 
