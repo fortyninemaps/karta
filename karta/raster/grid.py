@@ -6,7 +6,7 @@ from math import sqrt
 import numbers
 import numpy as np
 from . import _aai          # Contains the ascread driver
-from ..crs import CRS, pyproj, Cartesian
+from ..crs import CustomCRS, Cartesian
 
 IntegerType = (numbers.Integral, np.int32, np.int64)
 
@@ -616,14 +616,9 @@ def gtiffread(fnm, band=1):
          'xrot'       : hdr['sx'],
          'yrot'       : hdr['sy']}
 
-    if "lonlat" in hdr["srs"]["proj4"]:
-        crstype = "geographical"
-    else:
-        crstype = "projected"
-
-    crs = CRS(proj=pyproj.Proj(hdr["srs"]["proj4"]),
-              geod=pyproj.Geod(a=hdr["srs"]["semimajor"],
-                               f=hdr["srs"]["flattening"]))
+    geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
+                                     f=hdr["srs"]["flattening"])
+    crs = CustomCRS(proj=hdr["srs"]["proj4"], geod=geodstr)
     return RegularGrid(t, Z=arr.squeeze()[::-1], crs=crs)
 
 def get_nodata(T):
