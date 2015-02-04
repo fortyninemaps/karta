@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Experimental re-write of karta's CRS system.
 
