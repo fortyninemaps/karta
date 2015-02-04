@@ -161,22 +161,22 @@ class TestGeoJSONOutput(unittest.TestCase):
         self.assertEqual(obj1, obj2)
         return
 
-    def asJsonBuffer(self, geo):
+    def asJsonBuffer(self, geo, **kw):
         s = StringIO()
-        geo.to_geojson(s)
+        geo.to_geojson(s, **kw)
         s.seek(0)
         return s
 
     def test_point_write(self):
         p = Point((100.0, 0.0))
-        s = self.asJsonBuffer(p)
+        s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806")
         ans = """{ "crs": { "properties": { "name": "urn:ogc:def:crs:EPSG::5806" }, "type": "name" }, "coordinates": [ 100.0, 0.0 ], "type": "Point" }"""
         self.verifyJson(s.read(), ans)
         return
 
     def test_line_write(self):
         p = Line([(100.0, 0.0), (101.0, 1.0)])
-        s = self.asJsonBuffer(p)
+        s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806")
         ans = """{ "type": "Feature", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "properties": {}, "id": [ 0, 1 ], "geometry": { "coordinates": [ [ 100.0, 0.0 ], [ 101.0, 1.0 ] ], "type": "LineString" }, "bbox": [ [ 100.0, 101.0 ], [ 0.0, 1.0 ] ] }"""
 
         self.verifyJson(s.read(), ans)
@@ -185,7 +185,7 @@ class TestGeoJSONOutput(unittest.TestCase):
     def test_polygon_write(self):
         p = Polygon([[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
                             [100.0, 1.0], [100.0, 0.0]])
-        s = self.asJsonBuffer(p)
+        s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806")
         ans = """{ "bbox": [ [ 100.0, 101.0 ], [ 0.0, 1.0 ] ], "properties": {}, "id": [ 0, 1, 2, 3, 4 ], "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "geometry": { "type": "Polygon", "coordinates": [ [ [ 100.0, 0.0 ], [ 101.0, 0.0 ], [ 101.0, 1.0 ], [ 100.0, 1.0 ], [ 100.0, 0.0 ] ] ] }, "type": "Feature" }"""
         self.verifyJson(s.read(), ans)
         return
@@ -202,7 +202,7 @@ class TestGeoJSONOutput(unittest.TestCase):
              Point((-95.69, 39.04), data={"n": "Topeka, Kansas"}),
              Point((-71.02, 42.33), data={"n": "Boston, Massachusetts"}),
              Point((-96.68, 40.81), data={"n": "Lincoln, Nebraska"})])
-        s = capitols.as_geojson()
+        s = capitols.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
         ans = """{ "properties": { "n": [ "Phoenix, Arizona", "Sacramento, California", "Atlanta, Georgia", "Indianapolis, Indiana", "Helena, Montana", "Columbus, Ohio", "Richmond, Virginia", "Topeka, Kansas", "Boston, Massachusetts", "Lincoln, Nebraska" ] }, "bbox": [ [ -121.5, -71.02 ], [ 33.57, 46.6 ] ], "type": "Feature", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "geometry": { "type": "MultiPoint", "coordinates": [ [ -112.1, 33.57 ], [ -121.5, 38.57 ], [ -84.42, 33.76 ], [ -86.15, 39.78 ], [ -112.0, 46.6 ], [ -82.99, 39.98 ], [ -77.48, 37.53 ], [ -95.69, 39.04 ], [ -71.02, 42.33 ], [ -96.68, 40.81 ] ] }, "id": [ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 ] } """
         self.verifyJson(s, ans)
         return
