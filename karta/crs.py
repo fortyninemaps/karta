@@ -68,8 +68,8 @@ class _cartesian_geod(object):
             az = np.array(az) / 180 * np.pi
 
         backaz = _unrollrad(az + np.pi)
-        lons2 = lons + dist * np.cos(az)
-        lats2 = lats + dist * np.sin(az)
+        lons2 = lons + dist * np.sin(az)
+        lats2 = lats + dist * np.cos(az)
 
         if radians:
             lons2 = np.array(lons2) / 180 * np.pi
@@ -85,9 +85,7 @@ class _cartesian_geod(object):
         dx = np.array(lons2) - np.array(lons1)
 
         dist = np.sqrt(dx**2 + dy**2)
-        az = _unrollrad(np.arctan(dy/dx))
-        if dx < 0.0:
-            az += np.pi
+        az = plane_azimuth(dx, dy)
         backaz = _unrollrad(az + np.pi)
 
         if not radians:
@@ -193,6 +191,34 @@ def _unrollrad(angle):
     if angle < 0:
         angle += 2*np.pi
     return angle
+
+def _azimuth(dx, dy):
+    if dx > 0:
+        if dy > 0:
+            return np.arctan(dx/dy)
+        elif dy < 0:
+            return np.pi - np.arctan(-dx/dy)
+        else:
+            return 0.5*np.pi
+    elif dx < 0:
+        if dy > 0:
+            return 2*np.pi - np.arctan(-dx/dy)
+        elif dy < 0:
+            return np.pi + np.arctan(dx/dy)
+        else:
+            return 1.5*np.pi
+    else:
+        if dy > 0:
+            return 0.0
+        else:
+            return np.pi
+
+def plane_azimuth(dx, dy):
+    if hasattr(dx, "__iter__"):
+        return numpy.array([_azimuth(dx_, dy_) for dx_, dy_ in zip(dx, dy)])
+    else:
+        return _azimuth(dx, dy)
+
 
 ############ Predefined CRS instances ############
 

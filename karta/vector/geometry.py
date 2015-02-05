@@ -154,30 +154,6 @@ class Point(Geometry):
         if self.coordsxy() == other.coordsxy():
             return np.nan
 
-        if self._crs == self._crs == Cartesian:
-            dx = other.x - self.x
-            dy = other.y - self.y
-
-            if dx > 0:
-                if dy > 0:
-                    return math.atan(dx/dy)
-                elif dy < 0:
-                    return math.pi - math.atan(-dx/dy)
-                else:
-                    return 0.5*math.pi
-            elif dx < 0:
-                if dy > 0:
-                    return 2*math.pi - math.atan(-dx/dy)
-                elif dy < 0:
-                    return math.pi + math.atan(dx/dy)
-                else:
-                    return 1.5*math.pi
-            else:
-                if dy > 0:
-                    return 0.0
-                else:
-                    return math.pi
-
         elif self._crs == other._crs:
             az1, _, _ = self._crs.geod.inv(self.x, self.y, other.x, other.y)
             return az1 * math.pi / 180.0
@@ -186,30 +162,18 @@ class Point(Geometry):
             raise CRSError("Azimuth undefined for points in CRS {0} and "
                            "{1}".format(self._crs, other._crs))
 
-    def walk(self, distance, direction):
+    def walk(self, distance, direction, radians=False):
         """ Returns the point reached when moving in a given direction for
         a given distance from a specified starting location.
 
             distance (float): distance to walk
-            direction (float): horizontal walk direction in radians
+            direction (float): horizontal walk direction in radians with north at zero
         """
-        if self._crs == Cartesian:
-            dx = distance * math.sin(direction)
-            dy = distance * math.cos(direction)
-
-            if self.rank == 2:
-                return Point((self.x+dx, self.y+dy),
-                             properties=self.properties, data=self.data, crs=self._crs)
-            elif self.rank == 3:
-                return Point((self.x+dx, self.y+dy, self.z),
-                             properties=self.properties, data=self.data, crs=self._crs)
-
-        else:
-            (x, y, backaz) = self._crs.geod.fwd(self.x, self.y,
-                                                direction*180.0/math.pi,
-                                                distance, radians=False)
-            return Point((x, y), properties=self.properties, data=self.data,
-                         crs=self._crs)
+        if not radians:
+            direction = direction*180.0/math.pi
+        (x, y, backaz) = self._crs.geod.fwd(self.x, self.y, direction, distance)
+        return Point((x, y), properties=self.properties, data=self.data,
+                     crs=self._crs)
 
     def distance(self, other):
         """ Returns a distance to another Point. If the coordinate system is
@@ -227,8 +191,7 @@ class Point(Geometry):
         """ Return the great circle distance between two geographical points. """
         if not (self._crs == other._crs):
             raise CRSError("Both point have use the same CRS")
-        az1, az2, dist = self._crs.geod.inv(self.x, self.y, other.x, other.y,
-                                            radians=False)
+        az1, az2, dist = self._crs.geod.inv(self.x, self.y, other.x, other.y)
         return dist
 
     def shift(self, shift_vector):

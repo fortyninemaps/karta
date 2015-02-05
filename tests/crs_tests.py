@@ -13,12 +13,28 @@ class TestCRS(unittest.TestCase):
     def test_CartesianGeodFwd(self):
         az = math.atan(0.75) * 180 / math.pi
         lons, lats, backaz = crs.Cartesian.geod.fwd(0.0, 0.0, az, 5)
-        self.assertAlmostEqual(lons, 4.0, places=12)
-        self.assertAlmostEqual(lats, 3.0, places=12)
+        self.assertAlmostEqual(lons, 3.0, places=12)
+        self.assertAlmostEqual(lats, 4.0, places=12)
         self.assertAlmostEqual(backaz, az+180.0, places=12)
         return
 
     def test_CartesianGeodInv(self):
+        lon0 = 367
+        lat0 = 78
+        lon1 = 93
+        lat1 = 23
+        a1 = lon1-lon0
+        a2 = lat1-lat0
+        d_ = math.sqrt(a1**2 + a2**2)
+        az_ = 1.5*math.pi - math.atan(a2/a1)
+        baz_ = az_ - math.pi
+        az, baz, d = crs.Cartesian.geod.inv(lon0, lat0, lon1, lat1, radians=True)
+        self.assertAlmostEqual(d_, d, places=12)
+        self.assertAlmostEqual(az_, az, places=12)
+        self.assertAlmostEqual(baz_, baz, places=12)
+        return
+
+    def test_CartesianGeodInv2(self):
         lon0 = 367
         lat0 = 78
         lon1 = 732
@@ -26,8 +42,8 @@ class TestCRS(unittest.TestCase):
         a1 = lon1-lon0
         a2 = lat1-lat0
         d_ = math.sqrt(a1**2 + a2**2)
-        az_ = math.atan(a2/a1) + 2*math.pi
-        baz_ = az_ - math.pi
+        az_ = 0.5*math.pi - math.atan(a2/a1)
+        baz_ = az_ + math.pi
         az, baz, d = crs.Cartesian.geod.inv(lon0, lat0, lon1, lat1, radians=True)
         self.assertAlmostEqual(d_, d, places=12)
         self.assertAlmostEqual(az_, az, places=12)
