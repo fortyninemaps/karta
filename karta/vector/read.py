@@ -1,6 +1,7 @@
 """ Convenience reader functions """
 
 import os
+import sys
 from numbers import Number
 import shapefile
 from . import geometry
@@ -111,10 +112,19 @@ def recordsasdata(reader):
     """ Interpret shapefile records as a Metadata object """
     d = {}
     idfunc = lambda a: a
-    records = [rec for rec in reader.records()]
-    for (i,k) in enumerate(reader.fields[1:]):
-        f = dBase_type_dict.get(k[1], idfunc)
-        d[k[0]] = [f(rec[i]) for rec in records]
+    try:
+        records = [rec for rec in reader.records()]
+        for (i,k) in enumerate(reader.fields[1:]):
+            f = dBase_type_dict.get(k[1], idfunc)
+            d[k[0]] = [f(rec[i]) for rec in records]
+    except ValueError:
+        # bug in QGIS/pyshp, fixed in dev version of pyshp but not on PyPI yet
+        # see pyshp commit d72723c9e38db8e859b79d95a65c00af1c2ba8ba
+        sys.stderr.write("Warning: failed to read records (see "
+                         "https://github.com/GeospatialPython/pyshp/pull/16)\n")
+        for (i,k) in enumerate(reader.fields[1:]):
+            f = dBase_type_dict.get(k[1], idfunc)
+            d[k[0]] = [None for i in range(reader.numRecords)]
     return Metadata(d)
 
 def recordsasproperties(reader):
@@ -122,12 +132,19 @@ def recordsasproperties(reader):
     proplist = []
     keys = reader.fields
     idfunc = lambda a: a
-    for (i,rec) in enumerate(reader.records()):
-        properties = {}
-        for (k,v) in zip(keys, rec):
-            f = dBase_type_dict.get(k[1], idfunc)
-            properties[k[0]] = f(v)
-        proplist.append(properties)
+    try:
+        for (i,rec) in enumerate(reader.records()):
+            properties = {}
+            for (k,v) in zip(keys, rec):
+                f = dBase_type_dict.get(k[1], idfunc)
+                properties[k[0]] = f(v)
+            proplist.append(properties)
+    except ValueError:
+        # bug in QGIS/pyshp, fixed in dev version of pyshp but not on PyPI yet
+        # see pyshp commit d72723c9e38db8e859b79d95a65c00af1c2ba8ba
+        sys.stderr.write("Warning: failed to read records (see "
+                         "https://github.com/GeospatialPython/pyshp/pull/16)\n")
+        proplist = [None for i in range(reader.numRecords)]
     return proplist
 
 def read_shapefile(name, crs=LonLatWGS84):
@@ -143,12 +160,12 @@ def read_shapefile(name, crs=LonLatWGS84):
         reader = shapefile.Reader(shp=files['shp'], shx=files['shx'],
                                   dbf=files['dbf'])
 
-        if reader.shapeType == 1:       # Points
+        if reader.shapeType in (1, 11, 21):       # Points
             verts = [shp.points[0] for shp in reader.shapes()]
             d = recordsasdata(reader)
             geoms = [geometry.Multipoint(verts, data=d, crs=crs)]
 
-        elif reader.shapeType == 3:     # Lines
+        elif reader.shapeType in (3, 13, 23):     # Lines
             plist = recordsasproperties(reader)
             geoms = []
             for (shp,prop) in zip(reader.shapes(), plist):
@@ -158,7 +175,7 @@ def read_shapefile(name, crs=LonLatWGS84):
                     points = shp.points[i0:i1]
                     geoms.append(geometry.Line(points, properties=prop, crs=crs))
 
-        elif reader.shapeType == 5:     # Polygon
+        elif reader.shapeType in (5, 15, 25):     # Polygon
             plist = recordsasproperties(reader)
             geoms = []
             for (shp,prop) in zip(reader.shapes(), plist):
