@@ -33,16 +33,12 @@ class Geometry(object):
         self._crs = crs
         return
 
-    def _distance(self, pos0, pos1):
+    @staticmethod
+    def _distance(pos0, pos1):
         """ Generic method for calculating distance between positions that
         respects CRS """
-        if self._crs == Cartesian:
-            dist = _vecgeo.distance((pos0.x, pos0.y), (pos1.x, pos1.y))
-        elif pos0._crs == pos1._crs:
-            try:
-                _, _, dist = pos0._crs.geod.inv(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
-            except NameError:
-                dist = greatcircle(pos0, pos1)
+        if pos0._crs == pos1._crs:
+            _, _, dist = pos0._crs.geod.inv(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
         else:
             raise CRSError("Positions must use the same CRS")
         return dist
