@@ -394,7 +394,8 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_subsection_cartesian(self):
-        line = Line([(0.0, 0.0), (1,2), (3,-2), (4,-1), (4, 3), (3, 2)])
+        line = Line([(0.0, 0.0), (1.0, 2.0), (3.0, -2.0), (4.0, -1.0),
+                     (4.0, 3.0), (3.0, 2.0)])
         points = line.subsection(20)
         ans = [Point(v) for v in [(0.0, 0.0),
                                   (0.318619234003536, 0.637238468007072),
@@ -415,7 +416,7 @@ class TestGeometry(unittest.TestCase):
                                   (4.0, 2.2768507638606383),
                                   (4.0, 2.989305030031457),
                                   (3.5037812428946715, 2.503781242894671),
-                                  (3, 2)]]
+                                  (3.0, 2.0)]]
         for a,b in zip(points, ans):
             self.assertPointAlmostEqual(a, b)
         return

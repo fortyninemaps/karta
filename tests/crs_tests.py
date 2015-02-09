@@ -6,12 +6,12 @@ import karta.crs as crs
 class TestCRS(unittest.TestCase):
 
     def test_CartesianProj(self):
-        xp, yp = crs.Cartesian.proj(3, 4)
-        self.assertEqual((xp, yp), (3, 4))
+        xp, yp = crs.Cartesian.proj(3.0, 4.0)
+        self.assertEqual((xp, yp), (3.0, 4.0))
         return
 
     def test_CartesianGeodFwd(self):
-        az = math.atan(0.75) * 180 / math.pi
+        az = math.atan(0.75) * 180.0 / math.pi
         lons, lats, backaz = crs.Cartesian.geod.fwd(0.0, 0.0, az, 5)
         self.assertAlmostEqual(lons, 3.0, places=12)
         self.assertAlmostEqual(lats, 4.0, places=12)
@@ -19,10 +19,10 @@ class TestCRS(unittest.TestCase):
         return
 
     def test_CartesianGeodInv(self):
-        lon0 = 367
-        lat0 = 78
-        lon1 = 93
-        lat1 = 23
+        lon0 = 367.0
+        lat0 = 78.0
+        lon1 = 93.0
+        lat1 = 23.0
         a1 = lon1-lon0
         a2 = lat1-lat0
         d_ = math.sqrt(a1**2 + a2**2)
@@ -35,10 +35,10 @@ class TestCRS(unittest.TestCase):
         return
 
     def test_CartesianGeodInv2(self):
-        lon0 = 367
-        lat0 = 78
-        lon1 = 732
-        lat1 = 23
+        lon0 = 367.0
+        lat0 = 78.0
+        lon1 = 732.0
+        lat1 = 23.0
         a1 = lon1-lon0
         a2 = lat1-lat0
         d_ = math.sqrt(a1**2 + a2**2)
