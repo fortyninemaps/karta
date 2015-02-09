@@ -196,8 +196,12 @@ class RegularGrid(Grid):
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
         """ Return a clipped version of grid constrained to a bounding box. """
         if crs is not None:
-            raise NotImplementedError("grid clipping in other coordinate "
-                                      "systems not yet supported")
+            x, y = crs.proj([xmin, xmax], [ymin, ymax], inverse=True)
+            x_, y_ = self.crs.proj(x, y)
+            xmin, xmax = x
+            ymin, ymax = y
+        else:
+            crs = self.crs
         # obvious impl.
         # TODO: this could be better implemented by precomputing the values array
         # bounds and size and therefore avoiding allocating X and Y arrays
@@ -230,7 +234,7 @@ class RegularGrid(Grid):
         values[~mask[i0:i1, j0:j1]] = get_nodata(values.dtype.type)
         told = self.transform
         tnew = (X[i0,j0], Y[i0, j0], told[2], told[3], told[4], told[5])
-        return RegularGrid(tnew, values)
+        return RegularGrid(tnew, values, crs=self.crs)
 
     def resample_griddata(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy' using *scipy.griddata*
@@ -360,26 +364,43 @@ class RegularGrid(Grid):
     def get_indices(self, x, y):
         """ Return the column and row indices for the point nearest
         geographical coordinates (x, y). """
-        # Calculate this by forming matrices
-        #       | dx sy |
-        #   T = |       |
-        #       | sx dy |
+        # Calculate this by forming block matrices
+        #       | dx sy          |
+        #       | sx dy          |
+        #   T = |      ....      |
+        #       |          dx sy |
+        #       |          sx dy |
         #
         #       | x0 |
-        #   S = |    |
+        #       | y0 |
+        #   S = | .. |
+        #       | x0 |
         #       | y0 |
         #
         # where the grid transform is t = (x0, y0, dx, dy, sy, sx)
         #
         # Then the nearest indices J come from solving the system
         # T J = X - S
-        ny, nx = self.size
+        try:
+            n = len(x)
+        except TypeError:
+            n = 1
+        
         t = self._transform
-        T = np.array([[t[2], t[4]], [t[5], t[3]]])
-        S = np.array([t[0], t[1]])
-        ind = np.linalg.solve(T, np.array([x, y])-S)
-        ind = ind.clip((0, 0), (nx-1, ny-1))
-        return np.round(ind).astype(int)
+        T = (np.diag(np.tile([t[2], t[3]], n)) +
+             np.diag(np.tile([t[4], 0], n)[:-1], 1) +
+             np.diag(np.tile([t[5], 0], n)[:-1], -1))
+
+        S = np.tile([t[0], t[1]], n)
+        ind = np.linalg.solve(T, np.vstack([x, y]).T.ravel() - S)
+        ind = np.round(ind).astype(int)
+        ny, nx = self.size
+        xi = ind[::2].clip(0, nx-1)
+        yi = ind[1::2].clip(0, ny-1)
+        if n == 1:
+            return xi[0], yi[0]
+        else:
+            return xi, yi
 
     def sample_nearest(self, x, y):
         """ Return the value nearest to (`x`, `y`). Nearest grid center
