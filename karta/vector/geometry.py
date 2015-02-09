@@ -183,13 +183,6 @@ class Point(Geometry):
         else:
             return math.sqrt(flat_dist**2. + (self.z-other.z)**2.)
 
-    def greatcircle(self, other):
-        """ Return the great circle distance between two geographical points. """
-        if not (self._crs == other._crs):
-            raise CRSError("Both point have use the same CRS")
-        az1, az2, dist = self._crs.geod.inv(self.x, self.y, other.x, other.y)
-        return dist
-
     def shift(self, shift_vector):
         """ Shift point by the amount given by a vector. Operation occurs
         in-place """
@@ -244,7 +237,7 @@ class MultipointBase(Geometry):
 
     def __init__(self, vertices, data=None, properties=None, copy_metadata=True,
                  **kwargs):
-        """ Partial init function that establishes geometry rank and greates a
+        """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
         """
         super(MultipointBase, self).__init__(**kwargs)
@@ -476,11 +469,6 @@ class MultipointBase(Geometry):
     def distances_to(self, pt):
         """ Return the distance from each vertex to a point. """
         d = [pt.distance(a) for a in self]
-        return np.array(d)
-
-    def greatcircles_to(self, pt):
-        """ Return the great circle distances from each vertex to a point. """
-        d = [pt.greatcircle(a) for a in self]
         return np.array(d)
 
     def nearest_point_to(self, pt):
@@ -1062,56 +1050,6 @@ def ray_intersection(pt, endpt1, endpt2, direction=0.0):
             return (x_int, y_int)
         else:
             return
-
-
-def greatcircle(pta, ptb, method="vicenty"):
-    """ Computes the great circle distance between n point pairs on a
-    sphere. Returns a list of length (n-1)
-
-    [pntlist] contains a list of point objects
-
-    [method] may be "vicenty" (default) or "haversine". The Haversine
-    method is roughly 20% faster, but may yield rounding errors when
-    coordinates are antipodal.
-    """
-
-    radius = 6371.
-    deg2rad = np.pi / 180.
-
-    x1 = pta.x * deg2rad
-    x2 = ptb.x * deg2rad
-    y1 = pta.y * deg2rad
-    y2 = ptb.y * deg2rad
-
-    dx = x2 - x1
-    dy = y2 - y1
-
-    if method == "haversine":
-        try:
-            distance = 2 * radius * math.asin(math.sqrt((math.sin(dy /
-                2.))**2 + math.cos(y1) * math.cos(y2) *
-                (math.sin(dx / 2.))**2))
-        except GGeoError:
-            traceback.print_exc()
-
-    elif method == "vicenty":
-        try:
-            a = math.sqrt((math.cos(y2) * math.sin(dx))**2 +
-                (math.cos(y1) * math.sin(y2) - math.sin(y1) *
-                math.cos(y2) * math.cos(dx))**2)
-            b = (math.sin(y1) * math.sin(y2) + math.cos(y1) *
-                math.cos(y2) * math.cos(dx))
-            distance = radius * math.atan2(a, b)
-        except ZeroDivisionError:
-            raise GGeoError("Zero in denominator")
-            return None
-        except:
-            traceback.print_exc()
-    else:
-        raise Exception("Distance method unrecognized")
-        distance = np.nan
-
-    return distance
 
 
 def points_to_multipoint(points):

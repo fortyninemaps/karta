@@ -499,10 +499,10 @@ class TestGeometryProj(unittest.TestCase):
         return
 
     def test_greatcircle(self):
-        d1 = self.vancouver.greatcircle(self.ottawa)
-        d2 = self.vancouver.greatcircle(self.whitehorse)
-        d3 = self.whitehorse.greatcircle(self.ottawa)
-        d4 = self.whitehorse.greatcircle(self.vancouver)
+        d1 = self.vancouver.distance(self.ottawa)
+        d2 = self.vancouver.distance(self.whitehorse)
+        d3 = self.whitehorse.distance(self.ottawa)
+        d4 = self.whitehorse.distance(self.vancouver)
         self.assertTrue(abs(d1 - 3549030.70541) < 1e-5)
         self.assertTrue(abs(d2 - 1483327.53922) < 1e-5)
         self.assertTrue(abs(d3 - 4151366.88185) < 1e-5)

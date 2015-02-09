@@ -67,7 +67,13 @@ class _cartesian_geod(object):
         else:
             az = np.array(az) / 180 * np.pi
 
-        backaz = _unrollrad(az + np.pi)
+        backaz = az + np.pi
+        if hasattr(backaz, "__len__"):
+            m = backaz >= 2*np.pi
+            backaz[m] -= 2*np.pi
+        elif backaz >= 2*np.pi:
+            backaz -= 2*np.pi
+
         lons2 = lons + dist * np.sin(az)
         lats2 = lats + dist * np.cos(az)
 
@@ -86,7 +92,12 @@ class _cartesian_geod(object):
 
         dist = np.sqrt(dx**2 + dy**2)
         az = plane_azimuth(dx, dy)
-        backaz = _unrollrad(az + np.pi)
+        backaz = az + np.pi
+        if hasattr(backaz, "__len__"):
+            m = backaz >= 2*np.pi
+            backaz[m] -= 2*np.pi
+        elif backaz >= 2*np.pi:
+            backaz -= 2*np.pi
 
         if not radians:
             az = az * 180 / np.pi
@@ -97,34 +108,85 @@ class _spherical_geod(object):
     """ Static class that substitutes for a pyrproj.Geod instance for
     spherical coordinates """
 
+    def __init__(self, radius):
+        self.radius = radius
+
+    @staticmethod
+    def _distance(lons1, lats1, lons2, lats2):
+        """ Computes the great circle distance between point pairs on a
+        sphere. 
+
+        REQUIRES RADIANS
+        """
+        if dx > 0.01 or dy > 0.01:
+            # use spherical law of cosines
+            d_ = np.arccos(np.sin(lats1) * np.sin(lats2) +
+                    np.cos(lats1) * np.cos(lats2) * np.cos(np.abs(lons2-lons1)))
+
+        else:
+            # use haversine
+            dy = np.abs(lats2 - lats1)
+            dx = np.abs(lons2 - lons1)
+
+            d_ = (2 * np.arcsin(
+                        np.sqrt(np.sin(dy / 2.)**2 +
+                            np.cos(lats1) *
+                            np.cos(lats2) *
+                            np.sin(dx / 2.)**2)))
+        return self.radius * d_
+
     @staticmethod
     def fwd(lons, lats, az, dist, radians=False):
         """ Returns lons, lats, and back azimuths """
-        if radians:
-            lons = np.array(lons) * 180 / np.pi
-            lats = np.array(lats) * 180 / np.pi
-        else:
-            az = np.array(az) / 180 * np.pi
+        if not radians:
+            lons = np.array(lons) * np.pi / 180.0
+            lats = np.array(lats) * np.pi / 180.0
+            az = np.array(az) * np.pi / 180.0
 
-        raise NotImplementedError()
 
-        if radians:
-            lons2 = np.array(lons2) / 180 * np.pi
-            lats2 = np.array(lats2) / 180 * np.pi
-        else:
+        d_ = dist / self.radius
+        lats2 = np.arccos(np.sin(lats) * np.cos(d_) + 
+                    np.cos(lats) * np.sin(d_) * np.sin(az))
+        lons2 = lons + np.arccos((np.cos(d_) - np.sin(lats2) * np.sin(lats)) /
+                                 np.cos(lats) * np.cos(lats2))
+        backaz = az + np.pi
+        if hasattr(backaz, "__len__"):
+            m = backaz >= 2*np.pi
+            backaz[m] -= 2*np.pi
+        elif backaz >= 2*np.pi:
+            backaz -= 2*np.pi
+
+        if not radians:
+            lons2 = np.array(lons2) * 180 / np.pi
+            lats2 = np.array(lats2) * 180 / np.pi
             backaz = np.array(backaz) * 180 / np.pi
-
         return lons2, lats2, backaz
 
     @staticmethod
     def inv(lons1, lats1, lons2, lats2, radians=False):
         """ Returns forward and back azimuths and distances """
-        raise NotImplementedError()
+        if not radians:
+            lons1 = lons1 * np.pi / 180.0
+            lons2 = lons2 * np.pi / 180.0
+            lats1 = lats1 * np.pi / 180.0
+            lats2 = lats2 * np.pi / 180.0
+
+        dlon = lons2-lons1
+        az = np.arctan(np.sin(dlon) / 
+                (np.cos(lats1) * np.tan(lats2) - np.sin(lats1) * np.cos(dlon)))
+
+        backaz = az + np.pi
+        if hasattr(backaz, "__len__"):
+            m = backaz >= 2*np.pi
+            backaz[m] -= 2*np.pi
+        elif backaz >= 2*np.pi:
+            backaz -= 2*np.pi
+            
+        dist = self._distance(lons1, lats1, lons2, lats2)
 
         if not radians:
             az = az * 180 / np.pi
             backaz = backaz * 180 / np.pi
-
         return az, backaz, dist
 
 class Cartesian(CRS):
@@ -184,15 +246,9 @@ class CRSError(Exception):
     def __init__(self, message=''):
         self.message = message
 
-def _unrollrad(angle):
-    """ Wrap angle to the range [0,2pi) """
-    while angle >= 2*np.pi:
-        angle -= 2*np.pi
-    if angle < 0:
-        angle += 2*np.pi
-    return angle
-
+# The following functions are here on a temporary basis
 def _azimuth(dx, dy):
+    """ Return cartesian azimuth between points (scalar func) """
     if dx > 0:
         if dy > 0:
             return np.arctan(dx/dy)
@@ -214,11 +270,11 @@ def _azimuth(dx, dy):
             return np.pi
 
 def plane_azimuth(dx, dy):
+    """ Return cartesian azimuth between points """
     if hasattr(dx, "__iter__"):
         return numpy.array([_azimuth(dx_, dy_) for dx_, dy_ in zip(dx, dy)])
     else:
         return _azimuth(dx, dy)
-
 
 ############ Predefined CRS instances ############
 
