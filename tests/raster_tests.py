@@ -12,27 +12,27 @@ class RegularGrid(unittest.TestCase):
 
     def setUp(self):
         pe = karta.raster.peaks(n=49)
-        self.rast = karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 0.0, 0.0), Z=pe)
+        self.rast = karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 0.0, 0.0), values=pe)
         # self.rast = karta.grid.RegularGrid(hdr={'nx': 49, 'ny': 49,
         #                                         'xllcenter': 15.0,
         #                                         'yllcenter': 15.0,
         #                                         'dx': 30.0,
         #                                         'dy': 30.0,
-        #                                         'nbands': 1}, Z=pe)
+        #                                         'nbands': 1}, values=pe)
         return
 
     def test_add_rgrid(self):
         rast2 = karta.grid.RegularGrid(self.rast.transform,
-                                       Z=np.random.random(self.rast.Z.shape)) 
+                                       values=np.random.random(self.rast.values.shape)) 
         res = self.rast + rast2
-        self.assertTrue(np.all(res.Z == self.rast.Z+rast2.Z))
+        self.assertTrue(np.all(res.values == self.rast.values+rast2.values))
         return
 
     def test_sub_rgrid(self):
         rast2 = karta.grid.RegularGrid(self.rast.transform,
-                                       Z=np.random.random(self.rast.Z.shape)) 
+                                       values=np.random.random(self.rast.values.shape)) 
         res = self.rast - rast2
-        self.assertTrue(np.all(res.Z == self.rast.Z-rast2.Z))
+        self.assertTrue(np.all(res.values == self.rast.values-rast2.values))
         return
 
     def test_center_coords(self):
@@ -49,12 +49,12 @@ class RegularGrid(unittest.TestCase):
             xx, yy = np.meshgrid(np.linspace(s, f, n),
                                  np.linspace(s, f, n))
             zz = 2.0*xx + -3.0*yy
-            return karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 0.0, 0.0), Z=zz)
+            return karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 0.0, 0.0), values=zz)
 
         g = makegrid(0.0, 1.0, 129)
         sol = makegrid(1.0/128.0, 1.0-1.0/128.0, 64)
         gnew = g.resample(60.0, 60.0)
-        residue = gnew.Z - sol.Z
+        residue = gnew.values - sol.values
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return
 
@@ -126,15 +126,15 @@ class RegularGrid(unittest.TestCase):
         return
 
     # def test_resize(self):
-    #     orig = self.rast.Z.copy()
+    #     orig = self.rast.values.copy()
     #     x0, x1, y0, y1 = self.rast.get_extents()
     #     self.rast.resize((x0, x1/2.0, y0, y1/2.0))
-    #     self.assertTrue(np.all(self.rast.Z == orig[:25,:25]))
+    #     self.assertTrue(np.all(self.rast.values == orig[:25,:25]))
     #     return
 
     def test_aairead(self):
         grid = karta.grid.aairead(os.path.join(TESTDATA,'peaks49.asc'))
-        self.assertTrue(np.all(grid.Z[::-1] == self.rast.Z))
+        self.assertTrue(np.all(grid.values[::-1] == self.rast.values))
         return
 
 
@@ -145,21 +145,21 @@ class TestWarpedGrid(unittest.TestCase):
         jj = np.arange(50.0)
         X, Y = np.meshgrid(np.sin(ii/25.0 * 2*np.pi),
                            np.sin(jj/50.0 * 2*np.pi))
-        Z = karta.raster.witch_of_agnesi(50, 50)
-        self.rast = karta.grid.WarpedGrid(X=X, Y=Y, Z=Z)
+        values = karta.raster.witch_of_agnesi(50, 50)
+        self.rast = karta.grid.WarpedGrid(X=X, Y=Y, values=values)
 
     def test_add_sgrid(self):
         rast2 = karta.grid.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
-                                          Z=np.random.random(self.rast.Z.shape))
+                                          values=np.random.random(self.rast.values.shape))
         res = self.rast + rast2
-        self.assertTrue(np.all(res.Z == self.rast.Z+rast2.Z))
+        self.assertTrue(np.all(res.values == self.rast.values+rast2.values))
         return
 
     def test_sub_sgrid(self):
         rast2 = karta.grid.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
-                                      Z=np.random.random(self.rast.Z.shape))
+                                      values=np.random.random(self.rast.values.shape))
         res = self.rast - rast2
-        self.assertTrue(np.all(res.Z == self.rast.Z-rast2.Z))
+        self.assertTrue(np.all(res.values == self.rast.values-rast2.values))
         return
 
 class TestAAIGrid(unittest.TestCase):

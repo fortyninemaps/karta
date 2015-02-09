@@ -39,16 +39,16 @@ class Grid(object):
 
     def clipz(self, bounds):
         """ Clip the z-range in place to bounds = [min, max]. """
-        self.Z = self.Z.clip(bounds[0], bounds[1])
+        self.values = self.values.clip(bounds[0], bounds[1])
         return
 
     def max(self):
         """ Return the maximum non-nan in self.data. """
-        return np.nanmax(self.Z)
+        return np.nanmax(self.values)
 
     def min(self):
         """ Return the minimum non-nan in self.data. """
-        return np.nanmin(self.Z)
+        return np.nanmin(self.values)
 
     def minmax(self):
         """ Return the minimum and maximum value of data array. """
@@ -62,7 +62,7 @@ class Grid(object):
 class RegularGrid(Grid):
     """ Regular (structured) grid class. A RegularGrid contains a fixed number
     of rows and columns with a constant spacing and a scalar or vector field
-    defined as `Z`.
+    defined as `values`.
 
     Positions on a RegularGrid are referenced to their array indices *(i,j)*
     using an affine transform *T* such that
@@ -78,14 +78,14 @@ class RegularGrid(Grid):
 
     e = f = 0
     """
-    def __init__(self, transform, Z=None, crs=None, nodata_value=None):
+    def __init__(self, transform, values=None, crs=None, nodata_value=None):
         """ Create a RegularGrid instance with cells referenced according to
         *transform*, which is an iterable or dictionary consisting of
         (xllcenter, yllcenter, dx, dy, xrot, yrot).
 
         Optional parameters:
         --------------------
-        Z : grid data (nrows x ncols) [default NaN]
+        values : grid data (nrows x ncols) [default NaN]
         crs : Grid coordinate reference system [default None]
         """
         if hasattr(transform, "keys"):
@@ -100,10 +100,10 @@ class RegularGrid(Grid):
             raise GridError("RegularGrid must be initialized with a transform"
                             "iterable or dictionary")
 
-        if Z is not None:
-            self.Z = Z
+        if values is not None:
+            self.values = values
         else:
-            self.Z = np.atleast_2d([np.nan])
+            self.values = np.atleast_2d([np.nan])
 
         if crs is None:
             self._crs = Cartesian
@@ -111,7 +111,7 @@ class RegularGrid(Grid):
             self._crs = crs
 
         if nodata_value is None:
-            self._nodata = get_nodata(self.Z.dtype.type)
+            self._nodata = get_nodata(self.values.dtype.type)
         else:
             self._nodata = nodata_value
         return
@@ -119,20 +119,20 @@ class RegularGrid(Grid):
     def __add__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               Z=self.Z+other.Z)
+                               values=self.values+other.values)
         else:
             raise NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               Z=self.Z-other.Z)
+                               values=self.values-other.values)
         else:
             raise NonEquivalentGridError(self, other)
 
     def _equivalent_structure(self, other):
         return (self._transform == other._transform) and \
-               (self.Z.shape == other.Z.shape)
+               (self.values.shape == other.values.shape)
 
     @property
     def transform(self):
@@ -140,7 +140,7 @@ class RegularGrid(Grid):
 
     @property
     def size(self):
-        return self.Z.shape
+        return self.values.shape
 
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
@@ -160,10 +160,10 @@ class RegularGrid(Grid):
 
     def center_coords(self):
         t = self._transform
-        xcoords = np.empty(self.Z.shape[:2])
-        ycoords = np.empty(self.Z.shape[:2])
-        irow = np.arange(self.Z.shape[0])
-        for i in range(self.Z.shape[1]):
+        xcoords = np.empty(self.values.shape[:2])
+        ycoords = np.empty(self.values.shape[:2])
+        irow = np.arange(self.values.shape[0])
+        for i in range(self.values.shape[1]):
             xcoords[:,i] = t[0] + i*t[2] + irow*t[4]
             ycoords[:,i] = (t[1] + irow*t[3] + i*t[5])
         return xcoords, ycoords
@@ -172,7 +172,7 @@ class RegularGrid(Grid):
         """ Return the coordinates of vertices. """
         xllcorner, yllcorner = self.corner_llref()
         t = self._transform
-        ny, nx = self.Z.shape[:2]
+        ny, nx = self.values.shape[:2]
         xurcorner = xllcorner + (nx+1) * t[2] + (ny+1) * t[4]
         yurcorner = yllcorner + (ny+1) * t[3] + (nx+1) * t[5]
         return np.meshgrid(np.linspace(xllcorner, xurcorner, nx + 1),
@@ -189,7 +189,7 @@ class RegularGrid(Grid):
             n = 0
         else:
             raise GridError("`reference` must be 'center' or 'edge'")
-        ny, nx = self.Z.shape[:2]
+        ny, nx = self.values.shape[:2]
         dx, dy = self._transform[2:4]
         return (x0, x0 + dx*(nx+n), y0, y0 + dy*(ny+n))
 
@@ -199,7 +199,7 @@ class RegularGrid(Grid):
             raise NotImplementedError("grid clipping in other coordinate "
                                       "systems not yet supported")
         # obvious impl.
-        # TODO: this could be better implemented by precomputing the Z array
+        # TODO: this could be better implemented by precomputing the values array
         # bounds and size and therefore avoiding allocating X and Y arrays
         X, Y = self.center_coords()
         mask = (xmin <= X) & (X <= xmax) & (ymin <= Y) & (Y <= ymax)
@@ -226,11 +226,11 @@ class RegularGrid(Grid):
                 j1 = j
             j += 1
 
-        Z = self.Z.copy()[i0:i1, j0:j1]
-        Z[~mask[i0:i1, j0:j1]] = get_nodata(Z.dtype.type)
+        values = self.values.copy()[i0:i1, j0:j1]
+        values[~mask[i0:i1, j0:j1]] = get_nodata(values.dtype.type)
         told = self.transform
         tnew = (X[i0,j0], Y[i0, j0], told[2], told[3], told[4], told[5])
-        return RegularGrid(tnew, Z)
+        return RegularGrid(tnew, values)
 
     def resample_griddata(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy' using *scipy.griddata*
@@ -245,7 +245,7 @@ class RegularGrid(Grid):
         method : interpolation method, string ('nearest', 'linear')
         """
         from scipy.interpolate import griddata
-        ny0, nx0 = self.Z.shape[:2]
+        ny0, nx0 = self.values.shape[:2]
         dx0, dy0 = self._transform[2:4]
         xllcenter, yllcenter = self.center_llref()
         xurcenter = xllcenter + dx0*nx0
@@ -256,12 +256,12 @@ class RegularGrid(Grid):
         xx0, yy0 = self.coordmesh()
         xx, yy = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
                              np.linspace(yllcenter, yurcenter, ny))
-        idata = griddata((xx0.flatten(), yy0.flatten()), self.Z.flatten(),
+        idata = griddata((xx0.flatten(), yy0.flatten()), self.values.flatten(),
                          (xx.flatten(), yy.flatten()), method=method)
-        Z = idata.reshape(ny, nx)
+        values = idata.reshape(ny, nx)
         t = self._transform
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
-        return RegularGrid(tnew, Z)
+        return RegularGrid(tnew, values)
 
     def resample(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy'.
@@ -275,23 +275,23 @@ class RegularGrid(Grid):
 
         method : interpolation method, string ('nearest',)
         """
-        ny0, nx0 = self.Z.shape[:2]
+        ny0, nx0 = self.values.shape[:2]
         dx0, dy0 = self._transform[2:4]
         xllcenter, yllcenter = self.center_llref()
 
         if method == 'nearest':
             rx, ry = dx / dx0, dy / dy0
-            I = np.around(np.arange(ry/2, self.Z.shape[0], ry)).astype(int)
-            J = np.around(np.arange(rx/2, self.Z.shape[1], rx)).astype(int)
+            I = np.around(np.arange(ry/2, self.values.shape[0], ry)).astype(int)
+            J = np.around(np.arange(rx/2, self.values.shape[1], rx)).astype(int)
             JJ, II = np.meshgrid(J, I)
-            Z = self.Z[II, JJ]
+            values = self.values[II, JJ]
         else:
             raise NotImplementedError('method "{0}" not '
                                       'implemented'.format(method))
 
         t = self._transform
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
-        return RegularGrid(tnew, Z)
+        return RegularGrid(tnew, values)
 
     # def resize(self, te):
     #     """ Resize array to fit within extents given by te. If the new
@@ -304,7 +304,7 @@ class RegularGrid(Grid):
     #     Returns None.
     #     """
     #     t = self._transform
-    #     ny, nx = self.Z.shape[:2]
+    #     ny, nx = self.values.shape[:2]
     #     xll1, yll1 = self.center_llref()
     #     xur1 = xll1 + t[2] * (nx - 1)
     #     yur1 = yll1 + t[3] * (ny - 1)
@@ -385,12 +385,12 @@ class RegularGrid(Grid):
         """ Return the value nearest to (`x`, `y`). Nearest grid center
         sampling scheme. """
         xi, yi = self.get_indices(x, y)
-        ny, nx = self.Z.shape[:2]
+        ny, nx = self.values.shape[:2]
         if (np.any(xi < 0) or np.any(xi >= nx) or
             np.any(yi < 0) or np.any(yi >= ny)):
             raise GridError("coordinates ({0}, {1}) are outside grid region "
                             "({2}, {3})".format(xi, yi, nx, ny))
-        return self.Z[yi, xi]
+        return self.values[yi, xi]
 
     def sample(self, x, y, method="nearest"):
         """ Return the values nearest (`x`, `y`), where `x` and `y` may be
@@ -400,7 +400,7 @@ class RegularGrid(Grid):
         elif method == "linear":
             from scipy.interpolate import griddata
             Xd, Yd = self.center_coords()
-            return griddata((Xd.flat, Yd.flat), self.Z.flat,
+            return griddata((Xd.flat, Yd.flat), self.values.flat,
                             (x,y), method="linear")
         else:
             raise ValueError("method \"{0}\" not understood".format(method))
@@ -436,7 +436,7 @@ class RegularGrid(Grid):
                 fx = fd*xlen
                 fy = fd*ylen
                 xi, yi = self.get_indices(x0+fx, y0+fy)
-                z.append(self.Z[yi, xi])
+                z.append(self.values[yi, xi])
                 p += resolution
             p -= d
 
@@ -444,14 +444,14 @@ class RegularGrid(Grid):
 
     def fill_sinks(self):
         """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
-        return RegularGrid(self._transform, Z=fill_sinks(self.Z))
+        return RegularGrid(self._transform, values=fill_sinks(self.values))
 
     def as_warpedgrid(self):
         """ Return a copy as a WarpedGrid instance. This is a more general
         grid class that has a larger memory footprint but can represent more
         flexible data layouts. """
         Xc, Yc = self.center_coords()
-        return WarpedGrid(Xc, Yc, self.Z.copy())
+        return WarpedGrid(Xc, Yc, self.values.copy())
 
     def aaiwrite(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
@@ -471,7 +471,7 @@ class RegularGrid(Grid):
         if np.any(self._transform[4:] != 0.0):
             raise GridIOError("ESRI ASCII grids do not support skewed grids")
 
-        ny, nx = self.Z.shape[:2]
+        ny, nx = self.values.shape[:2]
         x0, y0, dx, dy = self._transform[:4]
         if dx != dy:
             raise GridIOError("ASCII grids require isometric grid cells")
@@ -480,7 +480,7 @@ class RegularGrid(Grid):
             f = open(f, "w")
 
         try:
-            data_a = self.Z.copy()
+            data_a = self.values.copy()
             data_a[np.isnan(data_a)] = nodata_value
 
             f.write("NCOLS {0}\n".format(nx))
@@ -506,47 +506,47 @@ class WarpedGrid(Grid):
     spacing is not necessarily constant.
     """
 
-    def __init__(self, X, Y, Z, nodata_value=None):
+    def __init__(self, X, Y, values, nodata_value=None):
         """
         Parameters:
         -----------
         X : first-dimension coordinates of grid centers
         Y : second-dimension coordinates of grid centers
-        Z : dependent m-dimensional quantity (nrows x ncols)
+        values : dependent m-dimensional quantity (nrows x ncols)
         """
 
-        if any(a is None for a in (X, Y, Z)):
-            raise GridError('All of (X, Y, Z) must be provided')
+        if any(a is None for a in (X, Y, values)):
+            raise GridError('All of (X, Y, values) must be provided')
 
-        if not (X.shape == Y.shape == Z.shape[:2]):
-            raise GridError('All of (X, Y, Z) must share the same '
+        if not (X.shape == Y.shape == values.shape[:2]):
+            raise GridError('All of (X, Y, values) must share the same '
                             'size over the first two dimensions')
 
         self.X = X
         self.Y = Y
-        self.Z = Z
+        self.values = values
 
         if nodata_value is None:
-            self._nodata = get_nodata(self.Z.dtype.type)
+            self._nodata = get_nodata(self.values.dtype.type)
         else:
             self._nodata = nodata_value
         return
 
     def __add__(self, other):
         if self._equivalent_structure(other):
-            return WarpedGrid(self.X.copy(), self.Y.copy(), self.Z+other.Z)
+            return WarpedGrid(self.X.copy(), self.Y.copy(), self.values+other.values)
         else:
             raise NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
-            return WarpedGrid(self.X.copy(), self.Y.copy(), self.Z-other.Z)
+            return WarpedGrid(self.X.copy(), self.Y.copy(), self.values-other.values)
         else:
             raise NonEquivalentGridError(self, other)
 
     def _equivalent_structure(self, other):
         return np.all(self.X == other.X) and np.all(self.Y == other.Y) and \
-                np.all(self.Z.shape == other.Z.shape)
+                np.all(self.values.shape == other.values.shape)
 
     def rotate(self, deg, origin=(0.0, 0.0)):
         """ Rotate grid by *deg* degrees counter-clockwise around *origin*. """
@@ -558,7 +558,7 @@ class WarpedGrid(Grid):
 
     def fill_sinks(self):
         """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
-        return WarpedGrid(self.X.copy(), self.Y.copy(), fill_sinks(self.Z))
+        return WarpedGrid(self.X.copy(), self.Y.copy(), fill_sinks(self.values))
 
 
 class GridError(Exception):
@@ -585,15 +585,15 @@ def aairead(fnm):
     """ Convenience function to open a ESRI ASCII grid and return a RegularGrid
     instance.
     """
-    Z, aschdr = _aai.aairead(fnm)
+    values, aschdr = _aai.aairead(fnm)
     t = {'xllcenter': aschdr['xllcorner'] + 0.5 * aschdr['cellsize'],
          'yllcenter': aschdr['yllcorner'] + 0.5 * aschdr['cellsize'],
          'dx'       : aschdr['cellsize'],
          'dy'       : aschdr['cellsize'],
          'xrot'     : 0.0,
          'yrot'     : 0.0}
-    Z[Z==aschdr['nodata_value']] = np.nan
-    return RegularGrid(t, Z=Z[::-1])
+    values[values==aschdr['nodata_value']] = np.nan
+    return RegularGrid(t, values=values[::-1])
 
 def gtiffread(fnm, band=1):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
@@ -619,7 +619,7 @@ def gtiffread(fnm, band=1):
     geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
                                      f=hdr["srs"]["flattening"])
     crs = CustomCRS(proj=hdr["srs"]["proj4"], geod=geodstr)
-    return RegularGrid(t, Z=arr.squeeze()[::-1], crs=crs)
+    return RegularGrid(t, values=arr.squeeze()[::-1], crs=crs)
 
 def get_nodata(T):
     """ Return a default value for NODATA given a type (e.g. int, float,
