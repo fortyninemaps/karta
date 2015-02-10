@@ -382,22 +382,35 @@ class RegularGrid(Grid):
         # Then the nearest indices J come from solving the system
         # T J = X - S
         try:
-            n = len(x)
+            npts = len(x)
         except TypeError:
-            n = 1
-        
+            npts = 1
+
+        n = min(70, npts)    # number to process at once
         t = self._transform
         T = (np.diag(np.tile([t[2], t[3]], n)) +
              np.diag(np.tile([t[4], 0], n)[:-1], 1) +
              np.diag(np.tile([t[5], 0], n)[:-1], -1))
-
         S = np.tile([t[0], t[1]], n)
-        ind = np.linalg.solve(T, np.vstack([x, y]).T.ravel() - S)
+
+        if npts == 1:
+            ind = np.linalg.solve(T, np.array([x, y]) - S)
+        else:
+            ind = np.empty(2*npts, dtype=np.float64)
+            i = 0
+            while i != npts:
+                ip = min(i + n, npts)
+                xy = np.zeros(2*n, dtype=np.float64)
+                xy[:2*(ip-i)] = np.vstack([x[i:ip], y[i:ip]]).T.ravel()
+                ind_ = np.linalg.solve(T, xy - S)
+                ind[2*i:2*ip] = ind_[:2*(ip-i)]
+                i = ip
+
         ind = np.round(ind).astype(int)
         ny, nx = self.size
         xi = ind[::2].clip(0, nx-1)
         yi = ind[1::2].clip(0, ny-1)
-        if n == 1:
+        if npts == 1:
             return xi[0], yi[0]
         else:
             return xi, yi
