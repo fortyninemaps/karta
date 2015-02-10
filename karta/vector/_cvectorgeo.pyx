@@ -175,8 +175,8 @@ def pt_nearest_planar(tuple pt, tuple endpt1, tuple endpt2):
         else:
             return (u_int, dist(u_int, pt))
 
-def pt_nearest_proj(geod, pt, endpt0, endpt1, float tol=1.0, int maxiter=50):
-    """ Given a geodetic function *geod*, a Point *pt*, and an arc from
+def pt_nearest_proj(fwd, inv, pt, endpt0, endpt1, float tol=1.0, int maxiter=50):
+    """ Given geodetic functions *fwd* and *inv*, a Point *pt*, and an arc from
     *endpt1* to *endpt2*, return the point on the arc that is nearest *pt*.
 
     Scheme employs a bisection minimization method. Iteration continues until a
@@ -184,12 +184,12 @@ def pt_nearest_proj(geod, pt, endpt0, endpt1, float tol=1.0, int maxiter=50):
     exhausted. If the iteration limit is reached, a ConvergenceError is raised.
     """
     cdef double az, az2, L
-    (az, az2, L) = geod.inv(endpt0[0], endpt0[1], endpt1[0], endpt1[1])
+    (az, az2, L) = inv(endpt0[0], endpt0[1], endpt1[0], endpt1[1])
 
     def distance(double x):
         cdef double trialx, trialy, _, d
-        (trialx, trialy, _) = geod.fwd(endpt0[0], endpt0[1], az, x*L)
-        (_, _, d) = geod.inv(trialx, trialy, pt[0], pt[1])
+        (trialx, trialy, _) = fwd(endpt0[0], endpt0[1], az, x*L)
+        (_, _, d) = inv(trialx, trialy, pt[0], pt[1])
         return d
     
     def ddx(double x):
@@ -224,7 +224,7 @@ def pt_nearest_proj(geod, pt, endpt0, endpt1, float tol=1.0, int maxiter=50):
             dx = abs(x0-xm) * L
             x0 = xm
         i += 1
-    (xn, yn, _) = geod.fwd(endpt0[0], endpt0[1], az, xm*L)
+    (xn, yn, _) = fwd(endpt0[0], endpt0[1], az, xm*L)
     return (xn, yn), distance(xm)
 
 class ConvergenceError(Exception):

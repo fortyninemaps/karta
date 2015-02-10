@@ -38,7 +38,7 @@ class Geometry(object):
         """ Generic method for calculating distance between positions that
         respects CRS """
         if pos0._crs == pos1._crs:
-            _, _, dist = pos0._crs.geod.inv(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
+            _, _, dist = pos0._crs.inverse(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
         else:
             raise CRSError("Positions must use the same CRS")
         return dist
@@ -151,7 +151,7 @@ class Point(Geometry):
             return np.nan
 
         elif self._crs == other._crs:
-            az1, _, _ = self._crs.geod.inv(self.x, self.y, other.x, other.y)
+            az1, _, _ = self._crs.inverse(self.x, self.y, other.x, other.y)
             return az1 * math.pi / 180.0
 
         else:
@@ -167,7 +167,7 @@ class Point(Geometry):
         """
         if not radians:
             direction = direction*180.0/math.pi
-        (x, y, backaz) = self._crs.geod.fwd(self.x, self.y, direction, distance)
+        (x, y, backaz) = self._crs.forward(self.x, self.y, direction, distance)
         return Point((x, y), properties=self.properties, data=self.data,
                      crs=self._crs)
 
@@ -670,8 +670,9 @@ class ConnectedMultipoint(MultipointBase):
         elif self._crs == Cartesian:
             func = _vecgeo.pt_nearest_planar
         else:
-            geod = self._crs.geod
-            func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args, tol=0.01)
+            fwd = self._crs.forward
+            inv = self._crs.inverse
+            func = lambda *args: _vecgeo.pt_nearest_proj(fwd, inv, *args, tol=0.01)
 
         segments = list(self.segments)
         point_dist = map(func,
@@ -690,8 +691,9 @@ class ConnectedMultipoint(MultipointBase):
         elif self._crs == Cartesian:
             func = _vecgeo.pt_nearest_planar
         else:
-            geod = self._crs.geod
-            func = lambda *args: _vecgeo.pt_nearest_proj(geod, *args, tol=0.01)
+            fwd = self._crs.forward
+            inv = self._crs.inverse
+            func = lambda *args: _vecgeo.pt_nearest_proj(fwd, inv, *args, tol=0.01)
 
         segments = list(self.segments)
         point_dist = list(map(func,

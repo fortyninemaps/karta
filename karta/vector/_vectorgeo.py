@@ -140,19 +140,19 @@ def pt_nearest_planar(pt, endpt1, endpt2):
         else:
             return (u_int, dist(u_int, pt))
 
-def pt_nearest_proj(geod, pt, endpt0, endpt1, tol=1.0, maxiter=50):
-    """ Given a geodetic function *geod*, a Point *pt*, and an arc from
+def pt_nearest_proj(fwd, inv, pt, endpt0, endpt1, tol=1.0, maxiter=50):
+    """ Given geodetic functions *fwd* and *inv*, a Point *pt*, and an arc from
     *endpt1* to *endpt2*, return the point on the arc that is nearest *pt*.
 
     Scheme employs a bisection minimization method. Iteration continues until a
     tolerance *tol* in meters is reached, or *maxiter* iterations are
     exhausted. If the iteration limit is reached, a ConvergenceError is raised.
     """
-    (az, az2, L) = geod.inv(endpt0[0], endpt0[1], endpt1[0], endpt1[1])
+    (az, az2, L) = inv(endpt0[0], endpt0[1], endpt1[0], endpt1[1])
 
     def distance(x):
-        trialpt = geod.fwd(endpt0[0], endpt0[1], az, x*L)
-        (_, _, d) = geod.inv(trialpt[0], trialpt[1], pt[0], pt[1])
+        trialpt = fwd(endpt0[0], endpt0[1], az, x*L)
+        (_, _, d) = inv(trialpt[0], trialpt[1], pt[0], pt[1])
         return d
     
     def ddx(x):
