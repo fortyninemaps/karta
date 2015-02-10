@@ -1,23 +1,18 @@
-#Karta - tidy Python package for geospatial computation
+#Karta
 
 [![Build Status](https://travis-ci.org/njwilson23/karta.svg?branch=master)](https://travis-ci.org/njwilson23/karta)
 
-*Karta* is a Python/Python3 package for geospatial data structures. *Karta*
-serves as a Leatherman for geographic analyses. It provides simple and clean
-vector and raster data types, a selection of geographical analysis methods, and
-the ability to read and write several formats, including GeoJSON, shapefiles,
-and ESRI ASCII.
-
-The goals of *Karta* is to expose a simple and fast framework for spatial
-analysis.
+*Karta* is a Python/Python3 package for working with geospatial data. It
+provides simple and clean vector and raster data types, a selection of
+geographical analysis methods, and an interface to several formats, including
+GeoJSON, shapefiles, ESRI ASCII, and GeoTiff.
 
 Suggestions, bug reports, testcases, and pull requests are welcome, particularly
 to improve format support and test coverage.
 
-**Current development focus:**
+**Current development goals:**
 
 - documentation
-- reprojections
 
 ## DOCUMENTATION
 See the [online manual](http://www.ironicmtn.com/karta/doc/manual/karta-manual.html).
@@ -89,7 +84,7 @@ To build from source,
 - Python 2.7+ or Python 3.3+
 - numpy
 - pyshp
-- pyproj (for geodetic calculations)
+- pyproj (for some geodetic calculations)
 
 ### Recommended
 

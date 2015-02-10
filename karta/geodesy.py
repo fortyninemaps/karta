@@ -1,4 +1,4 @@
-""" Defines basic geodetic operations on a cartesian plane and one a sphere. """
+""" Defines basic geodetic operations on a planes and spheres. """
 
 #
 # Functions are defined with an underscored version that works on scalars and a
