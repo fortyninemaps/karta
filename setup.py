@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 import numpy
 
-VERSION = "0.4.0"
+VERSION = "0.4.0.1"
 
 try:
     from Cython.Build import cythonize
@@ -63,16 +63,20 @@ analysis.
 DOCUMENTATION
 -------------
 
-See the `online manual` <http://www.ironicmtn.com/karta/doc/manual/karta-manual.html>__.
+See the `online manual`_.
+
+.. _a link: http://www.ironicmtn.com/karta/doc/manual/karta-manual.html
 
 The manual can also be built offline using Sphinx by running ``make`` from the
 ``doc/`` directory. The documentation is built from source code docstrings and
-information in the `Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`__.
+information in the `Wiki`_.
+
+.. _a link: https://github.com/njwilson23/karta/wiki/Tutorial
 """,
     download_url = "https://github.com/njwilson23/karta/archive/master.zip",
     classifiers = ["Programming Language :: Python",
                    "Programming Language :: Python :: 3",
-                   "Development Status :: 3 - Beta",
+                   "Development Status :: 4 - Beta",
                    "Topic :: Scientific/Engineering"],
     license = "MIT License",
     ext_modules = extensions
