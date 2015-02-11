@@ -130,7 +130,7 @@ def recordsasdata(reader):
 def recordsasproperties(reader):
     """ Interpret shapefile records as a list of properties dictionaries """
     proplist = []
-    keys = reader.fields
+    keys = reader.fields[1:]
     idfunc = lambda a: a
     try:
         for (i,rec) in enumerate(reader.records()):
