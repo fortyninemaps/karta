@@ -202,38 +202,23 @@ class RegularGrid(Grid):
             ymin, ymax = y
         else:
             crs = self.crs
-        # obvious impl.
-        # TODO: this could be better implemented by precomputing the values array
-        # bounds and size and therefore avoiding allocating X and Y arrays
-        X, Y = self.center_coords()
-        mask = (xmin <= X) & (X <= xmax) & (ymin <= Y) & (Y <= ymax)
 
-        i0, i1 = -1, -1
-        j0, j1 = -1, -1
-        i, j = 0, 0
+        ll = self.get_indices(xmin, ymin)
+        lr = self.get_indices(xmax, ymin)
+        ul = self.get_indices(xmin, ymax)
+        ur = self.get_indices(xmax, ymax)
 
-        while i1 == -1:
-            if i0 == -1 and np.any(mask[i,:]):
-                i0 = i
-            elif i0 != -1 and np.all(~mask[i,:]):
-                i1 = i
-            elif i == mask.shape[0]-1:
-                i1 = i
-            i += 1
+        i0 = min(ll[0], lr[0], ul[0], ur[0])
+        i1 = max(ll[0], lr[0], ul[0], ur[0])
+        j0 = min(ll[1], lr[1], ul[1], ur[1])
+        j1 = max(ll[1], lr[1], ul[1], ur[1])
 
-        while j1 == -1:
-            if j0 == -1 and np.any(mask[:,j]):
-                j0 = j
-            elif j0 != -1 and np.all(~mask[:,j]):
-                j1 = j
-            elif j == mask.shape[1]-1:
-                j1 = j
-            j += 1
 
-        values = self.values.copy()[i0:i1, j0:j1]
-        values[~mask[i0:i1, j0:j1]] = get_nodata(values.dtype.type)
-        told = self.transform
-        tnew = (X[i0,j0], Y[i0, j0], told[2], told[3], told[4], told[5])
+        values = self.values[i0:i1,j0:j1].copy()
+        t = self.transform
+        x0 = t[0] + j0*t[2] + i0*t[4]
+        y0 = t[1] + i0*t[3] + j0*t[5]
+        tnew = (x0, y0, t[2], t[3], t[4], t[5])
         return RegularGrid(tnew, values, crs=self.crs)
 
     def resample_griddata(self, dx, dy, method='nearest'):
@@ -408,23 +393,23 @@ class RegularGrid(Grid):
 
         ind = np.round(ind).astype(int)
         ny, nx = self.size
-        xi = ind[::2].clip(0, nx-1)
-        yi = ind[1::2].clip(0, ny-1)
+        j = ind[::2].clip(0, nx-1)
+        i = ind[1::2].clip(0, ny-1)
         if npts == 1:
-            return xi[0], yi[0]
+            return i[0], j[0]
         else:
-            return xi, yi
+            return i, j
 
     def sample_nearest(self, x, y):
         """ Return the value nearest to (`x`, `y`). Nearest grid center
         sampling scheme. """
-        xi, yi = self.get_indices(x, y)
+        i, j = self.get_indices(x, y)
         ny, nx = self.values.shape[:2]
-        if (np.any(xi < 0) or np.any(xi >= nx) or
-            np.any(yi < 0) or np.any(yi >= ny)):
+        if (np.any(j < 0) or np.any(j >= nx) or
+            np.any(i < 0) or np.any(i >= ny)):
             raise GridError("coordinates ({0}, {1}) are outside grid region "
-                            "({2}, {3})".format(xi, yi, nx, ny))
-        return self.values[yi, xi]
+                            "({2}, {3})".format(j, i, nx, ny))
+        return self.values[i, j]
 
     def sample(self, x, y, method="nearest"):
         """ Return the values nearest (`x`, `y`), where `x` and `y` may be
@@ -469,8 +454,8 @@ class RegularGrid(Grid):
                 fd = p / d
                 fx = fd*xlen
                 fy = fd*ylen
-                xi, yi = self.get_indices(x0+fx, y0+fy)
-                z.append(self.values[yi, xi])
+                i, j = self.get_indices(x0+fx, y0+fy)
+                z.append(self.values[i, j])
                 p += resolution
             p -= d
 
