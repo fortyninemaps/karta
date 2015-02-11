@@ -1,9 +1,32 @@
 """ Cython versions of low-level functions for computing vector geometry. """
 
-import math
 import numpy as np
 cimport numpy as np
 from cpython cimport bool
+from libc.math cimport atan, sqrt
+
+cpdef double cdot2(tuple v1, tuple v2):
+    return v1[0] * v2[0] + v1[1] * v2[1]
+
+cpdef double cross2(tuple pt1, tuple pt2):
+    return pt1[0]*pt2[1] - pt1[1]*pt2[0]
+
+def isleft(tuple pt0, tuple pt1, tuple pt2):
+    return (pt1[0]-pt0[0])*(pt2[1]-pt0[1]) - (pt1[1]-pt0[1])*(pt2[0]-pt0[0]) > 0.0
+
+def polarangle(tuple pt0, tuple pt1):
+    """ Return the polar angle from pt0 to pt1, where we assume pt0.y
+    <= pt1.y """
+    cdef double pi
+    cdef double dx
+    pi = 3.141592653589793
+    dx = pt1[0] - pt0[0]
+    if dx > 0:
+        return atan((pt1[1] - pt0[1]) / dx)
+    elif dx < 0:
+        return atan((pt1[1] - pt0[1]) / dx) + pi
+    else:
+        return 0.5*pi
 
 cdef inline double dbl_max(double a, double b): return a if a >= b else b
 cdef inline double dbl_min(double a, double b): return a if a <= b else b
@@ -117,9 +140,6 @@ def intersects_cn(double xp, double yp, double x0, double x1, double y0, double 
             iswithiny = True
     return iswithinx and iswithiny
 
-cdef double cdot2(tuple v1, tuple v2):
-    return v1[0] * v2[0] + v1[1] * v2[1]
-
 cdef tuple cproj2(tuple u, tuple v):
     cdef double uv, vv
     uv = cdot2(u,v)
@@ -132,7 +152,7 @@ def distance(tuple pt0, tuple pt1):
     dsq = 0.0
     for i in range(min(len(pt0), len(pt1))):
         dsq += abs(pt0[i] - pt1[i])**2
-    return math.sqrt(dsq)
+    return sqrt(dsq)
 
 def pt_nearest_planar(tuple pt, tuple endpt1, tuple endpt2):
     """ Determines the point on a segment defined by tuples endpt1
@@ -143,7 +163,7 @@ def pt_nearest_planar(tuple pt, tuple endpt1, tuple endpt2):
     cdef tuple u, v, u_int
     cdef tuple u_on_v
     
-    dist = lambda u,v: math.sqrt((u[0]-v[0])**2. + (u[1]-v[1])**2.)
+    dist = lambda u,v: sqrt((u[0]-v[0])**2. + (u[1]-v[1])**2.)
 
     u = (pt[0] - endpt1[0], pt[1] - endpt1[1])
     v = (endpt2[0] - endpt1[0], endpt2[1] - endpt1[1])

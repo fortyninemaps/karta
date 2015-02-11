@@ -493,20 +493,6 @@ class MultipointBase(Geometry):
                     map(lambda i: (c[i] for c in self.vertices),
                         range(self.rank))))
 
-    # This code should compute the convex hull of the points and then test the
-    # hull's combination space
-    # Alternatively, calculate the eigenvectors, rotate, and cherrypick the
-    # points
-    #def max_dimension(self):
-    #    """ Return the two points in the Multipoint that are furthest
-    #    from each other. """
-    #    dist = lambda xy0, xy1: math.sqrt((xy1[0]-xy0[0])**2 +
-    #                                      (xy1[1]-xy0[1])**2)
-
-    #    P = [(p0, p1) for p0 in self.vertices for p1 in self.vertices]
-    #    D = map(dist, (p[0] for p in P), (p[1] for p in P))
-    #    return P[D.index(max(D))]
-
     def any_within_poly(self, poly):
         """ Return whether any vertices are inside *poly* """
         for pt in self:
@@ -615,23 +601,6 @@ class Multipoint(MultipointBase):
     def convex_hull(self):
         """ Return a Polygon representing the convex hull. Assumes that the CRS
         may be treated as cartesian. """
-
-        def polarangle(pt0, pt1):
-            """ Return the polar angle from pt0 to pt1, where we assume pt0.y
-            <= pt1.y """
-            dx = pt1.x - pt0.x
-            if dx > 0:
-                return math.atan((pt1.y - pt0.y) / dx)
-            elif dx < 0:
-                return math.atan((pt1.y - pt0.y) / dx) + math.pi
-            else:
-                return 0.5*pi
-
-        def isleft(pt0, pt1, pt2):
-            """ Return true if the intersection between pt0-pt1 and pt1-pt2
-            bends left """
-            return (pt1.x-pt0.x)*(pt2.y-pt0.y) - (pt1.y-pt0.y)*(pt2.x-pt0.x) > 0
-
         points = [pt for pt in self]
 
         # Find the lowermost (left?) point
@@ -645,11 +614,11 @@ class Multipoint(MultipointBase):
         
         # Sort CCW relative to pt0, and drop all but farthest of any duplicates
         points.sort(key=lambda pt: pt0.distance(pt))
-        points.sort(key=lambda pt: polarangle(pt0, pt))
+        points.sort(key=lambda pt: _vecgeo.polarangle(pt0.vertex, pt.vertex))
         alpha = -1
         drop = []
         for i,pt in enumerate(points):
-            a = polarangle(pt0, pt)
+            a = _vecgeo.polarangle(pt0.vertex, pt.vertex)
             if a == alpha:
                 drop.append(i)
             else:
@@ -668,7 +637,7 @@ class Multipoint(MultipointBase):
 
             S = [pt0, points[0], points[1]]
             for pt in points[2:]:
-                while not isleft(S[-2], S[-1], pt):
+                while not _vecgeo.isleft(S[-2].vertex, S[-1].vertex, pt.vertex):
                     S.pop()
                 S.append(pt)
         

@@ -3,6 +3,23 @@
 import math
 import numpy as np
 
+def cross2(pt1, pt2):
+    return pt1[0]*pt2[1] - pt1[1]*pt2[0]
+
+def isleft(pt0, pt1, pt2):
+    return (pt1[0]-pt0[0])*(pt2[1]-pt0[1]) - (pt1[1]-pt0[1])*(pt2[0]-pt0[0]) > 0.0
+
+def polarangle(pt0, pt1):
+    """ Return the polar angle from pt0 to pt1, where we assume pt0.y
+    <= pt1.y """
+    dx = pt1[0] - pt0[0]
+    if dx > 0:
+        return math.atan((pt1[1] - pt0[1]) / dx)
+    elif dx < 0:
+        return math.atan((pt1[1] - pt0[1]) / dx) + math.pi
+    else:
+        return 0.5*math.pi
+
 def isbetween_inc(a, b, c):
     return b <= max(a, c) and b >= min(a, c)
 
