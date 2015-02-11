@@ -6,7 +6,8 @@ from . import grid
 from . import aaigrid
 from . import raster
 
-from .grid import RegularGrid, WarpedGrid, aairead, gtiffread
+from .grid import RegularGrid, WarpedGrid
+from .read import read_aai, read_gtiff, aairead, gtiffread
 from .aaigrid import AAIGrid
 from .raster import witch_of_agnesi, peaks, pad, slope, aspect, grad, div
 from .raster import normed_vector_field
@@ -27,9 +28,10 @@ except ImportError:
 #    pass
 
 __all__ = ["grid", "aaigrid", "raster",
-           "RegularGrid", "WarpedGrid", "aairead", "gtiffread",
+           "RegularGrid", "WarpedGrid",
+           "aairead", "gtiffread", "read_aai", "read_gtiff",
            "AAIGrid",
            "pad", "slope", "aspect", "grad", "div", "normed_vector_field",
-           "streamline2d",
-           "fill_sinks"]
+           "streamline2d"]
+           #"fill_sinks"]
 

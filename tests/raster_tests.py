@@ -209,8 +209,8 @@ class RegularGrid(unittest.TestCase):
     #     self.assertTrue(np.all(self.rast.values == orig[:25,:25]))
     #     return
 
-    def test_aairead(self):
-        grid = karta.grid.aairead(os.path.join(TESTDATA,'peaks49.asc'))
+    def test_read_aai(self):
+        grid = karta.read_aai(os.path.join(TESTDATA,'peaks49.asc'))
         self.assertTrue(np.all(grid.values[::-1] == self.rast.values))
         return
 
