@@ -612,6 +612,68 @@ class Multipoint(MultipointBase):
         indices = [i for (i, pt) in enumerate(self) if filtbbox(pt)]
         return self._subset(indices)
 
+    def convex_hull(self):
+        """ Return a Polygon representing the convex hull. Assumes that the CRS
+        may be treated as cartesian. """
+
+        def polarangle(pt0, pt1):
+            """ Return the polar angle from pt0 to pt1, where we assume pt0.y
+            <= pt1.y """
+            dx = pt1.x - pt0.x
+            if dx > 0:
+                return math.atan((pt1.y - pt0.y) / dx)
+            elif dx < 0:
+                return math.atan((pt1.y - pt0.y) / dx) + math.pi
+            else:
+                return 0.5*pi
+
+        def isleft(pt0, pt1, pt2):
+            """ Return true if the intersection between pt0-pt1 and pt1-pt2
+            bends left """
+            return (pt1.x-pt0.x)*(pt2.y-pt0.y) - (pt1.y-pt0.y)*(pt2.x-pt0.x) > 0
+
+        points = [pt for pt in self]
+
+        # Find the lowermost (left?) point
+        pt0 = points[0]
+        idx = 0
+        for i, pt in enumerate(points[1:]):
+            if (pt.y < pt0.y) or ((pt.y == pt0.y) and (pt.x < pt0.x)):
+                pt0 = pt
+                idx = i+1
+        points.pop(idx)
+        
+        # Sort CCW relative to pt0, and drop all but farthest of any duplicates
+        points.sort(key=lambda pt: pt0.distance(pt))
+        points.sort(key=lambda pt: polarangle(pt0, pt))
+        alpha = -1
+        drop = []
+        for i,pt in enumerate(points):
+            a = polarangle(pt0, pt)
+            if a == alpha:
+                drop.append(i)
+            else:
+                alpha = a
+        
+        if len(drop) != 0:
+            for i in drop[::-1]:
+                points.pop(i)
+        
+        # initialize convex hull
+        if len(points) == 2:
+            return [pt0, points[0], points[1]]
+        elif len(points) == 1:
+            return [pt0, points[0]]
+        else:
+
+            S = [pt0, points[0], points[1]]
+            for pt in points[2:]:
+                while not isleft(S[-2], S[-1], pt):
+                    S.pop()
+                S.append(pt)
+        
+        return Polygon(S)
+
 
 class ConnectedMultipoint(MultipointBase):
     """ Class for Multipoints in which vertices are assumed to be connected. """

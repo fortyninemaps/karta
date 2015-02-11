@@ -179,6 +179,30 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(sub, Multipoint(ans))
         return
 
+    def test_multipoint_convex_hull(self):
+        vertices = [(953, 198), (986, 271), (937, 305), (934, 464), (967, 595),
+                (965, 704), (800, 407), (782, 322), (863, 979), (637, 689),
+                (254, 944), (330, 745), (363, 646), (27, 990), (127, 696),
+                (286, 352), (436, 205), (88, 254), (187, 85)]
+        mp = Multipoint(vertices)
+        ch = mp.convex_hull()
+        hull_vertices = [(187, 85), (953, 198), (986, 271), (965, 704), (863,
+            979), (27, 990), (88, 254)]
+        self.assertEqual(ch.vertices, hull_vertices)
+        return
+
+    def test_multipoint_convex_hull2(self):
+        vertices = [(-158, 175), (-179, 230), (-404, -390), (259, -79), (32,
+            144), (-59, 355), (402, 301), (239, 159), (-421, 172), (-482, 26),
+            (2, -499), (134, -72), (-412, -12), (476, 235), (-412, 40), (-198,
+                -256), (314, 331), (431, -492), (325, -415), (-400, -491)]
+        mp = Multipoint(vertices)
+        ch = mp.convex_hull()
+        hull_vertices = [(2, -499), (431, -492), (476, 235), (402, 301), (314,
+            331), (-59, 355), (-421, 172), (-482, 26), (-400, -491)]
+        self.assertEqual(ch.vertices, hull_vertices)
+        return
+
     def test_connected_multipoint_shortest_distance_to(self):
         line = Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
         dist = line.shortest_distance_to(Point((0.0, 2.0)))
