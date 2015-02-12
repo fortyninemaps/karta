@@ -1,39 +1,15 @@
 # -*- coding: utf-8 -*-
-"""
-Desired interface:
+""" Coordinate reference systems
 
-    from karta.crs import Cartesian
-    from karta.crs import Spherical
-    from karta.crs import LonLatWGS84
+Implements CRS classes for different kinds of spatial reference systems:
 
-    from karta.crs import CustomCRS
+    - Cartesian
+    - Spherical
+    - GeographicalCRS
+    - CustomCRS
 
-    crs = CustomCRS(wkt=\"\"\"PROJCS["WGS 84 / NSIDC Sea Ice Polar Stereographic North",
-    GEOGCS["WGS 84",
-        DATUM["WGS_1984",
-            SPHEROID["WGS 84",6378137,298.257223563,
-                AUTHORITY["EPSG","7030"]],
-            AUTHORITY["EPSG","6326"]],
-        PRIMEM["Greenwich",0,
-            AUTHORITY["EPSG","8901"]],
-        UNIT["degree",0.01745329251994328,
-            AUTHORITY["EPSG","9122"]],
-        AUTHORITY["EPSG","4326"]],
-    UNIT["metre",1,
-        AUTHORITY["EPSG","9001"]],
-    PROJECTION["Polar_Stereographic"],
-    PARAMETER["latitude_of_origin",70],
-    PARAMETER["central_meridian",-45],
-    PARAMETER["scale_factor",1],
-    PARAMETER["false_easting",0],
-    PARAMETER["false_northing",0],
-    AUTHORITY["EPSG","3413"],
-    AXIS["X",UNKNOWN],
-    AXIS["Y",UNKNOWN]]\"\"\")
-    
-    crs = CustomCRS(proj4=\"\"\"+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +ellps=WGS84 +datum=WGS84 +units=m +no_defs\"\"\")
-
-    crs = CustomCRS(epsg=3413)
+These coordinate systems can be passed to define geographical references for
+objects (e.g. vector geometries, raster grids).
 """
 
 import numpy as np
@@ -151,8 +127,8 @@ class Spherical(CRS):
 SphericalEarth = Spherical(6371.0)
 
 class GeographicalCRS(CRS):
-    def __init__(self, geod, name):
-        self._geod = pyproj.Geod(geod)
+    def __init__(self, spheroid, name):
+        self._geod = pyproj.Geod(spheroid)
         self.name = name
         return
 
@@ -172,12 +148,12 @@ class GeographicalCRS(CRS):
 
 class CustomCRS(CRS):
 
-    def __init__(self, epsg=None, proj=None, geod=None, wkt=None, urn=None, name=None):
+    def __init__(self, epsg=None, proj=None, spheroid=None, wkt=None, urn=None, name=None):
         if epsg is not None:
             raise NotImplementedError("EPSG lookup not implemented")
-        elif None not in (proj, geod):
+        elif None not in (proj, spheroid):
             self.project = pyproj.Proj(proj)
-            self._geod = pyproj.Geod(geod)
+            self._geod = pyproj.Geod(spheroid)
         elif wkt is not None:
             raise NotImplementedError("WKT lookup not implemented")
         elif urn is not None:
@@ -217,15 +193,15 @@ LonLatNAD27 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
 LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")
 
 UPSNorth = CustomCRS(proj="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
-        geod="+ellps=WGS84", name="Universal Polar Stereographic (North)")
+        spheroid="+ellps=WGS84", name="Universal Polar Stereographic (North)")
 
 UPSSouth = CustomCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
-        geod="+ellps=WGS84", name="Universal Polar Stereographic (South)")
+        spheroid="+ellps=WGS84", name="Universal Polar Stereographic (South)")
 
 NSIDCNorth = CustomCRS(proj="+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs",
-        geod="+ellps=WGS84", name="NSIDC (North)")
+        spheroid="+ellps=WGS84", name="NSIDC (North)")
 
 NSIDCSouth = CustomCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs",
-        geod="+ellps=WGS84", name="NSIDC (South)")
+        spheroid="+ellps=WGS84", name="NSIDC (South)")
 
 
