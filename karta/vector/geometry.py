@@ -373,10 +373,7 @@ class MultipointBase(Geometry):
         """ Return the extents of a bounding box as
             (xmin, ymin, xmax, ymax)
         """
-        if self.rank == 2:
-            x, y = self.get_coordinate_lists()
-        elif self.rank == 3:
-            x, y, z = self.get_coordinate_lists()
+        x, y = self.get_coordinate_lists()
         bbox = (min(x), min(y), max(x), max(y))
         return bbox
 
@@ -393,16 +390,17 @@ class MultipointBase(Geometry):
         """ Return vertices as a list of tuples. """
         return np.array(self.vertices)
 
-    def get_coordinate_lists(self):
-        """ Return X, Y, and Z lists. If self.rank == 2, Z will be
-        zero-filled. """
-        X = [i[0] for i in self.vertices]
-        Y = [i[1] for i in self.vertices]
-        if self.rank == 3:
-            Z = [i[2] for i in self.vertices]
-            return X, Y, Z
+    def get_coordinate_lists(self, crs=None):
+        """ Return horizontal coordinate lists, optionally projected to *crs*.
+        """
+        if self.rank == 2:
+            x, y = list(zip(*self.vertices))
         else:
-            return X, Y
+            x, y, _ = list(zip(*self.vertices))
+        if crs is not None:
+            xg, yg = self.crs.project(x, y, inverse=True)
+            x, y = crs.project(x, y)
+        return x, y
 
     def shift(self, shift_vector):
         """ Shift feature by the amount given by a vector. Operation
