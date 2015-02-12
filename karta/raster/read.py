@@ -50,7 +50,7 @@ def read_gtiff(fnm, band=1):
 
     geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
                                      f=hdr["srs"]["flattening"])
-    crs = CustomCRS(proj=hdr["srs"]["proj4"], geod=geodstr)
+    crs = CustomCRS(proj=hdr["srs"]["proj4"], spheroid=geodstr)
     return RegularGrid(t, values=arr.squeeze()[::-1], crs=crs)
 
 # Aliases for backwards compat.
