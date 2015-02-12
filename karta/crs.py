@@ -150,6 +150,26 @@ class Spherical(CRS):
 
 SphericalEarth = Spherical(6371.0)
 
+class GeographicalCRS(CRS):
+    def __init__(self, geod, name):
+        self._geod = pyproj.Geod(geod)
+        self.name = name
+        return
+
+    @staticmethod
+    def project(x, y, inverse=False, radians=False):
+        if radians:
+            return x, y
+        else:
+            return np.array(x)/180 * np.pi, np.array(y)/180 * np.pi
+
+    def forward(self, *args, **kwargs):
+        return self._geod.fwd(*args, **kwargs)
+
+    def inverse(self, *args, **kwargs):
+        return self._geod.inv(*args, **kwargs)
+
+
 class CustomCRS(CRS):
 
     def __init__(self, epsg=None, proj=None, geod=None, wkt=None, urn=None, name=None):
@@ -192,10 +212,9 @@ class CRSError(Exception):
 
 ############ Predefined CRS instances ############
 
-LonLatWGS84 = CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs", geod="+ellps=WGS84", name="WGS84 (Geographical)")
-s = "+proj=longlat +datum=WGS84 +no_defs"
-LonLatNAD27 = CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs", geod="+ellps=clrk66", name="NAD27 (Geographical)")
-LonLatNAD83 = CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs", geod="+ellps=GRS80", name="NAD83 (Geographical)")
+LonLatWGS84 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)")
+LonLatNAD27 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
+LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")
 
 UPSNorth = CustomCRS(proj="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
         geod="+ellps=WGS84", name="Universal Polar Stereographic (North)")
