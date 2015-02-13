@@ -8,6 +8,7 @@ try:
 except ImportError:
     from io import StringIO
 import json
+import shapely.geometry
 from test_helper import TESTDATA
 
 import karta.vector as vector
@@ -16,6 +17,23 @@ from karta.vector.geojson import GeoJSONReader
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.crs import LonLatWGS84
 
+class TestGeoInterface(unittest.TestCase):
+
+    def test_point_conversion(self):
+        p = Point((4, 2))
+        shapely.geometry.shape(p)
+
+    def test_multipoint_conversion(self):
+        p = Multipoint([(4, 2), (3, 5), (3, 2), (7, 3)])
+        shapely.geometry.shape(p)
+
+    def test_line_conversion(self):
+        p = Line([(4, 2), (3, 5), (3, 2), (7, 3)])
+        shapely.geometry.shape(p)
+
+    def test_poly_conversion(self):
+        p = Polygon([(4, 2), (3, 5), (3, 2), (7, 3)])
+        shapely.geometry.shape(p)
 
 class TestGeoJSONInput(unittest.TestCase):
 

@@ -914,7 +914,10 @@ class Polygon(ConnectedMultipoint):
 
     @property
     def __geo_interface__(self):
-        return {"type" : "Polygon", "bbox" : self.bbox, "coordinates" : self.vertices}
+        coords = [self.vertices]
+        for geom in self.subs:
+            coords.append(geom.vertices)
+        return {"type" : "Polygon", "bbox" : self.bbox, "coordinates" : coords}
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
