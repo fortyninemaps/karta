@@ -71,7 +71,7 @@ class Spherical(CRS):
 
     @staticmethod
     def project(x, y, inverse=False, radians=False):
-        if radians:
+        if not radians:
             return x, y
         else:
             return np.array(x)/180 * np.pi, np.array(y)/180 * np.pi

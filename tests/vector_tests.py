@@ -6,7 +6,7 @@ import numpy as np
 
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.vector.geometry import affine_matrix
-from karta.crs import Cartesian, LonLatWGS84
+from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, CustomCRS
 
 class TestGeometry(unittest.TestCase):
 
@@ -34,7 +34,6 @@ class TestGeometry(unittest.TestCase):
                                    subs=[self.ring])
         self.unitsquare = Polygon([(0.0,0.0), (1.0,0.0), (1.0,1.0), (0.0,1.0)])
         return
-
 
     def test_point_equality(self):
         pt1 = Point((3.0, 4.0))
@@ -567,6 +566,24 @@ class TestGeometryOutput(unittest.TestCase):
         data1 = [54.0, 40.0, 77.0, 18.0, 84.0, 91.0, 61.0, 92.0, 19.0, 42.0,
                  50.0, 25.0, 11.0, 80.0, 59.0, 56.0, 32.0, 8.0, 88.0, 76.0]
         self.mp = Multipoint(vertices, data={'d0':data0, 'd1':data1})
+
+    # Due to the output of ElementTree.tostring not being deterministic, this
+    # test randomly fails due to the DataArray attributes being swapped. The
+    # output is correct, but it doesn't match the reference data. This is a bug
+    # in the test.
+    #def test_mp2vtp(self):
+    #    # Test VTK output for a Multipoint
+    #    s = StringIO()
+    #    self.mp.to_vtk(s)
+    #    s.seek(0)
+    #    #a1 = md5sum(s)
+    #    #a2 = md5sum_file(os.path.join(TESTDATA, 'testmp2vtp.vtp'))
+    #    #print(a1)
+    #    #print(a2)
+    #    #self.assertEqual(md5sum(s),
+    #    #                 md5sum_file(os.path.join(TESTDATA, 'testmp2vtp.vtp')))
+    #    return
+
 class TestAffineTransforms(unittest.TestCase):
 
     def setUp(self):
@@ -610,23 +627,32 @@ class TestAffineTransforms(unittest.TestCase):
         self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
         return
 
+class VectorCRSTests(unittest.TestCase):
 
-    # Due to the output of ElementTree.tostring not being deterministic, this
-    # test randomly fails due to the DataArray attributes being swapped. The
-    # output is correct, but it doesn't match the reference data. This is a bug
-    # in the test.
-    #def test_mp2vtp(self):
-    #    # Test VTK output for a Multipoint
-    #    s = StringIO()
-    #    self.mp.to_vtk(s)
-    #    s.seek(0)
-    #    #a1 = md5sum(s)
-    #    #a2 = md5sum_file(os.path.join(TESTDATA, 'testmp2vtp.vtp'))
-    #    #print(a1)
-    #    #print(a2)
-    #    #self.assertEqual(md5sum(s),
-    #    #                 md5sum_file(os.path.join(TESTDATA, 'testmp2vtp.vtp')))
-    #    return
+    def test_vertices_in_crs(self):
+        point = Point((-123.0, 49.0), crs=SphericalEarth)
+        self.assertEqual(point.get_vertex(SphericalEarth),
+                         (-123.0, 49.0))
+
+    def test_vertices_in_crs2(self):
+        point = Point((-123.0, 49.0), crs=SphericalEarth)
+        BCAlbers = CustomCRS(proj="+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
+                    "+lon_0=-126 +x_0=1000000 +y_0=0 +ellps=GRS80 +datum=NAD83 "
+                    "+units=m +no_defs", spheroid="+ellps=GRS80")
+        self.assertEqual(point.get_vertex(BCAlbers),
+                         (1219731.770879303, 447290.49891930853))
+        return
+
+    def test_vertices_in_crs3(self):
+        line = Line([(2.0, 34.0),
+                     (2.15, 34.2),
+                     (2.7, 34.1)], crs=SphericalEarth)
+        UTM31N = CustomCRS(proj="+proj=utm +zone=31 +ellps=WGS84 "
+                    "+datum=WGS84 +units=m +no_defs", spheroid="+ellps=WGS84")
+        self.assertEqual(line.get_coordinate_lists(UTM31N),
+                    ((407650.39665729366, 421687.71905896586, 472328.1095127584), 
+                     (3762606.6598763773, 3784658.467084308, 3773284.485241791)))
+        return
 
 if __name__ == "__main__":
     unittest.main()

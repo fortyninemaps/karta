@@ -13,24 +13,18 @@ class RegularGridTests(unittest.TestCase):
     def setUp(self):
         pe = karta.raster.peaks(n=49)
         self.rast = karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 0.0, 0.0), values=pe)
-        # self.rast = karta.grid.RegularGrid(hdr={'nx': 49, 'ny': 49,
-        #                                         'xllcenter': 15.0,
-        #                                         'yllcenter': 15.0,
-        #                                         'dx': 30.0,
-        #                                         'dy': 30.0,
-        #                                         'nbands': 1}, values=pe)
         return
 
     def test_add_rgrid(self):
         rast2 = karta.RegularGrid(self.rast.transform,
-                                       values=np.random.random(self.rast.values.shape)) 
+                                  values=np.random.random(self.rast.values.shape)) 
         res = self.rast + rast2
         self.assertTrue(np.all(res.values == self.rast.values+rast2.values))
         return
 
     def test_sub_rgrid(self):
         rast2 = karta.RegularGrid(self.rast.transform,
-                                       values=np.random.random(self.rast.values.shape)) 
+                                  values=np.random.random(self.rast.values.shape)) 
         res = self.rast - rast2
         self.assertTrue(np.all(res.values == self.rast.values-rast2.values))
         return
@@ -167,49 +161,11 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_profile(self):
-        path = karta.Line([(0.0, 0.0), (1485.0, 1485.0)], crs=karta.crs.Cartesian)
-        prof = self.rast.profile(path, resolution=30.0)
-        expected = np.array([3.22353596e-05, 3.22353596e-05, 1.12058629e-04,
-                             3.61838717e-04, 3.61838717e-04, 1.08395539e-03,
-                             3.00817013e-03, 3.00817013e-03, 7.72015842e-03,
-                             1.82832037e-02, 3.98497372e-02, 3.98497372e-02,
-                             7.96679278e-02, 1.45455904e-01, 1.45455904e-01,
-                             2.41123457e-01, 3.60000957e-01, 4.78441147e-01,
-                             4.78441147e-01, 5.55779901e-01, 5.47061156e-01,
-                             5.47061156e-01, 4.29133262e-01, 2.28899450e-01,
-                             2.28899450e-01, 3.21030706e-02, -4.58152669e-02,
-                             7.74741386e-02, 7.74741386e-02, 3.89805020e-01,
-                             7.72078470e-01, 7.72078470e-01, 1.05657945e+00,
-                             1.12541675e+00, 9.81011843e-01, 9.81011843e-01,
-                             7.35348921e-01, 5.25639991e-01, 5.25639991e-01,
-                             4.21139020e-01, 3.89628162e-01, 3.89628162e-01,
-                             3.40764035e-01, 2.03711858e-01, -2.20472642e-02,
-                             -2.20472642e-02, -2.72916549e-01, -4.67917982e-01,
-                             -4.67917982e-01, -5.56069225e-01, -5.35273179e-01,
-                             -4.40491855e-01, -4.40491855e-01, -3.18061354e-01,
-                             -2.04492912e-01, -2.04492912e-01, -1.18122152e-01,
-                             -6.16397937e-02, -2.91470271e-02, -2.91470271e-02,
-                             -1.25010468e-02, -4.85698059e-03, -4.85698059e-03,
-                             -1.70224503e-03, -5.33337096e-04, -5.33337096e-04,
-                             -1.46658120e-04, -3.39563401e-05, -5.86418787e-06,
-                             -5.86418787e-06, -5.86418787e-06])
-        self.assertTrue(np.allclose(prof, expected))
-        return
-
-
-    def test_profile(self):
         path = karta.Line([(15.0, 15.0), (1484.0, 1484.0)], crs=karta.crs.Cartesian)
         _, z = self.rast.profile(path, resolution=42.426406871192853, method="nearest")
         expected = self.rast.values.diagonal()
         self.assertTrue(np.allclose(z, expected))
         return
-
-    # def test_resize(self):
-    #     orig = self.rast.values.copy()
-    #     x0, x1, y0, y1 = self.rast.get_extents()
-    #     self.rast.resize((x0, x1/2.0, y0, y1/2.0))
-    #     self.assertTrue(np.all(self.rast.values == orig[:25,:25]))
-    #     return
 
     def test_read_aai(self):
         grid = karta.read_aai(os.path.join(TESTDATA,'peaks49.asc'))
@@ -225,18 +181,18 @@ class TestWarpedGrid(unittest.TestCase):
         X, Y = np.meshgrid(np.sin(ii/25.0 * 2*np.pi),
                            np.sin(jj/50.0 * 2*np.pi))
         values = karta.raster.witch_of_agnesi(50, 50)
-        self.rast = karta.grid.WarpedGrid(X=X, Y=Y, values=values)
+        self.rast = karta.WarpedGrid(X=X, Y=Y, values=values)
 
     def test_add_sgrid(self):
-        rast2 = karta.grid.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
-                                          values=np.random.random(self.rast.values.shape))
+        rast2 = karta.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
+                                      values=np.random.random(self.rast.values.shape))
         res = self.rast + rast2
         self.assertTrue(np.all(res.values == self.rast.values+rast2.values))
         return
 
     def test_sub_sgrid(self):
-        rast2 = karta.grid.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
-                                      values=np.random.random(self.rast.values.shape))
+        rast2 = karta.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
+                                 values=np.random.random(self.rast.values.shape))
         res = self.rast - rast2
         self.assertTrue(np.all(res.values == self.rast.values-rast2.values))
         return
