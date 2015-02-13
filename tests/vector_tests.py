@@ -59,22 +59,22 @@ class TestGeometry(unittest.TestCase):
         point = Point((1.0, 2.0))
 
         other = Point((2.0, 3.0))
-        self.assertEqual(point.azimuth(other), 0.25*np.pi)
+        self.assertEqual(point.azimuth(other), 0.25*180)
 
         other = Point((0.0, 3.0))
-        self.assertEqual(point.azimuth(other), 1.75*np.pi)
+        self.assertEqual(point.azimuth(other), 1.75*180)
 
         other = Point((0.0, 1.0))
-        self.assertEqual(point.azimuth(other), 1.25 * np.pi)
+        self.assertEqual(point.azimuth(other), 1.25*180)
 
         other = Point((2.0, 1.0))
-        self.assertEqual(point.azimuth(other), 0.75 * np.pi)
+        self.assertEqual(point.azimuth(other), 0.75*180)
 
         other = Point((1.0, 3.0))
         self.assertEqual(point.azimuth(other), 0.0)
 
         other = Point((1.0, 1.0))
-        self.assertEqual(point.azimuth(other), np.pi)
+        self.assertEqual(point.azimuth(other), 180.0)
         return
 
     def test_point_azimuth2(self):
@@ -412,7 +412,7 @@ class TestGeometry(unittest.TestCase):
 
     def test_walk_cartesian(self):
         start = Point((-3, -4), crs=Cartesian)
-        dest = start.walk(5.0, math.atan(3.0/4.0))
+        dest = start.walk(5.0, math.atan(3.0/4.0), radians=True)
         self.assertAlmostEqual(dest.x, 0.0)
         self.assertAlmostEqual(dest.y, 0.0)
         return
@@ -535,15 +535,15 @@ class TestGeometryProj(unittest.TestCase):
         return
 
     def test_azimuth_lonlat(self):
-        az1 = self.vancouver.azimuth(self.ottawa) * 180. / math.pi
-        az2 = self.vancouver.azimuth(self.whitehorse) * 180. / math.pi
+        az1 = self.vancouver.azimuth(self.ottawa)
+        az2 = self.vancouver.azimuth(self.whitehorse)
         self.assertTrue(abs(az1 - 78.4833443403) < 1e-10)
         self.assertTrue(abs(az2 - (-26.1358265354)) < 1e-10)
         return
 
     def test_walk_lonlat(self):
         start = Point((-132.14, 54.01), crs=LonLatWGS84)
-        dest = start.walk(5440.0, 106.8*math.pi/180.0)
+        dest = start.walk(5440.0, 106.8)
         self.assertAlmostEqual(dest.x, -132.0605910876)
         self.assertAlmostEqual(dest.y, 53.99584742821)
         return

@@ -2,7 +2,7 @@
 
 import sys
 import copy
-from math import sqrt
+import math
 import numbers
 import numpy as np
 from ..crs import Cartesian
@@ -417,42 +417,47 @@ class RegularGrid(Grid):
         else:
             raise ValueError("method \"{0}\" not understood".format(method))
 
-    def get_profile(self, segments, resolution=10.0):
+    def profile(self, line, resolution=None):
         """ Sample along a line defined as `segments`. Does not interpolate.
 
         Parameters:
         -----------
-        segments : iterable containing (x,y) pairs
+        line : Line-like object describing the sampling path
         resolution : sample spacing
 
         Returns:
         --------
         profile : ndarray
         """
+        if resolution is None:
+            resolution = min(self.transform[2:4])
 
-        z = []
-        p = 0
-        for s, f in zip(segments[:-1], segments[1:]):
+        np = math.ceil(line.length / resolution)
+        vertices = []
 
-            x0 = s[0]
-            y0 = s[1]
-            xf = f[0]
-            yf = f[1]
+        remainder = 0
+        pt0 = line[0]
+        vertices.append(pt0.get_vertex(self.crs))
 
-            xlen = xf-x0
-            ylen = yf-y0
-            d = sqrt((xf - x0)**2 + (yf - y0)**2)
+        for seg in line.segments:
+            pos = 0
+            az = seg[0].azimuth(seg[1])
 
-            while p < d:
-                fd = p / d
-                fx = fd*xlen
-                fy = fd*ylen
-                i, j = self.get_indices(x0+fx, y0+fy)
-                z.append(self.values[i, j])
-                p += resolution
-            p -= d
+            while pos != seg.length:
+                distance_to_endpt = pt0.distance(seg[1])
+                if distance_to_endpt >= resolution:
+                    pt1 = pt0.walk(resolution - remainder, az)
+                    pos += resolution - remainder
+                    vertices.append(pt1.get_vertex(self.crs))
+                    remainder = 0
+                    pt0 = pt1
+                else:
+                    remainder = distance_to_endpt
+                    pos = seg.length
+                    pt0 = seg[1]
 
-        return np.array(z)
+        z = self.sample(*zip(*vertices))
+        return vertices, z
 
     def fill_sinks(self):
         """ Fill depressions. Use the algorithm of Wang and Liu (2006). """

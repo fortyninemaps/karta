@@ -129,9 +129,13 @@ class Point(Geometry):
         return False not in [abs(a-b) <= tol for (a, b) in zip(self.vertices,
                                                                other.vertices)]
 
-    def get_vertex(self):
+    def get_vertex(self, crs=None):
         """ Return the Point vertex as a tuple. """
-        return self.vertex
+        if crs is None:
+            return self.vertex
+        else:
+            vg = self.crs.project(self.x, self.y, inverse=True)
+            return crs.project(*vg)
 
     def coordsxy(self, convert_to=False):
         """ Returns the x,y coordinates. Convert_to may be set to 'deg'
@@ -152,7 +156,7 @@ class Point(Geometry):
 
         elif self._crs == other._crs:
             az1, _, _ = self._crs.inverse(self.x, self.y, other.x, other.y)
-            return az1 * math.pi / 180.0
+            return az1
 
         else:
             raise CRSError("Azimuth undefined for points in CRS {0} and "
@@ -163,11 +167,9 @@ class Point(Geometry):
         a given distance from a specified starting location.
 
             distance (float): distance to walk
-            direction (float): horizontal walk direction in radians with north at zero
+            direction (float): walk azimuth (clockwise with "north" at 0)
         """
-        if not radians:
-            direction = direction*180.0/math.pi
-        (x, y, backaz) = self._crs.forward(self.x, self.y, direction, distance)
+        (x, y, backaz) = self._crs.forward(self.x, self.y, direction, distance, radians=radians)
         return Point((x, y), properties=self.properties, data=self.data,
                      crs=self._crs)
 
