@@ -4,12 +4,25 @@
 Implements CRS classes for different kinds of spatial reference systems:
 
     - Cartesian
-    - Spherical
     - GeographicalCRS
-    - CustomCRS
+    - Spherical
+    - Proj4CRS
 
 These coordinate systems can be passed to define geographical references for
 objects (e.g. vector geometries, raster grids).
+
+Predefined coordinate system instances are provided:
+
+    - *SphericalEarth*
+    - *LonLatWGS84*
+    - *LonLatNAD27*
+    - *LonLatNAD83*
+    - *UPSNorth*
+    - *UPSSouth*
+    - *NSIDCNorth*
+    - *NSIDCSouth*
+
+Additionally, the *Cartesian* class can be used without instantiation.
 """
 
 import numpy as np
@@ -22,15 +35,25 @@ from . import geodesy
 class CRS(object):
     """ Base class for coordinate system instances
     
-    Subclasses should at a minimum define a *name* attribute. Providing *proj*
-    and *geod* methods permits a geometry associated with a CRS subclass to be
-    used in analyses.
+    Subclasses should at a minimum define a *name* attribute. Providing
+    *project* *forward* and *inverse* methods permits a geometry associated with
+    a CRS subclass to be used in analyses.
+
+    *project* transforms between world and projected coordinates, and takes the
+    optional boolean parameter *inverse* (default `False`)
+
+    *forward* takes world coordinates, an azimuth, and a distance, and returns
+    world coordinates
+
+    *inverse* takes two pairs of world coordinates and returns an azimuth, a
+    back azimuth, and a distance
     """
     def __str__(self):
         return "<CRS {0}>".format(self.name)
 
 class Cartesian(CRS):
-    name = "Cartesian (flat-earth)"
+    """ Cartiesian (flat-earth) reference systems with (x, y) coordinates """
+    name = "Cartesian"
 
     @staticmethod
     def project(x, y, inverse=False):
@@ -62,12 +85,12 @@ class Cartesian(CRS):
             baz = baz * 180 / np.pi
         return az, baz, dist
 
-class Spherical(CRS):
-    """ Spherical (θ, φ) coordinate system. """
-    name = "Spherical"
-
-    def __init__(self, radius):
-        self.radius = radius
+class GeographicalCRS(CRS):
+    """ Reference systems with longitude-latitude (θ, φ) coordinates """
+    def __init__(self, spheroid, name):
+        self._geod = pyproj.Geod(spheroid)
+        self.name = name
+        return
 
     @staticmethod
     def project(x, y, inverse=False, radians=False):
@@ -75,6 +98,20 @@ class Spherical(CRS):
             return x, y
         else:
             return np.array(x)/180 * np.pi, np.array(y)/180 * np.pi
+
+    def forward(self, *args, **kwargs):
+        return self._geod.fwd(*args, **kwargs)
+
+    def inverse(self, *args, **kwargs):
+        return self._geod.inv(*args, **kwargs)
+
+
+class Spherical(GeographicalCRS):
+    """ Spherical (θ, φ) coordinate system. """
+    name = "Spherical"
+
+    def __init__(self, radius):
+        self.radius = radius
 
     def forward(self, lons, lats, az, dist, radians=False):
         """ Returns lons, lats, and back azimuths """
@@ -124,45 +161,18 @@ class Spherical(CRS):
             baz = baz * 180 / np.pi
         return az, baz, dist
 
-SphericalEarth = Spherical(6371.0)
+class Proj4CRS(CRS):
+    """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
+    or a custom projection function """
 
-class GeographicalCRS(CRS):
-    def __init__(self, spheroid, name):
+    def __init__(self, proj, spheroid, name=None):
+        self.project = pyproj.Proj(proj)
         self._geod = pyproj.Geod(spheroid)
-        self.name = name
-        return
-
-    @staticmethod
-    def project(x, y, inverse=False, radians=False):
-        if not radians:
-            return x, y
-        else:
-            return np.array(x)/180 * np.pi, np.array(y)/180 * np.pi
-
-    def forward(self, *args, **kwargs):
-        return self._geod.fwd(*args, **kwargs)
-
-    def inverse(self, *args, **kwargs):
-        return self._geod.inv(*args, **kwargs)
-
-
-class CustomCRS(CRS):
-
-    def __init__(self, epsg=None, proj=None, spheroid=None, wkt=None, urn=None, name=None):
-        if epsg is not None:
-            raise NotImplementedError("EPSG lookup not implemented")
-        elif None not in (proj, spheroid):
-            self.project = pyproj.Proj(proj)
-            self._geod = pyproj.Geod(spheroid)
-        elif wkt is not None:
-            raise NotImplementedError("WKT lookup not implemented")
-        elif urn is not None:
-            raise NotImplementedError("URN lookup not implemented")
 
         if name is not None:
             self.name = name
         else:
-            self.name = "Unnamed CRS"
+            self.name = proj
         return
 
     def __eq__(self, other):
@@ -188,20 +198,22 @@ class CRSError(Exception):
 
 ############ Predefined CRS instances ############
 
+
+SphericalEarth = Spherical(6371.0)
 LonLatWGS84 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)")
 LonLatNAD27 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
 LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")
 
-UPSNorth = CustomCRS(proj="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
+UPSNorth = Proj4CRS(proj="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
         spheroid="+ellps=WGS84", name="Universal Polar Stereographic (North)")
 
-UPSSouth = CustomCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
+UPSSouth = Proj4CRS(proj="+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
         spheroid="+ellps=WGS84", name="Universal Polar Stereographic (South)")
 
-NSIDCNorth = CustomCRS(proj="+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs",
+NSIDCNorth = Proj4CRS(proj="+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs",
         spheroid="+ellps=WGS84", name="NSIDC (North)")
 
-NSIDCSouth = CustomCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs",
+NSIDCSouth = Proj4CRS(proj="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs",
         spheroid="+ellps=WGS84", name="NSIDC (South)")
 
 

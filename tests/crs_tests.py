@@ -114,35 +114,35 @@ class TestCRS(unittest.TestCase):
         return
 
     def test_equal1(self):
-        WGS84 = crs.CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs",
-                              spheroid="+ellps=WGS84", name="WGS84 (Geographical)")
-        WGS84_ = crs.CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs",
-                               spheroid="+ellps=WGS84", name="WGS84 (Geographical)")
+        WGS84 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+                              "+ellps=WGS84", name="WGS84 (Geographical)")
+        WGS84_ = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+                               "+ellps=WGS84", name="WGS84 (Geographical)")
         self.assertTrue(WGS84 == WGS84_)
         return
 
     def test_equal2(self):
-        WGS84 = crs.CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs",
-                              spheroid="+ellps=WGS84", name="WGS84 (Geographical)")
-        NAD83 = crs.CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs",
-                              spheroid="+ellps=GRS80", name="NAD83 (Geographical)")
+        WGS84 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+                              "+ellps=WGS84", name="WGS84 (Geographical)")
+        NAD83 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+                              "+ellps=GRS80", name="NAD83 (Geographical)")
         self.assertTrue(not WGS84 == NAD83)
         return
 
     def test_not_equal1(self):
-        WGS84 = crs.CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs",
-                              spheroid="+ellps=WGS84", name="WGS84 (Geographical)")
-        NAD83 = crs.CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs",
-                              spheroid="+ellps=GRS80", name="NAD83 (Geographical)")
+        WGS84 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+                              "+ellps=WGS84", name="WGS84 (Geographical)")
+        NAD83 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+                              "+ellps=GRS80", name="NAD83 (Geographical)")
         self.assertTrue(WGS84 != NAD83)
         return
 
     def test_not_equal2(self):
-        WGS84 = crs.CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs",
-                              spheroid="+ellps=WGS84", name="WGS84 (Geographical)")
+        WGS84 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+                              "+ellps=WGS84", name="WGS84 (Geographical)")
 
-        WGS84_ = crs.CustomCRS(proj="+proj=longlat +datum=WGS84 +no_defs",
-                               spheroid="+ellps=WGS84", name="WGS84 (Geographical)")
+        WGS84_ = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+                               "+ellps=WGS84", name="WGS84 (Geographical)")
         self.assertTrue(not WGS84 != WGS84_)
         return
 

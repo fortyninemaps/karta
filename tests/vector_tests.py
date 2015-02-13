@@ -6,7 +6,7 @@ import numpy as np
 
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.vector.geometry import affine_matrix
-from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, CustomCRS
+from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, Proj4CRS
 
 class TestGeometry(unittest.TestCase):
 
@@ -636,9 +636,9 @@ class VectorCRSTests(unittest.TestCase):
 
     def test_vertices_in_crs2(self):
         point = Point((-123.0, 49.0), crs=SphericalEarth)
-        BCAlbers = CustomCRS(proj="+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
+        BCAlbers = Proj4CRS("+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
                     "+lon_0=-126 +x_0=1000000 +y_0=0 +ellps=GRS80 +datum=NAD83 "
-                    "+units=m +no_defs", spheroid="+ellps=GRS80")
+                    "+units=m +no_defs", "+ellps=GRS80")
         self.assertEqual(point.get_vertex(BCAlbers),
                          (1219731.770879303, 447290.49891930853))
         return
@@ -647,8 +647,8 @@ class VectorCRSTests(unittest.TestCase):
         line = Line([(2.0, 34.0),
                      (2.15, 34.2),
                      (2.7, 34.1)], crs=SphericalEarth)
-        UTM31N = CustomCRS(proj="+proj=utm +zone=31 +ellps=WGS84 "
-                    "+datum=WGS84 +units=m +no_defs", spheroid="+ellps=WGS84")
+        UTM31N = Proj4CRS("+proj=utm +zone=31 +ellps=WGS84 "
+                    "+datum=WGS84 +units=m +no_defs", "+ellps=WGS84")
         self.assertEqual(line.get_coordinate_lists(UTM31N),
                     ((407650.39665729366, 421687.71905896586, 472328.1095127584), 
                      (3762606.6598763773, 3784658.467084308, 3773284.485241791)))
