@@ -1,21 +1,23 @@
-#Karta
+# Karta
 
 [![Build Status](https://travis-ci.org/njwilson23/karta.svg?branch=master)](https://travis-ci.org/njwilson23/karta)
 
-*Karta* is a Python/Python3 package for working with geospatial data. It
-provides simple and clean vector and raster data types, a selection of
-geographical analysis methods, and an interface to several formats, including
-GeoJSON, shapefiles, ESRI ASCII, and GeoTiff.
+*Karta* provides a simple and fast framework for spatial analysis in Python.
 
-Suggestions, bug reports, testcases, and pull requests are welcome, particularly
-to improve format support and test coverage.
+The package provides clean vector and raster data types that are geographical
+coordinate system-aware, a selection of geographical analysis methods, and the
+ability to read and write several formats, including GeoJSON, shapefiles, and
+ESRI ASCII.
 
-**Current development goals:**
-
-- documentation
+*Karta* works with Python 2.6-2.7 and Python 3.3+. Suggestions, bug reports,
+test cases, and pull requests are welcome, particularly to improve file format
+support and test coverage.
 
 ## DOCUMENTATION
-See the [online manual](http://www.ironicmtn.com/kartadocs/karta-manual.html).
+
+See the [online manual](http://www.ironicmtn.com/kartadocs/karta-manual.html),
+the [tutorial](http://www.ironicmtn.com/kartadocs/tutorial.html), or read the
+[API documentation](http://www.ironicmtn.com/kartadocs/reference.html).
 
 The manual can also be built offline using Sphinx by running `make` from the
 `doc/` subdirectory. The documentation is built from source code docstrings and
@@ -23,7 +25,9 @@ information in the [Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
 Building the documentation requires [Sphinx](http://sphinx-doc.org/) and
 [numpydoc](https://github.com/numpy/numpydoc).
 
-##CONTENTS AT A GLANCE
+## PACKAGE CONTENTS
+
+- crs : Coordinate reference systems and geodetic calculations employed throughout *Karta*
 
 - vector
     - geometry:     Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`) supporting the [Python \_\_geo\_interface\_\_](https://gist.github.com/sgillies/2217756)
@@ -37,15 +41,12 @@ Building the documentation requires [Sphinx](http://sphinx-doc.org/) and
 - raster
     - grid:         Basic Grid types, including `RegularGrid` and `WarpedGrid`
     - raster:       General purpose raster functions
-    - aaigrid:      Grid subclass specifically for reading and writing ESRI ASCII grids
+    - aaigrid:      Grid subclass specifically for reading and writing ESRI ASCII grids (*deprecated, use `grid.RegularGrid`*)
     - streamline:   Streamline calculation
-    - flow:         Stream flow functions (experimental)
-
-- crs : Coordinate reference systems and geodetic calculations employed throughout *Karta*
 
 - tests : unit tests
 
-##FORMATS
+## FORMATS
 
 *Karta* provides a basic working interface to several of common file formats.
 Currently partially-supported are:
@@ -81,15 +82,18 @@ To build from source,
 
 ### Required
 
-- Python 2.7+ or Python 3.3+
+- Python 2.6+ or Python 3.3+
 - numpy
 - pyshp
-- pyproj (for some geodetic calculations)
+- pyproj
 
 ### Recommended
 
 - cython
 - gdal (for geotiff I/O)
+
+### Optional
+
 - scipy
 
 When installing from PyPI, Cython-compiled C source code is provided and will be
@@ -102,11 +106,11 @@ To run all unit tests, execute
 
     python tests/runtests.py
 
-##LICENSE
+## LICENSE
 
 This software is provided under the MIT license.
 
-###MIT License:
+### MIT License:
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in

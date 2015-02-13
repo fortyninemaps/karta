@@ -15,23 +15,27 @@ Contents:
    tutorial
    reference
 
-*Karta* is a Python/Python3 package for geospatial data structures. *Karta*
-serves as a Leatherman for geographic analyses. It provides simple and clean
-vector and raster data types, a selection of geographical analysis methods, and
-the ability to read and write several formats, including GeoJSON, shapefiles,
-and ESRI ASCII.
+*Karta* provides a simple and fast framework for spatial analysis in Python.
 
-The goals of *Karta* is to expose a simple and fast framework for spatial
-analysis.
+The package provides clean vector and raster data types that are geographical
+coordinate system-aware, a selection of geographical analysis methods, and the
+ability to read and write several formats, including GeoJSON, shapefiles, and
+ESRI ASCII.
 
-Suggestions, bug reports, testcases, and pull requests are welcome, particularly
-to improve format support and test coverage.
+*Karta* works with Python 2.6-2.7 and Python 3.3+. Suggestions, bug reports,
+testcases, and pull requests are welcome, particularly to improve file format
+support and test coverage.
+
+See the tutorial_, or read the `API documentation`_.
+
+.. _tutorial: tutorial.html
+.. _API documentation: reference.html
 
 Data Formats
 ------------
 
 *Karta* provides a basic working interface to several of common file
-formats. Currently partially-supported are:
+formats. Currently supported are:
 
 -  vector
 
