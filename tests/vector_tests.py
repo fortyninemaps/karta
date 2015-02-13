@@ -396,6 +396,14 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(self.ringed_poly.area, 100 - self.ring.area)
         return
 
+    def test_area_compute_pi(self):
+        r = np.linspace(0, 2*np.pi, 10000)
+        x = np.cos(r)
+        y = np.sin(r)
+        kp = Polygon(zip(x,y))
+        self.assertAlmostEqual(kp.area, np.pi, places=6)
+        return
+
     def test_segments(self):
         v = self.vertices
         self.assertEqual([tuple(a.vertices) for a in self.line.segments],

@@ -952,13 +952,13 @@ class Polygon(ConnectedMultipoint):
 
     @property
     def area(self):
-        """ Return the two-dimensional area of the polygon. If there are
-        sub-polygons, their areas are subtracted. """
-        a = 0.0
-        for i in range(len(self.vertices)-1):
-            a += 0.5 * abs((self.vertices[i][0] + self.vertices[i+1][0])
-                         * (self.vertices[i][1] - self.vertices[i+1][1]))
-        return a - sum(map(lambda p: p.area, self.subs))
+        """ Return the two-dimensional area of the polygon, excluding
+        sub-polygons. """
+        x, y = self.coordinates
+        x0 = np.min(x)
+        a = (0.5*(x[0] + x[-1]) - x0) * (y[0] - y[-1])
+        a += sum((0.5*(x[i+1]+x[i]) - x0) * (y[i+1] - y[i]) for i in range(len(x)-1))
+        return abs(a) - sum(map(lambda p: p.area, self.subs))
 
     @staticmethod
     def _signcross(a, b):
