@@ -1,18 +1,10 @@
 Package reference
 =================
 
-.. toctree::
-   reference
-
 Coordinate reference systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 .. automodule:: karta.crs
-
-.. autoclass:: karta.crs.CRSRegister
-    :members:
-
-.. autoclass:: karta.crs.CRS
     :members:
 
 Vector package
@@ -20,7 +12,7 @@ Vector package
 
 .. automodule:: karta.vector.geometry
 
-.. autoclass:: karta.vector.Geometry
+.. autoclass:: karta.vector.geometry.Geometry
     :members:
     :inherited-members:
 
@@ -40,16 +32,19 @@ Vector package
     :members:
     :inherited-members:
 
+.. automodule:: karta.vector.metadata
+    :members:
+
+Vector IO modules
+-----------------
+
+.. automodule:: karta.vector.read
+    :members:
+
 .. automodule:: karta.vector.geojson
     :members:
 
-.. automodule:: karta.vector.gpx
-    :members:
-
-.. automodule:: karta.vector.xyfile
-    :members:
-
-.. automodule:: karta.vector.metadata
+.. automodule:: karta.vector.shp
     :members:
 
 Raster package
@@ -58,9 +53,12 @@ Raster package
 .. automodule:: karta.raster.grid
     :members:
 
-.. automodule:: karta.raster.raster
+.. automodule:: karta.raster.read
     :members:
 
 .. automodule:: karta.raster.aaigrid
+    :members:
+
+.. automodule:: karta.raster.raster
     :members:
 
