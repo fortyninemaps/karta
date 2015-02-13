@@ -189,8 +189,8 @@ class RegularGrid(Grid):
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
         """ Return a clipped version of grid constrained to a bounding box. """
         if crs is not None:
-            x, y = crs.proj([xmin, xmax], [ymin, ymax], inverse=True)
-            x_, y_ = self.crs.proj(x, y)
+            xg, yg = crs.proj([xmin, xmax], [ymin, ymax], inverse=True)
+            x, y = self.crs.proj(xg, yg)
             xmin, xmax = x
             ymin, ymax = y
         else:
@@ -205,7 +205,6 @@ class RegularGrid(Grid):
         i1 = max(ll[0], lr[0], ul[0], ur[0])
         j0 = min(ll[1], lr[1], ul[1], ur[1])
         j1 = max(ll[1], lr[1], ul[1], ur[1])
-
 
         values = self.values[i0:i1,j0:j1].copy()
         t = self.transform
@@ -275,71 +274,7 @@ class RegularGrid(Grid):
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
         return RegularGrid(tnew, values)
 
-    # def resize(self, te):
-    #     """ Resize array to fit within extents given by te. If the new
-    #     dimensions are smaller, the data is clipped. If they are larger,
-    #     nan padding is added.
-
-    #     *te*        :   tuple of center coordinates in the form
-    #                     (xmin, xmax, ymin, ymax).
-
-    #     Returns None.
-    #     """
-    #     t = self._transform
-    #     ny, nx = self.values.shape[:2]
-    #     xll1, yll1 = self.center_llref()
-    #     xur1 = xll1 + t[2] * (nx - 1)
-    #     yur1 = yll1 + t[3] * (ny - 1)
-
-    #     xmin2 = te[0]
-    #     xmax2 = te[1]
-    #     ymin2 = te[2]
-    #     ymax2 = te[3]
-
-    #     data_a = self.data.copy()
-    #     ny = data_a.shape[0]
-
-    #     # The left side
-    #     Dx = int(np.floor((xmin2-xmin1) / float(self._hdr['dx'])))
-    #     if Dx < 0:
-    #         data_a = np.hstack([np.nan*np.ones([ny, Dx]), data_a])
-    #     elif Dx > 0:
-    #         data_a = data_a[:,Dx:]
-    #     xllcenter = xmin1 + self._hdr['dx'] * Dx
-
-    #     # The right side
-    #     Dx = int(np.floor((xmax2-xmax1) / float(self._hdr['dx'])))
-    #     if Dx > 0:
-    #         data_a = np.hstack([data_a, np.nan*np.ones([ny, Dx])])
-    #     elif Dx < 0:
-    #         data_a = data_a[:,:Dx]
-    #     self._hdr['nx'] = data_a.shape[1]
-
-    #     _, nx = data_a.shape
-
-    #     # The bottom
-    #     Dy = int(np.ceil((ymin2-ymin1) / float(self._hdr['dy'])))
-    #     if Dy < 0:
-    #         data_a = np.vstack([data_a, np.nan*np.ones([Dy, nx])])
-    #     elif Dy > 0:
-    #         data_a = data_a[Dy:,:]
-    #     yllcenter = ymin1 + self._hdr['dy'] * Dy
-
-    #     # The top
-    #     Dy = int(np.floor((ymax2-ymax1) / float(self._hdr['dy'])))
-    #     if Dy > 0:
-    #         data_a = np.vstack([np.nan*np.ones([Dy, nx]), data_a])
-    #     elif Dy < 0:
-    #         data_a = data_a[:Dy,:]
-    #     self._hdr['ny'] = data_a.shape[0]
-
-    #     self.data = data_a
-    #     self._hdr['xllcenter'] = xllcenter
-    #     self._hdr['yllcenter'] = yllcenter
-
-    #     return
-
-    def get_indices(self, x, y):
+    def get_positions(self, x, y):
         """ Return the column and row indices for the point nearest
         geographical coordinates (x, y). """
         # Calculate this by forming block matrices
@@ -384,14 +319,19 @@ class RegularGrid(Grid):
                 ind[2*i:2*ip] = ind_[:2*(ip-i)]
                 i = ip
 
-        ind = np.round(ind).astype(int)
         ny, nx = self.size
         j = ind[::2].clip(0, nx-1)
         i = ind[1::2].clip(0, ny-1)
-        if npts == 1:
-            return i[0], j[0]
+        return i, j
+
+    def get_indices(self, x, y):
+        """ Return the column and row indices for the point nearest
+        geographical coordinates (x, y). """
+        i, j = self.get_positions(x, y)
+        if len(i) != 1:
+            return np.round(i).astype(int), np.round(j).astype(int)
         else:
-            return i, j
+            return int(round(i[0])), int(round(j[0]))
 
     def sample_nearest(self, x, y):
         """ Return the value nearest to (`x`, `y`). Nearest grid center
@@ -404,26 +344,53 @@ class RegularGrid(Grid):
                             "({2}, {3})".format(j, i, nx, ny))
         return self.values[i, j]
 
-    def sample(self, x, y, method="nearest"):
+    def sample_bilinear(self, x, y):
+        i, j = self.get_positions(x, y)
+        i0 = np.floor(i).astype(int)
+        i1 = np.ceil(i).astype(int)
+        j0 = np.floor(j).astype(int)
+        j1 = np.ceil(j).astype(int)
+
+        # Handle case where interpolation point is exactly on a grid point
+        mska = i0==i1
+        mskb = i0==0
+        i0[mska&~mskb] -= 1
+        i1[mska&mskb] += 1
+
+        mska = j0==j1
+        mskb = j0==0
+        j0[mska&~mskb] -= 1
+        j1[mska&mskb] += 1
+
+        dx, dy = self._transform[2:4]
+        z = (self.values[i0,j0]*(i1-i)*(j1-j) + self.values[i1,j0]*(i-i0)*(j1-j) + \
+             self.values[i0,j1]*(i1-i)*(j-j0) + self.values[i1,j1]*(i-i0)*(j-j0)) / \
+            (dx * dy)
+        return z
+
+    def sample(self, x, y, crs=None, method="bilinear"):
         """ Return the values nearest (`x`, `y`), where `x` and `y` may be
-        equal length vectors. *method* may be one of `nearest`, `linear`. """
+        equal length vectors. *method* may be one of `nearest`, `bilinear`. """
+        if crs is not None:
+            xg, yg = crs.project(x, y, inverse=True)
+            x, y = self.crs.project(xg, yg)
+
         if method == "nearest":
             return self.sample_nearest(x, y)
-        elif method == "linear":
-            from scipy.interpolate import griddata
-            Xd, Yd = self.center_coords()
-            return griddata((Xd.flat, Yd.flat), self.values.flat,
-                            (x,y), method="linear")
+        elif method == "bilinear":
+            return self.sample_bilinear(x, y)
         else:
-            raise ValueError("method \"{0}\" not understood".format(method))
+            raise ValueError("method \"{0}\" not available".format(method))
 
-    def profile(self, line, resolution=None):
-        """ Sample along a line defined as `segments`. Does not interpolate.
+    def profile(self, line, resolution=None, **kw):
+        """ Sample along a line defined as `segments`.
 
         Parameters:
         -----------
         line : Line-like object describing the sampling path
         resolution : sample spacing
+
+        Additional keyword arguments passed to `RegularGrid.sample`
 
         Returns:
         --------
@@ -456,7 +423,7 @@ class RegularGrid(Grid):
                     pos = seg.length
                     pt0 = seg[1]
 
-        z = self.sample(*zip(*vertices))
+        z = self.sample(*zip(*vertices), **kw)
         return vertices, z
 
     def fill_sinks(self):

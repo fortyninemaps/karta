@@ -8,7 +8,7 @@ from test_helper import TESTDATA
 import karta
 from karta.raster import _dem
 
-class RegularGrid(unittest.TestCase):
+class RegularGridTests(unittest.TestCase):
 
     def setUp(self):
         pe = karta.raster.peaks(n=49)
@@ -22,14 +22,14 @@ class RegularGrid(unittest.TestCase):
         return
 
     def test_add_rgrid(self):
-        rast2 = karta.grid.RegularGrid(self.rast.transform,
+        rast2 = karta.RegularGrid(self.rast.transform,
                                        values=np.random.random(self.rast.values.shape)) 
         res = self.rast + rast2
         self.assertTrue(np.all(res.values == self.rast.values+rast2.values))
         return
 
     def test_sub_rgrid(self):
-        rast2 = karta.grid.RegularGrid(self.rast.transform,
+        rast2 = karta.RegularGrid(self.rast.transform,
                                        values=np.random.random(self.rast.values.shape)) 
         res = self.rast - rast2
         self.assertTrue(np.all(res.values == self.rast.values-rast2.values))
@@ -56,6 +56,31 @@ class RegularGrid(unittest.TestCase):
         gnew = g.resample(60.0, 60.0)
         residue = gnew.values - sol.values
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
+        return
+
+    def test_sample_nearest(self):
+        grid = karta.RegularGrid([0.5, 0.5, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        self.assertEqual(grid.sample_nearest(0.6, 0.7), 0.0)
+        self.assertEqual(grid.sample_nearest(0.6, 1.3), 1.0)
+        self.assertEqual(grid.sample_nearest(1.4, 0.3), 1.0)
+        self.assertEqual(grid.sample_nearest(1.6, 1.3), 0.5)
+        return
+
+    def test_sample_bilinear(self):
+        grid = karta.RegularGrid([0.5, 0.5, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        self.assertEqual(grid.sample_bilinear(1.0, 1.0), 0.625)
+        return
+
+    def test_sample_bilinear2(self):
+        grid = karta.RegularGrid([0.5, 0.5, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        xi, yi = np.meshgrid(np.linspace(0.5, 1.5), np.linspace(0.5, 1.5))
+        z = grid.sample_bilinear(xi.ravel(), yi.ravel())
+        self.assertEqual([z[400], z[1200], z[1550], z[2120]],
+                         [0.16326530612244894, 0.48979591836734693,
+                          0.63265306122448983, 0.74052478134110788])
         return
 
     def test_vertex_coords(self):
@@ -174,7 +199,7 @@ class RegularGrid(unittest.TestCase):
 
     def test_profile(self):
         path = karta.Line([(15.0, 15.0), (1484.0, 1484.0)], crs=karta.crs.Cartesian)
-        _, z = self.rast.profile(path, resolution=42.426406871192853)
+        _, z = self.rast.profile(path, resolution=42.426406871192853, method="nearest")
         expected = self.rast.values.diagonal()
         self.assertTrue(np.allclose(z, expected))
         return
