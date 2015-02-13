@@ -337,28 +337,34 @@ class RegularGrid(Grid):
                 i = ip
 
         ny, nx = self.size
-        j = ind[::2].clip(0, nx-1)
-        i = ind[1::2].clip(0, ny-1)
+        #j = ind[::2].clip(0, nx-1)
+        #i = ind[1::2].clip(0, ny-1)
+        j = ind[::2]
+        i = ind[1::2]
         return i, j
 
     def get_indices(self, x, y):
         """ Return the column and row indices for the point nearest
         geographical coordinates (x, y). """
+        ny, nx = self.size
         i, j = self.get_positions(x, y)
+
         if len(i) != 1:
-            return np.round(i).astype(int), np.round(j).astype(int)
+            i, j = np.round(i).astype(int), np.round(j).astype(int)
+            if min(i) < 0 or max(i) > ny-1 or min(j) < 0 or max(j) > nx-1:
+                raise GridError("Coordinates outside grid region ({0})".format(self.bbox))
         else:
-            return int(round(i[0])), int(round(j[0]))
+            i, j = int(round(i[0])), int(round(j[0]))
+            if not (0 <= i <= ny-1) or not(0 <= j <= nx-1):
+                raise GridError("Coordinates outside grid region ({0})".format(self.bbox))
+
+        return i,j
 
     def sample_nearest(self, x, y):
         """ Return the value nearest to (`x`, `y`). Nearest grid center
         sampling scheme. """
         i, j = self.get_indices(x, y)
         ny, nx = self.values.shape[:2]
-        if (np.any(j < 0) or np.any(j >= nx) or
-            np.any(i < 0) or np.any(i >= ny)):
-            raise GridError("coordinates ({0}, {1}) are outside grid region "
-                            "({2}, {3})".format(j, i, nx, ny))
         return self.values[i, j]
 
     def sample_bilinear(self, x, y):
@@ -381,8 +387,7 @@ class RegularGrid(Grid):
 
         dx, dy = self._transform[2:4]
         z = (self.values[i0,j0]*(i1-i)*(j1-j) + self.values[i1,j0]*(i-i0)*(j1-j) + \
-             self.values[i0,j1]*(i1-i)*(j-j0) + self.values[i1,j1]*(i-i0)*(j-j0)) / \
-            (dx * dy)
+             self.values[i0,j1]*(i1-i)*(j-j0) + self.values[i1,j1]*(i-i0)*(j-j0))
         return z
 
     def sample(self, x, y, crs=None, method="bilinear"):
@@ -427,7 +432,7 @@ class RegularGrid(Grid):
             pos = 0
             az = seg[0].azimuth(seg[1])
 
-            while pos != seg.length:
+            while pos < seg.length:
                 distance_to_endpt = pt0.distance(seg[1])
                 if distance_to_endpt >= resolution:
                     pt1 = pt0.walk(resolution - remainder, az)
