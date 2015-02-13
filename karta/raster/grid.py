@@ -171,6 +171,11 @@ class RegularGrid(Grid):
         return np.meshgrid(np.linspace(xllcorner, xurcorner, nx + 1),
                            np.linspace(yurcorner, yllcorner, ny + 1))
 
+    @property
+    def bbox(self):
+        extents = self.get_extents(reference="edge")
+        return extents[0], extents[2], extents[1], extents[3]
+
     def get_extents(self, reference='center'):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
         ymax). *reference* may be `center` or `edge`. """
@@ -184,7 +189,19 @@ class RegularGrid(Grid):
             raise GridError("`reference` must be 'center' or 'edge'")
         ny, nx = self.values.shape[:2]
         dx, dy = self._transform[2:4]
-        return (x0, x0 + dx*(nx+n), y0, y0 + dy*(ny+n))
+        sx, sy = self._transform[4:]
+
+        sgn = lambda a: 0 if a==0 else a/abs(a)
+        if sgn(dx) == sgn(sx):
+            xrng = dx*(nx+n) + sx*(ny+n)
+        else:
+            xrng = dx*(nx+n) - sx*(ny+n)
+
+        if sgn(dy) == sgn(sy):
+            yrng = dy*(ny+n) + sy*(nx+n)
+        else:
+            yrng = dy*(ny+n) - sy*(nx+n)
+        return min(x0, x0+xrng), max(x0, x0+xrng), min(y0, y0+yrng), max(y0, y0+yrng)
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
         """ Return a clipped version of grid constrained to a bounding box. """
