@@ -1,7 +1,7 @@
 """ Functions for reading raster data sources as RegularGrid objects """
 import numpy as np
 from .grid import RegularGrid
-from ..crs import CustomCRS
+from ..crs import CustomCRS, GeographicalCRS
 
 try:
     from . import _gtiff
@@ -26,6 +26,9 @@ def read_aai(fnm):
     values[values==aschdr['nodata_value']] = np.nan
     return RegularGrid(t, values=values[::-1])
 
+def proj4_isgeodetic(s):
+    return ("lonlat" in s) or ("longlat" in s) or \
+            ("latlon" in s) or ("latlong" in s)
 
 def read_gtiff(fnm, band=1):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
@@ -50,7 +53,11 @@ def read_gtiff(fnm, band=1):
 
     geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
                                      f=hdr["srs"]["flattening"])
-    crs = CustomCRS(proj=hdr["srs"]["proj4"], spheroid=geodstr)
+    if proj4_isgeodetic(hdr["srs"]["proj4"]):
+        crs = GeographicalCRS(geodstr, name="Imported GTiff")
+    else:
+        crs = CustomCRS(proj=hdr["srs"]["proj4"], spheroid=geodstr,
+                        name="Imported GTiff")
     return RegularGrid(t, values=arr.squeeze()[::-1], crs=crs)
 
 # Aliases for backwards compat.
