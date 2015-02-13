@@ -38,7 +38,11 @@ class Geometry(object):
         """ Generic method for calculating distance between positions that
         respects CRS """
         if pos0._crs == pos1._crs:
-            _, _, dist = pos0._crs.inverse(pos0.x, pos0.y, pos1.x, pos1.y, radians=False)
+            (x0,y0) = pos0.x, pos0.y
+            (x1,y1) = pos1.x, pos1.y
+            ((x0,x1), (y0,y1)) = pos0._crs.project([x0, x1], [y0, y1],
+                                                   inverse=True)
+            _, _, dist = pos0._crs.inverse(x0, y0, x1, y1, radians=False)
         else:
             raise CRSError("Positions must use the same CRS")
         return dist
@@ -650,7 +654,7 @@ class ConnectedMultipoint(MultipointBase):
     @property
     def length(self):
         """ Returns the length of the line/boundary. """
-        points = [Point(i, crs=self._crs) for i in self.vertices]
+        points = [Point(v, crs=self._crs) for v in self.vertices]
         distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
         return sum(distances)
 
