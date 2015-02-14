@@ -7,22 +7,6 @@ Implements CRS classes for different kinds of spatial reference systems:
     - GeographicalCRS
     - Spherical
     - Proj4CRS
-
-These coordinate systems can be passed to define geographical references for
-objects (e.g. vector geometries, raster grids).
-
-Predefined coordinate system instances are provided:
-
-    - *SphericalEarth*
-    - *LonLatWGS84*
-    - *LonLatNAD27*
-    - *LonLatNAD83*
-    - *UPSNorth*
-    - *UPSSouth*
-    - *NSIDCNorth*
-    - *NSIDCSouth*
-
-Additionally, the *Cartesian* class can be used without instantiation.
 """
 
 import numpy as np
