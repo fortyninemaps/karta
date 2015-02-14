@@ -18,10 +18,7 @@ except ImportError:
     print("Warning: Cython not imported")
     print("If C sources exist in the source tree, they will be used")
 
-extensions = [Extension("karta.raster.cfill_sinks",
-                        ["karta/raster/cfill_sinks"+ext],
-                        include_dirs=include_dirs),
-              Extension("karta.raster.crfuncs",
+extensions = [Extension("karta.raster.crfuncs",
                         ["karta/raster/crfuncs"+ext],
                         include_dirs=include_dirs),
               Extension("karta.vector._cvectorgeo",
