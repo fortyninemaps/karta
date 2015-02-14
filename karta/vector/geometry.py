@@ -127,12 +127,6 @@ class Point(Geometry):
     def z(self):
         return self.vertex[2]
 
-    def isat(self, other, tol=0.001):
-        """ Test whether point vertices are the same, regardless of properties or data.
-        Tolarance is not geodetic. """
-        return False not in [abs(a-b) <= tol for (a, b) in zip(self.vertices,
-                                                               other.vertices)]
-
     def get_vertex(self, crs=None):
         """ Return the Point vertex as a tuple. """
         if crs is None:
@@ -251,7 +245,7 @@ class MultipointBase(Geometry):
         if len(vertices) > 0:
 
             def ispoint(a):
-                return hasattr(a, "_geotype") and a._geotype == "Point"
+                return getattr(a, "_geotype", None) == "Point"
 
             if all(ispoint(a) for a in vertices):
 
@@ -371,8 +365,8 @@ class MultipointBase(Geometry):
         """
         reg0 = self.bbox
         reg1 = other.bbox
-        return (reg0[0] < reg1[2] and reg0[2] > reg1[0] and
-                reg0[1] < reg1[3] and reg0[3] > reg1[1])
+        return (reg0[0] <= reg1[2] and reg1[0] <= reg0[2] and
+                reg0[1] <= reg1[3] and reg1[1] <= reg0[3])
 
     @property
     def bbox(self):
@@ -400,9 +394,9 @@ class MultipointBase(Geometry):
         """ Return horizontal coordinate lists, optionally projected to *crs*.
         """
         if self.rank == 2:
-            x, y = list(zip(*self.vertices))
+            x, y = tuple(zip(*self.vertices))
         else:
-            x, y, _ = list(zip(*self.vertices))
+            x, y, _ = tuple(zip(*self.vertices))
         if crs is not None:
             xg, yg = self.crs.project(x, y, inverse=True)
             x, y = crs.project(x, y)
@@ -504,6 +498,51 @@ class MultipointBase(Geometry):
                 return True
         return False
 
+    def convex_hull(self):
+        """ Return a Polygon representing the convex hull. Assumes that the CRS
+        may be treated as cartesian. """
+        points = [pt for pt in self]
+
+        # Find the lowermost (left?) point
+        pt0 = points[0]
+        idx = 0
+        for i, pt in enumerate(points[1:]):
+            if (pt.y < pt0.y) or ((pt.y == pt0.y) and (pt.x < pt0.x)):
+                pt0 = pt
+                idx = i+1
+        points.pop(idx)
+
+        # Sort CCW relative to pt0, and drop all but farthest of any duplicates
+        points.sort(key=lambda pt: pt0.distance(pt))
+        points.sort(key=lambda pt: _vecgeo.polarangle(pt0.vertex, pt.vertex))
+        alpha = -1
+        drop = []
+        for i,pt in enumerate(points):
+            a = _vecgeo.polarangle(pt0.vertex, pt.vertex)
+            if a == alpha:
+                drop.append(i)
+            else:
+                alpha = a
+
+        if len(drop) != 0:
+            for i in drop[::-1]:
+                points.pop(i)
+
+        # initialize convex hull
+        if len(points) == 2:
+            return [pt0, points[0], points[1]]
+        elif len(points) == 1:
+            return [pt0, points[0]]
+        else:
+
+            S = [pt0, points[0], points[1]]
+            for pt in points[2:]:
+                while not _vecgeo.isleft(S[-2].vertex, S[-1].vertex, pt.vertex):
+                    S.pop()
+                S.append(pt)
+
+        return Polygon(S)
+
     def to_xyfile(self, fnm, fields=None, delimiter=' ', header=None):
         """ Write data to a delimited ASCII table.
 
@@ -596,56 +635,11 @@ class Multipoint(MultipointBase):
 
     def within_bbox(self, bbox):
         """ Return Multipoint subset that is within a square bounding box
-        given by (xmin, xmax, ymin, ymax). """
-        filtbbox = lambda pt: (bbox[0] <= pt.vertex[0] <= bbox[1]) and \
-                              (bbox[2] <= pt.vertex[1] <= bbox[3])
+        given by (xmin, xymin, xmax, ymax). """
+        filtbbox = lambda pt: (bbox[0] <= pt.vertex[0] <= bbox[2]) and \
+                              (bbox[1] <= pt.vertex[1] <= bbox[3])
         indices = [i for (i, pt) in enumerate(self) if filtbbox(pt)]
         return self._subset(indices)
-
-    def convex_hull(self):
-        """ Return a Polygon representing the convex hull. Assumes that the CRS
-        may be treated as cartesian. """
-        points = [pt for pt in self]
-
-        # Find the lowermost (left?) point
-        pt0 = points[0]
-        idx = 0
-        for i, pt in enumerate(points[1:]):
-            if (pt.y < pt0.y) or ((pt.y == pt0.y) and (pt.x < pt0.x)):
-                pt0 = pt
-                idx = i+1
-        points.pop(idx)
-        
-        # Sort CCW relative to pt0, and drop all but farthest of any duplicates
-        points.sort(key=lambda pt: pt0.distance(pt))
-        points.sort(key=lambda pt: _vecgeo.polarangle(pt0.vertex, pt.vertex))
-        alpha = -1
-        drop = []
-        for i,pt in enumerate(points):
-            a = _vecgeo.polarangle(pt0.vertex, pt.vertex)
-            if a == alpha:
-                drop.append(i)
-            else:
-                alpha = a
-        
-        if len(drop) != 0:
-            for i in drop[::-1]:
-                points.pop(i)
-        
-        # initialize convex hull
-        if len(points) == 2:
-            return [pt0, points[0], points[1]]
-        elif len(points) == 1:
-            return [pt0, points[0]]
-        else:
-
-            S = [pt0, points[0], points[1]]
-            for pt in points[2:]:
-                while not _vecgeo.isleft(S[-2].vertex, S[-1].vertex, pt.vertex):
-                    S.pop()
-                S.append(pt)
-        
-        return Polygon(S)
 
 
 class ConnectedMultipoint(MultipointBase):
@@ -1015,7 +1009,8 @@ class Polygon(ConnectedMultipoint):
 
     def to_polyline(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
-        return Line(self.vertices)
+        return Line(self.vertices, properties=self.properties, data=self.data,
+                    crs=self.crs)
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
@@ -1052,44 +1047,6 @@ class GGeoError(GeometryError):
     """ Exception to raise when a geometry object attempts an invalid transform. """
     def __init__(self, message=''):
         self.message = message
-
-
-def ray_intersection(pt, endpt1, endpt2, direction=0.0):
-    """ Determines whether a ray intersects a line segment. If yes,
-    returns the point of intersection. If no, return None. Input
-    "points" should be tuples or similar. Input direction is in
-    radians, and defines the ray path from pt.
-    """
-    m_ray = math.tan(direction)
-    if endpt2[0] != endpt1[0]:
-        m_lin = float(endpt2[1] - endpt1[1]) / float(endpt2[0] - endpt1[0])
-        if m_ray == m_lin:      # Lines are parallel
-            return
-        else:
-            x_int = ( (m_ray * pt[0] - m_lin * endpt1[0] - pt[1] + endpt1[1])
-                / (m_ray - m_lin) )
-
-        # Test that y_int is within segment and ray points toward segment
-        if ( (x_int >= endpt1[0]) is not (x_int >= endpt2[0]) and
-            (x_int-pt[0] > 0) is (math.cos(direction) > 0) ):
-            y_int = ( (m_ray * m_lin * pt[0] - m_ray * m_lin * endpt1[0]
-                + m_ray * endpt1[1] - m_lin * pt[1]) / (m_ray - m_lin) )
-            return (x_int, y_int)
-        else:
-            return
-
-    else:       # Line segment is vertical
-        if direction % math.pi/2. == 0.0 and direction != 0.0:
-            # Lines are parallel
-            return
-        x_int = float(endpt1[0])
-        y_int = (x_int - pt[0]) * m_ray + pt[1]
-        # Test that y_int is within segment and ray points toward segment
-        if ( (y_int >= endpt1[1]) is not (y_int >= endpt2[1]) and
-            (x_int-pt[0] > 0) is (math.cos(direction) > 0) ):
-            return (x_int, y_int)
-        else:
-            return
 
 
 def points_to_multipoint(points):

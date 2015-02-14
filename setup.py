@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 import numpy
 
-VERSION = "0.4.1"
+VERSION = "0.4.2"
 
 try:
     from Cython.Build import cythonize
@@ -59,19 +59,18 @@ coordinate system-aware, a selection of geographical analysis methods, and the
 ability to read and write several formats, including GeoJSON, shapefiles, and
 ESRI ASCII.
 
-*Karta* works with Python 2.6-2.7 and Python 3.3+. Suggestions, bug reports,
-testcases, and pull requests are welcome, particularly to improve file format
-support and test coverage.
+*Karta* works with Python 2.6-2.7 and Python 3.3+.
+
+DOCUMENTATION
+-------------
+
+See the `online manual <http://www.ironicmtn.com/kartadocs/karta-manual.html>`_.
 
 See the tutorial_, or read the `API documentation`_.
 
 .. _tutorial: http://www.ironicmtn.com/kartadocs/tutorial.html
 .. _API documentation: http://www.ironicmtn.com/kartadocs/reference.html
 
-DOCUMENTATION
--------------
-
-See the `online manual <http://www.ironicmtn.com/kartadocs/karta-manual.html>`_.
 
 The manual can also be built offline using Sphinx by running ``make`` from the
 ``doc/`` directory. The documentation is built from source code docstrings and

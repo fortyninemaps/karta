@@ -174,7 +174,7 @@ class TestGeometry(unittest.TestCase):
                                         for y in range(-10,11)]
         ans = [v for v in vertices if (-5.0<=v[0]<=5.0) and (-4.0<=v[1]<=6.0)]
         mp = Multipoint(vertices)
-        sub = mp.within_bbox((-5.0, 5.0, -4.0, 6.0))
+        sub = mp.within_bbox((-5.0, -4.0, 5.0, 6.0))
         self.assertEqual(sub, Multipoint(ans))
         return
 

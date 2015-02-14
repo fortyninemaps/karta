@@ -1,8 +1,6 @@
 """
 GPX IO and manipulation (UNDER DEVELOPMENT)
 
-This is a rewrite of gpxparser.py, designed to fit better with karta types.
-
 To do:
     - XML namespaces aren't really handled properly
     - metadata node not addressed
