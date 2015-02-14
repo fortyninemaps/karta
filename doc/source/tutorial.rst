@@ -88,9 +88,9 @@ and metadata.
 .. parsed-literal::
 
     Point((-123.1, 49.25))
-    <class 'karta.vector.guppy.Multipoint'([(-122.93, 48.62), (-123.1, 48.54), (-122.9, 48.49), (-122.81, 48.56)])>
-    <class 'karta.vector.guppy.Line'([(-124.35713, 49.31437), (-124.37857, 49.3172)...(-124.41681, 49.32477), (-124.42278, 49.32588)])>
-    <class 'karta.vector.guppy.Polygon'([(-25.41, 67.03), (-24.83, 62.92), (-12.76, 63.15), (-11.44, 66.82)])>
+    <class 'karta.vector.geometry.Multipoint'([(-122.93, 48.62), (-123.1, 48.54), (-122.9, 48.49), (-122.81, 48.56)])>
+    <class 'karta.vector.geometry.Line'([(-124.35713, 49.31437), (-124.37857, 49.3172)...(-124.41681, 49.32477), (-124.42278, 49.32588)])>
+    <class 'karta.vector.geometry.Polygon'([(-25.41, 67.03), (-24.83, 62.92), (-12.76, 63.15), (-11.44, 66.82)])>
 
 
 Each geometrical object now contains a vertex/vertices in a cartesian
@@ -162,7 +162,7 @@ A slice that takes part of a polygon returns a line.
 
 .. parsed-literal::
 
-    <class 'karta.vector.guppy.Line'([(-25.41, 67.03), (-24.83, 62.92)])>
+    <class 'karta.vector.geometry.Line'([(-25.41, 67.03), (-24.83, 62.92)])>
 
 
 Points have a ``distance`` that calculates the distance to another
@@ -176,7 +176,7 @@ point. However, if we do
 
 .. parsed-literal::
 
-    53.00666508061746
+    53.00666467530286
 
 
 this probably isn't what we wanted. Be default, geometries in Karta use
@@ -189,8 +189,8 @@ each geometry at creation, as in
     from karta import crs
 .. code:: python
 
-    pt = Point((-123.1, 49.25), crs=crs.LONLAT)
-    pt2 = Point((-70.66, 41.52), crs=crs.LONLAT)
+    pt = Point((-123.1, 49.25), crs=crs.LonLatWGS84)
+    pt2 = Point((-70.66, 41.52), crs=crs.LonLatWGS84)
     pt.distance(pt2)
 
 
@@ -211,7 +211,7 @@ American state capitols are within 2000 km of Mexico City?
 .. code:: python
 
     from karta.examples import us_capitols
-    mexico_city = Point((-99.13, 19.43), crs=crs.LONLAT)
+    mexico_city = Point((-99.13, 19.43), crs=crs.LonLatWGS84)
 .. code:: python
 
     # List all US state capitols
@@ -356,56 +356,8 @@ American state capitols are within 2000 km of Mexico City?
 
 
 All of the above calculations are performed on a geoid. The
-``crs.LONLAT`` coordinate system is just a *Karta* shorthand for WGS 84
-with geographical coordinates.
-
-.. code:: python
-
-    crs.LONLAT_WGS84
-
-
-
-.. parsed-literal::
-
-    geographical CRS (urn: {'urn': 'urn:ogc:def:crs:EPSG::4326'})
-
-
-
-.. code:: python
-
-    crs.LONLAT
-
-
-
-.. parsed-literal::
-
-    geographical CRS (urn: {'urn': 'urn:ogc:def:crs:EPSG::4326'})
-
-
-
-.. code:: python
-
-    crs.LONLAT == crs.LONLAT_WGS84
-
-
-
-.. parsed-literal::
-
-    True
-
-
-
-.. code:: python
-
-    crs.LONLAT == crs.LONLAT_NAD83
-
-
-
-.. parsed-literal::
-
-    False
-
-
+``crs.LonLatWGS84`` coordinate system means to use geographical
+(longitude and latitude) coordinates on the WGS 84 ellipsoid.
 
 **TODO: describe other geometries**
 
@@ -454,7 +406,7 @@ geometry.
 
 .. parsed-literal::
 
-    <class 'karta.vector.guppy.Line'([(-25.41, 67.03), (-24.83, 62.92), (-12.76, 63.15)])>
+    <class 'karta.vector.geometry.Line'([(-25.41, 67.03), (-24.83, 62.92), (-12.76, 63.15)])>
 
 
 Visualizing and importing/exporting data
@@ -473,7 +425,7 @@ make is easy to visualize a geometry.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f0b978bd3c8>]
+    [<matplotlib.lines.Line2D at 0x7f5939d55358>]
 
 
 
@@ -490,11 +442,18 @@ Each geometry has appropriate methods to save data:
     line.to_shapefile("my_shapefile")
     poly.to_geojson("my_json.json")
 
+.. parsed-literal::
+
+    Warning: CRS URN lookup not implemented
+    <class 'karta.crs.Cartesian'>
+    returning CRS name instead
+
+
 
 
 .. parsed-literal::
 
-    <karta.vector.geojson.GeoJSONWriter at 0x7f0b978f0c18>
+    <karta.vector.geojson.GeoJSONWriter at 0x7f5939d389b0>
 
 
 
@@ -502,4 +461,3 @@ Raster data
 -----------
 
 **WIP**
-
