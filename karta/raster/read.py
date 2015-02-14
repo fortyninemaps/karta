@@ -49,7 +49,7 @@ def read_gtiff(fnm, band=1):
          'dx'         : hdr['dx'],
          'dy'         : -hdr['dy'],
          'xrot'       : hdr['sx'],
-         'yrot'       : hdr['sy']}
+         'yrot'       : -hdr['sy']}
 
     geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
                                      f=hdr["srs"]["flattening"])
