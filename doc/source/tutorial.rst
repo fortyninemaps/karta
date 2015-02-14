@@ -17,7 +17,7 @@ Should you come across any mistakes, let me know, or even better,
 provide a pull request on
 `Github <https://github.com/njwilson23/karta>`__!
 
-The following exmaples are shown using Python 3, however *Karta* is
+The following examples are shown using Python 3, however *Karta* is
 supported on both Python 2.7+ and Python 3.2+.
 
 Definitions
