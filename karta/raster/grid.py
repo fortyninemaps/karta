@@ -9,13 +9,6 @@ from ..crs import Cartesian
 
 IntegerType = (numbers.Integral, np.int32, np.int64)
 
-try:
-    from .fill_sinks import fill_sinks
-except ImportError:
-    sys.stderr.write("Compiled fill_sinks not available. Falling back to "
-                     "Python version\n")
-    from .raster import fill_sinks
-
 class Grid(object):
     """ Grid baseclass. Don't use this directly except to implement subclasses.
     The primary attributes defined by all Grid-derived classed are _hdr and
@@ -448,10 +441,6 @@ class RegularGrid(Grid):
         z = self.sample(*zip(*vertices), **kw)
         return vertices, z
 
-    def fill_sinks(self):
-        """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
-        return RegularGrid(self._transform, values=fill_sinks(self.values))
-
     def as_warpedgrid(self):
         """ Return a copy as a WarpedGrid instance. This is a more general
         grid class that has a larger memory footprint but can represent more
@@ -561,10 +550,6 @@ class WarpedGrid(Grid):
     def resample(self, X, Y):
         """ Resample internal grid to the points defined by `X`, `Y`. """
         raise NotImplementedError
-
-    def fill_sinks(self):
-        """ Fill depressions. Use the algorithm of Wang and Liu (2006). """
-        return WarpedGrid(self.X.copy(), self.Y.copy(), fill_sinks(self.values))
 
 
 class GridError(Exception):
