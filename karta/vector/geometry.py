@@ -14,7 +14,7 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
-from ..crs import Cartesian, CRSError
+from ..crs import Cartesian, SphericalEarth, CRSError
 from .metadata import Metadata
 from . import _vectorgeo
 
@@ -145,20 +145,22 @@ class Point(Geometry):
         else:
             return (self.x, self.y)
 
-    def azimuth(self, other, spherical=False):
+    def azimuth(self, other, crs=SphericalEarth):
         """ Returns the compass azimuth from self to other in radians (i.e.
         clockwise, with north at 0). Returns NaN if points are coincident. """
 
         if self.coordsxy() == other.coordsxy():
-            return np.nan
+            az = np.nan
 
         elif self._crs == other._crs:
-            az1, _, _ = self._crs.inverse(self.x, self.y, other.x, other.y)
-            return az1
+            lon0, lat0 = self._crs.project(self.x, self.y, inverse=True)
+            lon1, lat1 = self._crs.project(other.x, other.y, inverse=True)
+            az, _, _ = self._crs.inverse(lon0, lat0, lon1, lat1)
 
         else:
             raise CRSError("Azimuth undefined for points in CRS {0} and "
                            "{1}".format(self._crs, other._crs))
+        return az
 
     def walk(self, distance, direction, radians=False):
         """ Returns the point reached when moving in a given direction for
@@ -167,9 +169,9 @@ class Point(Geometry):
             distance (float): distance to walk
             direction (float): walk azimuth (clockwise with "north" at 0)
         """
-        (x, y, backaz) = self._crs.forward(self.x, self.y, direction, distance, radians=radians)
-        return Point((x, y), properties=self.properties, data=self.data,
-                     crs=self._crs)
+        xg, yg = self._crs.project(self.x, self.y, inverse=True)
+        (x, y, backaz) = self._crs.forward(xg, yg, direction, distance, radians=radians)
+        return Point((x, y), properties=self.properties, data=self.data, crs=self._crs)
 
     def distance(self, other):
         """ Returns a distance to another Point. If the coordinate system is
@@ -399,7 +401,7 @@ class MultipointBase(Geometry):
             x, y, _ = tuple(zip(*self.vertices))
         if crs is not None:
             xg, yg = self.crs.project(x, y, inverse=True)
-            x, y = crs.project(x, y)
+            x, y = crs.project(xg, yg)
         return x, y
 
     def shift(self, shift_vector):

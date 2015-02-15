@@ -6,7 +6,7 @@ import numpy as np
 
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.vector.geometry import affine_matrix
-from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, Proj4CRS
+from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, NSIDCNorth, Proj4CRS
 
 class TestGeometry(unittest.TestCase):
 
@@ -80,6 +80,16 @@ class TestGeometry(unittest.TestCase):
         point = Point((5.0, 2.0))
         other = Point((5.0, 2.0))
         self.assertTrue(np.isnan(point.azimuth(other)))
+        return
+
+    def test_point_azimuth3(self):
+        """ Verify with:
+
+        printf "0 -1000000\n100000 -900000" | proj +proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs -I -s | tr '\n' ' ' | invgeod +ellps=WGS84 -f "%.6f"
+        """
+        point = Point((0.0, -10e5), crs=NSIDCNorth)
+        other = Point((1e5, -9e5), crs=NSIDCNorth)
+        self.assertAlmostEqual(point.azimuth(other), 45.036973, places=6)
         return
 
     def test_point_shift(self):
@@ -506,7 +516,7 @@ class TestGeoInterface(unittest.TestCase):
         self.assertEqual(poly.__geo_interface__,
                          {"type":"Polygon",
                           "bbox":(0, 0, 4, 16),
-                          "coordinates": list(zip(x, y))})
+                          "coordinates": [list(zip(x, y))]})
 
     def test_line(self):
         x = np.arange(10)
@@ -542,10 +552,13 @@ class TestGeometryProj(unittest.TestCase):
         return
 
     def test_azimuth_lonlat(self):
+        """ Verify with
+        echo "49.25dN 123.1dW 45.42dW 75.69dW" | invgeod +ellps=WGS84 -f "%.6f"
+        """
         az1 = self.vancouver.azimuth(self.ottawa)
         az2 = self.vancouver.azimuth(self.whitehorse)
-        self.assertTrue(abs(az1 - 78.4833443403) < 1e-10)
-        self.assertTrue(abs(az2 - (-26.1358265354)) < 1e-10)
+        self.assertAlmostEqual(az1, 78.483344, places=6)
+        self.assertAlmostEqual(az2, -26.135827, places=6)
         return
 
     def test_walk_lonlat(self):
@@ -596,9 +609,6 @@ class TestAffineTransforms(unittest.TestCase):
 
     def setUp(self):
         self.square = Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])
-        #self.line_geo = Line([(6.5, 45), (6.8, 45.2), (6.9, 45.1), (6.8, 45.6),
-        #                      (6.6, 45.5)],
-        #                     crs=LonLatWGS84)
         return
 
     def test_translate(self):
