@@ -441,6 +441,16 @@ class TestGeometry(unittest.TestCase):
         self.assertAlmostEqual(dest.y, 49.398187, places=6)
         return
 
+    def test_walk_albers(self):
+        AlaskaAlbers = Proj4CRS("+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 "
+                                "+x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs",
+                                "+ellps=GRS80")
+        start = Point((-2658638, 2443580), crs=AlaskaAlbers)
+        dest = start.walk(4500, 195.0)
+        self.assertAlmostEqual(dest.x, -2662670.889, places=3)
+        self.assertAlmostEqual(dest.y, 2441551.155, places=3)
+        return
+
     def test_subsection_cartesian(self):
         line = Line([(0.0, 0.0), (1.0, 2.0), (3.0, -2.0), (4.0, -1.0),
                      (4.0, 3.0), (3.0, 2.0)])
