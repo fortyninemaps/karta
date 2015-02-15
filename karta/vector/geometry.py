@@ -129,7 +129,7 @@ class Point(Geometry):
 
     def get_vertex(self, crs=None):
         """ Return the Point vertex as a tuple. """
-        if crs is None:
+        if crs is None or crs==self._crs:
             return self.vertex
         else:
             vg = self.crs.project(self.x, self.y, inverse=True)
@@ -169,9 +169,12 @@ class Point(Geometry):
             distance (float): distance to walk
             direction (float): walk azimuth (clockwise with "north" at 0)
         """
-        xg, yg = self._crs.project(self.x, self.y, inverse=True)
-        (x, y, backaz) = self._crs.forward(xg, yg, direction, distance, radians=radians)
-        return Point((x, y), properties=self.properties, data=self.data, crs=self._crs)
+        xg1, yg1 = self._crs.project(self.x, self.y, inverse=True)
+        xg2, yg2, _ = self._crs.forward(xg1, yg1, direction, distance,
+                                        radians=radians)
+        x, y = self.crs.project(xg2, yg2)
+        return Point((x, y), properties=self.properties, data=self.data,
+                     crs=self._crs, copy_metadata=False)
 
     def distance(self, other):
         """ Returns a distance to another Point. If the coordinate system is
@@ -399,7 +402,7 @@ class MultipointBase(Geometry):
             x, y = tuple(zip(*self.vertices))
         else:
             x, y, _ = tuple(zip(*self.vertices))
-        if crs is not None:
+        if crs is not None and (crs != self._crs):
             xg, yg = self.crs.project(x, y, inverse=True)
             x, y = crs.project(xg, yg)
         return x, y

@@ -434,6 +434,13 @@ class TestGeometry(unittest.TestCase):
         self.assertAlmostEqual(dest.y, 0.0)
         return
 
+    def test_walk(self):
+        start = Point((-123.1, 49.25), crs=LonLatWGS84)
+        dest = start.walk(1e5, 80.0)
+        self.assertAlmostEqual(dest.x, -121.743196, places=6)
+        self.assertAlmostEqual(dest.y, 49.398187, places=6)
+        return
+
     def test_subsection_cartesian(self):
         line = Line([(0.0, 0.0), (1.0, 2.0), (3.0, -2.0), (4.0, -1.0),
                      (4.0, 3.0), (3.0, 2.0)])

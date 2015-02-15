@@ -414,12 +414,9 @@ class RegularGrid(Grid):
         if resolution is None:
             resolution = min(self.transform[2:4])
 
-        np = math.ceil(line.length / resolution)
-        vertices = []
-
         remainder = 0
         pt0 = line[0]
-        vertices.append(pt0.get_vertex(self.crs))
+        vertices = [pt0.get_vertex(self.crs)]
 
         for seg in line.segments:
             pos = 0
