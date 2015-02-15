@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 import numpy
 
-VERSION = "0.4.2"
+VERSION = "0.4.2.1"
 
 try:
     from Cython.Build import cythonize
@@ -51,25 +51,28 @@ Karta - tidy package for geospatial computation
 
 *Karta* provides a simple and fast framework for spatial analysis in Python.
 
-The package provides clean vector and raster data types that are geographical
-coordinate system-aware, a selection of geographical analysis methods, and the
-ability to read and write several formats, including GeoJSON, shapefiles, and
-ESRI ASCII.
+Components:
+
+- Clean vector and raster data types that are geographical coordinate
+  system-aware
+- A selection of geographical analysis methods including geodetic length and
+  area calculations, intersections, convex hulls, raster sampling, and grid
+  warping
+- IO for several common geographical formats, including GeoJSON, shapefiles,
+  and ESRI ASCII
 
 *Karta* works with Python 2.6-2.7 and Python 3.3+.
 
 DOCUMENTATION
 -------------
 
-See the `online manual <http://www.ironicmtn.com/kartadocs/karta-manual.html>`_.
-
-See the tutorial_, or read the `API documentation`_.
+See the `online manual <http://www.ironicmtn.com/kartadocs/karta-manual.html>`_,
+read the tutorial_, or search the `API documentation`_.
 
 .. _tutorial: http://www.ironicmtn.com/kartadocs/tutorial.html
 .. _API documentation: http://www.ironicmtn.com/kartadocs/reference.html
 
-
-The manual can also be built offline using Sphinx by running ``make`` from the
+The manual can also be built offline with Sphinx by running ``make`` from the
 ``doc/`` directory. The documentation is built from source code docstrings and
 information in the `Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`_.
 """,
