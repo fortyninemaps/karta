@@ -445,6 +445,15 @@ class RegularGrid(Grid):
         Xc, Yc = self.center_coords()
         return WarpedGrid(Xc, Yc, self.values.copy())
 
+    def gtiffwrite(self, fnm):
+        """ Write data to a GeoTiff file using GDAL """
+        try:
+            from . import _gtiff
+            return _gtiff.write(fnm, self)
+        except ImportError as e:
+            raise ImportError("{0}\nReading GeoTiffs depends on GDAL, which "
+                              "could not be imported".format(e))
+
     def aaiwrite(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
         only isometric grids (i.e. `hdr['dx'] == hdr['dy']` can be saved,

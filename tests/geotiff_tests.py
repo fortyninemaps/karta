@@ -28,7 +28,7 @@ class GdalTests(unittest.TestCase):
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TESTDATA, "test.tif")
-        _gtiff.write(fpath, g)
+        g.gtiffwrite(fpath)
         gnew = karta.read_gtiff(fpath)
 
         self.assertTrue("+proj=utm" in gnew.crs.project.srs)

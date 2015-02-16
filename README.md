@@ -31,9 +31,9 @@ Building the documentation requires [Sphinx](http://sphinx-doc.org/) and
 
 - vector
     - geometry:     Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`) supporting the [Python \_\_geo\_interface\_\_](https://gist.github.com/sgillies/2217756)
-    - gpx:          GPX class for parsing and constructing GPX eXchange files
     - geojson:      Classes and functions for reading and writing GeoJSON
     - shp\_funcs:   Shapefile interface through _pyshp_
+    - gpx:          GPX class for parsing and constructing GPX eXchange files
     - xyfile:       ASCII table functions
     - quadtree:     QuadTree implementation
     - stats:        Geostatistical functions (experimental)
@@ -58,7 +58,7 @@ Currently partially-supported are:
     - ASCII tables (XYZ) (r,w)
 - raster
     - ESRI ASCII Grid (r,w)
-    - GeoTiff through GDAL (r)
+    - GeoTiff via GDAL (r,w)
     - USGS DEM (WIP)
 
 ## INSTALLATION
