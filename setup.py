@@ -53,13 +53,14 @@ Karta - tidy package for geospatial computation
 
 Components:
 
-- Clean vector and raster data types that are geographical coordinate
-  system-aware
+- Clean geographically-aware vector and raster data types
+- Integration with pyproj to support a wide range of coordinate systems and
+  transformations
 - A selection of geographical analysis methods including geodetic length and
   area calculations, intersections, convex hulls, raster sampling, and grid
   warping
-- IO for several common geographical formats, including GeoJSON, shapefiles,
-  and ESRI ASCII
+- IO for several common geographical formats, including GeoJSON, shapefiles
+  (through pyshp), ESRI ASCII, and GeoTiff (through GDAL)
 
 *Karta* works with Python 2.6-2.7 and Python 3.3+.
 
