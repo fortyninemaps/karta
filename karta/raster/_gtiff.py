@@ -104,7 +104,7 @@ def srs_from_crs(crs):
 def write(fnm, grid):
     """ Write a grid-like object to *fnm* """
     driver = gdal.GetDriverByName("GTiff")
-    nx, ny = grid.size
+    ny, nx = grid.size
     dataset = driver.Create(fnm, nx, ny, 1, gdal_type(grid.values.dtype))
     t = grid.transform
     dataset.SetGeoTransform([t[0] - 0.5*(t[2] + t[4]), t[2], -t[4],
