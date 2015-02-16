@@ -699,44 +699,53 @@ class ConnectedMultipoint(MultipointBase):
         """ Return the shortest distance from any position on the Multipoint
         boundary to *pt* (Point).
         """
-        if self._crs != pt._crs:
-            raise CRSError("Point must have matching CRS")
-        elif self._crs == Cartesian:
+        ptvertex = pt.crs.project(*pt.vertex, inverse=True)
+        vertices = list(zip(*self.crs.project(*self.coordinates, inverse=True)))
+        segments = zip(vertices[:-1], vertices[1:])
+
+        if self._crs == Cartesian:
             func = _vecgeo.pt_nearest_planar
+            func = lambda ptseg: _vecgeo.pt_nearest_planar(ptseg[0],
+                                            ptseg[1][0], ptseg[1][1]) 
         else:
             fwd = self._crs.forward
             inv = self._crs.inverse
-            func = lambda *args: _vecgeo.pt_nearest_proj(fwd, inv, *args, tol=0.01)
+            func = lambda ptseg: _vecgeo.pt_nearest_proj(fwd, inv, ptseg[0],
+                                            ptseg[1][0], ptseg[1][1], tol=0.01)
 
-        segments = list(self.segments)
-        point_dist = map(func,
-                         (pt.vertex for _ in segments),
-                         (seg[0].vertex for seg in segments),
-                         (seg[1].vertex for seg in segments))
-        distances = [i[1] for i in point_dist]
-        return min(distances)
+        point_dist = map(func, zip(itertools.repeat(ptvertex), segments))
+        mindist = -1.0
+        for i, (_, d) in enumerate(point_dist):
+            if d < mindist or (i == 0):
+                mindist = d
+        return mindist
 
     def nearest_on_boundary(self, pt):
         """ Returns the position on the Multipoint boundary that is nearest to
         pt (Point). If two points are equidistant, only one will be returned.
         """
-        if self._crs != pt._crs:
-            raise CRSError("Point must have matching CRS")
-        elif self._crs == Cartesian:
+        ptvertex = pt.crs.project(*pt.vertex, inverse=True)
+        vertices = list(zip(*self.crs.project(*self.coordinates, inverse=True)))
+        segments = zip(vertices[:-1], vertices[1:])
+
+        if self._crs == Cartesian:
             func = _vecgeo.pt_nearest_planar
+            func = lambda ptseg: _vecgeo.pt_nearest_planar(ptseg[0],
+                                            ptseg[1][0], ptseg[1][1]) 
         else:
             fwd = self._crs.forward
             inv = self._crs.inverse
-            func = lambda *args: _vecgeo.pt_nearest_proj(fwd, inv, *args, tol=0.01)
+            func = lambda ptseg: _vecgeo.pt_nearest_proj(fwd, inv, ptseg[0],
+                                            ptseg[1][0], ptseg[1][1], tol=0.01)
 
-        segments = list(self.segments)
-        point_dist = list(map(func,
-                              (pt.vertex for _ in segments),
-                              (seg[0].vertex for seg in segments),
-                              (seg[1].vertex for seg in segments)))
-        distances = [i[1] for i in point_dist]
-        imin = distances.index(min(distances))
-        return Point(point_dist[imin][0], crs=self._crs)
+        point_dist = map(func, zip(itertools.repeat(ptvertex), segments))
+        minpt = None
+        mindist = -1.0
+        for i, (pt, d) in enumerate(point_dist):
+            if d < mindist or (i == 0):
+                minpt = pt
+                mindist = d
+        return Point(minpt, crs=self._crs)
 
     def within_distance(self, pt, distance):
         """ Test whether a point is within *distance* of a ConnectedMultipoint. """

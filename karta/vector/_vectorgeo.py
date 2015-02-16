@@ -120,7 +120,7 @@ def distance(pt0, pt1):
 def pt_nearest_planar(pt, endpt1, endpt2):
     """ Determines the point on a segment defined by tuples endpt1
     and endpt2 nearest to a point defined by tuple pt.
-    Returns the a nested tuple of (point, distance)
+    Returns a nested tuple of (point, distance)
     """
     dot2 = lambda v1,v2: float(v1[0]*v2[0] + v1[1]*v2[1])
     proj2 = lambda u,v: [dot2(u,v) / dot2(v,v) * e for e in v]
@@ -130,7 +130,6 @@ def pt_nearest_planar(pt, endpt1, endpt2):
     v = (endpt2[0] - endpt1[0], endpt2[1] - endpt1[1])
     u_on_v = proj2(u,v)
     u_int = (u_on_v[0] + endpt1[0], u_on_v[1] + endpt1[1])
-    #dist_u_int = dist(u_int, pt)
 
     # Determine whether u_int is inside the segment
     # Otherwise return the nearest endpoint
