@@ -10,7 +10,7 @@ from . import vtk
 from . import quadtree
 
 from .geometry import Point, Multipoint, Line, Polygon
-from .read import read_geojson, read_shapefile
+from .read import read_geojson, read_shapefile, from_shape
 from .shp import write_shapefile
 from .gpx import GPX
 from .xyfile import load_xy, xyz2array_reg, array2xyz

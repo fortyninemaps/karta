@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 import numpy
 
-VERSION = "0.4.2.1"
+VERSION = "0.4.2.2"
 
 try:
     from Cython.Build import cythonize
