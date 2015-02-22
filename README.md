@@ -2,12 +2,12 @@
 
 [![Build Status](https://travis-ci.org/njwilson23/karta.svg?branch=master)](https://travis-ci.org/njwilson23/karta)
 
-*Karta* provides a simple and fast framework for spatial analysis in Python.
+*Karta* is a simple and fast framework for spatial analysis in Python.
 
-The package provides clean vector and raster data types that are geographical
-coordinate system-aware, a selection of geographical analysis methods, and the
-ability to read and write several formats, including GeoJSON, shapefiles, and
-ESRI ASCII.
+It contains clean vector and raster data types that are geographical
+coordinate system-aware, a selection of geographical analysis methods, and
+the ability to read and write several formats, including GeoJSON, shapefiles,
+and ESRI ASCII.
 
 *Karta* works with Python 2.6-2.7 and Python 3.3+. Suggestions, bug reports,
 test cases, and pull requests are welcome, particularly to improve file format

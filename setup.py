@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 import numpy
 
-VERSION = "0.4.2.2"
+VERSION = "0.4.2.3"
 
 try:
     from Cython.Build import cythonize
@@ -49,20 +49,21 @@ setup(
 Karta - tidy package for geospatial computation
 ===============================================
 
-*Karta* provides a simple and fast framework for spatial analysis in Python.
+*Karta* is a simple and fast framework for spatial analysis in Python.
 
 Components:
 
-- Clean geographically-aware vector and raster data types
+- Clean geographically-aware vector and gridded data types
 - Integration with pyproj to support a wide range of coordinate systems and
   transformations
 - A selection of geographical analysis methods including geodetic length and
-  area calculations, intersections, convex hulls, raster sampling, and grid
-  warping
+  area calculations, intersections, convex hulls, raster sampling and profiling,
+  and grid warping
 - IO for several common geographical formats, including GeoJSON, shapefiles
-  (through pyshp), ESRI ASCII, and GeoTiff (through GDAL)
+  (through pyshp), ESRI ASCII, and GeoTiff (through GDAL). Vector geometries
+  implement ``__geo_interface__``.
 
-*Karta* works with Python 2.6-2.7 and Python 3.3+.
+*Karta* works with Python 2.6+ and Python 3.3+.
 
 DOCUMENTATION
 -------------
