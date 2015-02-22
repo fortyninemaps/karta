@@ -1,8 +1,6 @@
 """ Classes for basic grid types """
 
-import sys
 import copy
-import math
 import numbers
 import numpy as np
 from ..crs import Cartesian

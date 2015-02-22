@@ -8,7 +8,6 @@ from __future__ import division
 import math
 import sys
 import itertools
-import traceback
 import numpy as np
 from . import vtk
 from . import geojson

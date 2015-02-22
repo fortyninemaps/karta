@@ -200,7 +200,7 @@ def pt_nearest_proj(fwd, inv, pt, endpt0, endpt1, tol=1.0, maxiter=50):
             dx = abs(x0-xm) * L
             x0 = xm
         i += 1
-    (xn, yn, _) = geod.fwd(endpt0[0], endpt0[1], az, xm*L)
+    (xn, yn, _) = fwd(endpt0[0], endpt0[1], az, xm*L)
     return (xn, yn), distance(xm)
 
 class ConvergenceError(Exception):

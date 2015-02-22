@@ -103,7 +103,7 @@ def sphere_azimuth(lons1, lats1, lons2, lats2):
 ###### Utility functions ######
 def unroll_angle(alpha):
     if hasattr(alpha, "__len__"):
-        alpha_unrolled = np.array([unroll_angle(a) for a in alpha])
+        alpha = np.array([unroll_angle(a) for a in alpha])
     else:
         while alpha < 0:
             alpha += 2*pi
