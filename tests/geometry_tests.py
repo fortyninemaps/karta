@@ -317,13 +317,6 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(line0.intersections(line1), Multipoint([(2.5, 0.0)]))
         return
 
-    def test_line_intersection_metadata(self):
-        line0 = Line([(0.0, 0.0), (3.0, 3.0)], data=[1, 3])
-        line1 = Line([(0.0, 3.0), (3.0, 0.0)], data=[2, 4])
-        self.assertTrue(line0.intersects(line1))
-        self.assertEqual(line0.intersections(line1), Multipoint([(1.5, 1.5)], data=[np.nan, np.nan]))
-        return
-
     def test_poly_clockwise(self):
         p = Polygon([(0,0), (0,1), (1,1), (1,0)])
         self.assertTrue(p.isclockwise())
