@@ -25,24 +25,13 @@ information in the [Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
 Building the documentation requires [Sphinx](http://sphinx-doc.org/) and
 [numpydoc](https://github.com/numpy/numpydoc).
 
-## PACKAGE CONTENTS
+## PACKAGE OVERVIEW
 
 - crs : Coordinate reference systems and geodetic calculations employed throughout *Karta*
 
-- vector
-    - geometry:     Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`) supporting the [Python \_\_geo\_interface\_\_](https://gist.github.com/sgillies/2217756)
-    - geojson:      Classes and functions for reading and writing GeoJSON
-    - shp\_funcs:   Shapefile interface through _pyshp_
-    - gpx:          GPX class for parsing and constructing GPX eXchange files
-    - xyfile:       ASCII table functions
-    - quadtree:     QuadTree implementation
-    - stats:        Geostatistical functions (experimental)
+- vector.geometry : Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`) supporting the [Python \_\_geo\_interface\_\_](https://gist.github.com/sgillies/2217756)
 
-- raster
-    - grid:         Basic Grid types, including `RegularGrid` and `WarpedGrid`
-    - raster:       General purpose raster functions
-    - aaigrid:      Grid subclass specifically for reading and writing ESRI ASCII grids (*deprecated, use `grid.RegularGrid`*)
-    - streamline:   Streamline calculation
+- raster.grid : Basic grid types, including `RegularGrid` and `WarpedGrid`
 
 - tests : unit tests
 
@@ -53,18 +42,21 @@ Currently partially-supported are:
 
 - vector
     - GeoJSON (r,w)
-    - ESRI Shapefiles via pyshp (r,w)
+    - ESRI Shapefiles (via pyshp) (r,w)
     - GPS eXchange (GPX) (r,w)
     - ASCII tables (XYZ) (r,w)
 - raster
     - ESRI ASCII Grid (r,w)
-    - GeoTiff via GDAL (r,w)
+    - GeoTiff (via GDAL) (r,w)
     - USGS DEM (WIP)
+
+Since *Karta* implements `__geo_interface__` for vector geometries, external
+libraries for the above or other formats (e.g. KML) are straightforward to use.
 
 ## INSTALLATION
 
-The easiest way to install is to use `pip`. Installation requires a
-version of `setuptools>=0.7.0`.
+The easiest way to install in production is to use `pip`. Installation requires
+a version of `setuptools>=0.7.0`.
 
     pip install -U setuptools
 
