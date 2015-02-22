@@ -8,9 +8,8 @@ from ..crs import Cartesian
 IntegerType = (numbers.Integral, np.int32, np.int64)
 
 class Grid(object):
-    """ Grid baseclass. Don't use this directly except to implement subclasses.
-    The primary attributes defined by all Grid-derived classed are _hdr and
-    data.
+    """ Grid base class. Intended only for implementing subclasses. The primary
+    attributes defined by all Grid-derived classed are _hdr and data.
     """
 
     @property
@@ -50,7 +49,7 @@ class RegularGrid(Grid):
 
     Positions on a RegularGrid are referenced to their array indices *(i,j)*
     using an affine transform *T* such that
-    
+
     (a, b, c, d, e, f) = T
 
     X = a + j * c + i * e
@@ -153,7 +152,7 @@ class RegularGrid(Grid):
         return xcoords, ycoords
 
     def vertex_coords(self):
-        """ Return the coordinates of vertices. """
+        """ Return the coordinates of cell vertices. """
         xllcorner, yllcorner = self.corner_llref()
         t = self._transform
         ny, nx = self.values.shape[:2]
@@ -169,7 +168,7 @@ class RegularGrid(Grid):
 
     def get_extents(self, reference='center'):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
-        ymax). *reference* may be `center` or `edge`. """
+        ymax). *reference* is a string and may be 'center' or 'edge'. """
         if reference == 'center':
             x0, y0 = self.center_llref()
             n = -1
@@ -195,7 +194,10 @@ class RegularGrid(Grid):
         return min(x0, x0+xrng), max(x0, x0+xrng), min(y0, y0+yrng), max(y0, y0+yrng)
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
-        """ Return a clipped version of grid constrained to a bounding box. """
+        """ Return a clipped version of grid constrained to a bounding box
+        defined by *xmin*, *xmax*, *ymin*, *ymax*. If *crs* is not provided, it
+        is assumed that the bounding box shares the same coordinate system as
+        the grid. """
         if crs is not None:
             xg, yg = crs.proj([xmin, xmax], [ymin, ymax], inverse=True)
             x, y = self.crs.proj(xg, yg)
@@ -223,6 +225,9 @@ class RegularGrid(Grid):
 
     def resample_griddata(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy' using *scipy.griddata*
+
+        Warning: This method is likely to be removed in the future, once
+        the built-in `resample` method matures.
 
         Parameters
         ----------
@@ -328,8 +333,6 @@ class RegularGrid(Grid):
                 i = ip
 
         ny, nx = self.size
-        #j = ind[::2].clip(0, nx-1)
-        #i = ind[1::2].clip(0, ny-1)
         j = ind[::2]
         i = ind[1::2]
         return i, j
@@ -359,6 +362,8 @@ class RegularGrid(Grid):
         return self.values[i, j]
 
     def sample_bilinear(self, x, y):
+        """ Return the value nearest to (`x`, `y`). Bilinear sampling scheme.
+        """
         i, j = self.get_positions(x, y)
         i0 = np.floor(i).astype(int)
         i1 = np.ceil(i).astype(int)
@@ -382,8 +387,10 @@ class RegularGrid(Grid):
         return z
 
     def sample(self, x, y, crs=None, method="bilinear"):
-        """ Return the values nearest (`x`, `y`), where `x` and `y` may be
-        equal length vectors. *method* may be one of `nearest`, `bilinear`. """
+        """ Return the values nearest (*x*, *y*), where *x* and *y* may be
+        equal length vectors. Keyword *method* may be one of 'nearest',
+        'bilinear' (default).
+        """
         if crs is not None:
             xg, yg = crs.project(x, y, inverse=True)
             x, y = self.crs.project(xg, yg)
@@ -396,14 +403,16 @@ class RegularGrid(Grid):
             raise ValueError("method \"{0}\" not available".format(method))
 
     def profile(self, line, resolution=None, **kw):
-        """ Sample along a line defined as `segments`.
+        """ Sample along a *line* at *resolution*.
 
         Parameters:
         -----------
-        line : Line-like object describing the sampling path
+        line : `geometry.Line`-like object describing the sampling path
+
         resolution : sample spacing
 
-        Additional keyword arguments passed to `RegularGrid.sample`
+        Additional keyword arguments passed to `RegularGrid.sample` (e.g. to
+        specify sampling method)
 
         Returns:
         --------
@@ -437,9 +446,10 @@ class RegularGrid(Grid):
         return vertices, z
 
     def as_warpedgrid(self):
-        """ Return a copy as a WarpedGrid instance. This is a more general
+        """ Return a copy of grid as a `WarpedGrid`. This is a more general
         grid class that has a larger memory footprint but can represent more
-        flexible data layouts. """
+        flexible data layouts.
+        """
         Xc, Yc = self.center_coords()
         return WarpedGrid(Xc, Yc, self.values.copy())
 
@@ -459,9 +469,11 @@ class RegularGrid(Grid):
 
         Parameters:
         -----------
-        f : either a file-like object or a filename
-        reference : specify a header reference ("center" | "corner")
-        nodata_value : specify how nans should be represented (int or float)
+        f : a file-like object or a filename
+
+        reference : specify a header reference ('center' | 'corner')
+
+        nodata_value : specify how NaNs should be represented (int or float)
         """
         if reference not in ('center', 'corner'):
             raise GridIOError("reference in AAIGrid.tofile() must be 'center' or "
@@ -510,7 +522,9 @@ class WarpedGrid(Grid):
         Parameters:
         -----------
         X : first-dimension coordinates of grid centers
+
         Y : second-dimension coordinates of grid centers
+
         values : dependent m-dimensional quantity (nrows x ncols)
         """
 
@@ -552,7 +566,7 @@ class WarpedGrid(Grid):
         raise NotImplementedError
 
     def resample(self, X, Y):
-        """ Resample internal grid to the points defined by `X`, `Y`. """
+        """ Resample internal grid to the points defined by *X*, *Y*. """
         raise NotImplementedError
 
 
