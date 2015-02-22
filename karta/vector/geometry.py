@@ -84,11 +84,12 @@ class Point(Geometry):
 
     def __init__(self, coords, data=None, properties=None, copy_metadata=True,
                  **kwargs):
-        if not hasattr(coords, "__iter__"):
-            raise ValueError("Point coordinates must be a sequence")
+        try:
+            self.rank = 2 if len(coords) == 2 else 3
+        except TypeError:
+            raise TypeError("Point coordinates must be a sequence")
         super(Point, self).__init__(**kwargs)
         self.vertex = coords
-        self.rank = 2 if len(coords) == 2 else 3
 
         self.data = Metadata(data, singleton=True, copydata=copy_metadata)
         if hasattr(properties, "keys"):
@@ -359,10 +360,12 @@ class MultipointBase(Geometry):
         return (self[i] for i in range(len(self)))
 
     def __eq__(self, other):
-        return hasattr(other, "_geotype") and \
-               (self._geotype == other._geotype) and \
-               (len(self) == len(other)) and \
-               all(a==b for a,b in zip(self, other))
+        try:
+            return self._geotype == other._geotype and \
+                   len(self) == len(other) and \
+                   all(a==b for a,b in zip(self, other))
+        except (AttributeError, TypeError):
+            return False
 
     def _bbox_overlap(self, other):
         """ Return whether bounding boxes between self and another geometry
