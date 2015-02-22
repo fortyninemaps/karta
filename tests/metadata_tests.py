@@ -35,7 +35,7 @@ class TestMetadata(unittest.TestCase):
     def test_reference_vs_value_list(self):
         # metadata objects should carry values rather than references
         L = [1,2,3,4,5]
-        md = Metadata(L)
+        md = Metadata(L, copy=True)
         L[3] = -99
         self.assertEqual(md["values"], [1,2,3,4,5])
         return
@@ -44,7 +44,7 @@ class TestMetadata(unittest.TestCase):
         # metadata objects should carry values rather than references
         D = {"A":[1,2,3,4,5],
              "B":[6,7,8,9,10]}
-        md = Metadata(D)
+        md = Metadata(D, copy=True)
         D["A"][3] = -99
         self.assertEqual(md["A"], [1,2,3,4,5])
         return

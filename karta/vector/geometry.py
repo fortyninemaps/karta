@@ -82,7 +82,7 @@ class Point(Geometry):
     """
     _geotype = "Point"
 
-    def __init__(self, coords, data=None, properties=None, copy_metadata=True,
+    def __init__(self, coords, data=None, properties=None, copy_metadata=False,
                  **kwargs):
         try:
             self.rank = 2 if len(coords) == 2 else 3
@@ -91,7 +91,7 @@ class Point(Geometry):
         super(Point, self).__init__(**kwargs)
         self.vertex = coords
 
-        self.data = Metadata(data, singleton=True, copydata=copy_metadata)
+        self.data = Metadata(data, singleton=True, copy=copy_metadata)
         if hasattr(properties, "keys"):
             self.properties = properties
         else:
@@ -241,7 +241,7 @@ class MultipointBase(Geometry):
     polyline and polygon classes. """
     _geotype = "MultipointBase"
 
-    def __init__(self, vertices, data=None, properties=None, copy_metadata=True,
+    def __init__(self, vertices, data=None, properties=None, copy_metadata=False,
                  **kwargs):
         """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
@@ -307,7 +307,7 @@ class MultipointBase(Geometry):
         else:
             raise GInitError("value provided as 'properties' must be a hash")
 
-        self.data = Metadata(data, copydata=copy_metadata)
+        self.data = Metadata(data, copy=copy_metadata)
         return
 
     def __repr__(self):
@@ -549,7 +549,7 @@ class MultipointBase(Geometry):
                     S.pop()
                 S.append(pt)
 
-        return Polygon(S)
+        return Polygon(S, crs=self.crs)
 
     def to_xyfile(self, fnm, fields=None, delimiter=' ', header=None):
         """ Write data to a delimited ASCII table.
@@ -695,7 +695,7 @@ class ConnectedMultipoint(MultipointBase):
                                            crs=self._crs))
         nandata = [np.nan for _ in interx_points]
         keys = [k for k in set(list(self.data.keys()) + list(other.data.keys()))]
-        d = Metadata(dict((key,nandata) for key in keys))
+        d = Metadata(dict((key,nandata) for key in keys), copy=True)
         return Multipoint(interx_points, data=d)
 
     def shortest_distance_to(self, pt):
@@ -882,7 +882,7 @@ class Line(ConnectedMultipoint):
     def to_polygon(self):
         """ Returns a polygon. """
         return Polygon(self.vertices, data=self.data, properties=self.properties,
-                       crs=self._crs)
+                       crs=self._crs, copy_metadata=True)
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
@@ -1024,10 +1024,11 @@ class Polygon(ConnectedMultipoint):
         else:
             return self._contains_projected(pt)
 
-    def to_polyline(self):
+    def to_line(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
-        return Line(self.vertices, properties=self.properties, data=self.data,
-                    crs=self.crs)
+        v = self.vertices + self.vertices[0]
+        return Line(v, properties=self.properties, data=self.data,
+                    crs=self.crs, copy_metadata=True)
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
@@ -1086,7 +1087,7 @@ def points_to_multipoint(points):
 
     vertices = [pt.vertex for pt in points]
 
-    return Multipoint(vertices, data=ptdata, crs=crs)
+    return Multipoint(vertices, data=ptdata, crs=crs, copy_metadata=True)
 
 def affine_matrix(mpa, mpb):
     """ Compute the affine transformation matrix that projects Multipoint mpa

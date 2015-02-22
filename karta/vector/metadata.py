@@ -1,6 +1,6 @@
 """ Vector geospatial metadata management """
 
-import copy
+from copy import deepcopy
 import numbers
 from collections import Mapping
 from numpy import isnan, int32, int64
@@ -18,7 +18,7 @@ class Metadata(Mapping):
     _data = {}
     _fieldtypes = []
 
-    def __init__(self, data, singleton=False, copydata=True):
+    def __init__(self, data, singleton=False, copy=False):
         """ Create a collection of metadata from *data*, which may be a list
         with uniform type or a dictionary with equally-sized fields of uniform
         type.
@@ -31,8 +31,8 @@ class Metadata(Mapping):
         *kwargs*:
         singleton : treat data as a single unit, rather than as a list of units
         """
-        if copydata:
-            data = copy.deepcopy(data)
+        if copy:
+            data = deepcopy(data)
 
         if data is None or len(data) == 0:
             self._len = 0
@@ -109,10 +109,6 @@ class Metadata(Mapping):
 
     def __setitem__(self, key, value):
         if isinstance(key, (IntegerType, slice)):
-            #       if len(self._fieldtypes) == 1:
-            #           return self.values()[0][key]
-            #       else:
-
             nkeys = len(self._data.keys())
             if (nkeys > 1) and (nkeys != len(list(value))):
                 raise IndexError("Setting Metadata requires a value to be "
@@ -157,7 +153,7 @@ class Metadata(Mapping):
 
         for key, val in items:
             newdata[key] = [self._data[key][i] for i in idxs]
-        return Metadata(newdata, copydata=False)
+        return Metadata(newdata, copy=False)
 
     def getfield(self, name):
         """ Return all values from field *name*. """
