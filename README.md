@@ -25,26 +25,19 @@ information in the [Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
 Building the documentation requires [Sphinx](http://sphinx-doc.org/) and
 [numpydoc](https://github.com/numpy/numpydoc).
 
-## PACKAGE CONTENTS
+## PACKAGE OVERVIEW
 
-- crs : Coordinate reference systems and geodetic calculations employed throughout *Karta*
+- crs: framework for coordinate reference systems and geodetic calculations
+  employed throughout *Karta*
 
-- vector
-    - geometry:     Vector geometry classes (e.g. `Point`, `Multipoint`, `Line`, `Polygon`) supporting the [Python \_\_geo\_interface\_\_](https://gist.github.com/sgillies/2217756)
-    - geojson:      Classes and functions for reading and writing GeoJSON
-    - shp\_funcs:   Shapefile interface through _pyshp_
-    - gpx:          GPX class for parsing and constructing GPX eXchange files
-    - xyfile:       ASCII table functions
-    - quadtree:     QuadTree implementation
-    - stats:        Geostatistical functions (experimental)
+- vector.geometry: includes geometry classes `Point`, `Multipoint`, `Line`, and
+  `Polygon` with associated analytical methods such as length, area,
+  intersections, membership testing, convex hulls, and affine transformations
 
-- raster
-    - grid:         Basic Grid types, including `RegularGrid` and `WarpedGrid`
-    - raster:       General purpose raster functions
-    - aaigrid:      Grid subclass specifically for reading and writing ESRI ASCII grids (*deprecated, use `grid.RegularGrid`*)
-    - streamline:   Streamline calculation
+- raster.grid: includes `RegularGrid` class (supporting CRS-aware clipping,
+  sampling, profiling along vector tracks), and experimental `WarpedGrid`
 
-- tests : unit tests
+- tests: unit tests, to be run with `python tests/runtests.py`
 
 ## FORMATS
 
@@ -53,18 +46,23 @@ Currently partially-supported are:
 
 - vector
     - GeoJSON (r,w)
-    - ESRI Shapefiles via pyshp (r,w)
+    - ESRI Shapefiles (via pyshp) (r,w)
     - GPS eXchange (GPX) (r,w)
     - ASCII tables (XYZ) (r,w)
 - raster
     - ESRI ASCII Grid (r,w)
-    - GeoTiff via GDAL (r,w)
+    - GeoTiff (via GDAL) (r,w)
     - USGS DEM (WIP)
+
+*Karta* implements [Python
+`__geo_interface__`](https://gist.github.com/sgillies/2217756) for vector
+geometries, so external libraries are straightforward to use for access to
+additional formats.
 
 ## INSTALLATION
 
-The easiest way to install is to use `pip`. Installation requires a
-version of `setuptools>=0.7.0`.
+The easiest way to install in production is to use `pip`. Installation requires
+a version of `setuptools>=0.7.0`.
 
     pip install -U setuptools
 
@@ -99,12 +97,6 @@ To build from source,
 When installing from PyPI, Cython-compiled C source code is provided and will be
 automatically compiled to improve performance if a suitable C compiler is
 available.
-
-## TESTING
-
-To run all unit tests, execute
-
-    python tests/runtests.py
 
 ## LICENSE
 
