@@ -145,7 +145,7 @@ class TestGeometry(unittest.TestCase):
                                "severn", "churchill"])
         mp1[2] = (4.0, 5.0)
         self.assertNotEqual(mp1, mp2)
-        mp1[2] = Point((4.0, 5.0), data="umiujaq")
+        mp1[2] = Point((4.0, 5.0), data=["umiujaq"])
         self.assertEqual(mp1, mp2)
         return
 

@@ -90,7 +90,11 @@ class Point(Geometry):
         super(Point, self).__init__(**kwargs)
         self.vertex = coords
 
-        self.data = Metadata(data, singleton=True, copy=copy_metadata)
+        if data is None:
+            self.data = data
+        else:
+            self.data = Metadata(data)
+
         if hasattr(properties, "keys"):
             self.properties = properties
         else:
@@ -107,9 +111,13 @@ class Point(Geometry):
         try:
             return (tuple(self.vertex) == tuple(other.vertex)) and \
                    (self.data == other.data) and \
-                   (self.properties == other.properties)
+                   (self.properties == other.properties) and \
+                   (self._crs == other._crs)
         except AttributeError:
             return False
+
+    def __neq__(self, other):
+        return ~(self == other)
 
     @property
     def __geo_interface__(self):
@@ -253,32 +261,31 @@ class MultipointBase(Geometry):
                 return getattr(a, "_geotype", None) == "Point"
 
             if all(ispoint(a) for a in vertices):
+                pts = vertices
 
                 # Consolidate a list of points
-                rank = vertices[0].rank
-                crs = vertices[0].crs
-                if len(vertices) != 1 and any(crs != pt._crs for pt in vertices[1:]):
+                rank = pts[0].rank
+                crs = pts[0].crs
+                if len(pts) != 1 and any(crs != pt._crs for pt in pts[1:]):
                     raise CRSError("All points must share the same CRS")
-                if len(vertices) != 1 and any(rank != pt.rank for pt in vertices[1:]):
+                if len(pts) != 1 and any(rank != pt.rank for pt in pts[1:]):
                     raise GInitError("Input must have consistent rank")
 
-                keys = list(vertices[0].data.keys())
-                if len(vertices) != 1:
-                    for pt in vertices[1:]:
-                        for key in keys:
-                            if key not in pt.data:
-                                keys.pop(keys.index(key))
-
-                ptdata = {}
-                for key in keys:
-                    ptdata[key] = [pt.data[key] for pt in vertices]
-
-                if data is None:
-                    data = ptdata
+                # Data
+                if pts[0].data is not None:
+                    if all(pt.data._fields == pts[0].data._fields for pt in pts[1:]):
+                        if data is not None:
+                            raise GInitError("Data kweyword disallowed when constructing from points")
+                        d = [pt.data._data[0] for pt in pts]
+                        self.data = Metadata(d, fields=pts[0].data.fields)
+                    else:
+                        raise GInitError("Point have inconsistent data attributes")
+                elif data is not None:
+                    self.data = Metadata(data)
                 else:
-                    data.update(ptdata)
+                    self.data = None
 
-                self.vertices = [pt.vertex for pt in vertices]
+                self.vertices = [pt.vertex for pt in pts]
                 self.rank = rank
                 self._crs = crs
 
@@ -295,6 +302,11 @@ class MultipointBase(Geometry):
 
                 self.vertices = [tuple(v) for v in vertices]
 
+                if data is None:
+                    self.data = None
+                else:
+                    self.data = Metadata(data)
+
         else:
             self.rank = None
             self.vertices = []
@@ -305,8 +317,6 @@ class MultipointBase(Geometry):
             self.properties = {}
         else:
             raise GInitError("value provided as 'properties' must be a hash")
-
-        self.data = Metadata(data, copy=copy_metadata)
         return
 
     def __repr__(self):
@@ -321,26 +331,45 @@ class MultipointBase(Geometry):
         return len(self.vertices)
 
     def __getitem__(self, key):
+        if self.data is None:
+            d = None
+        else:
+            d = Metadata(self.data[key], fields=self.data._fields)
+
         if isinstance(key, (int, np.int64)):
-            return Point(self.vertices[key], data=self.data[key],
-                         properties=self.properties, crs=self._crs,
-                         copy_metadata=False)
+            if self.data is None:
+                d = None
+            else:
+                d = self.data[key]
+            return Point(self.vertices[key], data=d, properties=self.properties,
+                         crs=self._crs)
         elif isinstance(key, slice):
-            return type(self)(self.vertices[key], data=self.data[key],
-                              properties=self.properties, crs=self._crs,
-                              copy_metadata=False)
+            return type(self)(self.vertices[key], data=d,
+                              properties=self.properties, crs=self._crs)
         else:
             raise GGeoError('Index must be an integer or a slice object')
 
     def __setitem__(self, key, value):
         if not isinstance(key, int):
             raise GGeoError('Indices must be integers')
+        try:
+            self.vertices[key] = value.vertex
+            if None not in (self.data, value.data):
+                self.data[key] = tuple(value.data[value.data._fields.index(f)] for f in self._fields)
+            elif self.data is not None:
+                self.data[key] = (None for i in range(len(self.data._fields)))
+
+        except AttributeError:
+            self.vertices[key] = value
+            if self.data is not None:
+                self.data[key] = (None for i in range(len(self.data._fields)))
+
         if getattr(value, "_geotype", None) == "Point":
             self.vertices[key] = value.vertex
-            self.data[key] = list(value.data.values())[0]
+            if self.data is not None:
+                self.data[key] = value.data._data[0]
         elif len(value) == self.rank:
             self.vertices[key] = value
-            self.data[key] = None
         else:
             raise GGeoError('Cannot insert non-Pointlike value with '
                             'length != {0}'.format(self.rank))
@@ -360,11 +389,16 @@ class MultipointBase(Geometry):
 
     def __eq__(self, other):
         try:
-            return self._geotype == other._geotype and \
-                   len(self) == len(other) and \
-                   all(a==b for a,b in zip(self, other))
+            return (self._geotype == other._geotype) and \
+                   (self.vertices == other.vertices) and \
+                   (self.data == other.data) and \
+                   (self.properties == other.properties) and \
+                   (self._crs == other._crs)
         except (AttributeError, TypeError):
             return False
+
+    def __neq__(self, other):
+        return ~(self == other)
 
     def _bbox_overlap(self, other):
         """ Return whether bounding boxes between self and another geometry
@@ -459,7 +493,10 @@ class MultipointBase(Geometry):
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
-        data = self.data.sub(idxs)
+        if self.data is not None:
+            data = Metadata([self.data[i] for i in idxs], fields=self.data.fields)
+        else:
+            data = None
         subset = type(self)(vertices, data=data, properties=self.properties,
                             crs=self._crs, copy_metadata=False)
         return subset
@@ -766,6 +803,7 @@ class Line(ConnectedMultipoint):
     def __geo_interface__(self):
         return {"type" : "LineString", "bbox" : self.bbox, "coordinates" : self.vertices}
 
+    # TODO: remove add_vertex, remove_vertex methods and replace with more robust append, pop methods similar to lists
     def add_vertex(self, vertex):
         """ Add a vertex to self.vertices. """
         if isinstance(vertex, Point):
@@ -773,7 +811,10 @@ class Line(ConnectedMultipoint):
                 self.vertices.append((vertex.x, vertex.y))
             elif self.rank == 3:
                 self.vertices.append((vertex.x, vertex.y, vertex.z))
-            self.data += vertex.data
+            if self.data is not None:
+                self.data._data
+            if self.data is not None:
+                self.data += vertex.data
         else:
             if self.rank == 2:
                 self.vertices.append((vertex[0], vertex[1]))
@@ -793,11 +834,16 @@ class Line(ConnectedMultipoint):
         if self.rank == other.rank:
             if self._geotype == other._geotype:
                 self.vertices.extend(other.vertices)
-                self.data = self.data + other.data
+                if None not in (self.data, other.data):
+                    self.data._data.extend(other.data._data)
+                elif self.data == other.data:
+                    self.data = None
+                else:
+                    raise GGeoError('Cannot add geometries with mismatched metadata')
             else:
-                GGeoError('Cannot add inconsistent geometry types')
+                raise GGeoError('Cannot add inconsistent geometry types')
         else:
-            GGeoError('Cannot add geometries with inconsistent rank')
+            raise GGeoError('Cannot add geometries with inconsistent rank')
         return self
 
     def cumlength(self):
@@ -915,7 +961,11 @@ class Polygon(ConnectedMultipoint):
         if isinstance(key, slice):
             ind = key.indices(len(self))
             if len(self) != ((ind[1] - ind[0]) // ind[2]):
-                return Line(self.vertices[key], data=self.data[key],
+                if self.data is None:
+                    d = None
+                else:
+                    d = self.data[key]
+                return Line(self.vertices[key], data=d,
                             properties=self.properties, crs=self._crs)
         return super(Polygon, self).__getitem__(key)
 
@@ -929,7 +979,10 @@ class Polygon(ConnectedMultipoint):
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
-        data = self.data.sub(idxs)
+        if self.data is None:
+            data = None
+        else:
+            data = Metadata([self.data[i] for i in idxs], fields=self.data.fields)
         subset = Line(vertices, data=data, properties=self.properties,
                       crs=self._crs, copy_metadata=False)
         return subset

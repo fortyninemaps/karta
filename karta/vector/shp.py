@@ -58,13 +58,14 @@ def addfields(writer, properties):
 
 def addfields_points(writer, points):
     writer.field("ID", "I", "8")
-    keys = list(points.data.keys())
-    for key in keys:
-        t = property_field_type(points.data[key][0])
-        dec = 0 if t not in ("N", "F", "O", "I") else 16
-        writer.field(key, fieldType=t, size="100", decimal=dec)
-    for i, pt in enumerate(points):
-        writer.record(str(i), *[pt.data[key] for key in keys])
+    if points.data is not None:
+        keys = point.data.fields
+        for key in keys:
+            t = property_field_type(points.data[key][0])
+            dec = 0 if t not in ("N", "F", "O", "I") else 16
+            writer.field(key, fieldType=t, size="100", decimal=dec)
+        for i, pt in enumerate(points):
+            writer.record(str(i), *[pt.data[key] for key in keys])
     return
 
 def write_multipoint2(mp, fstem):
@@ -156,10 +157,13 @@ def write_shapefile(features, fstem):
 
         # add records
         w.field("ID", "I", "8")
-        keys = set(features[0].data.keys())     # for testing similarity
-        keylist = list(keys)                    # preserves order
+        if features[0].data is not None:
+            keys = set(features[0].data.fields)     # for testing similarity
+            keylist = features[0].data.fields       # preserves order
+        else:
+            keys = []
 
-        if len(keys) != 0 and all(keys == set(f.data.keys()) for f in features[1:]):
+        if len(keys) != 0 and all(keys == set(f.data.fields) for f in features[1:]):
             for key in keylist:
                 testvalue = features[0].data[key][0]
                 w.field(key.upper(), property_field_type(testvalue), "100")

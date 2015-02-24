@@ -63,11 +63,14 @@ def read_geojson(f):
 
     def convert_feature(feat, **kw):
         data = feat.properties["vector"]
-        for key, val in data.items():
-            if any(isinstance(a, Number) or hasattr(a, "dtype") for a in val):
-                for i in range(len(val)):
-                    if val[i] is None:
-                        val[i] = float('nan')
+        if len(data) == 0:
+            data = None
+        else:
+            for key, val in data.items():
+                if any(isinstance(a, Number) or hasattr(a, "dtype") for a in val):
+                    for i in range(len(val)):
+                        if val[i] is None:
+                            val[i] = float('nan')
         prop = feat.properties["scalar"]
         return convert_geometry(feat.geometry, data=data, properties=prop, **kw)
 

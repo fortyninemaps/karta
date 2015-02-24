@@ -13,7 +13,7 @@ from test_helper import TESTDATA
 
 import karta.vector as vector
 import karta.vector.geojson as geojson
-from karta.vector.geojson import GeoJSONReader
+from karta.vector.geojson import GeoJSONReader, GeoJSONNamedCRS
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.crs import LonLatWGS84
 
@@ -186,20 +186,24 @@ class TestGeoJSON(unittest.TestCase):
     low level geojson module, this test case focuses on the bindings with geometry.
     """
 
+    def setUp(self):
+        self.crs4326 = GeoJSONNamedCRS("urn:ogc:def:crs:epsg::4326")
+
     def test_featurecollection2geometry(self):
         path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
         features = vector.read_geojson(path)
 
-        ans0 = Point((102.0, 0.5), properties={"prop0":"value0"}, crs=LonLatWGS84)
+        ans0 = Point((102.0, 0.5), properties={"prop0":"value0"}, crs=self.crs4326)
         self.assertEqual(features[0], ans0)
 
         ans1 = Line([(102.0, 0.0), (103.0, 1.0), (104.0, 0.0), (105.0, 1.0)],
-                    properties={"prop0":"value0", "prop1":0.0}, crs=LonLatWGS84)
+                    properties={"prop0":"value0", "prop1":0.0}, crs=self.crs4326)
         self.assertEqual(features[1], ans1)
 
         ans2 = Polygon([(100.0, 0.0), (101.0, 0.0), (101.0, 1.0), (100.0, 1.0),
                         (100.0, 0.0)],
-                        properties={"prop0":"value0", "prop1":{"this":"that"}})
+                        properties={"prop0":"value0", "prop1":{"this":"that"}},
+                        crs=self.crs4326)
         self.assertEqual(features[2], ans2)
         return
 
@@ -239,7 +243,7 @@ class TestGeoJSON(unittest.TestCase):
                  'Montpelier, Vermont, United States', 'Olympia, Washington, United States', 
                  'Charleston, West Virginia, United States', 
                  'Madison, Wisconsin, United States', 'Cheyenne, Wyoming, United States']
-        self.assertEqual(names, features[0].data["n"])
+        self.assertEqual(names, features[0].data.getfield("n"))
         return
 
 

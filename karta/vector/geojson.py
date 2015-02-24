@@ -25,11 +25,17 @@ class GeoJSONNamedCRS(CRS):
         self.name = name
         self.jsonname = name
 
+    def __eq__(self, other):
+        return self.jsonname == other.jsonname
+
 class GeoJSONLinkedCRS(CRS):
     def __init__(self, href, linktype):
         self.name = href
         self.jsonhref = href
         self.jsontype = linktype
+
+    def __eq__(self, other):
+        return self.jsonhref == other.jsonhref
 
 DEFAULTCRS = GeoJSONNamedCRS("urn:ogc:def:crs:epsg::4326")
 
@@ -162,14 +168,15 @@ class GeoJSONWriter(object):
         if target is None:
             target = self.supobj
         target['properties'] = {}
-        if (False in (a is None for a in self.gpobj.data)):
-            if hasattr(self.gpobj.data, 'keys'):
+        if self.gpobj.data is not None:
+            if hasattr(self.gpobj.data, 'fields'):
                 data = self.gpobj.data
+                data = dict((f, data.getfield(f)) for f in data.fields)
             else:
                 data = {'point_data': self.gpobj.data}
             for key in data:
                 nan2none = lambda a: None if isinstance(a, Number) and isnan(a) else a
-                target['properties'][key] = list(map(nan2none, data.getfield(key)))
+                target['properties'][key] = list(map(nan2none, data[key]))
         return
 
     def add_id(self, target=None):
