@@ -979,46 +979,16 @@ class Polygon(ConnectedMultipoint):
         else:
             return 0
 
-    def _contains_cartesian(self, pt):
-        """ Fast `contains` for 2D data on cartesian plane """
-        a = np.array(self.vertices[-1])
-        b = np.array(self.vertices[0])
-        p = np.array(pt.vertex)
-        s = self._signcross(b-p, b-a)
-        i = 0
-        while True:
-            a = np.array(self.vertices[i])
-            b = np.array(self.vertices[i+1])
-            s_ = self._signcross(b-p, b-a)
-            i += 1
-            if s_ == -s:
-                # Point is outside
-                return False
-            elif i == len(self.vertices)-1:
-                # Point in inside, so check subpolys
-                return not any(self._contains_cartesiah(p, pt) for p in self.subs)
-
-    def _contains_projected(self, pt):
-        """ Slower `contains` for projected data based on counting
-        intersections. """
-        nintx = 0
+    def contains(self, pt):
+        """ Returns True if pt is inside or on the boundary of the polygon, and
+        False otherwise. Uses a crossing number scheme. """
+        cnt = 0
         x, y = pt[0], pt[1]
         for seg in self.segments:
             (a, b) = seg
             if _vecgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
-                nintx += 1
-
-        # If odd, point is inside so check subpolys
-        return nintx % 2 == 1 and not any(p.contains(pt) for p in self.subs)
-
-    def contains(self, pt):
-        """ Returns True if pt is inside or on the boundary of the
-        polygon, and False otherwise. Uses a crossing number scheme.
-        """
-        if self.crs is Cartesian:
-            return self._contains_cartesian(pt)
-        else:
-            return self._contains_projected(pt)
+                cnt += 1
+        return cnt % 2 == 1 and not any(p.contains(pt) for p in self.subs)
 
     def to_line(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """

@@ -370,6 +370,18 @@ class TestGeometry(unittest.TestCase):
         self.assertTrue(square.contains(pt))
         return
 
+    def test_poly_contains5(self):
+        # hippie star
+        theta = np.linspace(0, 2*np.pi, 361)[:-1]
+        r = 10*np.sin(theta*8) + 15
+        x = np.cos(theta) * r + 25
+        y = np.sin(theta) * r + 25
+        polygon = Polygon(zip(x, y))
+        # causes naive cross-product methods to fail
+        pt = Point((28.75, 25.625))
+        self.assertTrue(polygon.contains(pt))
+        return
+
     def test_poly_getitem(self):
         poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
                         (5.0, 4.0)])
