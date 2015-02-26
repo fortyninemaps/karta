@@ -212,9 +212,9 @@ class RegularGrid(Grid):
         ur = self.get_indices(xmax, ymax)
 
         i0 = min(ll[0], lr[0], ul[0], ur[0])
-        i1 = max(ll[0], lr[0], ul[0], ur[0])
+        i1 = max(ll[0], lr[0], ul[0], ur[0]) + 1
         j0 = min(ll[1], lr[1], ul[1], ur[1])
-        j1 = max(ll[1], lr[1], ul[1], ur[1])
+        j1 = max(ll[1], lr[1], ul[1], ur[1]) + 1
 
         values = self.values[i0:i1,j0:j1].copy()
         t = self.transform

@@ -98,14 +98,25 @@ class RegularGridTests(unittest.TestCase):
 
     def test_clip(self):
         clipped = self.rast.clip(500, 900, 500, 900)
-        self.assertEqual(clipped.size, (14, 14))
+        self.assertEqual(clipped.size, (15, 15))
         self.assertEqual(clipped.transform, (495, 495, 30, 30, 0, 0))
         X, Y = clipped.center_coords()
         self.assertEqual(X[0,0], 495)
-        self.assertEqual(X[0,-1], 885)
+        self.assertEqual(X[0,-1], 915)
         self.assertEqual(Y[0,0], 495)
-        self.assertEqual(Y[-1,0], 885)
+        self.assertEqual(Y[-1,0], 915)
         return
+
+    def test_clip_to_extents(self):
+        proto = karta.RegularGrid((495, 495, 30, 30, 0, 0), np.zeros((15,15)))
+        clipped = self.rast.clip(*proto.get_extents())
+        self.assertEqual(clipped.size, (15, 15))
+        self.assertEqual(clipped.transform, (495, 495, 30, 30, 0, 0))
+        X, Y = clipped.center_coords()
+        self.assertEqual(X[0,0], 495)
+        self.assertEqual(X[0,-1], 915)
+        self.assertEqual(Y[0,0], 495)
+        self.assertEqual(Y[-1,0], 915)
 
     def test_get_indices(self):
         ind = self.rast.get_indices(15.0, 15.0)
