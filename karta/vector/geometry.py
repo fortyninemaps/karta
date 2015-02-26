@@ -1003,6 +1003,11 @@ class Polygon(ConnectedMultipoint):
                                (self._subset((L-1,0)),))
 
     @property
+    def segment_tuples(self):
+        """ Returns an generator of adjacent line segments as coordinate tuples. """
+        return ((self.vertices[i-1], self.vertices[i]) for i in range(len(self.vertices)))
+
+    @property
     def length(self):
         return self.perimeter
 
@@ -1037,7 +1042,7 @@ class Polygon(ConnectedMultipoint):
         False otherwise. Uses a crossing number scheme. """
         cnt = 0
         x, y = pt[0], pt[1]
-        for seg in self.segments:
+        for seg in self.segment_tuples:
             (a, b) = seg
             if _vecgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
                 cnt += 1
