@@ -199,8 +199,8 @@ class RegularGrid(Grid):
         is assumed that the bounding box shares the same coordinate system as
         the grid. """
         if crs is not None:
-            xg, yg = crs.proj([xmin, xmax], [ymin, ymax], inverse=True)
-            x, y = self.crs.proj(xg, yg)
+            xg, yg = crs.project([xmin, xmax], [ymin, ymax], inverse=True)
+            x, y = self.crs.project(xg, yg)
             xmin, xmax = x
             ymin, ymax = y
         else:
