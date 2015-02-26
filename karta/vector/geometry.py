@@ -493,10 +493,10 @@ class MultipointBase(Geometry):
                 mn = min(mn, x)
                 mx = max(mx, x)
             return mn, mx
-        # Get the min/max for a generator defined for each dimension
-        return list(map(gen_minmax,
-                    map(lambda i: (c[i] for c in self.vertices),
-                        range(self.rank))))
+
+        xmn, xmx = gen_minmax(c[0] for c in self.vertices)
+        ymn, ymx = gen_minmax(c[1] for c in self.vertices)
+        return xmn, xmx, ymn, ymx
 
     def any_within_poly(self, poly):
         """ Return whether any vertices are inside *poly* """

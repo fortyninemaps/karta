@@ -328,7 +328,7 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_poly_extents(self):
-        self.assertEqual(self.poly.get_extents(), [(0.0, 6.0), (1.0, 8.0)])
+        self.assertEqual(self.poly.get_extents(), (0.0, 6.0, 1.0, 8.0))
         return
 
     def test_poly_length(self):
