@@ -1,191 +1,111 @@
-""" Vector geospatial metadata management """
+""" Metadata tables for vector data """
 
-from copy import deepcopy
-import numbers
-from collections import Mapping
-from numpy import isnan, int32, int64
-IntegerType = (numbers.Integral, int32, int64)
+from collections import Sequence
 
-class Metadata(Mapping):
-    """ Class for handling collections of metadata. Data are organized similar
-    to a Python dict, however different values must all have the same length
-    and be of uniform type.
+class Metadata(Sequence):
 
-    Data are accessed either by field name (returning the entire series for
-    that field) for by index (returning the value within eather field at that
-    index). """
+    def __init__(self, data, fields=None, checktypes=False):
+        """ Create a collection of metadata from *data*.
 
-    _data = {}
-    _fieldtypes = []
+        *data* may be:
+        
+            - a list with uniform type
+            - a dictionary with equally-sized fields of uniform type.
+            - a scalar
+            - another Metadata instance
 
-    def __init__(self, data, singleton=False, copy=False):
-        """ Create a collection of metadata from *data*, which may be a list
-        with uniform type or a dictionary with equally-sized fields of uniform
-        type.
+        The *kwarg* fields is used for fast Metadata object creation, and
+        requires *data* to be provided as a list of equal-sized tuples.
 
-        Parameters
-        ----------
-        data : list of uniform type or dictionary of equally-sized fields of
-        uniform type
-
-        *kwargs*:
-        singleton : treat data as a single unit, rather than as a list of units
+        If *checktypes* is True (default False), the values in *data* will be
+        tested to ensure they are of constant type. In the usual case, this
+        type-checking is foregone for speed.
         """
-        if copy:
-            data = deepcopy(data)
-
-        if data is None or len(data) == 0:
-            self._len = 0
-            self._data = {}
-            self._fieldtypes = []
-
-        elif singleton:
-
-            if hasattr(data, "keys") and hasattr(data.values, "__call__"):
-                self._data = data
-            else:
-                self._data = {"values": data}
-            self._fieldtypes = [type(self._data[k]) for k in self._data]
-            self._len = 1
-
-        else:
-
-            if hasattr(data, 'keys') and hasattr(data.values, '__call__'):
-                # Dictionary of attributes
-                n = -1
-                for k in data:
-                    dtype = type(data[k][0])
-                    if not all(isinstance(a, dtype) or a is None or isnan(a)
-                                    for a in data[k]):
-                        raise MetadataError("Data must have uniform type")
-                    if n != -1:
-                        if len(data[k]) != n:
-                            raise MetadataError("Data must have uniform lengths")
-                    else:
-                        n = len(data[k])
-
-                self._len = n
-                self._data = data
-
-            else:
-                # Single attribute
-                if not hasattr(data, '__iter__'):
-                    data = [data]
-                self._len = len(data)
-                dtype = type(data[0])
-                if not all(isinstance(a, dtype) for a in data):
-                    raise MetadataError("Data must have uniform type")
+        if fields is None:
+            if hasattr(data, "_fields"):        # Data is Metadata-like
+                self._fields = data._fields
+                self._data = data._data
+            elif hasattr(data, "keys"):         # Data is dict-like
+                self._fields = tuple(data.keys())
+                fst = data[self._fields[0]]
+                if hasattr(fst, "__iter__") and not isinstance(fst, str):   # Vector entries
+                    zipvalues = zip(*[data[f] for f in self._fields])
+                    self._data = [tuple(item) for item in zipvalues]
+                else:                           # Scalar entries
+                    self._data = [(data[f],) for f in self._fields]
+            else:                               # Data is list or scalar
+                self._fields = ("value",)
+                if hasattr(data, "__iter__") and not isinstance(data, str):
+                    self._data = [(d,) for d in data]
                 else:
-                    data = {'values': data}
-
+                    self._data = [(data,)]
+        else:
+            if hasattr(data[0], "__len__") and not isinstance(data[0], str):
+                if len(data[0]) != len(fields):
+                    raise ValueError("Length of data entries and fields don't match")
+            self._fields = tuple(fields)
             self._data = data
-            self._fieldtypes = [type(data[k][0]) for k in data]
+
+        if checktypes:
+            self._validatetypes()
+        return
+
+    def _validatetypes(self):
+        for i,t in enumerate(self.types):
+            if not all(isinstance(t, d[i]) for d in self._data):
+                raise TypeError("data contains item ({0}) not of type {1}".format(self._fields[i], t))
         return
 
     def __repr__(self):
-        return "D[" + ", ".join(str(k) for k in self._data.keys()) + "]"
+        return "D[" + ", ".join(self._fields) + "]"
 
-    def __add__(self, other):
-        if not isinstance(other, type(self)):
-            raise MetadataError("self and other must both be instances of "
-                                "{0}".format(type(self)))
-        if set(self.keys()) != set(other.keys()):
-            raise MetadataError("self and other do not have identical field "
-                                "names")
-        res = Metadata({})
-        res._len = self._len + other._len
-        for k in self:
-            res[k] = self[k] + other[k]
-        return res
+    def __eq__(self, other):
+        return (self._data == other._data) and (self._fields == other._fields)
 
-    def __len__(self):
-        return self._len
+    def __neq__(self, other):
+        return self != other
 
-    def __contains__(self, other):
-        return (other in self._data)
+    def __getitem__(self, i):
+        return self._data[i]
 
-    def __iter__(self):
-        return self._data.__iter__()
-
-    def __setitem__(self, key, value):
-        if isinstance(key, (IntegerType, slice)):
-            nkeys = len(self._data.keys())
-            if (nkeys > 1) and (nkeys != len(list(value))):
-                raise IndexError("Setting Metadata requires a value to be "
-                                 "provided for every Metadata field")
-
-            if nkeys > 1:
-                for seq in self._data.values():
-                    seq[key] = value[key]
-            else:
-                for k in self._data.keys():
-                    self._data[k][key] = value
-
-        else:
-            if len(list(value)) != len(self):
-                raise IndexError("Setting a Metadata field requires that "
-                                 "length be preserved")
-            self._data[key] = list(value)
+    def __setitem__(self, i, val):
+        self._data[i] = val
         return
 
-    def __getitem__(self, key):
-        # If there is one field type, a number index should return a scalar
-        # If there are multiple field types, a number index should return a dict
-        # Although this is a bit irregular, it probably adheres better to the
-        # principle of least surprise
-        if isinstance(key, (IntegerType, slice)):
-            return dict((k, self._data[k][key]) for k in self._data.keys())
+    def __delitem__(self, i):
+        del self._data[i]
+
+    def __len__(self, i):
+        return len(self._data)
+
+    @property
+    def data(self):
+        return self._data
+
+    @property
+    def fields(self):
+        return self._fields
+
+    @property
+    def types(self):
+        return tuple(type(a) for a in self._data[0])
+
+    def get(self, i):
+        """ Return a dictionary for a single entry """
+        d = self._data[i]
+        if isinstance(i, slice):
+            r = {}
+            for j in range(len(self._fields)):
+                r[self._fields[j]] = [d_[j] for d_ in d]
+            return r
         else:
-            return self.getfield(key)
+            return dict((self._fields[j], d[j]) for j in range(len(self._fields)))
 
-    def __delitem__(self, idx):
-        for k in self._data:
-            del self._data[k][idx]
-        self._len -= 1
-
-    def sub(self, idxs):
-        """ Return a Metadata instance with values from idxs. """
-        newdata = dict()
-        try:
-            items = self._data.iteritems()
-        except AttributeError:
-            items = self._data.items()
-
-        for key, val in items:
-            newdata[key] = [self._data[key][i] for i in idxs]
-        return Metadata(newdata, copy=False)
-
-    def getfield(self, name):
-        """ Return all values from field *name*. """
-        if name not in self._data:
-            raise IndexError("Field {0} not in Metadata".format(name))
-        return self._data[name]
-
-    def update(self, other):
-        """ Extend collection in-place. """
-        if isinstance(other, type(self)):
-            for i, k in enumerate(self._data):
-                if type(self._fieldtypes[i]) == type(other._fieldtypes[i]):
-                    self._data[k] += other._data[k]
-                    self._len += other._len
-                else:
-                    raise MetadataError("Cannot combine metadata instances "
-                                         "with different type hierarchies")
-        return self
-
-    def keys(self):
-        """ Return internal dictionary keys. """
-        return self._data.keys()
-
-    def values(self):
-        """ Return internal dictionary values. """
-        return self._data.values()
-
-
-class MetadataError(Exception):
-    def __init__(self, message=''):
-        self.message = message
-    def __str__(self):
-        return self.message
-
+    def getfield(self, field):
+        """ Return list of data corresponding to *field* """
+        if field in self._fields:
+            i = self._fields.index(field)
+            return [d[i] for d in self._data]
+        else:
+            raise KeyError("'{0}' not a field field".format(field))
 

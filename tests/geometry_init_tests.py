@@ -36,7 +36,6 @@ class TestVectorGeometry(unittest.TestCase):
     def test_polygon_from_points(self):
         pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
-
         mp = Polygon(pts)
         ans = Polygon(self.vertices, data={"d":self.data}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)

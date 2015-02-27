@@ -227,8 +227,12 @@ class GPX(object):
                 else:
                     sg_extensions[key] = str(line.properties[key])
 
-            pt_properties = [k for k in line.data.keys() if k in VALID_PROPERTIES]
-            pt_extensions = [k for k in line.data.keys() if k not in VALID_PROPERTIES]
+            if line.data is not None:
+                pt_properties = [k for k in line.data.keys() if k in VALID_PROPERTIES]
+                pt_extensions = [k for k in line.data.keys() if k not in VALID_PROPERTIES]
+            else:
+                pt_properties = []
+                pt_extensions = []
 
             for i, xy in enumerate(line.vertices):
 
@@ -266,8 +270,9 @@ class GPX(object):
         points = []
         for i, vertex in enumerate(route.vertices):
             prop = {}
-            for k in route.data.keys():
-                prop[k] = route.data[k][i]
+            if route.data is not None:
+                for k in rout.data.fields:
+                    prop[k] = route.data[k][i]
             points.append(Point((vertex[0], vertex[1]), prop, {}))
         self.routes.append(Route(points, route.properties, {}))
         return

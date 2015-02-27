@@ -123,17 +123,16 @@ class TestShapefile(unittest.TestCase):
                           (-11.002583333333334, 80.32173333333333), (-11.002583333333334, 80.32173333333333),
                           (-11.002583333333334, 80.32173333333333), (-11.07225, 80.56316666666666),
                           (-11.07225, 80.56316666666666)])
-        self.assertEqual(mp.data["meterno"], ['IMS1/1', 'IMS2/1', '5952/2',
-                                              'IMS4/1', '5953/2', '1963/13',
-                                              'IMS5/1', '5213/A', '2121/13',
-                                              'IMS3/1', '3613/2'])
-        self.assertEqual(mp.data["depth_m"], [73, 143, 247, 86, 147, 250, 74,
-                                              142, 235, 150, 248])
+        self.assertEqual(mp.data.getfield("meterno"),
+                         ['IMS1/1', 'IMS2/1', '5952/2', 'IMS4/1', '5953/2', '1963/13',
+                          'IMS5/1', '5213/A', '2121/13', 'IMS3/1', '3613/2'])
+        self.assertEqual(mp.data.getfield("depth_m"),
+                         [73, 143, 247, 86, 147, 250, 74, 142, 235, 150, 248])
         return
 
     def test_read_multipoint_attributes(self):
         mp = read_shapefile(os.path.join(TESTDATA, "shapefiles", "points"))
-        self.assertEqual(mp[0].data["species"], self.multipoint.data["species"])
+        self.assertEqual(mp[0].data.getfield("species"), self.multipoint.data.getfield("species"))
         return
 
     def test_read_line(self):
