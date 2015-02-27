@@ -149,6 +149,25 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(mp1, mp2)
         return
 
+    def test_multipoint_iterator(self):
+        mp = Multipoint([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
+                         (4.0, 4.0), (0.0, 1.0)],
+                         data=["rankin", "corbet", "arviat",
+                               "severn", "churchill"])
+        for i, pt in enumerate(mp):
+            self.assertEqual(mp[i], pt)
+        return
+
+    def test_multipoint_get_data_fields(self):
+        mp = Multipoint([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
+                         (4.0, 4.0), (0.0, 1.0)],
+                         data={"location": ["rankin", "corbet", "arviat",
+                                            "severn", "churchill"]})
+        pt = mp[3]
+        self.assertEqual(pt.data.fields, ("location",))
+        self.assertEqual(pt.data[0], ("severn",))
+        return
+
     def test_multipoint_slicing(self):
         submp = Multipoint(self.vertices[5:10], data=self.data[5:10])
         self.assertEqual(self.mp[5:10], submp)

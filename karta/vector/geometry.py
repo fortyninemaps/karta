@@ -331,19 +331,15 @@ class MultipointBase(Geometry):
         return len(self.vertices)
 
     def __getitem__(self, key):
-        if self.data is None:
-            d = None
-        else:
-            d = Metadata(self.data[key], fields=self.data._fields)
-
+        d = None
         if isinstance(key, (int, np.int64)):
-            if self.data is None:
-                d = None
-            else:
-                d = self.data[key]
+            if self.data is not None:
+                d = Metadata([self.data[key]], fields=self.data._fields)
             return Point(self.vertices[key], data=d, properties=self.properties,
                          crs=self._crs)
         elif isinstance(key, slice):
+            if self.data is not None:
+                d = Metadata(self.data[key], fields=self.data._fields)
             return type(self)(self.vertices[key], data=d,
                               properties=self.properties, crs=self._crs)
         else:

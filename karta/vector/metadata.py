@@ -28,7 +28,7 @@ class Metadata(Sequence):
                 else:
                     self._data = [(data,)]
         else:
-            if hasattr(data[0], "__len__"):
+            if hasattr(data[0], "__len__") and not isinstance(data[0], str):    # TODO: avoid assertions
                 assert(len(data[0]) == len(fields))
             self._fields = tuple(fields)
             self._data = data
@@ -75,8 +75,6 @@ class Metadata(Sequence):
         return tuple(type(a) for a in self._data[0])
 
     def get(self, i):
-        #if len(self._fields) == 1:
-        #    return {self._fields[0]: self.data[i][0]}
         d = self._data[i]
         if isinstance(i, slice):
             r = {}
@@ -91,8 +89,5 @@ class Metadata(Sequence):
             i = self._fields.index(name)
             return [d[i] for d in self._data]
         else:
-            raise KeyError("{0} not a field name".format(name))
-           
-    #def sub(self, i):
-    #    return Metadata(
+            raise KeyError("'{0}' not a field name".format(name))
 

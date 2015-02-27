@@ -69,6 +69,18 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(md.getfield("A"), md.getfield("A"))
         return
 
+    def test_init_specified_fields(self):
+        md = Metadata([(1,2,3),(4,5,6),(7,8,9)], fields=("a","b","c"))
+        self.assertEqual(md.data, [(1,2,3),(4,5,6),(7,8,9)])
+        self.assertEqual(md.fields, ("a","b","c"))
+        return
+
+    def test_init_specified_fields2(self):
+        md = Metadata([("by air",),("by land,"),("by sea",)], fields=("mode",))
+        self.assertEqual(md.data, [("by air",),("by land,"),("by sea",)])
+        self.assertEqual(md.fields, ("mode",))
+        return
+
 if __name__ == "__main__":
     unittest.main()
 

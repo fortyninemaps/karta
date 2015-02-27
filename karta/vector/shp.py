@@ -61,11 +61,12 @@ def addfields_points(writer, points):
     if points.data is not None:
         keys = points.data.fields
         for key in keys:
-            t = property_field_type(points.data[key][0])
+            #t = points.data.types[points.data.fields.index(key)]
+            t = property_field_type(points.data.get(0)[key])
             dec = 0 if t not in ("N", "F", "O", "I") else 16
             writer.field(key, fieldType=t, size="100", decimal=dec)
         for i, pt in enumerate(points):
-            writer.record(str(i), *[pt.data[key] for key in keys])
+            writer.record(str(i), *[pt.data.get(0)[key] for key in keys])
     return
 
 def write_multipoint2(mp, fstem):
