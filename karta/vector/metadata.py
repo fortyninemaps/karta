@@ -28,8 +28,9 @@ class Metadata(Sequence):
                 else:
                     self._data = [(data,)]
         else:
-            if hasattr(data[0], "__len__") and not isinstance(data[0], str):    # TODO: avoid assertions
-                assert(len(data[0]) == len(fields))
+            if hasattr(data[0], "__len__") and not isinstance(data[0], str):
+                if len(data[0]) != len(fields):
+                    raise ValueError("Length of data entries and fields don't match")
             self._fields = tuple(fields)
             self._data = data
 
