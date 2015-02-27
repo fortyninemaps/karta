@@ -14,7 +14,7 @@ before_install:
 install:
   - "conda create --yes -n test-environment python=$TRAVIS_PYTHON_VERSION numpy pip gdal"
   - "source activate test-environment"
-  - "pip install -U setuptools"
+    #- "pip install -U setuptools"
   - "pip install coveralls"
   - "pip install -r requirements.txt"
   - "pip install shapely"   # used to verify __geo_interface__
