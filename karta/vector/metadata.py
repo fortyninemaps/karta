@@ -1,23 +1,35 @@
-""" Faster Metadata implementation
-
-Based on the observation that constructing Metadata is very common, while
-changing it is less so.
-"""
+""" Metadata tables for vector data """
 
 from collections import Sequence
 
 class Metadata(Sequence):
 
     def __init__(self, data, fields=None, checktypes=False):
+        """ Create a collection of metadata from *data*.
+
+        *data* may be:
+        
+            - a list with uniform type
+            - a dictionary with equally-sized fields of uniform type.
+            - a scalar
+            - another Metadata instance
+
+        The *kwarg* fields is used for fast Metadata object creation, and
+        requires *data* to be provided as a list of equal-sized tuples.
+
+        If *checktypes* is True (default False), the values in *data* will be
+        tested to ensure they are of constant type. In the usual case, this
+        type-checking is foregone for speed.
+        """
         if fields is None:
-            if isinstance(data, Metadata):      # Data is a Metadata instance
-                self._data = data._data
+            if hasattr(data, "_fields"):        # Data is Metadata-like
                 self._fields = data._fields
+                self._data = data._data
             elif hasattr(data, "keys"):         # Data is dict-like
                 self._fields = tuple(data.keys())
                 fst = data[self._fields[0]]
                 if hasattr(fst, "__iter__") and not isinstance(fst, str):   # Vector entries
-                    zipvalues = zip(*(data[f] for f in self._fields))
+                    zipvalues = zip(*[data[f] for f in self._fields])
                     self._data = [tuple(item) for item in zipvalues]
                 else:                           # Scalar entries
                     self._data = [(data[f],) for f in self._fields]
@@ -43,6 +55,9 @@ class Metadata(Sequence):
             if not all(isinstance(t, d[i]) for d in self._data):
                 raise TypeError("data contains item ({0}) not of type {1}".format(self._fields[i], t))
         return
+
+    def __repr__(self):
+        return "D[" + ", ".join(self._fields) + "]"
 
     def __eq__(self, other):
         return (self._data == other._data) and (self._fields == other._fields)
@@ -76,6 +91,7 @@ class Metadata(Sequence):
         return tuple(type(a) for a in self._data[0])
 
     def get(self, i):
+        """ Return a dictionary for a single entry """
         d = self._data[i]
         if isinstance(i, slice):
             r = {}
@@ -85,10 +101,11 @@ class Metadata(Sequence):
         else:
             return dict((self._fields[j], d[j]) for j in range(len(self._fields)))
 
-    def getfield(self, name):
-        if name in self._fields:
-            i = self._fields.index(name)
+    def getfield(self, field):
+        """ Return list of data corresponding to *field* """
+        if field in self._fields:
+            i = self._fields.index(field)
             return [d[i] for d in self._data]
         else:
-            raise KeyError("'{0}' not a field name".format(name))
+            raise KeyError("'{0}' not a field field".format(field))
 
