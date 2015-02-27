@@ -59,7 +59,7 @@ def addfields(writer, properties):
 def addfields_points(writer, points):
     writer.field("ID", "I", "8")
     if points.data is not None:
-        keys = point.data.fields
+        keys = points.data.fields
         for key in keys:
             t = property_field_type(points.data[key][0])
             dec = 0 if t not in ("N", "F", "O", "I") else 16
