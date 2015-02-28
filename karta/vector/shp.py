@@ -67,6 +67,9 @@ def addfields_points(writer, points):
             writer.field(key, fieldType=t, size="100", decimal=dec)
         for i, pt in enumerate(points):
             writer.record(str(i), *[pt.data.get(0)[key] for key in keys])
+    else:
+        for i in range(len(points)):
+            writer.record(str(i))
     return
 
 def write_multipoint2(mp, fstem):
