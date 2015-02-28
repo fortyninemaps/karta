@@ -75,7 +75,7 @@ class Metadata(Sequence):
     def __delitem__(self, i):
         del self._data[i]
 
-    def __len__(self, i):
+    def __len__(self):
         return len(self._data)
 
     def __contains__(self, field):
@@ -111,4 +111,20 @@ class Metadata(Sequence):
             return [d[i] for d in self._data]
         else:
             raise KeyError("'{0}' not a field field".format(field))
+
+    def extend(self, other):
+        """ Extend Metadata from another Metadata instance. If *other* has
+        field f in *self*, it is copied. Otherwise, the None is appended. """
+        # TODO: appended None value should be approariate to the type of field f.
+        idxs_other = []
+        for f in self._fields:
+            if f in other._fields:
+                idxs_other.append(other._fields.index(f))
+            else:
+                idxs_other.append(None)
+
+        for i in range(len(other)):
+            self._data.append(tuple([None if j not in idxs_other
+                                          else other._data[i][idxs_other.index(j)]
+                                          for j in range(len(self._fields))]))
 

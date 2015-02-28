@@ -81,6 +81,16 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(md.fields, ("mode",))
         return
 
+    def test_extend(self):
+        md1 = Metadata({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
+                        "number": [3784, 78, 83]})
+        md2 = Metadata({"street": ["Winding Ln.", "Oyster Pond Rd."],
+                        "color": ["Grey", "White"]})
+        md1.extend(md2)
+        self.assertEqual(len(md1), 5)
+        self.assertEqual(set((None, "Winding Ln.")), set(md1[3]))
+        return
+
 if __name__ == "__main__":
     unittest.main()
 
