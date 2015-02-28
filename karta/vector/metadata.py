@@ -78,6 +78,9 @@ class Metadata(Sequence):
     def __len__(self, i):
         return len(self._data)
 
+    def __contains__(self, field):
+        return field in self._fields
+
     @property
     def data(self):
         return self._data
