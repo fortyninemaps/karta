@@ -124,7 +124,7 @@ class Metadata(Sequence):
                 idxs_other.append(None)
 
         for i in range(len(other)):
-            self._data.append(tuple([None if j not in idxs_other
-                                          else other._data[i][idxs_other.index(j)]
+            self._data.append(tuple([None if idxs_other[j] is None
+                                          else other._data[i][idxs_other[j]]
                                           for j in range(len(self._fields))]))
 
