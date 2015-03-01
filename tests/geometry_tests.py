@@ -276,21 +276,19 @@ class TestGeometry(unittest.TestCase):
     #     self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=LonLatWGS84))
     #     return
 
-    def test_line_add_vertex2d(self):
+    def test_line_append2d(self):
         ln0 = Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0)])
         ln1 = Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
-                    (4.0, 4.0), (0.0, 1.0)])
-        ln0.add_vertex((4.0, 4.0))
-        ln0.add_vertex(Point((0.0, 1.0)))
+                    (0.0, 1.0)])
+        ln0.append(Point((0.0, 1.0)))
         self.assertEqual(ln0, ln1)
         return
 
-    def test_line_add_vertex3d(self):
+    def test_line_append3d(self):
         ln0 = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0)])
         ln1 = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
-                    (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
-        ln0.add_vertex((4.0, 4.0, 6.0))
-        ln0.add_vertex(Point((0.0, 1.0, 3.0)))
+                    (0.0, 1.0, 3.0)])
+        ln0.append(Point((0.0, 1.0, 3.0)))
         self.assertEqual(ln0, ln1)
         return
 

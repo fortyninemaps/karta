@@ -490,7 +490,7 @@ class MultipointBase(Geometry):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
         if self.data is not None:
-            data = Metadata([self.data[i] for i in idxs], fields=self.data.fields)
+            data = Metadata([self.data[i] for i in idxs], fields=self.data._fields)
         else:
             data = None
         subset = type(self)(vertices, data=data, properties=self.properties,
@@ -800,22 +800,16 @@ class Line(ConnectedMultipoint):
         return {"type" : "LineString", "bbox" : self.bbox, "coordinates" : self.vertices}
 
     # TODO: remove add_vertex, remove_vertex methods and replace with more robust append, pop methods similar to lists
-    def add_vertex(self, vertex):
+    def append(self, point):
         """ Add a vertex to self.vertices. """
-        if isinstance(vertex, Point):
-            if self.rank == 2:
-                self.vertices.append((vertex.x, vertex.y))
-            elif self.rank == 3:
-                self.vertices.append((vertex.x, vertex.y, vertex.z))
+        if self._crs != point._crs:
+            raise crs.CRSError("CRS mismatch ({0} != {1})".format(self._crs, point._crs))
+        if self.rank == point.rank:
+            self.vertices.append(point.vertex)
             if self.data is not None:
-                self.data._data
-            if self.data is not None:
-                self.data += vertex.data
+                self.data.extend(point.data)
         else:
-            if self.rank == 2:
-                self.vertices.append((vertex[0], vertex[1]))
-            elif self.rank == 3:
-                self.vertices.append((vertex[0], vertex[1], vertex[2]))
+            raise GeometryError("geometries have incompatible rank")
         return self
 
     def remove_vertex(self, index):
@@ -837,9 +831,9 @@ class Line(ConnectedMultipoint):
                 else:
                     raise GGeoError('Cannot add geometries with mismatched metadata')
             else:
-                raise GGeoError('Cannot add inconsistent geometry types')
+                raise GGeoError("Geometry mismatch ({0} != {1})".format(self._geotype, other._geotype))
         else:
-            raise GGeoError('Cannot add geometries with inconsistent rank')
+            raise GGeoError("Rank mismatch ({0} != {1})".format(self.rank, other.rank))
         return self
 
     def cumlength(self):
