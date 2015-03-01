@@ -45,6 +45,7 @@ def property_field_type(value):
     return desc
 
 def addfields(writer, properties):
+    """ Add geometry properties *properties* to shapefile writer *writer*. """
     writer.field("ID", "I", "8")
     values = []
     for key in properties:
@@ -57,6 +58,7 @@ def addfields(writer, properties):
     return
 
 def addfields_points(writer, points):
+    """ Add *points* data to shapefile writer *writer*. """
     writer.field("ID", "I", "8")
     if points.data is not None:
         keys = points.data.fields

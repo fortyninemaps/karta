@@ -820,23 +820,22 @@ class Line(ConnectedMultipoint):
     def extend(self, other):
         """ Combine two lines, provided that that the data formats are similar.
         """
-        if self.rank == other.rank:
-            if self._geotype == other._geotype:
-                self.vertices.extend(other.vertices)
-                if None not in (self.data, other.data):
-                    self.data._data.extend(other.data._data)
-                elif self.data == other.data:
-                    self.data = None
-                else:
-                    raise GGeoError('Cannot add geometries with mismatched metadata')
-            else:
-                raise GGeoError("Geometry mismatch ({0} != {1})".format(self._geotype, other._geotype))
-        else:
+        if self.rank != other.rank:
             raise GGeoError("Rank mismatch ({0} != {1})".format(self.rank, other.rank))
+        if self._geotype != other._geotype:
+            raise GGeoError("Geometry mismatch ({0} != {1})".format(self._geotype, other._geotype))
+
+        if None not in (self.data, other.data):
+            self.data._data.extend(other.data._data)
+        elif self.data == other.data:
+            self.data = None
+        else:
+            raise GGeoError('Cannot add geometries with mismatched metadata')
+        self.vertices.extend(other.vertices)
         return self
 
     def cumlength(self):
-        """ Returns the cumulative length by segment, prefixed by zero. """
+        """ Returns the cumulative length by vertex. """
         d = [0.0]
         pta = self[0]
         for ptb in self[1:]:
@@ -887,28 +886,6 @@ class Line(ConnectedMultipoint):
     def displacement(self):
         """ Returns the distance between the first and last vertex. """
         return self[0].distance(self[-1])
-
-    #def direction(self):
-    #    """ Returns a vector of the azimuth along a line at each point,
-    #    weighted by neighbour position. """
-    #    # The weights are calculated to give greater weight to azimuths to
-    #    # nearby points
-    #    # a' = w1 a1 + w2 a2
-    #    #    = (a1 h2) / (h1 + h2) + (a2 h1) / (h1 + h2)
-    #    #    = (a1 h2 + a2 h1) / (h1 + h2)
-    #    azs = np.empty(len(self)-1)
-    #    hs = np.empty(len(self)-1)
-    #    pts = [pt for pt in self]
-    #    for i in range(len(self)-1):
-    #        azs[i] = pt[i].azimuth(pt[i+1])
-    #        hs[i] = pt[i].distance(pt[i+1])
-    #    weighted_azs = np.empty(len(self))
-    #    weighted_azs[0] = azs[0]
-    #    weighted_azs[-1] = azs[-1]
-    #    for i in range(1, len(self)-1):
-    #        raise NotImplementedError("need to phase unwrap")
-    #        weighted_azs[i] = (azs[i]*hs[i+1] + azs[i+1]*hs[i]) / (hs[i] + hs[i+1])
-    #    return weighted_azs
 
     def to_polygon(self):
         """ Returns a polygon. """
