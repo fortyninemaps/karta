@@ -439,6 +439,24 @@ class MultipointBase(Geometry):
             x, y = crs.project(xg, yg)
         return x, y
 
+    def append(self, point):
+        """ Add a vertex to self.vertices. """
+        if self._crs != point._crs:
+            raise crs.CRSError("CRS mismatch ({0} != {1})".format(self._crs, point._crs))
+        if self.rank == point.rank:
+            self.vertices.append(point.vertex)
+            if self.data is not None:
+                self.data.extend(point.data)
+        else:
+            raise GeometryError("geometries have incompatible rank")
+        return self
+
+    def pop(self, index=-1):
+        """ Removes a vertex from the register by index. """
+        pt = Point(self.vertices.pop(index), data=self.data[index])
+        del self.data[index]
+        return pt
+
     def shift(self, shift_vector):
         """ Shift feature by the amount given by a vector. Operation
         occurs in-place """
@@ -798,25 +816,6 @@ class Line(ConnectedMultipoint):
     @property
     def __geo_interface__(self):
         return {"type" : "LineString", "bbox" : self.bbox, "coordinates" : self.vertices}
-
-    # TODO: remove add_vertex, remove_vertex methods and replace with more robust append, pop methods similar to lists
-    def append(self, point):
-        """ Add a vertex to self.vertices. """
-        if self._crs != point._crs:
-            raise crs.CRSError("CRS mismatch ({0} != {1})".format(self._crs, point._crs))
-        if self.rank == point.rank:
-            self.vertices.append(point.vertex)
-            if self.data is not None:
-                self.data.extend(point.data)
-        else:
-            raise GeometryError("geometries have incompatible rank")
-        return self
-
-    def remove_vertex(self, index):
-        """ Removes a vertex from the register by index. """
-        pt = Point(self.vertices.pop(index), data=self.data[index])
-        del self.data[index]
-        return pt
 
     def extend(self, other):
         """ Combine two lines, provided that that the data formats are similar.

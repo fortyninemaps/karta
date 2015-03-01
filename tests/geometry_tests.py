@@ -300,14 +300,14 @@ class TestGeometry(unittest.TestCase):
         ln0a.extend(ln0b)
         self.assertEqual(ln0a, ln1)
 
-    def test_line_remove(self):
-        ln = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
-                   (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)],
-                  data=["red", "green", "blue", "chartreuse", "aquamarine"])
-        lnresult = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
-                         (0.0, 1.0, 3.0)],
-                        data=["red", "green", "blue", "aquamarine"])
-        pt = ln.remove_vertex(3)
+    def test_pop(self):
+        ln = Multipoint([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
+                         (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)],
+                        data=["red", "green", "blue", "chartreuse", "aquamarine"])
+        lnresult = Multipoint([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
+                               (0.0, 1.0, 3.0)],
+                              data=["red", "green", "blue", "aquamarine"])
+        pt = ln.pop(3)
         ptresult = Point((4.0, 4.0, 6.0), data="chartreuse")
         self.assertEqual(pt, ptresult)
         self.assertEqual(ln, lnresult)
