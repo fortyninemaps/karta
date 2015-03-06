@@ -112,6 +112,19 @@ class Metadata(Sequence):
         else:
             raise KeyError("'{0}' not a field field".format(field))
 
+    def setfield(self, field, values):
+        """ Modify or add a field with *values* """
+        if len(values) != self.__len__():
+            raise ValueError("mismatch between metadata length and field values")
+        if field in self._fields:
+            idx = self._fields.index(field)
+            self._data = [tuplemut(row, v, idx) for row, v in zip(self._data, values)]
+        else:
+            idx = len(self._fields)
+            self._fields = tupleinsert(self._fields, field, idx)
+            self._data = [tupleinsert(row, v, idx) for row, v in zip(self._data, values)]
+        return
+
     def extend(self, other):
         """ Extend Metadata from another Metadata instance. If *other* has
         field f in *self*, it is copied. Otherwise, the None is appended. """
@@ -127,4 +140,15 @@ class Metadata(Sequence):
             self._data.append(tuple([None if idxs_other[j] is None
                                           else other._data[i][idxs_other[j]]
                                           for j in range(len(self._fields))]))
+
+def tuplemut(tpl, val, idx):
+    """ Return a tuple with *idx* changed to *val* """
+    lst = list(tpl)
+    lst[idx] = val
+    return tuple(lst)
+
+def tupleinsert(tpl, val, idx):
+    """ Return a tuple with *val* inserted into position *idx* """
+    lst = list(tpl[:idx]) + [val] + list(tpl[idx:])
+    return tuple(lst)
 

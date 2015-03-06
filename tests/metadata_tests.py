@@ -91,6 +91,26 @@ class TestMetadata(unittest.TestCase):
         self.assertEqual(set((None, "Winding Ln.")), set(md1[3]))
         return
 
+    def test_addfield(self):
+        # data, field syntax used in order to specify field order
+        md = Metadata([("F R. Lillie", 3784), ("School St.", 78), ("Quissett Ave.", 83)],
+                      fields=("street", "number"))
+        md.setfield("driveway", [True, True, False])
+        ans = Metadata([("F R. Lillie", 3784, True), ("School St.", 78, True),
+                        ("Quissett Ave.", 83, False)],
+                       fields=("street", "number", "driveway"))
+        self.assertEqual(md, ans)
+        return
+
+    def test_updatefield(self):
+        md = Metadata({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
+                       "number": [3784, 78, 83]})
+        md.setfield("number", [3782, 78, 83])
+        ans = Metadata({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
+                        "number": [3782, 78, 83]})
+        self.assertEqual(md, ans)
+        return
+
 if __name__ == "__main__":
     unittest.main()
 
