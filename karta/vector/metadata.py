@@ -53,7 +53,8 @@ class Metadata(Sequence):
     def _validatetypes(self):
         for i,t in enumerate(self.types):
             if not all(isinstance(t, d[i]) for d in self._data):
-                raise TypeError("data contains item ({0}) not of type {1}".format(self._fields[i], t))
+                raise TypeError("data contains item ({0}) not of type {1}" \
+                                .format(self._fields[i], t))
         return
 
     def __repr__(self):
@@ -110,7 +111,7 @@ class Metadata(Sequence):
             i = self._fields.index(field)
             return [d[i] for d in self._data]
         else:
-            raise KeyError("'{0}' not a field field".format(field))
+            raise KeyError("'{0}' not a field".format(field))
 
     def setfield(self, field, values):
         """ Modify or add a field with *values* """
@@ -140,6 +141,22 @@ class Metadata(Sequence):
             self._data.append(tuple([None if idxs_other[j] is None
                                           else other._data[i][idxs_other[j]]
                                           for j in range(len(self._fields))]))
+
+class Indexer(object):
+
+    def __init__(self, md):
+        if md is None:
+            raise KeyError("cannot index data-less geometry")
+        else:
+            self.md = md
+
+    def __getitem__(self, key):
+        if isinstance(key, str):
+            return self.md.getfield(key)
+        elif isinstance(key, int):
+            return self.md.get(key)
+        else:
+            raise KeyError("invalid key type: {0}".format(type(key)))
 
 def tuplemut(tpl, val, idx):
     """ Return a tuple with *idx* changed to *val* """

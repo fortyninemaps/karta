@@ -14,7 +14,7 @@ from . import geojson
 from . import xyfile
 from . import shp
 from ..crs import Cartesian, SphericalEarth, CRSError
-from .metadata import Metadata
+from .metadata import Metadata, Indexer
 from . import _vectorgeo
 
 try:
@@ -49,6 +49,10 @@ class Geometry(object):
     @property
     def crs(self):
         return self._crs
+
+    @property
+    def d(self):
+        return Indexer(self.data)
 
     def add_property(self, name, value):
         """ Insert a property (name -> value) into the properties dict, raising

@@ -711,6 +711,27 @@ class VectorCRSTests(unittest.TestCase):
                      (3762606.6598763773, 3784658.467084308, 3773284.485241791)))
         return
 
+class MetadataAttributeTests(unittest.TestCase):
+
+    def test_metadataattribute_str(self):
+        g = Line(zip(range(5), range(5, 0, -1)),
+                 data={"a": range(5), "b": [a**2 for a in range(-2, 3)]})
+        self.assertEqual(g.d["a"], list(range(5)))
+        self.assertEqual(g.d["b"], [a**2 for a in range(-2, 3)])
+        return
+
+    def test_metadataattribute_int(self):
+        g = Line(zip(range(5), range(5, 0, -1)),
+                 data={"a": range(5), "b": [a**2 for a in range(-2, 3)]})
+        self.assertEqual(g.d[3], {"a": 3, "b": 1})
+        return
+
+    def test_None_data(self):
+        g = Line(zip(range(5), range(5, 0, -1)))
+        f = lambda a: getattr(g, a)
+        self.assertRaises(KeyError, f, "d")
+        return
+
 if __name__ == "__main__":
     unittest.main()
 
