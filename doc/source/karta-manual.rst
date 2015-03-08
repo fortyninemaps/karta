@@ -50,6 +50,14 @@ formats. Currently supported are:
    -  GeoTiff (through GDAL) (r)
    -  USGS DEM (WIP)
 
+Examples
+--------
+
+`Sharing data via __geo_interface__ <geointerface.html>`_
+
+*(work in progress)*
+
+
 License
 -------
 
