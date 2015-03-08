@@ -169,6 +169,16 @@ class Proj4CRS(CRS):
     def __ne__(self, other):
         return not self.__eq__(other)
 
+    @property
+    def initstring_proj(self):
+        """ Return the proj.4 init string defining the projection. """
+        return self._proj.srs
+
+    @property
+    def initstring_geod(self):
+        """ Return the proj.4 init string defining the geoid. """
+        return self._geod.initstring
+
     def forward(self, *args, **kwargs):
         return self._geod.fwd(*args, **kwargs)
 
