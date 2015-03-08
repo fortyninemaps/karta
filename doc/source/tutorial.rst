@@ -143,9 +143,9 @@ sliced:
 
 .. code:: python
 
-    subline = line[2:-2]
-    for pt_ in subline:
-        print(pt_.vertex)
+    section = line[2:-2]
+    for pt in section:
+        print(pt.vertex)
 
 .. parsed-literal::
 
@@ -187,8 +187,7 @@ each geometry at creation, as in
 .. code:: python
 
     from karta import crs
-.. code:: python
-
+    
     pt = Point((-123.1, 49.25), crs=crs.LonLatWGS84)
     pt2 = Point((-70.66, 41.52), crs=crs.LonLatWGS84)
     pt.distance(pt2)
@@ -380,12 +379,12 @@ through subsequent operations.
     pt = mp[2]
     
     print(pt)
-    print(pt.data["species"])
+    print(pt.d["species"])
 
 .. parsed-literal::
 
     Point((4, 3))
-    M. alba
+    ['M. alba']
 
 
 Metadata at the geometry level rather than the point level can be
@@ -419,16 +418,7 @@ make is easy to visualize a geometry.
 
     import matplotlib.pyplot as plt
     %matplotlib qt
-    plt.plot(*line.get_coordinate_lists())
-
-
-
-.. parsed-literal::
-
-    [<matplotlib.lines.Line2D at 0x7f5939d55358>]
-
-
-
+    plt.plot(*line.coordinates)
 Data can be read from several common formats, including ESRI shapefiles
 (through bindings to the *pyshp* module), GeoJSON, GPX, and comma
 separated value tables. Convenience functions are kept in the
