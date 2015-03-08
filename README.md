@@ -4,14 +4,13 @@
 
 *Karta* is a simple and fast framework for spatial analysis in Python.
 
-It contains clean vector and raster data types that are geographical
-coordinate system-aware, a selection of geographical analysis methods, and
-the ability to read and write several formats, including GeoJSON, shapefiles,
-and ESRI ASCII.
+It contains clean vector and raster data types that are coordinate system-aware,
+implementations of frequently-used of geospatial analysis methods, and the
+read/write interfaces to several formats, including GeoJSON, shapefiles, and
+ESRI ASCII.
 
 *Karta* works with Python 2.6-2.7 and Python 3.3+. Suggestions, bug reports,
-test cases, and pull requests are welcome, particularly to improve file format
-support and test coverage.
+test cases, and pull requests are welcome.
 
 ## DOCUMENTATION
 
@@ -21,23 +20,26 @@ the [tutorial](http://www.ironicmtn.com/kartadocs/tutorial.html), or read the
 
 The manual can also be built offline using Sphinx by running `make` from the
 `doc/` subdirectory. The documentation is built from source code docstrings and
-information in the [Wiki](https://github.com/njwilson23/karta/wiki/Tutorial).
-Building the documentation requires [Sphinx](http://sphinx-doc.org/) and
+the example IPython notebooks, which are also reproduced in the
+[Wiki](https://github.com/njwilson23/karta/wiki/Tutorial). Building the
+documentation requires [Sphinx](http://sphinx-doc.org/),
+[alabaster](https://github.com/bitprophet/alabaster) and
 [numpydoc](https://github.com/numpy/numpydoc).
 
 ## PACKAGE OVERVIEW
 
-- crs: framework for coordinate reference systems and geodetic calculations
-  employed throughout *Karta*
+- **karta.crs**: framework for coordinate reference systems and geodetic
+  calculations
 
-- vector.geometry: includes geometry classes `Point`, `Multipoint`, `Line`, and
-  `Polygon` with associated analytical methods such as length, area,
-  intersections, membership testing, convex hulls, and affine transformations
+- **karta.vector.geometry**: geometry classes `Point`, `Multipoint`, `Line`, and
+  `Polygon` with associated methods such as length, area, intersections,
+  membership testing, convex hulls, and affine transformations
 
-- raster.grid: includes `RegularGrid` class (supporting CRS-aware clipping,
-  sampling, profiling along vector tracks), and experimental `WarpedGrid`
+- **karta.raster.grid**: `Grid` classes including `RegularGrid` class
+  (supporting CRS-aware clipping, sampling, profiling along vector tracks), and
+  experimental `WarpedGrid`
 
-- tests: unit tests, to be run with `python tests/runtests.py`
+- **karta.tests**: unit tests, to be run with `python tests/runtests.py`
 
 ## FORMATS
 
@@ -56,8 +58,10 @@ Currently partially-supported are:
 
 *Karta* implements [Python
 `__geo_interface__`](https://gist.github.com/sgillies/2217756) for vector
-geometries, so external libraries are straightforward to use for access to
-additional formats.
+geometries. External modules that also implement `__geo_interface__` (e.g.
+[shapely](https://github.com/Toblerity/Shapely),
+[fastkml](https://fastkml.readthedocs.org/en/latest/)) can be directly used to
+read and write additional formats.
 
 ## INSTALLATION
 
