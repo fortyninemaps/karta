@@ -998,6 +998,17 @@ class Polygon(ConnectedMultipoint):
         a += sum((0.5*(x[i+1]+x[i]) - x0) * (y[i+1] - y[i]) for i in range(len(x)-1))
         return abs(a) - sum(map(lambda p: p.area, self.subs))
 
+    @property
+    def centroid(self):
+        """ Return Polygon centroid as a Point, ignoring sub-polygons. """
+        x, y = self.coordinates
+        A = 0.5 * sum(x[i]*y[i+1] - x[i+1]*y[i] for i in range(-1, len(self)-1))
+        cx = sum((x[i] + x[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
+                    for i in range(-1, len(self)-1)) / (6*A)
+        cy = sum((y[i] + y[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
+                    for i in range(-1, len(self)-1)) / (6*A)
+        return Point((cx, cy), properties=self.properties, crs=self.crs)
+
     @staticmethod
     def _signcross(a, b):
         """ Return sign of 2D cross product a x b """

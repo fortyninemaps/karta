@@ -420,6 +420,22 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(sub, poly)
         return
 
+    def test_poly_centroid(self):
+        poly = Polygon([(0,0), (1,0), (1,1), (0,1)], properties={"name": "features1"})
+        c = poly.centroid
+        self.assertEqual(c.x, 0.5)
+        self.assertEqual(c.y, 0.5)
+        self.assertEqual(c.properties, poly.properties)
+        return
+
+    def test_poly_centroid2(self):
+        poly = Polygon([(0,0), (1,0), (2,0.5), (1,1), (0,1)], properties={"name": "features1"})
+        c = poly.centroid
+        self.assertAlmostEqual(c.x, 7/9)
+        self.assertEqual(c.y, 0.5)
+        self.assertEqual(c.properties, poly.properties)
+        return
+
     def test_ringedpoly_perimeter(self):
         self.assertEqual(round(self.ringed_poly.perimeter, 3), 50.246)
         return
