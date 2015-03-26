@@ -193,7 +193,7 @@ class CRSError(Exception):
 ############ Predefined CRS instances ############
 
 
-SphericalEarth = Spherical(6371.0)
+SphericalEarth = Spherical(6371009.0)
 LonLatWGS84 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)")
 LonLatNAD27 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
 LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")

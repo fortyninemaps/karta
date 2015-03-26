@@ -53,7 +53,7 @@ class TestCRS(unittest.TestCase):
     def test_SphericalForward1(self):
         lon1 = 0.0
         lat1 = 0.0
-        lon2, lat2, baz = crs.SphericalEarth.forward(lon1, lat1, 90.0, 5003.771699,
+        lon2, lat2, baz = crs.SphericalEarth.forward(lon1, lat1, 90.0, 5003778.767588614,
                                                      radians=False)
         self.assertAlmostEqual(lon2, 45.0, places=8)
         self.assertAlmostEqual(lat2, 0.0, places=8)
@@ -63,7 +63,7 @@ class TestCRS(unittest.TestCase):
     def test_SphericalForward2(self):
         lon1 = 30.0
         lat1 = 0.0
-        lon2, lat2, baz = crs.SphericalEarth.forward(lon1, lat1, 90.0, 5003.771699,
+        lon2, lat2, baz = crs.SphericalEarth.forward(lon1, lat1, 90.0, 5003778.767588614,
                                                      radians=False)
         self.assertAlmostEqual(lon2, 75.0, places=8)
         self.assertAlmostEqual(lat2, 0.0, places=8)
@@ -73,11 +73,11 @@ class TestCRS(unittest.TestCase):
     def test_SphericalForward3(self):
         lon1 = -120.0
         lat1 = 49.0
-        lon2, lat2, baz = crs.SphericalEarth.forward(lon1, lat1, 310.0, 2000.0,
+        lon2, lat2, baz = crs.SphericalEarth.forward(lon1, lat1, 310.0, 2000e3,
                                                      radians=False)
         self.assertAlmostEqual(lon2, -146.5118, places=4)
         self.assertAlmostEqual(lat2, 57.9998, places=4)
-        self.assertAlmostEqual(baz, 108.4889, places=4)
+        self.assertAlmostEqual(baz, 108.48895148, places=4)
         return
 
     def test_SphericalInverse1(self):
@@ -88,7 +88,7 @@ class TestCRS(unittest.TestCase):
         az, baz, dist = crs.SphericalEarth.inverse(lon1, lat1, lon2, lat2, radians=False)
         self.assertEqual(az, 270.0)
         self.assertEqual(baz, 90.0)
-        self.assertAlmostEqual(dist, 5003.771699, places=6)
+        self.assertAlmostEqual(dist, 5003778.767589, places=6)
         return
 
     def test_SphericalInverse2(self):
@@ -99,7 +99,7 @@ class TestCRS(unittest.TestCase):
         az, baz, dist = crs.SphericalEarth.inverse(lon1, lat1, lon2, lat2, radians=False)
         self.assertAlmostEqual(az, 15.5977, places=4)
         self.assertAlmostEqual(baz, 194.9583, places=4)
-        self.assertAlmostEqual(dist, 2533.568, places=2)
+        self.assertAlmostEqual(dist, 2533572.0748, places=2)
         return
 
     def test_SphericalInverse3(self):
@@ -110,7 +110,7 @@ class TestCRS(unittest.TestCase):
         az, baz, dist = crs.SphericalEarth.inverse(lon1, lat1, lon2, lat2, radians=False)
         self.assertAlmostEqual(az, 165.0417, places=4)
         self.assertAlmostEqual(baz, 344.4023, places=4)
-        self.assertAlmostEqual(dist, 2533.568, places=2)
+        self.assertAlmostEqual(dist, 2533572.0748, places=2)
         return
 
     def test_equal1(self):
