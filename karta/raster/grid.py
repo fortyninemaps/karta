@@ -285,7 +285,7 @@ class RegularGrid(Grid):
 
         t = self._transform
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
-        return RegularGrid(tnew, values)
+        return RegularGrid(tnew, values, crs=self.crs)
 
     def get_positions(self, x, y):
         """ Return the column and row indices for the point nearest
