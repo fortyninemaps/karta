@@ -63,7 +63,6 @@ def addfields_points(writer, points):
     if points.data is not None:
         keys = points.data.fields
         for key in keys:
-            #t = points.data.types[points.data.fields.index(key)]
             t = property_field_type(points.data.get(0)[key])
             dec = 0 if t not in ("N", "F", "O", "I") else 16
             writer.field(key, fieldType=t, size="100", decimal=dec)
@@ -118,6 +117,33 @@ def write_poly3(poly, fstem):
     w.save(fstem)
     return
 
+def shapefile_type(feature):
+    """ Match a feature with a shapefile type identifier """
+    if feature._geotype == "Multipoint":
+        if feature.rank == 2:
+            return shapefile.POINT
+        elif feature.rank == 3:
+            return shapefile.POINTZ
+        else:
+            raise RankError
+    elif feature._geotype == "Line":
+        if feature.rank == 2:
+            return shapefile.POLYLINE
+        elif feature.rank == 3:
+            return shapefile.POLYLINEZ
+        else:
+            raise RankError
+    elif feature._geotype == "Polygon":
+        if feature.rank == 2:
+            return shapefile.POLYGON
+        elif feature.rank == 3:
+            return shapefile.POLYGONZ
+        else:
+            raise RankError
+    else:
+        raise TypeError("Expected list with items of geotype 'Multipoint',"
+                        "'Line', or 'Polygon'")
+
 def write_shapefile(features, fstem):
     """ Write *features* to a shapefile. All features must be of the same type
     (i.e. Multipoints, Lines, Polygons). """
@@ -131,30 +157,11 @@ def write_shapefile(features, fstem):
 
     RankError = IOError("feature must be in two or three dimensions to write "
                         "as shapefile")
-    if features[0]._geotype == "Multipoint":
-        if features[0].rank == 2:
-            typ = shapefile.POINT
-        elif features[0].rank == 3:
-            typ = shapefile.POINTZ
-        else:
-            raise RankError
-    elif features[0]._geotype == "Line":
-        if features[0].rank == 2:
-            typ = shapefile.POLYLINE
-        elif features[0].rank == 3:
-            typ = shapefile.POLYLINEZ
-        else:
-            raise RankError
-    elif features[0]._geotype == "Polygon":
-        if features[0].rank == 2:
-            typ = shapefile.POLYGON
-        elif features[0].rank == 3:
-            typ = shapefile.POLYGONZ
-        else:
-            raise RankError
 
-    w = shapefile.Writer(shapeType=typ)
-    if typ in (shapefile.POINT, shapefile.POINTZ):
+    shapeType = shapefile_type(features[0])
+
+    w = shapefile.Writer(shapeType=shapeType)
+    if shapeType in (shapefile.POINT, shapefile.POINTZ):
 
         # add geometry
         for feature in features:
@@ -189,7 +196,6 @@ def write_shapefile(features, fstem):
 
         # add geometry
         for feature in features:
-            #print(feature)
             w.poly([feature.vertices])
 
         # add records
@@ -197,16 +203,16 @@ def write_shapefile(features, fstem):
         keys = set(features[0].properties.keys())   # for testing similarity
         keylist = list(keys)                        # preserves order
 
-        if len(keys) != 0 and all(keys == set(f.data.keys()) for f in features[1:]):
+        if len(keys) != 0 and all(keys == set(f.properties.keys()) for f in features[1:]):
             for key in features[0].properties:
                 value = features[0].properties[key]
-                typ = property_field_type(value)
+                propertyType = property_field_type(value)
                 length = "100"
-                w.field(key.upper(), typ, length)
+                w.field(key.upper(), propertyType, length)
             for (i, feature) in enumerate(features):
                 values = []
                 for key in keylist:
-                    value.append(feature.properties[key])
+                    values.append(feature.properties[key])
                 w.record(str(i), *values)
         else:
             for (i, feature) in enumerate(features):
