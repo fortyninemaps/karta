@@ -172,7 +172,7 @@ class Proj4CRS(CRS):
     @property
     def initstring_proj(self):
         """ Return the proj.4 init string defining the projection. """
-        return self._proj.srs
+        return self.project.srs
 
     @property
     def initstring_geod(self):
