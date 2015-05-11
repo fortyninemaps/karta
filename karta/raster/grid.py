@@ -409,13 +409,15 @@ class RegularGrid(Grid):
         -----------
         line : `geometry.Line`-like object describing the sampling path
 
-        resolution : sample spacing
+        resolution : sample spacing, taken to be the minimum grid resolution by
+        default
 
         Additional keyword arguments passed to `RegularGrid.sample` (e.g. to
         specify sampling method)
 
         Returns:
         --------
+        vertices : list of (x, y) tuples
         profile : ndarray
         """
         if resolution is None:
