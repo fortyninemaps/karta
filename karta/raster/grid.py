@@ -166,7 +166,7 @@ class RegularGrid(Grid):
         extents = self.get_extents(reference="edge")
         return extents[0], extents[2], extents[1], extents[3]
 
-    def get_extents(self, reference='center'):
+    def get_extents(self, reference='center', crs=None):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
         ymax). *reference* is a string and may be 'center' or 'edge'. """
         if reference == 'center':
@@ -183,15 +183,27 @@ class RegularGrid(Grid):
 
         sgn = lambda a: 0 if a==0 else a/abs(a)
         if sgn(dx) == sgn(sx):
-            xrng = dx*(nx+n) + sx*(ny+n)
+            x1 = x0 + dx*(nx+n) + sx*(ny+n)
         else:
-            xrng = dx*(nx+n) - sx*(ny+n)
+            x1 = x0 + dx*(nx+n) - sx*(ny+n)
 
         if sgn(dy) == sgn(sy):
-            yrng = dy*(ny+n) + sy*(nx+n)
+            y1 = y0 + dy*(ny+n) + sy*(nx+n)
         else:
-            yrng = dy*(ny+n) - sy*(nx+n)
-        return min(x0, x0+xrng), max(x0, x0+xrng), min(y0, y0+yrng), max(y0, y0+yrng)
+            y1 = y0 + dy*(ny+n) - sy*(nx+n)
+
+        if crs is None or (crs == self.crs):
+            (a, b, c, d) = min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1)
+        else:
+            xg0, yg0 = crs.project(*self.crs.project(x0, y0, inverse=True))
+            xg1, yg1 = crs.project(*self.crs.project(x0, y1, inverse=True))
+            xg2, yg2 = crs.project(*self.crs.project(x1, y0, inverse=True))
+            xg3, yg3 = crs.project(*self.crs.project(x1, y1, inverse=True))
+            a = min(xg0, xg1, xg2, xg3)
+            b = max(xg0, xg1, xg2, xg3)
+            c = min(yg0, yg1, yg2, yg3)
+            d = max(yg0, yg1, yg2, yg3)
+        return a, b, c, d
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
         """ Return a clipped version of grid constrained to a bounding box
