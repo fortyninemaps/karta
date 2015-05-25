@@ -210,13 +210,17 @@ class RegularGrid(Grid):
         defined by *xmin*, *xmax*, *ymin*, *ymax*. If *crs* is not provided, it
         is assumed that the bounding box shares the same coordinate system as
         the grid. """
-        if crs is not None:
-            xg, yg = crs.project([xmin, xmax], [ymin, ymax], inverse=True)
-            x, y = self.crs.project(xg, yg)
-            xmin, xmax = x
-            ymin, ymax = y
-        else:
+        if crs is None:
             crs = self.crs
+        else:
+            xg, yg = crs.project([xmin, xmin, xmax, xmax],
+                                 [ymin, ymax, ymin, ymax],
+                                 inverse=True)
+            x, y = self.crs.project(xg, yg)
+            xmin = min(x)
+            xmax = max(x)
+            ymin = min(y)
+            ymax = max(y)
 
         ll = self.get_indices(xmin, ymin)
         lr = self.get_indices(xmax, ymin)
