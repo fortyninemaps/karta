@@ -91,6 +91,20 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(self.rast.get_extents(reference='edge'), ereg)
         return
 
+    def test_get_extents_crs(self):
+        pe = karta.raster.peaks(n=49)
+        crs = karta.crs.Proj4CRS("+proj=utm +zone=12 +north=True", "+ellps=WGS84")
+        rast_utm12N = karta.RegularGrid((0.0, 0.0, 10000.0, 10000.0, 0.0, 0.0),
+                                        values=pe,
+                                        crs=crs)
+        a,b,c,d = rast_utm12N.get_extents(reference='center',
+                                          crs=karta.crs.LonLatWGS84)
+        self.assertAlmostEqual(a, -115.50152876)
+        self.assertAlmostEqual(b, -111.17973465)
+        self.assertAlmostEqual(c, 0.0)
+        self.assertAlmostEqual(d, 4.3426056159)
+        return
+
     def test_minmax(self):
         minmax = self.rast.minmax()
         self.assertEqual(minmax, (-6.5466445243204294, 8.075173545159231))
