@@ -427,9 +427,14 @@ class MultipointBase(Geometry):
         for i, vertex in enumerate(self.vertices):
             print("{0}\t{1}".format(i, vertex))
 
-    def get_vertices(self):
-        """ Return vertices as a list of tuples. """
-        return np.array(self.vertices)
+    def get_vertices(self, crs=None):
+        """ Return vertices as an array. """
+        if (crs is None) or (crs is self.crs):
+            return np.array(self.vertices)
+        else:
+            vertices = [crs.project(*self.crs.project(*v, inverse=True))
+                        for v in self.vertices]
+            return np.array(vertices)
 
     def get_coordinate_lists(self, crs=None):
         """ Return horizontal coordinate lists, optionally projected to *crs*.
@@ -539,19 +544,24 @@ class MultipointBase(Geometry):
         idx = np.argmin(distances)
         return self[idx]
 
-    def get_extents(self):
+    def get_extents(self, crs=None):
         """ Calculate a bounding box. """
         def gen_minmax(G):
             """ Get the min/max from a single pass through a generator. """
-            mn = mx = next(G)
-            for x in G:
-                mn = min(mn, x)
-                mx = max(mx, x)
-            return mn, mx
+            (xmin, ymin) = (xmax, ymax) = next(G)
+            for (x, y) in G:
+                xmin = min(xmin, x)
+                xmax = max(xmax, x)
+                ymin = min(ymin, y)
+                ymax = max(ymax, y)
+            return xmin, xmax, ymin, ymax
 
-        xmn, xmx = gen_minmax(c[0] for c in self.vertices)
-        ymn, ymx = gen_minmax(c[1] for c in self.vertices)
-        return xmn, xmx, ymn, ymx
+        if (crs is None) or (crs == self.crs):
+            xmin, xmax, ymin, ymax = gen_minmax(c for c in self.vertices)
+        else:
+            fprj = lambda c: crs.project(*self.crs.project(*c, inverse=True))
+            xmin, xmax, ymin, ymax = gen_minmax(fprj(c) for c in self.vertices)
+        return xmin, xmax, ymin, ymax
 
     def any_within_poly(self, poly):
         """ Return whether any vertices are inside *poly* """

@@ -349,6 +349,11 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(self.poly.get_extents(), (0.0, 6.0, 1.0, 8.0))
         return
 
+    def test_poly_extents_foreign_crs(self):
+        x, y = zip(*self.poly.get_vertices(crs=NSIDCNorth))
+        self.assertEqual(self.poly.get_extents(NSIDCNorth), (min(x), max(x), min(y), max(y)))
+        return
+
     def test_poly_length(self):
         self.assertEqual(self.poly.length, 19.430647008220866)
         return
