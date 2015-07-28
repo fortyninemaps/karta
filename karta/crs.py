@@ -70,7 +70,10 @@ class Cartesian(CRS):
         return az, baz, dist
 
 class GeographicalCRS(CRS):
-    """ Reference systems with longitude-latitude (θ, φ) coordinates """
+    """ Reference systems with longitude-latitude (θ, φ) coordinates.
+
+    `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
+    """
     def __init__(self, spheroid, name):
         self._geod = pyproj.Geod(spheroid)
         self.name = name
@@ -147,8 +150,12 @@ class Spherical(GeographicalCRS):
 
 class Proj4CRS(CRS):
     """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
-    or a custom projection function """
+    or a custom projection function.
 
+    `proj` is a dictionary used to define an instance of `pyproj.Proj`
+
+    `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
+    """
     def __init__(self, proj, spheroid, name=None):
         self.project = pyproj.Proj(proj)
         self._geod = pyproj.Geod(spheroid)
