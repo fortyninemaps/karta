@@ -13,7 +13,7 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
-from ..crs import Cartesian, SphericalEarth, CRSError
+from ..crs import GeographicalCRS, Cartesian, SphericalEarth, CRSError
 from .metadata import Metadata, Indexer
 from . import _vectorgeo
 
@@ -973,6 +973,43 @@ class Polygon(ConnectedMultipoint):
                 for seg in self.segments)
         return s > 0
 
+    def ispolar(self, pole=None):
+        """ Return True if polygon contains one pole. If the polygon contains
+        neither or both poles, returns False. 
+        
+        Currently expects geographical coordinates with longitude ranging from
+        (-180, 180].
+        """
+
+        if not isinstance(self.crs, GeographicalCRS):
+            raise CRSError("ispolar defined only for geographical CRS")
+
+        if pole is None:
+            pole = Point((0, 90), crs=SphericalEarth)
+
+        def sign(a):
+            if a == 0.0:
+                return 1
+            else:
+                return a/abs(a)
+
+        lon0 = self[-1].vertex[0]
+        sum_angle = 0.0
+
+        for lon1, _ in self.vertices:
+
+            if sign(lon0) == -sign(lon1):       # Dateline
+                #sum_angle += 360.0 + lon1 - lon0
+                sum_angle += (lon1 + 180.0) + (180.0 - lon0)
+
+            else:
+                sum_angle += lon1 - lon0
+
+            print(lon0, lon1, sum_angle)
+            lon0 = lon1
+
+        return True if abs(sum_angle) > 1e-4 else False
+
     @property
     def segments(self):
         """ Returns an generator of adjacent line segments.
@@ -1030,7 +1067,10 @@ class Polygon(ConnectedMultipoint):
 
     def contains(self, pt):
         """ Returns True if pt is inside or on the boundary of the polygon, and
-        False otherwise. Uses a crossing number scheme. """
+        False otherwise. Uses a crossing number scheme.
+
+        Behaviour may not be defined for polar geographical polygons.
+        """
         cnt = 0
         x, y = pt[0], pt[1]
         for seg in self.segment_tuples:

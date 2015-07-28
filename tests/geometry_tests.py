@@ -8,6 +8,7 @@ import numpy as np
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.vector.geometry import affine_matrix
 from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, NSIDCNorth, Proj4CRS
+from karta.crs import CRSError
 
 class TestGeometry(unittest.TestCase):
 
@@ -343,6 +344,23 @@ class TestGeometry(unittest.TestCase):
     def test_poly_counterclockwise(self):
         p = Polygon([(0,0), (1,0), (1,1), (0,1)])
         self.assertFalse(p.isclockwise())
+        return
+
+    def test_poly_polar(self):
+        p = Polygon([(0.0, 80.0), (30.0, 80.0), (60.0, 80.0), (90.0, 80.0),
+                     (120.0, 80.0), (150.0, 80.0), (180.0, 80.0), (-150.0, 80.0),
+                     (-120.0, 80.0), (-90.0, 80.0), (-60.0, 80.0), (-30.0, 80.0)],
+                    crs=SphericalEarth)
+        self.assertTrue(p.ispolar())
+
+        p = Polygon([(45.0, 30.0), (40.0, 25.0), (45.0, 20.0), (35.0, 25.0)],
+                    crs=SphericalEarth)
+        self.assertFalse(p.ispolar())
+
+
+        p = Polygon([(45.0, 30.0), (40.0, 25.0), (45.0, 20.0), (35.0, 25.0)],
+                    crs=Cartesian)
+        self.assertRaises(CRSError, p.ispolar)
         return
 
     def test_poly_extents(self):
