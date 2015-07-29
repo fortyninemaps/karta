@@ -32,13 +32,13 @@ cdef inline double dbl_max(double a, double b): return a if a >= b else b
 cdef inline double dbl_min(double a, double b): return a if a <= b else b
 
 cdef bool isbetween_inc(double a, double b, double c):
-    return b <= dbl_max(a, c) and b >= dbl_min(a, c)
+    return dbl_min(a, c) <= b <= dbl_max(a, c)
 
 cdef bool isbetween_incl(double a, double b, double c):
-    return b < dbl_max(a, c) and b >= dbl_min(a, c)
+    return dbl_min(a, c) <= b < dbl_max(a, c)
 
 cdef bool isbetween_incr(double a, double b, double c):
-    return b <= dbl_max(a, c) and b > dbl_min(a, c)
+    return dbl_min(a, c) < b <= dbl_max(a, c)
 
 ctypedef bool (*isbetween_t)(double, double, double)
 
@@ -98,23 +98,20 @@ def intersection(double x0, double x1, double x2, double x3,
         return (np.nan, np.nan)
 
 def intersects_cn(double xp, double yp, double x0, double x1, double y0, double y1):
-    """ Test whether a horizontal ray emanating left from a point (xp, yp)
-    crosses a line segment. Used to implement a crossing number membership
-    test.
+    """ Test whether a vertical ray emanating up from a point (xp, yp) crosses
+    a line segment [(x0, y0), (x1, y1)]. Used to implement a crossing number
+    membership test.
     """
-    cdef double m0, m1
-    cdef double x, y
+    cdef double m, y
 
-    if x1 != x0:
-        m = float(y1-y0) / float(x1-x0)
+    if x0 != x1:
+        m = (y1-y0) / (x1-x0)
     else:
-        m = 1e37
-    if m == 0.0:
         return False
 
-    x = float(yp-y0) / m  + x0
+    y = y0 + m * (xp - x0)
 
-    if x < xp:
+    if y < yp:
         return False
     
     cdef bool iswithinx
@@ -122,22 +119,16 @@ def intersects_cn(double xp, double yp, double x0, double x1, double y0, double 
     iswithinx = False
     iswithiny = False
 
-    cdef isbetween_t isbetween
-    if m > 0:
-        isbetween = isbetween_incl
-    else:
-        isbetween = isbetween_incr
+    if m > 0.0 and isbetween_incr(y0, y, y1):
+        iswithiny = True
+    elif isbetween_incl(y0, y, y1):
+        iswithiny = True
+    elif abs(y0-y1) < 1e-15 and abs(y-y0) < 1e-15:
+        iswithiny = True
 
-    if abs(x1 - x0) >= 1e-15 and isbetween(x0, x, x1):
-        iswithinx = True
-    elif abs(x - x0) < 1e-15:
+    if isbetween_incr(x0, xp, x1):
         iswithinx = True
 
-    if iswithinx:
-        if abs(y1 - y0) >= 1e-15 and isbetween(y0, yp, y1):
-            iswithiny = True
-        elif abs(yp - y0) < 1e-15:
-            iswithiny = True
     return iswithinx and iswithiny
 
 cdef tuple cproj2(tuple u, tuple v):

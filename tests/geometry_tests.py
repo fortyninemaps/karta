@@ -377,15 +377,13 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_poly_contains1(self):
-        # trivial case
+        # trivial cases
         pt0 = Point((-0.5, 0.92))
-        pt1 = Point((0.125, 0.875))
         self.assertFalse(self.unitsquare.contains(pt0))
-        self.assertTrue(self.unitsquare.contains(pt1))
-        return
 
-    def test_poly_contains2(self):
-        # trivial but more interesting case
+        pt1 = Point((0.125, 0.875))
+        self.assertTrue(self.unitsquare.contains(pt1))
+
         x = np.arange(-4, 5)
         y = (x)**2
         line = Line([(x_,y_) for x_,y_ in zip(x, y)], crs=Cartesian)
@@ -394,24 +392,26 @@ class TestGeometry(unittest.TestCase):
 
         self.assertEqual(list(filter(bbox.contains, line)),
                          [Point((-1, 1)), Point((0, 0)), Point((1, 1))])
+        return
 
-    def test_poly_contains3(self):
+    def test_poly_contains2(self):
         # test some hard cases
         diamond = Polygon([(0,0), (1,1), (2,0), (1, -1)])
         self.assertFalse(diamond.contains(Point((2, 1))))
         self.assertTrue(diamond.contains(Point((1, 0))))
         self.assertFalse(diamond.contains(Point((2.5, 0))))
+        self.assertFalse(diamond.contains(Point((0, -1))))
         self.assertFalse(diamond.contains(Point((2, -1))))
         return
 
-    def test_poly_contains4(self):
-        # case where point is on an edge (should return true)
-        square = Polygon([(0,0), (1,0), (1,1), (0,1)])
-        pt = Point([0.5, 0])
-        self.assertTrue(square.contains(pt))
-        return
+    #def test_poly_contains3(self):
+    #    # case where point is on an edge (should return true)
+    #    square = Polygon([(0,0), (1,0), (1,1), (0,1)])
+    #    self.assertTrue(square.contains(Point([0.5, 0])))
+    #    self.assertTrue(square.contains(Point([0, 0.5])))
+    #    return
 
-    def test_poly_contains5(self):
+    def test_poly_contains4(self):
         # hippie star
         theta = np.linspace(0, 2*np.pi, 361)[:-1]
         r = 10*np.sin(theta*8) + 15
