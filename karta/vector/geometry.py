@@ -999,13 +999,11 @@ class Polygon(ConnectedMultipoint):
         for lon1, _ in self.vertices:
 
             if sign(lon0) == -sign(lon1):       # Dateline
-                #sum_angle += 360.0 + lon1 - lon0
-                sum_angle += (lon1 + 180.0) + (180.0 - lon0)
+                sum_angle += 360.0 + lon1 - lon0
 
             else:
                 sum_angle += lon1 - lon0
 
-            print(lon0, lon1, sum_angle)
             lon0 = lon1
 
         return True if abs(sum_angle) > 1e-4 else False
@@ -1071,6 +1069,13 @@ class Polygon(ConnectedMultipoint):
 
         Behaviour may not be defined for polar geographical polygons.
         """
+        if isinstance(self.crs, GeographicalCRS):
+            if self.ispolar():
+                raise NotImplementedError(
+                    "Membership tests on polar geographical polygons not "
+                    "implemented. As a workaround, transform to an appropriate "
+                    "ProjectedCRS first.")
+
         cnt = 0
         x, y = pt[0], pt[1]
         for seg in self.segment_tuples:
