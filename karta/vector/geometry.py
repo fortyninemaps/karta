@@ -428,7 +428,7 @@ class MultipointBase(Geometry):
         if (crs is None) or (crs is self.crs):
             return np.array(self.vertices)
         else:
-            vertices = [crs.project(*self.crs.project(*v, inverse=True))
+            vertices = [crs.project(*self.crs.project(*v[:2], inverse=True))
                         for v in self.vertices]
             return np.array(vertices)
 
@@ -992,7 +992,9 @@ class Polygon(ConnectedMultipoint):
         lon0 = self[-1].vertex[0]
         sum_angle = 0.0
 
-        for lon1, _ in self.vertices:
+        for vertex in self.vertices:
+
+            lon1 = vertex[0]
 
             if sign(lon0) == -sign(lon1):       # Dateline
                 sum_angle += 360.0 + lon1 - lon0

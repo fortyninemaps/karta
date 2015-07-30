@@ -353,6 +353,10 @@ class TestGeometry(unittest.TestCase):
                     crs=SphericalEarth)
         self.assertTrue(p.ispolar())
 
+        p = Polygon([(0.0, 85.0, 0.0), (90.0, 85.0, 0.0), (180.0, 85.0, 0.0), (-90.0, 85.0, 0.0)],
+                    crs=SphericalEarth)
+        self.assertTrue(p.ispolar())
+
         p = Polygon([(45.0, 30.0), (40.0, 25.0), (45.0, 20.0), (35.0, 25.0)],
                     crs=SphericalEarth)
         self.assertFalse(p.ispolar())
