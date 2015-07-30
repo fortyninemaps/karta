@@ -50,4 +50,4 @@ the old Polygon.
 .. code:: python
 
     greenland_buffered = from_shape(shapely_poly_buffered)
-    greenland_buffered._crs = greenland.crs
+    greenland_buffered.crs = greenland.crs

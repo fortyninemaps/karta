@@ -53,7 +53,7 @@ class TestShapefile(unittest.TestCase):
 
     def assertGeomEqual(self, this, that):
         self.assertTrue(np.all(this.get_vertices() == that.get_vertices()))
-        self.assertEqual(this._crs, that._crs)
+        self.assertEqual(this.crs, that.crs)
         return
 
     def test_writepoints(self):

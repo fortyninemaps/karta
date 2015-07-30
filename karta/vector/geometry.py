@@ -29,26 +29,22 @@ class Geometry(object):
 
     def __init__(self, crs=Cartesian):
         self.properties = {}
-        self._crs = crs
+        self.crs = crs
         return
 
     @staticmethod
     def _distance(pos0, pos1):
         """ Generic method for calculating distance between positions that
         respects CRS """
-        if pos0._crs == pos1._crs:
+        if pos0.crs == pos1.crs:
             (x0,y0) = pos0.x, pos0.y
             (x1,y1) = pos1.x, pos1.y
-            ((x0,x1), (y0,y1)) = pos0._crs.project([x0, x1], [y0, y1],
-                                                   inverse=True)
-            _, _, dist = pos0._crs.inverse(x0, y0, x1, y1, radians=False)
+            ((x0,x1), (y0,y1)) = pos0.crs.project([x0, x1], [y0, y1],
+                                                  inverse=True)
+            _, _, dist = pos0.crs.inverse(x0, y0, x1, y1, radians=False)
         else:
             raise CRSError("Positions must use the same CRS")
         return dist
-
-    @property
-    def crs(self):
-        return self._crs
 
     @property
     def d(self):
@@ -116,7 +112,7 @@ class Point(Geometry):
             return (tuple(self.vertex) == tuple(other.vertex)) and \
                    (self.data == other.data) and \
                    (self.properties == other.properties) and \
-                   (self._crs == other._crs)
+                   (self.crs == other.crs)
         except AttributeError:
             return False
 
@@ -141,7 +137,7 @@ class Point(Geometry):
 
     def get_vertex(self, crs=None):
         """ Return the Point vertex as a tuple. """
-        if crs is None or crs==self._crs:
+        if crs is None or crs==self.crs:
             return self.vertex
         else:
             vg = self.crs.project(self.x, self.y, inverse=True)
@@ -164,14 +160,14 @@ class Point(Geometry):
         if self.coordsxy() == other.coordsxy():
             az = np.nan
 
-        elif self._crs == other._crs:
-            lon0, lat0 = self._crs.project(self.x, self.y, inverse=True)
-            lon1, lat1 = self._crs.project(other.x, other.y, inverse=True)
-            az, _, _ = self._crs.inverse(lon0, lat0, lon1, lat1)
+        elif self.crs == other.crs:
+            lon0, lat0 = self.crs.project(self.x, self.y, inverse=True)
+            lon1, lat1 = self.crs.project(other.x, other.y, inverse=True)
+            az, _, _ = self.crs.inverse(lon0, lat0, lon1, lat1)
 
         else:
             raise CRSError("Azimuth undefined for points in CRS {0} and "
-                           "{1}".format(self._crs, other._crs))
+                           "{1}".format(self.crs, other.crs))
         return az
 
     def walk(self, distance, direction, radians=False):
@@ -181,18 +177,18 @@ class Point(Geometry):
             distance (float): distance to walk
             direction (float): walk azimuth (clockwise with "north" at 0)
         """
-        xg1, yg1 = self._crs.project(self.x, self.y, inverse=True)
-        xg2, yg2, _ = self._crs.forward(xg1, yg1, direction, distance,
+        xg1, yg1 = self.crs.project(self.x, self.y, inverse=True)
+        xg2, yg2, _ = self.crs.forward(xg1, yg1, direction, distance,
                                         radians=radians)
         x, y = self.crs.project(xg2, yg2)
         return Point((x, y), properties=self.properties, data=self.data,
-                     crs=self._crs, copy_metadata=False)
+                     crs=self.crs, copy_metadata=False)
 
     def distance(self, other):
         """ Returns a distance to another Point. If the coordinate system is
         geographical and a third (z) coordinate exists, it is assumed to have
         the same units as the real-world horizontal distance (i.e. meters). """
-        if self._crs != other._crs:
+        if self.crs != other.crs:
             raise CRSError("Points must share the same coordinate system.")
         flat_dist = self._distance(self, other)
         if 2 == self.rank == other.rank:
@@ -270,7 +266,7 @@ class MultipointBase(Geometry):
                 # Consolidate a list of points
                 rank = pts[0].rank
                 crs = pts[0].crs
-                if len(pts) != 1 and any(crs != pt._crs for pt in pts[1:]):
+                if len(pts) != 1 and any(crs != pt.crs for pt in pts[1:]):
                     raise CRSError("All points must share the same CRS")
                 if len(pts) != 1 and any(rank != pt.rank for pt in pts[1:]):
                     raise GInitError("Input must have consistent rank")
@@ -291,7 +287,7 @@ class MultipointBase(Geometry):
 
                 self.vertices = [pt.vertex for pt in pts]
                 self.rank = rank
-                self._crs = crs
+                self.crs = crs
 
             else:
 
@@ -340,12 +336,12 @@ class MultipointBase(Geometry):
             if self.data is not None:
                 d = Metadata([self.data[key]], fields=self.data._fields)
             return Point(self.vertices[key], data=d, properties=self.properties,
-                         crs=self._crs)
+                         crs=self.crs)
         elif isinstance(key, slice):
             if self.data is not None:
                 d = Metadata(self.data[key], fields=self.data._fields)
             return type(self)(self.vertices[key], data=d,
-                              properties=self.properties, crs=self._crs)
+                              properties=self.properties, crs=self.crs)
         else:
             raise GGeoError('Index must be an integer or a slice object')
 
@@ -393,7 +389,7 @@ class MultipointBase(Geometry):
                    (self.vertices == other.vertices) and \
                    (self.data == other.data) and \
                    (self.properties == other.properties) and \
-                   (self._crs == other._crs)
+                   (self.crs == other.crs)
         except (AttributeError, TypeError):
             return False
 
@@ -443,15 +439,15 @@ class MultipointBase(Geometry):
             x, y = tuple(zip(*self.vertices))
         else:
             x, y, _ = tuple(zip(*self.vertices))
-        if crs is not None and (crs != self._crs):
+        if crs is not None and (crs != self.crs):
             xg, yg = self.crs.project(x, y, inverse=True)
             x, y = crs.project(xg, yg)
         return x, y
 
     def append(self, point):
         """ Add a vertex to self.vertices. """
-        if self._crs != point._crs:
-            raise crs.CRSError("CRS mismatch ({0} != {1})".format(self._crs, point._crs))
+        if self.crs != point.crs:
+            raise crs.CRSError("CRS mismatch ({0} != {1})".format(self.crs, point.crs))
         if self.rank == point.rank:
             self.vertices.append(point.vertex)
             if self.data is not None:
@@ -511,7 +507,7 @@ class MultipointBase(Geometry):
         for x,y in self.get_vertices():
             vertices.append(tuple(np.dot(M, [x, y, 1])[:2]))
         return type(self)(vertices, data=self.data, properties=self.properties,
-                          crs=self._crs)
+                          crs=self.crs)
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
@@ -521,7 +517,7 @@ class MultipointBase(Geometry):
         else:
             data = None
         subset = type(self)(vertices, data=data, properties=self.properties,
-                            crs=self._crs, copy_metadata=False)
+                            crs=self.crs, copy_metadata=False)
         return subset
 
     def flat_distances_to(self, pt):
@@ -636,7 +632,7 @@ class MultipointBase(Geometry):
         crs : coordinate reference system
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
-        writer = geojson.GeoJSONWriter(self, crs=self._crs, **kwargs)
+        writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
         return writer.print_json()
 
     def to_geojson(self, f, **kwargs):
@@ -655,7 +651,7 @@ class MultipointBase(Geometry):
                 fobj = open(f, "w")
             else:
                 fobj = f
-            writer = geojson.GeoJSONWriter(self, crs=self._crs, **kwargs)
+            writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
             writer.write_json(fobj)
         finally:
             if not hasattr(f, "write"):
@@ -720,7 +716,7 @@ class ConnectedMultipoint(MultipointBase):
     @property
     def length(self):
         """ Returns the length of the line/boundary. """
-        points = [Point(v, crs=self._crs) for v in self.vertices]
+        points = [Point(v, crs=self.crs) for v in self.vertices]
         distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
         return sum(distances)
 
@@ -756,7 +752,7 @@ class ConnectedMultipoint(MultipointBase):
         for vertex in interx:
             if np.nan not in vertex:
                 interx_points.append(Point(vertex, properties=self.properties,
-                                           crs=self._crs))
+                                           crs=self.crs))
         return Multipoint(interx_points)
 
     def shortest_distance_to(self, pt):
@@ -767,13 +763,13 @@ class ConnectedMultipoint(MultipointBase):
         vertices = list(zip(*self.crs.project(*self.coordinates, inverse=True)))
         segments = zip(vertices[:-1], vertices[1:])
 
-        if self._crs == Cartesian:
+        if self.crs == Cartesian:
             func = _vecgeo.pt_nearest_planar
             func = lambda ptseg: _vecgeo.pt_nearest_planar(ptseg[0],
                                             ptseg[1][0], ptseg[1][1]) 
         else:
-            fwd = self._crs.forward
-            inv = self._crs.inverse
+            fwd = self.crs.forward
+            inv = self.crs.inverse
             func = lambda ptseg: _vecgeo.pt_nearest_proj(fwd, inv, ptseg[0],
                                             ptseg[1][0], ptseg[1][1], tol=0.01)
 
@@ -792,13 +788,13 @@ class ConnectedMultipoint(MultipointBase):
         vertices = list(zip(*self.crs.project(*self.coordinates, inverse=True)))
         segments = zip(vertices[:-1], vertices[1:])
 
-        if self._crs == Cartesian:
+        if self.crs == Cartesian:
             func = _vecgeo.pt_nearest_planar
             func = lambda ptseg: _vecgeo.pt_nearest_planar(ptseg[0],
                                             ptseg[1][0], ptseg[1][1]) 
         else:
-            fwd = self._crs.forward
-            inv = self._crs.inverse
+            fwd = self.crs.forward
+            inv = self.crs.inverse
             func = lambda ptseg: _vecgeo.pt_nearest_proj(fwd, inv, ptseg[0],
                                             ptseg[1][0], ptseg[1][1], tol=0.01)
 
@@ -809,7 +805,7 @@ class ConnectedMultipoint(MultipointBase):
             if d < mindist or (i == 0):
                 minpt = pt
                 mindist = d
-        return Point(minpt, crs=self._crs)
+        return Point(minpt, crs=self.crs)
 
     def within_distance(self, pt, distance):
         """ Test whether a point is within *distance* of a ConnectedMultipoint. """
@@ -904,7 +900,7 @@ class Line(ConnectedMultipoint):
     def to_polygon(self):
         """ Returns a polygon. """
         return Polygon(self.vertices, data=self.data, properties=self.properties,
-                       crs=self._crs, copy_metadata=True)
+                       crs=self.crs, copy_metadata=True)
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
@@ -946,7 +942,7 @@ class Polygon(ConnectedMultipoint):
                 else:
                     d = self.data[key]
                 return Line(self.vertices[key], data=d,
-                            properties=self.properties, crs=self._crs)
+                            properties=self.properties, crs=self.crs)
         return super(Polygon, self).__getitem__(key)
 
     @property
@@ -964,7 +960,7 @@ class Polygon(ConnectedMultipoint):
         else:
             data = Metadata([self.data[i] for i in idxs], fields=self.data.fields)
         subset = Line(vertices, data=data, properties=self.properties,
-                      crs=self._crs, copy_metadata=False)
+                      crs=self.crs, copy_metadata=False)
         return subset
 
     def isclockwise(self):
@@ -1131,8 +1127,8 @@ def points_to_multipoint(points):
     """ Merge *points* into a Multipoint instance. Point properties are stored
     as Multipoint data. All points must use the same CRS.
     """
-    crs = points[0]._crs
-    if not all(pt._crs == crs for pt in points):
+    crs = points[0].crs
+    if not all(pt.crs == crs for pt in points):
         raise CRSError("All points must share the same CRS")
 
     keys = list(points[0].properties.keys())

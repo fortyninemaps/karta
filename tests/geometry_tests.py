@@ -256,7 +256,7 @@ class TestGeometry(unittest.TestCase):
             self.assertAlmostEqual(a_, b_, places=5)
         self.assertEqual(a.data, b.data)
         self.assertEqual(a.properties, b.properties)
-        self.assertEqual(a._crs, b._crs)
+        self.assertEqual(a.crs, b.crs)
         return
 
     def test_connected_multipoint_nearest_on_boundary2(self):

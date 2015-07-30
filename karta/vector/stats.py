@@ -10,6 +10,8 @@ except ImportError:
     pass
 import random
 
+from ..crs import GeographicalCRS
+
 class VariogramFunction(object):
     """ Base class for variogram functions, which can be composed
     through summation. """
@@ -95,7 +97,7 @@ def estimate_vario(mp, npoints=2000, max_dist=None, interval=None):
     verts = mp.get_vertices()[irand]
     z = np.array([mp.data[i] for i in irand])
 
-    if mp._crs == "lonlat":
+    if isinstance(mp.crs, GeographicalCRS):
         import warnings
         import pyproj
         warnings.warn("For improved performance, consider projecting data to an "

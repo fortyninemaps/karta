@@ -77,7 +77,7 @@ class GeoJSONWriter(object):
             self.typestr = type_equiv[gpobj._geotype]
         else:
             raise TypeError('Input object not a recognized geometry')
-        crs = gpobj._crs
+        crs = gpobj.crs
         bbox = kwargs.get('bbox', None)
         urn = kwargs.get('urn', None)
 

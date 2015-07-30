@@ -13,10 +13,6 @@ class Grid(object):
     """
 
     @property
-    def crs(self):
-        return getattr(self, "_crs", None)
-
-    @property
     def nodata(self):
         return self._nodata
 
@@ -89,9 +85,9 @@ class RegularGrid(Grid):
             self.values = np.atleast_2d([np.nan])
 
         if crs is None:
-            self._crs = Cartesian
+            self.crs = Cartesian
         else:
-            self._crs = crs
+            self.crs = crs
 
         if nodata_value is None:
             self._nodata = get_nodata(self.values.dtype.type)
