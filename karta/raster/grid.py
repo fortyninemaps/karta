@@ -289,6 +289,10 @@ class RegularGrid(Grid):
             rx, ry = dx / dx0, dy / dy0
             I = np.around(np.arange(ry/2, self.values.shape[0], ry)).astype(int)
             J = np.around(np.arange(rx/2, self.values.shape[1], rx)).astype(int)
+            if I[-1] == self.values.shape[0]:
+                I = I[:-1]
+            if J[-1] == self.values.shape[1]:
+                J = J[:-1]
             JJ, II = np.meshgrid(J, I)
             values = self.values[II, JJ]
         else:
