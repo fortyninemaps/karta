@@ -469,7 +469,7 @@ class RegularGrid(Grid):
         flexible data layouts.
         """
         Xc, Yc = self.center_coords()
-        return WarpedGrid(Xc, Yc, self.values.copy())
+        return WarpedGrid(Xc, Yc, self.values.copy(), crs=self.crs)
 
     def gtiffwrite(self, fnm):
         """ Write data to a GeoTiff file using GDAL """
@@ -535,7 +535,7 @@ class WarpedGrid(Grid):
     spacing is not necessarily constant.
     """
 
-    def __init__(self, X, Y, values, nodata_value=None):
+    def __init__(self, X, Y, values, crs=None, nodata_value=None):
         """
         Parameters:
         -----------
@@ -552,6 +552,11 @@ class WarpedGrid(Grid):
         if not (X.shape == Y.shape == values.shape[:2]):
             raise GridError('All of (X, Y, values) must share the same '
                             'size over the first two dimensions')
+
+        if crs is None:
+            self.crs = Cartesian
+        else:
+            self.crs = crs
 
         self.X = X
         self.Y = Y
