@@ -556,7 +556,7 @@ class MultipointBase(Geometry):
             xmin, xmax, ymin, ymax = gen_minmax(c for c in self.vertices)
         else:
             fprj = lambda c: crs.project(*self.crs.project(*c, inverse=True))
-            xmin, xmax, ymin, ymax = gen_minmax(fprj(c) for c in self.vertices)
+            xmin, xmax, ymin, ymax = gen_minmax(fprj(c[:2]) for c in self.vertices)
         return xmin, xmax, ymin, ymax
 
     def any_within_poly(self, poly):
