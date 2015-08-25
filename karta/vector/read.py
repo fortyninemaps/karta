@@ -7,8 +7,15 @@ import shapefile
 from . import geometry
 from . import geojson
 from . import xyfile
-from ..crs import LonLatWGS84
 from .metadata import Metadata
+from ..crs import LonLatWGS84, Proj4CRS, GeographicalCRS
+from ..errors import CRSError
+
+try:
+    import osgeo
+    HAS_OSGEO = True
+except ImportError:
+    HAS_OSGEO = False
 
 def from_shape(obj, properties=None):
     """ Read a __geo_interface__ dictionary and return an appropriate karta
@@ -184,7 +191,29 @@ def recordsasproperties(reader):
         proplist = [None for i in range(reader.numRecords)]
     return proplist
 
-def read_shapefile(name, crs=LonLatWGS84):
+def crs_from_prj(prjfnm):
+    """ Read a *.prj file and return a matching CRS instance """
+    if not HAS_OSGEO:
+        raise MissingDependencyError("Parsing prj files is performed by osgeo.osr, which is not installed.")
+
+    with open(prjfnm, "r") as f:
+        wkt_str = f.read()
+
+    # Hacks to patch over gaps between OSGEO, ESRI, others...
+    wkt_str = wkt_str.replace("Stereographic_North_Pole", "Polar_Stereographic")
+    wkt_str = wkt_str.replace("Stereographic_South_Pole", "Polar_Stereographic")
+
+    srs = osgeo.osr.SpatialReference(wkt_str)
+    if srs.IsGeographic():
+        proj4_str = srs.ExportToProj4()
+        for arg in proj4_str.split():
+            if "+ellps" in arg:
+                return GeographicalCRS(arg, "unnamed")
+        raise CRSError("Could not interpret %s as a geographical CRS" % proj4_str)
+    else:
+        return Proj4CRS(srs.ExportToProj4())
+
+def read_shapefile(name, crs=None):
     """ Read a shapefile given `name`, which may include or exclude the .shp
     extension. The CRS must be specified, otherwise it is assumed to be
     cartesian. """
@@ -192,6 +221,27 @@ def read_shapefile(name, crs=LonLatWGS84):
         name = name[:-4]
     fnms = get_filenames(name, check=True)
 
+    # Construct a CRS instance
+    if crs is None:
+        prjfnm = name + ".prj"
+        qpjfnm = name + ".qpj"
+
+        if os.path.exists(prjfnm):
+            try:
+                crs = crs_from_prj(prjfnm)
+            except CRSError as e:
+                # attempt to recover with a warning
+                sys.stderr.write(e)
+                crs = LonLatWGS84
+
+        elif os.path.exists(qpjfnm):
+            raise NotImplementedError("Currently support for *.QPJ projection data is missing. Specify CRS explicitly with the 'crs' keyword")
+
+        else:
+            # Make a guess -- however it seems this could be harmful
+            crs = LonLatWGS84
+
+    # Read shapefile data
     try:
         files = open_file_dict(fnms)
         reader = shapefile.Reader(shp=files['shp'], shx=files['shx'],

@@ -166,7 +166,7 @@ class Proj4CRS(CRS):
                         spheroid = "+ellps=%s" % v
                         break
             else:
-                raise CRSError("Spheroid must be provided")
+                raise CRSError("Spheroid must be provided: %s" % proj)
 
         self.project = pyproj.Proj(proj)
         self._geod = pyproj.Geod(spheroid)

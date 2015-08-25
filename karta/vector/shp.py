@@ -4,6 +4,16 @@ geometry object. """
 import datetime
 import numbers
 import shapefile
+from ..errors import MissingDependencyError
+
+try:
+    import osgeo
+    HAS_OSGEO = True
+except ImportError:
+    HAS_OSGEO = False
+
+rankerror = IOError("feature must be in two or three dimensions to write "
+                    "as shapefile")
 
 def _isnumpyint(o):
     return hasattr(o, "dtype") and \
@@ -79,6 +89,7 @@ def write_multipoint2(mp, fstem):
         w.point(*vertex)
     addfields_points(w, mp)
     w.save(fstem)
+    write_projection(mp, fstem)
     return
 
 def write_multipoint3(mp, fstem):
@@ -87,6 +98,7 @@ def write_multipoint3(mp, fstem):
         w.point(*vertex)
     addfields_points(w, mp)
     w.save(fstem)
+    write_projection(mp, fstem)
     return
 
 def write_line2(line, fstem):
@@ -94,6 +106,7 @@ def write_line2(line, fstem):
     w.poly(shapeType=shapefile.POLYLINE, parts=[line.vertices])
     addfields(w, line.properties)
     w.save(fstem)
+    write_projection(line, fstem)
     return
 
 def write_line3(line, fstem):
@@ -101,6 +114,7 @@ def write_line3(line, fstem):
     w.poly(shapeType=shapefile.POLYLINEZ, parts=[line.vertices])
     addfields(w, line.properties)
     w.save(fstem)
+    write_projection(line, fstem)
     return
 
 def write_poly2(poly, fstem):
@@ -108,6 +122,7 @@ def write_poly2(poly, fstem):
     w.poly(shapeType=shapefile.POLYGON, parts=[poly.vertices])
     addfields(w, poly.properties)
     w.save(fstem)
+    write_projection(poly, fstem)
     return
 
 def write_poly3(poly, fstem):
@@ -115,6 +130,7 @@ def write_poly3(poly, fstem):
     w.poly(shapeType=shapefile.POLYGONZ, parts=[poly.vertices])
     addfields(w, poly.properties)
     w.save(fstem)
+    write_projection(poly, fstem)
     return
 
 def shapefile_type(feature):
@@ -125,21 +141,21 @@ def shapefile_type(feature):
         elif feature.rank == 3:
             return shapefile.POINTZ
         else:
-            raise RankError
+            raise rankerror
     elif feature._geotype == "Line":
         if feature.rank == 2:
             return shapefile.POLYLINE
         elif feature.rank == 3:
             return shapefile.POLYLINEZ
         else:
-            raise RankError
+            raise rankerror
     elif feature._geotype == "Polygon":
         if feature.rank == 2:
             return shapefile.POLYGON
         elif feature.rank == 3:
             return shapefile.POLYGONZ
         else:
-            raise RankError
+            raise rankerror
     else:
         raise TypeError("Expected list with items of geotype 'Multipoint',"
                         "'Line', or 'Polygon'")
@@ -155,11 +171,8 @@ def write_shapefile(features, fstem):
     elif not all(f.rank == features[0].rank for f in features[1:]):
         raise IOError("all features must have the same dimensionality")
 
-    RankError = IOError("feature must be in two or three dimensions to write "
-                        "as shapefile")
-
+    write_projection(features[0], fstem)
     shapeType = shapefile_type(features[0])
-
     w = shapefile.Writer(shapeType=shapeType)
     if shapeType in (shapefile.POINT, shapefile.POINTZ):
 
@@ -220,4 +233,28 @@ def write_shapefile(features, fstem):
 
     w.save(fstem)
     return
+
+def crs_to_prj(crs, prjfnm):
+    if not HAS_OSGEO:
+        raise MissingDependencyError()
+
+    srs = osgeo.osr.SpatialReference()
+
+    try:
+        srs.ImportFromProj4(crs.initstring_proj)
+    except AttributeError:
+        raise NotImplementedError("Constructing .PRJ files currently only works"
+                                  " for CRS instances that provide a Proj4 string")
+
+    with open(prjfnm, "r") as f:
+        f.write(srs.ExportToWkt())
+    return
+
+def write_projection(geom, fstem):
+    try:
+        crs_to_prj(geom.crs, fstem+".prj")
+    except MissingDependencyError:
+        print("Projection information not saved (requires osgeo)")
+    except NotImplementedError as e:
+        print(e)
 

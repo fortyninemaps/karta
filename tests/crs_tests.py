@@ -113,6 +113,18 @@ class TestCRS(unittest.TestCase):
         self.assertAlmostEqual(dist, 2533572.0748, places=2)
         return
 
+    def test_ConstructProj4(self):
+        # Canonical constructor
+        crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs", "+ellps=WGS84")
+
+        # Combine ellipsoid information into projection information
+        crs.Proj4CRS("+proj=longlat +ellps=WGS84 +no_defs")
+
+        # Fail if no geodetic information given
+        with self.assertRaises(crs.CRSError):
+            crs.Proj4CRS("+proj=longlat +no_defs")
+        return
+
     def test_equal1(self):
         WGS84 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
                               "+ellps=WGS84", name="WGS84 (Geographical)")

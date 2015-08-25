@@ -57,7 +57,7 @@ class TestShapefile(unittest.TestCase):
         return
 
     def test_writepoints(self):
-        mp = Multipoint([p.vertex for p in self.points])
+        mp = Multipoint(self.points)
         mp.to_shapefile("data/points_shp")
         return
 
@@ -70,7 +70,7 @@ class TestShapefile(unittest.TestCase):
         return
 
     def test_writepoints3(self):
-        mp = Multipoint([p.vertex for p in self.points3])
+        mp = Multipoint(self.points3)
         mp.to_shapefile("data/pointsz_shp")
         return
 
