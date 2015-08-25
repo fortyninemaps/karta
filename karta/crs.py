@@ -157,7 +157,17 @@ class Proj4CRS(CRS):
 
     `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
     """
-    def __init__(self, proj, spheroid, name=None):
+    def __init__(self, proj, spheroid=None, name=None):
+        if spheroid is None:
+            if "+ellps" in proj:
+                for kv in proj.split():
+                    if "+ellps" in kv:
+                        k,v = kv.split("=")
+                        spheroid = "+ellps=%s" % v
+                        break
+            else:
+                raise CRSError("Spheroid must be provided")
+
         self.project = pyproj.Proj(proj)
         self._geod = pyproj.Geod(spheroid)
 
