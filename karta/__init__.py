@@ -4,11 +4,12 @@ geospatial data.
 """
 
 __version__ = 0.4
-__all__ = ["vector", "raster", "crs"]
+__all__ = ["vector", "raster", "crs", "errors"]
 
 from . import vector
 from . import raster
 from . import crs
+from . import errors
 from .vector import *
 from .raster import *
 

@@ -16,6 +16,7 @@ from . import shp
 from ..crs import GeographicalCRS, Cartesian, SphericalEarth, CRSError
 from .metadata import Metadata, Indexer
 from . import _vectorgeo
+from ..errors import GeometryError, GGeoError, GUnitError, GInitError
 
 try:
     from . import _cvectorgeo as _vecgeo
@@ -1097,32 +1098,6 @@ class Polygon(ConnectedMultipoint):
         else:
             raise IOError("rank must be 2 or 3 to write as a shapefile")
         return
-
-
-class GeometryError(Exception):
-    """ Base class for geometry module errors. """
-    def __init__(self, message=''):
-        self.message = message
-    def __str__(self):
-        return self.message
-
-
-class GInitError(GeometryError):
-    """ Exception to raise when a geometry object fails to initialize. """
-    def __init__(self, message=''):
-        self.message = message
-
-
-class GUnitError(GeometryError):
-    """ Exception to raise there is a projected unit problem. """
-    def __init__(self, message=''):
-        self.message = message
-
-
-class GGeoError(GeometryError):
-    """ Exception to raise when a geometry object attempts an invalid transform. """
-    def __init__(self, message=''):
-        self.message = message
 
 
 def points_to_multipoint(points):

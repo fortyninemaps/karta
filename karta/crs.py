@@ -12,6 +12,7 @@ Implements CRS classes for different kinds of spatial reference systems:
 import numpy as np
 import pyproj
 from . import geodesy
+from .errors import CRSError
 
 # A CRS class needs to have pyproj Proj and Geod instances. Exceptions are
 # `Cartesian` and `Spherical` which are implemented specially.
@@ -191,11 +192,6 @@ class Proj4CRS(CRS):
 
     def inverse(self, *args, **kwargs):
         return self._geod.inv(*args, **kwargs)
-
-class CRSError(Exception):
-    """ Exception to raise for invalid geodetic operations. """
-    def __init__(self, message=''):
-        self.message = message
 
 ############ Predefined CRS instances ############
 
