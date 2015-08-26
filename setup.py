@@ -31,7 +31,7 @@ class build_ext(_build_ext):
             for ext in self.extensions:
                 ext.sources = list(map(lambda f: f+".pyx", ext.sources))
 
-            _needs_stub = [ext._needs_stub for ext in self.extension]
+            _needs_stub = [ext._needs_stub for ext in self.extensions]
             self.extensions = cythonize(self.extensions)
             for ns, ext in zip(_needs_stub, self.extensions):
                 ext._needs_stub = ns
