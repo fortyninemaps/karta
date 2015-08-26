@@ -2,44 +2,67 @@ from ez_setup import use_setuptools
 use_setuptools()
 from os.path import exists
 from setuptools import setup, Extension
-import numpy
+from setuptools.command.build_ext import build_ext as _build_ext
 
 VERSION = "0.4.4"
 
-try:
-    from Cython.Build import cythonize
-    USE_CYTHON = True
-    include_dirs = [numpy.get_include()]
-    ext = ".pyx"
-except ImportError:
-    USE_CYTHON = False
-    include_dirs = []
-    ext = ".c"
-    print("Warning: Cython not imported")
-    print("If C sources exist in the source tree, they will be used")
+class build_ext(_build_ext):
 
-extensions = [Extension("karta.raster.crfuncs",
-                        ["karta/raster/crfuncs"+ext],
-                        include_dirs=include_dirs),
-              Extension("karta.vector._cvectorgeo",
-                        ["karta/vector/_cvectorgeo"+ext],
-                        include_dirs=include_dirs)]
+    # solution taken from http://stackoverflow.com/questions/19919905/ \
+    #   how-to-bootstrap-numpy-installation-in-setup-py 
+    def finalize_options(self):
+        """ Unsets __NUMPY_SETUP__ so that the get_include function can be used 
+        """
+        _build_ext.finalize_options(self)
 
-if USE_CYTHON:
-    extensions = cythonize(extensions)
+        # Hack: unset __NUMPY_SETUP__ so that it can be imported
+        __builtins__.__NUMPY_SETUP__ = False
+        import numpy
+        self.include_dirs.append(numpy.get_include())
 
-for extension in extensions:
-    if not all(exists(src) for src in extension.sources):
-        # C-extension sources missing, so don't try to build them
-        extensions = []
-        print("Warning: Extension source not found: {0}".format(extension.sources))
-        print("Not building accelerated modules")
-        break
+        # Add the instance include_dirs to each extension so that Cython will
+        # can them
+        for extension in self.extensions:
+            extension.include_dirs = self.include_dirs
+
+        # Attempt to compile with Cython - or fallback on local C sources
+        try:
+            from Cython.Build import cythonize
+            for ext in self.extensions:
+                ext.sources = list(map(lambda f: f+".pyx", ext.sources))
+
+            _needs_stub = [ext._needs_stub for ext in self.extension]
+            self.extensions = cythonize(self.extensions)
+            for ns, ext in zip(_needs_stub, self.extensions):
+                ext._needs_stub = ns
+
+        except ImportError:
+            print("Cython not imported")
+            print("If C sources exist in the source tree, they will be used")
+
+            for ext in self.extensions:
+                ext.sources = list(map(lambda f: f+".c", ext.sources))
+
+        # Check that sources exist for each extension, either from Cython for
+        # from having the C-code sitting around. Also, add a _needs_stub
+        # attribute to each extension for setuptools.
+        for ext in self.extensions:
+            if not all(exists(src) for src in ext.sources):
+                self.extensions = []
+                print("Extension sources not found: %s" % extension.sources)
+                print("Not building accelerated modules")
+                break
+        return
+
+# File extension is added to sources at overloaded build_ext.run()
+extensions = [Extension("karta.raster.crfuncs", ["karta/raster/crfuncs"]),
+              Extension("karta.vector._cvectorgeo", ["karta/vector/_cvectorgeo"])]
 
 setup(
     name = "karta",
     version = VERSION,
-    install_requires = ["numpy>=1.6", "cython>=0.15", "pyproj>=1.9", "pyshp>=1.2"],
+    setup_requires = ["numpy>=1.6"],
+    install_requires = ["numpy>=1.6", "pyproj>=1.9", "pyshp>=1.2"],
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
@@ -84,6 +107,7 @@ information in the `Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`_.
                    "Development Status :: 4 - Beta",
                    "Topic :: Scientific/Engineering"],
     license = "MIT License",
-    ext_modules = extensions
+    ext_modules = extensions,
+    cmdclass = {"build_ext": build_ext},
 )
 
