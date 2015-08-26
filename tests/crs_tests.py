@@ -121,8 +121,8 @@ class TestCRS(unittest.TestCase):
         crs.Proj4CRS("+proj=longlat +ellps=WGS84 +no_defs")
 
         # Fail if no geodetic information given
-        with self.assertRaises(crs.CRSError):
-            crs.Proj4CRS("+proj=longlat +no_defs")
+        self.assertRaises(crs.CRSError,
+                          lambda: crs.Proj4CRS("+proj=longlat +no_defs"))
         return
 
     def test_equal1(self):
