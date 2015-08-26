@@ -12,7 +12,7 @@ def isleft(pt0, pt1, pt2):
 def polarangle(pt0, pt1):
     """ Return the polar angle from pt0 to pt1, where we assume pt0.y
     <= pt1.y """
-    dx = pt1[0] - pt0[0]
+    dx = float(pt1[0] - pt0[0])
     if dx > 0:
         return math.atan((pt1[1] - pt0[1]) / dx)
     elif dx < 0:
