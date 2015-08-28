@@ -86,7 +86,7 @@ Components:
   (through pyshp), ESRI ASCII, and GeoTiff (through GDAL). Vector geometries
   implement ``__geo_interface__``.
 
-*Karta* works with Python 2.6+ and Python 3.3+.
+*Karta* works with Python 2.7 and Python 3.3+.
 
 DOCUMENTATION
 -------------

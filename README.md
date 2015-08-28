@@ -9,8 +9,8 @@ implementations of frequently-used of geospatial analysis methods, and the
 read/write interfaces to several formats, including GeoJSON, shapefiles, and
 ESRI ASCII.
 
-*Karta* works with Python 2.6-2.7 and Python 3.3+. Suggestions, bug reports,
-test cases, and pull requests are welcome.
+*Karta* works with Python 2.7 and Python 3.3+. Suggestions, bug reports, test
+cases, and pull requests are welcome.
 
 ## DOCUMENTATION
 
