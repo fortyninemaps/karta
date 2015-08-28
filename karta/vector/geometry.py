@@ -1075,8 +1075,8 @@ class Polygon(ConnectedMultipoint):
                     "implemented. As a workaround, transform to an appropriate "
                     "ProjectedCRS first.")
 
+        x, y = pt.get_vertex(crs=self.crs)[:2]
         cnt = 0
-        x, y = pt[0], pt[1]
         for seg in self.segment_tuples:
             (a, b) = seg
             if _vecgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
