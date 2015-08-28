@@ -12,7 +12,8 @@ from ..crs import LonLatWGS84, Proj4CRS, GeographicalCRS
 from ..errors import CRSError
 
 try:
-    import osgeo
+    import osgeo.osr
+    osgeo.osr.UseExceptions()
     HAS_OSGEO = True
 except ImportError:
     HAS_OSGEO = False
@@ -200,10 +201,11 @@ def crs_from_prj(prjfnm):
         wkt_str = f.read()
 
     # Hacks to patch over gaps between OSGEO, ESRI, others...
-    wkt_str = wkt_str.replace("Stereographic_North_Pole", "Polar_Stereographic")
-    wkt_str = wkt_str.replace("Stereographic_South_Pole", "Polar_Stereographic")
+    #wkt_str = wkt_str.replace("Stereographic_North_Pole", "Polar_Stereographic")
+    #wkt_str = wkt_str.replace("Stereographic_South_Pole", "Polar_Stereographic")
 
     srs = osgeo.osr.SpatialReference(wkt_str)
+    srs.MorphFromESRI()     # munge parameters for proj.4 export
     if srs.IsGeographic():
         proj4_str = srs.ExportToProj4()
         for arg in proj4_str.split():
