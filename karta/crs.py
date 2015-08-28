@@ -159,9 +159,16 @@ class Proj4CRS(CRS):
     """
     def __init__(self, proj, spheroid=None, name=None):
         if spheroid is None:
+            # Extract the spheroid from the +ellps or +datum parameter if present
             if "+ellps" in proj:
                 for kv in proj.split():
                     if "+ellps" in kv:
+                        k,v = kv.split("=")
+                        spheroid = "+ellps=%s" % v
+                        break
+            elif "+datum" in proj:
+                for kv in proj.split():
+                    if "+datum" in kv:
                         k,v = kv.split("=")
                         spheroid = "+ellps=%s" % v
                         break
