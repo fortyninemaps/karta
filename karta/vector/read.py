@@ -233,7 +233,7 @@ def read_shapefile(name, crs=None):
                 crs = crs_from_prj(prjfnm)
             except CRSError as e:
                 # attempt to recover with a warning
-                sys.stderr.write(e)
+                sys.stderr.write(str(e))
                 crs = LonLatWGS84
 
         elif os.path.exists(qpjfnm):
