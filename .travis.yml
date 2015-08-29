@@ -4,6 +4,8 @@ python:
   - "3.3"
   - "3.4"
 before_install:
+  - "sudo apt-get update -qq"
+  - "sudo apt-get install -y libproj-dev"
   - "wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh"
   - "chmod +x miniconda.sh"
   - "./miniconda.sh -b"
@@ -22,4 +24,3 @@ script:
   coverage run --source=karta tests/runtests.py
 after_success:
   coveralls
-sudo: false
