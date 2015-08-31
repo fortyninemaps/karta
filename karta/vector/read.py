@@ -55,7 +55,7 @@ def _from_shape(d, properties):
 def read_geojson(f):
     """ Read a GeoJSON object file and return a list of geometries """
 
-    def convert_geometry(geom, defaultcrs=None, **kw):
+    def convert_geometry(geom, **kw):
         if isinstance(geom, geojson.Point):
             return geometry.Point(geom.coordinates, crs=geom.crs, **kw)
         elif isinstance(geom, geojson.MultiPoint):
@@ -89,7 +89,7 @@ def read_geojson(f):
             gplist.append(convert_feature(item))
         elif isinstance(item, geojson.FeatureCollection):
             for feature in item.features:
-                gplist.append(convert_feature(feature, defaultcrs=item.crs))
+                gplist.append(convert_feature(feature))
         else:
             gplist.append(convert_geometry(item))
     return gplist
