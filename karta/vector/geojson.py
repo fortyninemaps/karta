@@ -37,7 +37,7 @@ class GeoJSONLinkedCRS(CRS):
     def __eq__(self, other):
         return self.jsonhref == other.jsonhref
 
-DEFAULTCRS = GeoJSONNamedCRS("urn:ogc:def:crs:epsg::4326")
+DEFAULTCRS = GeoJSONNamedCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 
 class ExtendedJSONEncoder(json.JSONEncoder):
     """ Numpy-specific numbers prior to 1.9 don't inherit from Python numeric
@@ -77,16 +77,22 @@ class GeoJSONWriter(object):
             self.typestr = type_equiv[gpobj._geotype]
         else:
             raise TypeError('Input object not a recognized geometry')
-        crs = gpobj.crs
-        bbox = kwargs.get('bbox', None)
-        urn = kwargs.get('urn', None)
+
 
         self.gpobj = gpobj
         self.supobj = {}
-        if crs is not None:
-            self.add_crs(crs, urn=urn)
+
+        self.crs = None     # Becomes not None if a non-native CRS is added
+        if 'urn' in kwargs:
+            self.add_crs(urn=kwargs['urn'])
+        elif gpobj.crs is None:
+            self.add_crs(crs=DEFAULTCRS)
+        else:
+            self.add_crs(crs=gpobj.crs)
+
         if self.typestr != 'Point':
             self.supobj['type'] = 'Feature'
+            bbox = kwargs.get('bbox', None)
             self.add_bbox(bbox)
             self.add_geometry()
         else:
@@ -94,7 +100,7 @@ class GeoJSONWriter(object):
             self.add_coordinates()
         return
 
-    def add_crs(self, crs, **kw):
+    def add_crs(self, crs=None, urn=None):
         """ Tag the JSON object with coordinate reference system metadata using
         a CRS instance, which is expected the have the interface of crs.CRS.
 
@@ -106,17 +112,22 @@ class GeoJSONWriter(object):
         For more details, see the GeoJSON specification at:
         http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
         """
-        if hasattr(crs, "jsonhref") and hasattr(crs, "jsontype"):
-            self.supobj['crs'] = {'type': 'link',
-                                  'properties': {'href': crs.jsonname,
-                                                 'type': crs.jsontype}}
-        elif hasattr(crs, "jsonname"):
-            self.supobj['crs'] = {'type': 'name',
-                                  'properties': {'name': crs.jsonname}}
-        else:
-            urn = kw.get("urn", geturn(crs))
+        if urn is not None:
             self.supobj['crs'] = {'type': 'name',
                                   'properties': {'name': urn}}
+        else:
+            if hasattr(crs, "jsonhref") and hasattr(crs, "jsontype"):
+                self.supobj['crs'] = {'type': 'link',
+                                      'properties': {'href': crs.jsonname,
+                                                     'type': crs.jsontype}}
+            elif hasattr(crs, "jsonname"):
+                self.supobj['crs'] = {'type': 'name',
+                                      'properties': {'name': crs.jsonname}}
+            else:
+                self.crs = crs
+                self.supobj['crs'] = {'type': 'link',
+                                      'properties': {'href': "",
+                                                     'type': 'proj4'}}
         return
 
     def add_bbox(self, bbox=None):
@@ -193,6 +204,10 @@ class GeoJSONWriter(object):
     def write_json(self, fout):
         """ Dump internal dict-object to JSON using the builtin `json` module.
         """
+        if self.crs is not None:
+            self.supobj["crs"]["properties"]["href"] = fout_crs
+            with open(fout_crs, "w") as f:
+                f.write(crs.initstring_proj)        # TODO: handle non Proj4CRS types
         json.dump(self.supobj, fout, indent=2, cls=ExtendedJSONEncoder)
         return
 
@@ -302,14 +317,6 @@ class GeoJSONReader(object):
         else:
             items.append(self.parseGeometry(o, crs))
         return items
-
-def geturn(crs):
-    """ Return a urn string for *crs* """
-    print("Warning: CRS URN lookup not implemented")
-    print(crs)
-    print("returning CRS name instead")
-    return crs.name
-
 
 def list_rec(A):
     """ Recursively convert nested iterables to nested lists """
