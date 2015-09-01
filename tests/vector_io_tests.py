@@ -187,23 +187,23 @@ class TestGeoJSON(unittest.TestCase):
     """
 
     def setUp(self):
-        self.crs4326 = GeoJSONNamedCRS("urn:ogc:def:crs:epsg::4326")
+        self.default_crs = GeoJSONNamedCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 
     def test_featurecollection2geometry(self):
         path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
         features = vector.read_geojson(path)
 
-        ans0 = Point((102.0, 0.5), properties={"prop0":"value0"}, crs=self.crs4326)
+        ans0 = Point((102.0, 0.5), properties={"prop0":"value0"}, crs=self.default_crs)
         self.assertEqual(features[0], ans0)
 
         ans1 = Line([(102.0, 0.0), (103.0, 1.0), (104.0, 0.0), (105.0, 1.0)],
-                    properties={"prop0":"value0", "prop1":0.0}, crs=self.crs4326)
+                    properties={"prop0":"value0", "prop1":0.0}, crs=self.default_crs)
         self.assertEqual(features[1], ans1)
 
         ans2 = Polygon([(100.0, 0.0), (101.0, 0.0), (101.0, 1.0), (100.0, 1.0),
                         (100.0, 0.0)],
                         properties={"prop0":"value0", "prop1":{"this":"that"}},
-                        crs=self.crs4326)
+                        crs=self.default_crs)
         self.assertEqual(features[2], ans2)
         return
 
