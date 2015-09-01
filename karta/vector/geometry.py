@@ -13,10 +13,10 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
-from ..crs import GeographicalCRS, Cartesian, SphericalEarth, CRSError
+from ..crs import GeographicalCRS, Cartesian, SphericalEarth
 from .metadata import Metadata, Indexer
 from . import _vectorgeo
-from ..errors import GeometryError, GGeoError, GUnitError, GInitError
+from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
 
 try:
     from . import _cvectorgeo as _vecgeo

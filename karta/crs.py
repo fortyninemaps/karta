@@ -18,7 +18,7 @@ fail.
 import numpy as np
 import pyproj
 from . import geodesy
-from .errors import CRSError
+from . import errors
 
 try:
     import osgeo.osr
@@ -243,7 +243,7 @@ class Proj4CRS(CRS):
                         spheroid = "+a=%s +b=%s" % (a, b)
                         break
             else:
-                raise CRSError("Spheroid must be provided: %s" % proj)
+                raise errors.CRSError("Spheroid must be provided: %s" % proj)
 
         self.project = pyproj.Proj(proj)
         self._geod = pyproj.Geod(spheroid)
@@ -274,6 +274,20 @@ class Proj4CRS(CRS):
     def inverse(self, *args, **kwargs):
         return self._geod.inv(*args, **kwargs)
 
+def crs_from_wkt(wkt):
+    srs = osgeo.osr.SpatialReference(wkt)
+    srs.MorphFromESRI()     # munge parameters for proj.4 export
+    if srs.IsGeographic():
+        proj4 = srs.ExportToProj4()
+        for arg in proj4.split():
+            if "+ellps" in arg:
+                return GeographicalCRS(arg, "unnamed")
+            if "+datum" in arg:
+                _,v = arg.split("=")
+                return GeographicalCRS("+ellps=%s" % v, "unnamed")
+        raise errors.CRSError("Could not interpret %s as geographical CRS" % proj4)
+    else:
+        return Proj4CRS(srs.ExportToProj4())
 
 ############ Predefined CRS instances ############
 

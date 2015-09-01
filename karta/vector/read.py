@@ -8,7 +8,7 @@ from . import geometry
 from . import geojson
 from . import xyfile
 from .metadata import Metadata
-from ..crs import LonLatWGS84, Proj4CRS, GeographicalCRS, HASOSR
+from ..crs import LonLatWGS84, HASOSR, crs_from_wkt
 from .. import errors
 
 def from_shape(obj, properties=None):
@@ -187,26 +187,12 @@ def recordsasproperties(reader):
 
 def crs_from_prj(prjfnm):
     """ Read a *.prj file and return a matching CRS instance """
-    if not crs.HASOSR:
+    if not HASOSR:
         raise errors.MissingDependencyError("Parsing prj files is performed by osgeo.osr, which is not installed.")
 
     with open(prjfnm, "r") as f:
         wkt_str = f.read()
-
-    # Hacks to patch over gaps between OSGEO, ESRI, others...
-    #wkt_str = wkt_str.replace("Stereographic_North_Pole", "Polar_Stereographic")
-    #wkt_str = wkt_str.replace("Stereographic_South_Pole", "Polar_Stereographic")
-
-    srs = osgeo.osr.SpatialReference(wkt_str)
-    srs.MorphFromESRI()     # munge parameters for proj.4 export
-    if srs.IsGeographic():
-        proj4_str = srs.ExportToProj4()
-        for arg in proj4_str.split():
-            if "+ellps" in arg:
-                return GeographicalCRS(arg, "unnamed")
-        raise errors.CRSError("Could not interpret %s as a geographical CRS" % proj4_str)
-    else:
-        return Proj4CRS(srs.ExportToProj4())
+    return crs_from_wkt(wkt_str)
 
 def read_shapefile(name, crs=None):
     """ Read a shapefile given `name`, which may include or exclude the .shp
