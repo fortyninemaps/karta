@@ -4,6 +4,13 @@ import copy
 import numbers
 import numpy as np
 from ..crs import Cartesian
+from .. import errors
+
+try:
+    from scipy import interpolate
+    HASSCIPY = True
+except ImportError:
+    HASSCIPY = False
 
 IntegerType = (numbers.Integral, np.int32, np.int64)
 
@@ -76,8 +83,8 @@ class RegularGrid(Grid):
             self._transform = (transform[0], transform[1],
                                transform[2], transform[3], 0, 0)
         else:
-            raise GridError("RegularGrid must be initialized with a transform"
-                            "iterable or dictionary")
+            raise errors.GridError("RegularGrid must be initialized with a "
+                                   " transform iterable or dictionary")
 
         if values is not None:
             self.values = values
@@ -100,14 +107,14 @@ class RegularGrid(Grid):
             return RegularGrid(copy.copy(self.transform),
                                values=self.values+other.values)
         else:
-            raise NonEquivalentGridError(self, other)
+            raise errors.NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
                                values=self.values-other.values)
         else:
-            raise NonEquivalentGridError(self, other)
+            raise errors.NonEquivalentGridError(self, other)
 
     def _equivalent_structure(self, other):
         return (self._transform == other._transform) and \
@@ -172,7 +179,7 @@ class RegularGrid(Grid):
             x0, y0 = self.corner_llref()
             n = 0
         else:
-            raise GridError("`reference` must be 'center' or 'edge'")
+            raise errors.GridError("`reference` must be 'center' or 'edge'")
         ny, nx = self.values.shape[:2]
         dx, dy = self._transform[2:4]
         sx, sy = self._transform[4:]
@@ -250,7 +257,8 @@ class RegularGrid(Grid):
 
         method : interpolation method, string ('nearest', 'linear')
         """
-        from scipy.interpolate import griddata
+        if not HASSCIPY:
+            raise errors.MissingDependencyError("resample_griddata requires scipy")
         ny0, nx0 = self.values.shape[:2]
         dx0, dy0 = self._transform[2:4]
         xllcenter, yllcenter = self.center_llref()
@@ -262,8 +270,8 @@ class RegularGrid(Grid):
         xx0, yy0 = self.coordmesh()
         xx, yy = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
                              np.linspace(yllcenter, yurcenter, ny))
-        idata = griddata((xx0.flatten(), yy0.flatten()), self.values.flatten(),
-                         (xx.flatten(), yy.flatten()), method=method)
+        idata = interpolate.griddata((xx0.flatten(), yy0.flatten()), self.values.flatten(),
+                                     (xx.flatten(), yy.flatten()), method=method)
         values = idata.reshape(ny, nx)
         t = self._transform
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
@@ -362,11 +370,11 @@ class RegularGrid(Grid):
         if len(i) != 1:
             i, j = np.round(i).astype(int), np.round(j).astype(int)
             if min(i) < 0 or max(i) > ny-1 or min(j) < 0 or max(j) > nx-1:
-                raise GridError("Coordinates outside grid region ({0})".format(self.bbox))
+                raise errors.GridError("Coordinates outside grid region ({0})".format(self.bbox))
         else:
             i, j = int(round(i[0])), int(round(j[0]))
             if not (0 <= i <= ny-1) or not(0 <= j <= nx-1):
-                raise GridError("Coordinates outside grid region ({0})".format(self.bbox))
+                raise errors.GridError("Coordinates outside grid region ({0})".format(self.bbox))
 
         return i,j
 
@@ -494,16 +502,16 @@ class RegularGrid(Grid):
         nodata_value : specify how NaNs should be represented (int or float)
         """
         if reference not in ('center', 'corner'):
-            raise GridIOError("reference in AAIGrid.tofile() must be 'center' or "
+            raise errors.GridIOError("reference in AAIGrid.tofile() must be 'center' or "
                            "'corner'")
 
         if np.any(self._transform[4:] != 0.0):
-            raise GridIOError("ESRI ASCII grids do not support skewed grids")
+            raise errors.GridIOError("ESRI ASCII grids do not support skewed grids")
 
         ny, nx = self.values.shape[:2]
         x0, y0, dx, dy = self._transform[:4]
         if dx != dy:
-            raise GridIOError("ASCII grids require isometric grid cells")
+            raise errors.GridIOError("ASCII grids require isometric grid cells")
 
         if not hasattr(f, 'read'):
             f = open(f, "w")
@@ -547,10 +555,10 @@ class WarpedGrid(Grid):
         """
 
         if any(a is None for a in (X, Y, values)):
-            raise GridError('All of (X, Y, values) must be provided')
+            raise errors.GridError('All of (X, Y, values) must be provided')
 
         if not (X.shape == Y.shape == values.shape[:2]):
-            raise GridError('All of (X, Y, values) must share the same '
+            raise errors.GridError('All of (X, Y, values) must share the same '
                             'size over the first two dimensions')
 
         if crs is None:
@@ -572,13 +580,13 @@ class WarpedGrid(Grid):
         if self._equivalent_structure(other):
             return WarpedGrid(self.X.copy(), self.Y.copy(), self.values+other.values)
         else:
-            raise NonEquivalentGridError(self, other)
+            raise errors.NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
             return WarpedGrid(self.X.copy(), self.Y.copy(), self.values-other.values)
         else:
-            raise NonEquivalentGridError(self, other)
+            raise errors.NonEquivalentGridError(self, other)
 
     def _equivalent_structure(self, other):
         return np.all(self.X == other.X) and np.all(self.Y == other.Y) and \
@@ -592,26 +600,6 @@ class WarpedGrid(Grid):
         """ Resample internal grid to the points defined by *X*, *Y*. """
         raise NotImplementedError
 
-
-class GridError(Exception):
-    def __init__(self, message=''):
-        self.message = message
-    def __str__(self):
-        return self.message
-
-
-class GridIOError(GridError):
-    def __init__(self, message=''):
-        self.message = message
-
-
-class NonEquivalentGridError(GridError):
-    def __init__(self, A, B, message=''):
-        if len(message) == 0:
-            self.message = ("{0} and {1} do not share equivalent "
-                            "grid layouts".format(A, B))
-        else:
-            self.message = message
 
 def get_nodata(T):
     """ Return a default value for NODATA given a type (e.g. int, float,

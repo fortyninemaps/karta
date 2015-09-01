@@ -32,6 +32,26 @@ class CRSError(Exception):
     def __init__(self, message=''):
         self.message = message
 
+class GridError(Exception):
+    def __init__(self, message=''):
+        self.message = message
+    def __str__(self):
+        return self.message
+
+
+class GridIOError(GridError):
+    def __init__(self, message=''):
+        self.message = message
+
+
+class NonEquivalentGridError(GridError):
+    def __init__(self, A, B, message=''):
+        if len(message) == 0:
+            self.message = ("{0} and {1} do not share equivalent "
+                            "grid layouts".format(A, B))
+        else:
+            self.message = message
+
 class MissingDependencyError(Exception):
     def __init__(self, message=''):
         self.message = message
