@@ -1,21 +1,27 @@
 """ IO interface to GeoTiffs using GDAL. """
 
 import sys
-from osgeo import gdal, osr
-import osgeo.gdalconst as gc
 import numpy as np
+from .. import errors
 
-gdal.UseExceptions()
+try:
+    import osgeo.gdal
+    import osgeo.osr
+    import osgeo.gdalconst as gc
+    osgeo.gdal.UseExceptions()
+    HASGDAL = True
+except ImportError:
+    HASGDAL = False
 
 def SRS_from_WKT(s):
     """ Return Proj.4 string, semimajor axis, and flattening """
-    sr = osr.SpatialReference()
+    sr = osgeo.osr.SpatialReference()
     sr.ImportFromWkt(s)
     return sr
 
 def numpy_dtype(dt_int):
     """ Return a numpy dtype that matches the band data type. """
-    name = gdal.GetDataTypeName(dt_int)
+    name = osgeo.gdal.GetDataTypeName(dt_int)
     if name == "UInt16":
         return np.uint16
     elif name == "Int16":
@@ -36,27 +42,30 @@ def numpy_dtype(dt_int):
 def gdal_type(dtype):
     """ Return a GDAL type that matches numpy dtype """
     if dtype == np.uint16:
-        return gdal.GDT_UInt16
+        return osgeo.gdal.GDT_UInt16
     elif dtype == np.int16:
-        return gdal.GDT_Int16
+        return osgeo.gdal.GDT_Int16
     elif dtype == np.int32:
-        return gdal.GDT_Int32
+        return osgeo.gdal.GDT_Int32
     elif dtype == np.int32:
-        return gdal.GDT_Int32
+        return osgeo.gdal.GDT_Int32
     elif dtype == np.float32:
-        return gdal.GDT_Float32
+        return osgeo.gdal.GDT_Float32
     elif dtype == np.float64:
-        return gdal.GDT_Float64
+        return osgeo.gdal.GDT_Float64
     elif dtype == np.complex64:
-        return gdal.GDT_CFloat64
+        return osgeo.gdal.GDT_CFloat64
     else:
         raise TypeError("GDAL equivalent to type {0} unknown".format(dtype))
 
 def read(fnm, band):
     """ Read a GeoTiff file and return a numpy array and a dictionary of header
     information. """
+    if not HASGDAL:
+        raise errors.MissingDependencyError("requires osgeo.gdal")
+
     hdr = dict()
-    dataset = gdal.Open(fnm, gc.GA_ReadOnly)
+    dataset = osgeo.gdal.Open(fnm, gc.GA_ReadOnly)
 
     try:
         hdr["nx"] = dataset.RasterXSize
@@ -95,7 +104,7 @@ def read(fnm, band):
 
 def srs_from_crs(crs):
     try:
-        srs = osr.SpatialReference()
+        srs = osgeo.osr.SpatialReference()
         srs.ImportFromProj4(crs.project.srs)
     except AttributeError:
         raise TypeError("Right now, GDAL projection can only be set from CRS instances backed by proj.4")
@@ -103,7 +112,10 @@ def srs_from_crs(crs):
 
 def write(fnm, grid):
     """ Write a grid-like object to *fnm* """
-    driver = gdal.GetDriverByName("GTiff")
+    if not HASGDAL:
+        raise errors.MissingDependencyError("requires osgeo.gdal")
+
+    driver = osgeo.gdal.GetDriverByName("GTiff")
     ny, nx = grid.size
     dataset = driver.Create(fnm, nx, ny, 1, gdal_type(grid.values.dtype))
     t = grid.transform

@@ -2,13 +2,7 @@
 import numpy as np
 from .grid import RegularGrid
 from ..crs import Proj4CRS, GeographicalCRS
-
-try:
-    from . import _gtiff
-    HAS_GDAL = True
-except ImportError:
-    HAS_GDAL = False
-
+from . import _gtiff
 from . import _aai
 # from . import _dem
 
@@ -41,9 +35,6 @@ def read_gtiff(fnm, band=1):
 
     band : band to open (default 1)
     """
-    if not HAS_GDAL:
-        raise ImportError("Reading GeoTiffs depends on GDAL, which could not "
-                          "be imported")
     arr, hdr = _gtiff.read(fnm, band)
     t = {'xllcenter'  : hdr['xulcorner'] + 0.5 * (hdr['dx'] + hdr['sx']),
          'yllcenter'  : hdr['yulcorner'] + (hdr['ny'] - 0.5) * hdr['dy'] - 0.5 * hdr['sy'],

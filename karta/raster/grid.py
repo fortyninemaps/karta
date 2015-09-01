@@ -3,8 +3,9 @@
 import copy
 import numbers
 import numpy as np
-from ..crs import Cartesian
+from . import _gtiff
 from .. import errors
+from ..crs import Cartesian
 
 try:
     from scipy import interpolate
@@ -481,12 +482,7 @@ class RegularGrid(Grid):
 
     def gtiffwrite(self, fnm):
         """ Write data to a GeoTiff file using GDAL """
-        try:
-            from . import _gtiff
-            return _gtiff.write(fnm, self)
-        except ImportError as e:
-            raise ImportError("{0}\nReading GeoTiffs depends on GDAL, which "
-                              "could not be imported".format(e))
+        return _gtiff.write(fnm, self)
 
     def aaiwrite(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
