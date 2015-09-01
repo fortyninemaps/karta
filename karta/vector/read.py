@@ -46,19 +46,30 @@ def _from_shape(d, properties):
                                       "implemented".format(d["type"]))
 
 def read_geojson(f):
-    """ Read a GeoJSON object file and return a list of geometries """
+    """ Read a GeoJSON file object and return a list of geometries """
+
+    def convert_crs(crsdict):
+        if crsdict.get("type", None) not in ("name", "link"):
+            crs = LonLatWGS84
+        elif crsdict["type"] == "name":
+            crs = geojson.GeoJSONNamedCRS(crsdict["properties"]["name"])
+        elif crsdict["type"] == "link":
+            crs = geojson.GeoJSONLinkedCRS(crsdict["properties"]["href"],
+                                           crsdict["properties"]["type"])
+        return crs
 
     def convert_geometry(geom, **kw):
+        crs = convert_crs(geom.crs)
         if isinstance(geom, geojson.Point):
-            return geometry.Point(geom.coordinates, crs=geom.crs, **kw)
+            return geometry.Point(geom.coordinates, crs=crs, **kw)
         elif isinstance(geom, geojson.MultiPoint):
-            return geometry.Multipoint(geom.coordinates, crs=geom.crs, **kw)
+            return geometry.Multipoint(geom.coordinates, crs=crs, **kw)
         elif isinstance(geom, geojson.LineString):
-            return geometry.Line(geom.coordinates, crs=geom.crs, **kw)
+            return geometry.Line(geom.coordinates, crs=crs, **kw)
         elif isinstance(geom, geojson.Polygon):
             return geometry.Polygon(geom.coordinates[0],
                                  subs=geom.coordinates[1:],
-                                 crs=geom.crs, **kw)
+                                 crs=crs, **kw)
         else:
             raise TypeError("Argument to convert_geometry is a not a JSON geometry")
 
