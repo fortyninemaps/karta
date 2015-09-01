@@ -127,6 +127,7 @@ class GeographicalCRS(CRS):
     def __init__(self, spheroid, name):
         self._geod = pyproj.Geod(spheroid)
         self.name = name
+        self.ref_proj4 = "+proj=lonlat %s" % self._geod.initstring
         return
 
     @staticmethod
@@ -152,12 +153,13 @@ class SphericalCRS(GeographicalCRS):
 
     @property
     def ref_proj4(self):
-        return "+proj=lonlat +a=%f +b=%f" % (self.redius, self.radius)
+        return "+proj=lonlat +a=%f +b=%f +no_defs" % (self.radius, self.radius)
 
     @property
     def ref_wkt(self):
-        raise NotImplementedError()
-        return 'GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
+        return ('GEOGCS["unnamed ellipse",DATUM["unknown",'
+                'SPHEROID["unnamed",%f,0]],PRIMEM["Greenwich",0],'
+                'UNIT["degree",0.0174532925199433]]' % self.radius)
 
     def forward(self, lons, lats, az, dist, radians=False):
         """ Returns lons, lats, and back azimuths """
@@ -246,6 +248,10 @@ class Proj4CRS(CRS):
         self.project = pyproj.Proj(proj)
         self._geod = pyproj.Geod(spheroid)
 
+        self.initstring_proj = self.project.srs
+        self.initstring_geod = self._geod.initstring
+        self.ref_proj4 = "%s %s" % (self.project.srs, self._geod.initstring)
+
         if name is not None:
             self.name = name
         else:
@@ -261,20 +267,6 @@ class Proj4CRS(CRS):
 
     def __ne__(self, other):
         return not self.__eq__(other)
-
-    @property
-    def ref_proj4(self):
-        return "%s %s" % (self.project.srs, self._geod.initstring)
-
-    @property
-    def initstring_proj(self):
-        """ Return the proj.4 init string defining the projection. """
-        return self.project.srs
-
-    @property
-    def initstring_geod(self):
-        """ Return the proj.4 init string defining the geoid. """
-        return self._geod.initstring
 
     def forward(self, *args, **kwargs):
         return self._geod.fwd(*args, **kwargs)
