@@ -8,15 +8,8 @@ from . import geometry
 from . import geojson
 from . import xyfile
 from .metadata import Metadata
-from ..crs import LonLatWGS84, Proj4CRS, GeographicalCRS
-from ..errors import CRSError
-
-try:
-    import osgeo.osr
-    osgeo.osr.UseExceptions()
-    HAS_OSGEO = True
-except ImportError:
-    HAS_OSGEO = False
+from ..crs import LonLatWGS84, Proj4CRS, GeographicalCRS, HASOSR
+from .. import errors
 
 def from_shape(obj, properties=None):
     """ Read a __geo_interface__ dictionary and return an appropriate karta
@@ -194,8 +187,8 @@ def recordsasproperties(reader):
 
 def crs_from_prj(prjfnm):
     """ Read a *.prj file and return a matching CRS instance """
-    if not HAS_OSGEO:
-        raise MissingDependencyError("Parsing prj files is performed by osgeo.osr, which is not installed.")
+    if not crs.HASOSR:
+        raise errors.MissingDependencyError("Parsing prj files is performed by osgeo.osr, which is not installed.")
 
     with open(prjfnm, "r") as f:
         wkt_str = f.read()
@@ -211,7 +204,7 @@ def crs_from_prj(prjfnm):
         for arg in proj4_str.split():
             if "+ellps" in arg:
                 return GeographicalCRS(arg, "unnamed")
-        raise CRSError("Could not interpret %s as a geographical CRS" % proj4_str)
+        raise errors.CRSError("Could not interpret %s as a geographical CRS" % proj4_str)
     else:
         return Proj4CRS(srs.ExportToProj4())
 
@@ -231,7 +224,7 @@ def read_shapefile(name, crs=None):
         if os.path.exists(prjfnm):
             try:
                 crs = crs_from_prj(prjfnm)
-            except CRSError as e:
+            except errors.CRSError as e:
                 # attempt to recover with a warning
                 sys.stderr.write(str(e))
                 crs = LonLatWGS84

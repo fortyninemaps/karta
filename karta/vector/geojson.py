@@ -207,7 +207,7 @@ class GeoJSONWriter(object):
         if self.crs is not None:
             self.supobj["crs"]["properties"]["href"] = fout_crs
             with open(fout_crs, "w") as f:
-                f.write(crs.initstring_proj)        # TODO: handle non Proj4CRS types
+                f.write(crs.get_proj4())
         json.dump(self.supobj, fout, indent=2, cls=ExtendedJSONEncoder)
         return
 

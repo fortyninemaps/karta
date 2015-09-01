@@ -3,10 +3,16 @@
 
 Implements CRS classes for different kinds of spatial reference systems:
 
-    - Cartesian
+    - CartesianCRS
     - GeographicalCRS
-    - Spherical
+    - SphericalCRS
     - Proj4CRS
+
+Coordinate reference system (CRS) objects represent mappings geographical
+positions to an x, y representation, and contain both projection and geodetic
+information. CRS objects should be treated is immutable. It is possible for
+multiple CRS objects to implement the same system, and tests for equality may
+fail.
 """
 
 import numpy as np
@@ -14,31 +20,74 @@ import pyproj
 from . import geodesy
 from .errors import CRSError
 
-# A CRS class needs to have pyproj Proj and Geod instances. Exceptions are
-# `Cartesian` and `Spherical` which are implemented specially.
+try:
+    import osgeo.osr
+    osgeo.osr.UseExceptions()
+    HASOSR = True
+except ImportError:
+    HASOSR = False
 
 class CRS(object):
-    """ Base class for coordinate system instances
-    
-    Subclasses should at a minimum define a *name* attribute. Providing
-    *project* *forward* and *inverse* methods permits a geometry associated with
-    a CRS subclass to be used in analyses.
+    """ Base class for coordinate system instances.
+
+    Subclasses should define:
+
+    - name attribute
+    - project(x, y) method
+    - forward(x, y, azimuth, distance) method
+    - inverse(x0, y0, x1, y1) method
 
     *project* transforms between world and projected coordinates, and takes the
     optional boolean parameter *inverse* (default `False`)
 
-    *forward* takes world coordinates, an azimuth, and a distance, and returns
-    world coordinates
+    *forward* performs a forward geodetic calculation and returns world
+    coordinates
 
-    *inverse* takes two pairs of world coordinates and returns an azimuth, a
-    back azimuth, and a distance
+    *inverse* performs an inverse geodetic calculation and returns an azimuth,
+    a back azimuth, and a distance
+
+    A CRS subclass may optionally also provide string attributes:
+
+    - ref_proj4
+    - ref_wkt
+
+    which are used to provide interoperability with other systems.
     """
     def __str__(self):
         return "<CRS {0}>".format(self.name)
 
-class Cartesian(CRS):
-    """ Cartiesian (flat-earth) reference systems with (x, y) coordinates """
+    def get_proj4(self):
+        if hasattr(self, "ref_proj4"):
+            return self.ref_proj4
+        else:
+            if not HASOSR:
+                raise errors.CRSError("no ref_proj4 attribute and no conversion possible (osgeo.osr not installed)")
+            srs = osgeo.osr.SpatialReference()
+            if hasattr(self, "ref_wkt"):
+                srs.ImportFromWkt(self.ref_wkt)
+            else:
+                raise AttributeError("incomplete CRS definition (missing ref_proj4, ref_wkt attributes)")
+            return srs.ExportToProj4()
+
+    def get_wkt(self):
+        if hasattr(self, "ref_wkt"):
+            return self.ref_proj4
+        else:
+            if not HASOSR:
+                raise errors.CRSError("no ref_wkt attribute and no conversion possible (osgeo.osr not installed)")
+            srs = osgeo.osr.SpatialReference()
+            if hasattr(self, "ref_proj4"):
+                srs.ImportFromProj4(self.ref_proj4.replace("lon", "long"))
+            else:
+                raise AttributeError("incomplete CRS definition (missing ref_proj4, ref_wkt attributes)")
+            return srs.ExportToWkt()
+
+class CartesianCRS(CRS):
+    """ Cartesian (flat-earth) reference systems with (x, y) coordinates """
     name = "Cartesian"
+
+    ref_proj4 = ""
+    ref_wkt = ""
 
     @staticmethod
     def project(x, y, inverse=False):
@@ -93,13 +142,22 @@ class GeographicalCRS(CRS):
     def inverse(self, *args, **kwargs):
         return self._geod.inv(*args, **kwargs)
 
-
-class Spherical(GeographicalCRS):
+class SphericalCRS(GeographicalCRS):
     """ Spherical (θ, φ) coordinate system. """
     name = "Spherical"
 
     def __init__(self, radius):
         self.radius = radius
+        return
+
+    @property
+    def ref_proj4(self):
+        return "+proj=lonlat +a=%f +b=%f" % (self.redius, self.radius)
+
+    @property
+    def ref_wkt(self):
+        raise NotImplementedError()
+        return 'GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]'
 
     def forward(self, lons, lats, az, dist, radians=False):
         """ Returns lons, lats, and back azimuths """
@@ -108,9 +166,8 @@ class Spherical(GeographicalCRS):
             lats = np.array(lats) * np.pi / 180.0
             az = np.array(az) * np.pi / 180.0
 
-
         d_ = dist / self.radius
-        lats2 = np.arcsin(np.sin(lats) * np.cos(d_) + 
+        lats2 = np.arcsin(np.sin(lats) * np.cos(d_) +
                     np.cos(lats) * np.sin(d_) * np.cos(az))
         dlons = np.arccos((np.cos(d_) - np.sin(lats2) * np.sin(lats)) /
                           (np.cos(lats) * np.cos(lats2)))
@@ -206,6 +263,10 @@ class Proj4CRS(CRS):
         return not self.__eq__(other)
 
     @property
+    def ref_proj4(self):
+        return "%s %s" % (self.project.srs, self._geod.initstring)
+
+    @property
     def initstring_proj(self):
         """ Return the proj.4 init string defining the projection. """
         return self.project.srs
@@ -221,10 +282,11 @@ class Proj4CRS(CRS):
     def inverse(self, *args, **kwargs):
         return self._geod.inv(*args, **kwargs)
 
+
 ############ Predefined CRS instances ############
 
-
-SphericalEarth = Spherical(6371009.0)
+Cartesian = CartesianCRS()
+SphericalEarth = SphericalCRS(6371009.0)
 LonLatWGS84 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)")
 LonLatNAD27 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
 LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")

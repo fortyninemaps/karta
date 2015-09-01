@@ -1,10 +1,11 @@
 """ Provides functions for reading and writing ESRI shapefiles and returning a
 geometry object. """
 
+import sys
 import datetime
 import numbers
 import shapefile
-from ..errors import MissingDependencyError
+from .. import errors
 
 try:
     import osgeo
@@ -235,26 +236,20 @@ def write_shapefile(features, fstem):
     return
 
 def crs_to_prj(crs, prjfnm):
-    if not HAS_OSGEO:
-        raise MissingDependencyError()
-
-    srs = osgeo.osr.SpatialReference()
-
-    try:
-        srs.ImportFromProj4(crs.initstring_proj)
-    except AttributeError:
-        raise NotImplementedError("Constructing .PRJ files currently only works"
-                                  " for CRS instances that provide a Proj4 string")
-
+    """ Given a CRS object and a *.prj filename, write WKT information """
+    wkt = crs.get_wkt()
     with open(prjfnm, "r") as f:
-        f.write(srs.ExportToWkt())
+        f.write(wkt)
     return
 
 def write_projection(geom, fstem):
     try:
-        crs_to_prj(geom.crs, fstem+".prj")
-    except MissingDependencyError:
-        print("Projection information not saved (requires osgeo)")
-    except NotImplementedError as e:
-        print(e)
+        wkt = geom.crs.get_wkt()
+        with open(fstem+".prj", "w") as f:
+            f.write(wkt)
+    except errors.CRSError:
+        sys.stderr.write("Projection information not saved (requires osgeo)\n")
+    except AttributeError as e:
+        sys.stderr.write(str(e))
+        sys.stderr.write("\n")
 
