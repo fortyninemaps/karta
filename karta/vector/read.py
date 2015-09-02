@@ -68,8 +68,8 @@ def read_geojson(f):
             return geometry.Line(geom.coordinates, crs=crs, **kw)
         elif isinstance(geom, geojson.Polygon):
             return geometry.Polygon(geom.coordinates[0],
-                                 subs=geom.coordinates[1:],
-                                 crs=crs, **kw)
+                                    subs=geom.coordinates[1:],
+                                    crs=crs, **kw)
         else:
             raise TypeError("Argument to convert_geometry is a not a JSON geometry")
 
@@ -87,16 +87,14 @@ def read_geojson(f):
         return convert_geometry(feat.geometry, data=data, properties=prop, **kw)
 
     R = geojson.GeoJSONReader(f)
-    gplist = []
-    for item in R.items():
-        if isinstance(item, geojson.Feature):
-            gplist.append(convert_feature(item))
-        elif isinstance(item, geojson.FeatureCollection):
-            for feature in item.features:
-                gplist.append(convert_feature(feature))
-        else:
-            gplist.append(convert_geometry(item))
-    return gplist
+    geom = R.parse()
+    if isinstance(geom, geojson.Feature):
+        res = [convert_feature(geom)]
+    elif isinstance(geom, geojson.FeatureCollection):
+        res = [convert_feature(f) for f in geom.features]
+    else:
+        res = [convert_geometry(item)]
+    return res
 
 def _geojson_properties2karta(properties, n):
     """ Takes a dictionary (derived from a GeoJSON properties object) and

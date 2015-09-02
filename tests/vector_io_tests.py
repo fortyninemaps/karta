@@ -113,45 +113,45 @@ class TestGeoJSONInput(unittest.TestCase):
     def test_point_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/point.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.items()
-        self.assertEqual(res[0].coordinates, [100.0, 0.0])
+        res = reader.parse()
+        self.assertEqual(res.coordinates, [100.0, 0.0])
         return
 
     def test_linestring_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/linestring.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.items()
-        self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
+        res = reader.parse()
+        self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_polygon_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/polygon.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.items()
-        self.assertEqual(res[0].coordinates,
+        res = reader.parse()
+        self.assertEqual(res.coordinates,
             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
         return
 
     def test_multipoint_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/multipoint.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.items()
-        self.assertEqual(res[0].coordinates, [[100.0, 0.0], [101.0, 1.0]])
+        res = reader.parse()
+        self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
         return
 
     def test_multilinestring_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/multilinestring.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.items()
-        self.assertEqual(res[0].coordinates, [[[100.0, 0.0], [101.0, 1.0]],
+        res = reader.parse()
+        self.assertEqual(res.coordinates, [[[100.0, 0.0], [101.0, 1.0]],
                                               [[102.0, 2.0], [103.0, 3.0]]])
         return
 
     def test_multipolygon_read(self):
         with open(os.path.join(TESTDATA, 'geojson_input/multipolygon.json')) as f:
             reader = GeoJSONReader(f)
-        res = reader.items()
-        self.assertEqual(res[0].coordinates, 
+        res = reader.parse()
+        self.assertEqual(res.coordinates, 
             [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
              [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
              [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]])
@@ -161,7 +161,7 @@ class TestGeoJSONInput(unittest.TestCase):
         path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
         with open(path) as f:
             reader = GeoJSONReader(f)
-        fc = reader.items()[0]
+        fc = reader.parse()
         self.assertTrue(isinstance(fc.features[0].geometry, geojson.Point))
         self.assertEqual(fc.features[0].geometry.coordinates, [102.0, 0.5])
         self.assertEqual(fc.features[0].properties["scalar"], {"prop0": "value0"})

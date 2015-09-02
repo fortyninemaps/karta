@@ -37,7 +37,8 @@ class GeoJSONLinkedCRS(CRS):
     def __eq__(self, other):
         return self.jsonhref == other.jsonhref
 
-DEFAULTCRS = GeoJSONNamedCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
+DEFAULTCRS = {"type": "name",
+              "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
 
 class ExtendedJSONEncoder(json.JSONEncoder):
     """ Numpy-specific numbers prior to 1.9 don't inherit from Python numeric
@@ -213,7 +214,7 @@ class GeoJSONWriter(object):
 
 class GeoJSONReader(object):
 
-    def __init__(self, finput):
+    def __init__(self, finput, defaultcrs=DEFAULTCRS):
         """ Create a reader-object for a GeoJSON-containing file or StreamIO
         object. Use as::
 
@@ -225,71 +226,66 @@ class GeoJSONReader(object):
                 self.jsondict = json.load(f)
         else:
             self.jsondict = json.load(finput)
+
+        self.defaultcrs = defaultcrs
         return
 
-    @staticmethod
-    def parsePoint(d, defaultcrs):
-        crs = d.get("crs", defaultcrs)
+    def parsePoint(self, d):
+        crs = d.get("crs", self.defaultcrs)
         return Point(d["coordinates"], crs)
 
-    @staticmethod
-    def parseMultiPoint(d, defaultcrs):
-        crs = d.get("crs", defaultcrs)
+    def parseMultiPoint(self, d):
+        crs = d.get("crs", self.defaultcrs)
         return MultiPoint(d["coordinates"], crs)
 
-    @staticmethod
-    def parseLineString(d, defaultcrs):
-        crs = d.get("crs", defaultcrs)
+    def parseLineString(self, d):
+        crs = d.get("crs", self.defaultcrs)
         return LineString(d["coordinates"], crs)
 
-    @staticmethod
-    def parseMultiLineString(d, defaultcrs):
-        crs = d.get("crs", defaultcrs)
+    def parseMultiLineString(self, d):
+        crs = d.get("crs", self.defaultcrs)
         return MultiLineString(d["coordinates"], crs)
 
-    @staticmethod
-    def parsePolygon(d, defaultcrs):
-        crs = d.get("crs", defaultcrs)
+    def parsePolygon(self, d):
+        crs = d.get("crs", self.defaultcrs)
         return Polygon(d["coordinates"], crs)
 
-    @staticmethod
-    def parseMultiPolygon(d, defaultcrs):
-        crs = d.get("crs", defaultcrs)
+    def parseMultiPolygon(self, d):
+        crs = d.get("crs", self.defaultcrs)
         return MultiPolygon(d["coordinates"], crs)
 
-    def parseGeometry(self, o, defaultcrs):
-        crs = o.get("crs", defaultcrs)
+    def parseGeometry(self, o):
         t = o["type"]
         if t == "Point":
-            return self.parsePoint(o, crs)
+            return self.parsePoint(o)
         elif t == "MultiPoint":
-            return self.parseMultiPoint(o, crs)
+            return self.parseMultiPoint(o)
         elif t == "LineString":
-            return self.parseLineString(o, crs)
+            return self.parseLineString(o)
         elif t == "MultiLineString":
-            return self.parseMultiLineString(o, crs)
+            return self.parseMultiLineString(o)
         elif t == "Polygon":
-            return self.parsePolygon(o, crs)
+            return self.parsePolygon(o)
         elif t == "MultiPolygon":
-            return self.parseMultiPolygon(o, crs)
+            return self.parseMultiPolygon(o)
         else:
             raise TypeError("Unrecognized type {0}".format(t))
 
-    def parseGeometryCollection(self, o, defaultcrs):
-        crs = o.get("crs", defaultcrs)
+    def parseGeometryCollection(self, o):
+        crs = o.get("crs", self.defaultcrs)
         geoms = [self.parseGeometry(g) for g in o["geometries"]]
         return GeometryCollection(geoms, crs)
 
-    def parseFeature(self, o, defaultcrs):
-        crs = o.get("crs", defaultcrs)
-        geom = self.parseGeometry(o["geometry"], crs)
+    def parseFeature(self, o):
+        crs = o.get("crs", self.defaultcrs)
+        geom = self.parseGeometry(o["geometry"])
         prop = self.parseProperties(o["properties"], len(geom.coordinates))
         fid = o.get("id", None)
         return Feature(geom, prop, fid, crs)
 
-    def parseFeatureCollection(self, o, defaultcrs):
-        crs = o.get("crs", defaultcrs)
-        features = [self.parseFeature(f, crs) for f in o["features"]]
+    def parseFeatureCollection(self, o):
+        crs = o.get("crs", self.defaultcrs)
+        features = [self.parseFeature(f) for f in o["features"]]
         return FeatureCollection(features, crs)
 
     @staticmethod
@@ -303,20 +299,16 @@ class GeoJSONReader(object):
                 d["scalar"][key] = value
         return d
 
-    def items(self, o=None):
-        if o is None:
-            o = self.jsondict
-        crs = o.get("crs", DEFAULTCRS)
-        items = []
-        if o["type"] == "GeometryCollection":
-            items.append(self.parseGeometryCollection(o, crs))
-        elif o["type"] == "FeatureCollection":
-            items.append(self.parseFeatureCollection(o, crs))
-        elif o["type"] == "Feature":
-            items.append(self.parseFeature(o, crs))
+    def parse(self):
+        if self.jsondict["type"] == "GeometryCollection":
+            res = self.parseGeometryCollection(self.jsondict)
+        elif self.jsondict["type"] == "FeatureCollection":
+            res = self.parseFeatureCollection(self.jsondict)
+        elif self.jsondict["type"] == "Feature":
+            res = self.parseFeature(self.jsondict)
         else:
-            items.append(self.parseGeometry(o, crs))
-        return items
+            res = self.parseGeometry(self.jsondict)
+        return res
 
 def list_rec(A):
     """ Recursively convert nested iterables to nested lists """

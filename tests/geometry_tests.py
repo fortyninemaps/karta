@@ -8,7 +8,7 @@ import numpy as np
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.vector.geometry import affine_matrix
 from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, NSIDCNorth, Proj4CRS
-from karta.crs import CRSError
+from karta.errors import CRSError
 
 class TestGeometry(unittest.TestCase):
 
