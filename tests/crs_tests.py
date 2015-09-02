@@ -2,6 +2,7 @@
 import unittest
 import math
 import karta.crs as crs
+import karta.errors
 
 class TestCRS(unittest.TestCase):
 
@@ -146,7 +147,7 @@ class TestCRS(unittest.TestCase):
         crs.Proj4CRS("+proj=longlat +ellps=WGS84 +no_defs")
 
         # Fail if no geodetic information given
-        self.assertRaises(crs.CRSError,
+        self.assertRaises(karta.errors.CRSError,
                           lambda: crs.Proj4CRS("+proj=longlat +no_defs"))
         return
 
