@@ -172,7 +172,6 @@ def write_shapefile(features, fstem):
     elif not all(f.rank == features[0].rank for f in features[1:]):
         raise IOError("all features must have the same dimensionality")
 
-    write_projection(features[0], fstem)
     shapeType = shapefile_type(features[0])
     w = shapefile.Writer(shapeType=shapeType)
     if shapeType in (shapefile.POINT, shapefile.POINTZ):
@@ -233,13 +232,7 @@ def write_shapefile(features, fstem):
                 w.record(str(i))
 
     w.save(fstem)
-    return
-
-def crs_to_prj(crs, prjfnm):
-    """ Given a CRS object and a *.prj filename, write WKT information """
-    wkt = crs.get_wkt()
-    with open(prjfnm, "r") as f:
-        f.write(wkt)
+    write_projection(features[0], fstem)
     return
 
 def write_projection(geom, fstem):
