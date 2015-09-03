@@ -5,7 +5,7 @@
 *Karta* is a simple and fast framework for spatial analysis in Python.
 
 It contains clean vector and raster data types that are coordinate system-aware,
-implementations of frequently-used of geospatial analysis methods, and the
+implementations of frequently-used geospatial analysis methods, and the
 read/write interfaces to several formats, including GeoJSON, shapefiles, and
 ESRI ASCII.
 
