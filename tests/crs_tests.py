@@ -11,12 +11,24 @@ class TestCRS(unittest.TestCase):
         self.assertEqual(c0.get_proj4(), "+proj=lonlat +a=6371009.000000 +b=6371009.000000 +no_defs")
 
         c1 = crs.LonLatWGS84
-        self.assertEqual(c1.get_proj4(), "+proj=lonlat +a=6378137.0 +f=0.0033528106647474805")
+        proj4 = c1.get_proj4()
+        self.assertTrue("+proj=lonlat" in proj4)
+        self.assertTrue("+a=6378137.0" in proj4)
+        self.assertTrue("+f=0.0033528" in proj4)
 
         c2 = crs.NSIDCNorth
-        self.assertEqual(c2.get_proj4(),
-            "+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 "
-            "+units=m +datum=WGS84 +no_defs  +a=6378137.0 +f=0.0033528106647474805")
+        proj4 = c2.get_proj4()
+        self.assertTrue("+proj=stere" in proj4)
+        self.assertTrue("+lat_0=90" in proj4)
+        self.assertTrue("+lat_ts=70" in proj4)
+        self.assertTrue("+lon_0=-45" in proj4)
+        self.assertTrue("+k=1" in proj4)
+        self.assertTrue("+x_0=0" in proj4)
+        self.assertTrue("+y_0=0" in proj4)
+        self.assertTrue("+units=m" in proj4)
+        self.assertTrue("+datum=WGS84" in proj4)
+        self.assertTrue("+a=6378137.0" in proj4)
+        self.assertTrue("+f=0.0033528" in proj4)
         return
 
     def test_get_wkt(self):
@@ -24,11 +36,15 @@ class TestCRS(unittest.TestCase):
         self.assertEqual(c0.get_wkt(), '+proj=lonlat +a=6371009.000000 +b=6371009.000000 +no_defs')
 
         c1 = crs.LonLatWGS84
-        self.assertEqual(c1.get_wkt(), 'GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6378137,298.257223563]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
+        wkt = c1.get_wkt()
+        self.assertTrue('GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6378137,298.25722' in wkt)
+        self.assertTrue('PRIMEM["Greenwich",0],UNIT["degree",0.01745329' in wkt)
 
         c2 = crs.NSIDCNorth
-        self.assertEqual(c2.get_wkt(),
-            'PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",70],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]')
+        wkt = c2.get_wkt()
+        self.assertTrue('PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.25722' in wkt)
+        self.assertTrue('AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329' in wkt)
+        self.assertTrue('AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",70],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]' in wkt)
         return
 
     def test_CartesianProj(self):
