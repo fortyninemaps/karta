@@ -20,8 +20,7 @@ class build_ext(_build_ext):
         import numpy
         self.include_dirs.append(numpy.get_include())
 
-        # Add the instance include_dirs to each extension so that Cython will
-        # can them
+        # Add include_dirs to each extension so that Cython will find them
         for extension in self.extensions:
             extension.include_dirs = self.include_dirs
 
@@ -29,7 +28,13 @@ class build_ext(_build_ext):
         try:
             from Cython.Build import cythonize
             for ext in self.extensions:
-                ext.sources = list(map(lambda f: f+".pyx", ext.sources))
+                sources = []
+                for src in ext.sources:
+                    if src.endswith(".pyx"):
+                        sources.append(src)
+                    else:
+                        sources.append(src+".pyx")
+                ext.sources = sources
 
             _needs_stub = [ext._needs_stub for ext in self.extensions]
             self.extensions = cythonize(self.extensions)
