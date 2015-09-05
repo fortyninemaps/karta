@@ -13,16 +13,10 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
-from ..crs import GeographicalCRS, Cartesian, SphericalEarth
 from .metadata import Metadata, Indexer
-from . import _vectorgeo
+from . import _cvectorgeo
+from ..crs import GeographicalCRS, Cartesian, SphericalEarth
 from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
-
-try:
-    from . import _cvectorgeo as _vecgeo
-except ImportError:
-    sys.stderr.write("falling back on slow _vectorgeo")
-    _vecgeo = _vectorgeo
 
 class Geometry(object):
     """ This is the abstract base class for all geometry types """
@@ -583,11 +577,11 @@ class MultipointBase(Geometry):
 
         # Sort CCW relative to pt0, and drop all but farthest of any duplicates
         points.sort(key=lambda pt: pt0.distance(pt))
-        points.sort(key=lambda pt: _vecgeo.polarangle(pt0.vertex, pt.vertex))
+        points.sort(key=lambda pt: _cvectorgeo.polarangle(pt0.vertex, pt.vertex))
         alpha = -1
         drop = []
         for i,pt in enumerate(points):
-            a = _vecgeo.polarangle(pt0.vertex, pt.vertex)
+            a = _cvectorgeo.polarangle(pt0.vertex, pt.vertex)
             if a == alpha:
                 drop.append(i)
             else:
@@ -606,7 +600,7 @@ class MultipointBase(Geometry):
 
             S = [pt0, points[0], points[1]]
             for pt in points[2:]:
-                while not _vecgeo.isleft(S[-2].vertex, S[-1].vertex, pt.vertex):
+                while not _cvectorgeo.isleft(S[-2].vertex, S[-1].vertex, pt.vertex):
                     S.pop()
                 S.append(pt)
 
@@ -734,7 +728,7 @@ class ConnectedMultipoint(MultipointBase):
 
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
-        interxbool = (np.nan in _vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+        interxbool = (np.nan in _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                                      a[0][1], a[1][1], b[0][1], b[1][1])
                     for a in self.segments for b in other.segments)
         if self._bbox_overlap(other) and (True not in interxbool):
@@ -744,7 +738,7 @@ class ConnectedMultipoint(MultipointBase):
 
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
-        interx = (_vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+        interx = (_cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                           a[0][1], a[1][1], b[0][1], b[1][1])
                      for a in self.segments for b in other.segments)
         if not keep_duplicates:
@@ -765,13 +759,13 @@ class ConnectedMultipoint(MultipointBase):
         segments = zip(vertices[:-1], vertices[1:])
 
         if self.crs == Cartesian:
-            func = _vecgeo.pt_nearest_planar
-            func = lambda ptseg: _vecgeo.pt_nearest_planar(ptseg[0],
+            func = _cvectorgeo.pt_nearest_planar
+            func = lambda ptseg: _cvectorgeo.pt_nearest_planar(ptseg[0],
                                             ptseg[1][0], ptseg[1][1]) 
         else:
             fwd = self.crs.forward
             inv = self.crs.inverse
-            func = lambda ptseg: _vecgeo.pt_nearest_proj(fwd, inv, ptseg[0],
+            func = lambda ptseg: _cvectorgeo.pt_nearest_proj(fwd, inv, ptseg[0],
                                             ptseg[1][0], ptseg[1][1], tol=0.01)
 
         point_dist = map(func, zip(itertools.repeat(ptvertex), segments))
@@ -790,13 +784,13 @@ class ConnectedMultipoint(MultipointBase):
         segments = zip(vertices[:-1], vertices[1:])
 
         if self.crs == Cartesian:
-            func = _vecgeo.pt_nearest_planar
-            func = lambda ptseg: _vecgeo.pt_nearest_planar(ptseg[0],
+            func = _cvectorgeo.pt_nearest_planar
+            func = lambda ptseg: _cvectorgeo.pt_nearest_planar(ptseg[0],
                                             ptseg[1][0], ptseg[1][1]) 
         else:
             fwd = self.crs.forward
             inv = self.crs.inverse
-            func = lambda ptseg: _vecgeo.pt_nearest_proj(fwd, inv, ptseg[0],
+            func = lambda ptseg: _cvectorgeo.pt_nearest_proj(fwd, inv, ptseg[0],
                                             ptseg[1][0], ptseg[1][1], tol=0.01)
 
         point_dist = map(func, zip(itertools.repeat(ptvertex), segments))
@@ -1079,7 +1073,7 @@ class Polygon(ConnectedMultipoint):
         cnt = 0
         for seg in self.segment_tuples:
             (a, b) = seg
-            if _vecgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
+            if _cvectorgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
                 cnt += 1
         return cnt % 2 == 1 and not any(p.contains(pt) for p in self.subs)
 

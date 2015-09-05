@@ -1,9 +1,6 @@
 """ Implements a simple quadtree datastructure, with emphasis on performance. """
 
-try:
-    from ._cvectorgeo import iswithin, hashpt
-except ImportError:
-    from ._vectorgeo import iswithin, hashpt
+from ._cvectorgeo import iswithin, hashpt
 
 class Node(object):
     def __init__(self, children, bbox, leaf):

@@ -11,11 +11,7 @@ from .read import read_aai, read_gtiff, aairead, gtiffread
 from .aaigrid import AAIGrid
 from .misc import witch_of_agnesi, peaks, pad, slope, aspect, grad, div
 from .misc import normed_vector_field
-
-try:
-    from .crfuncs import streamline2d
-except ImportError:
-    from .streamline import streamline2d
+from .crfuncs import streamline2d
 
 __all__ = ["grid", "aaigrid", "misc",
            "RegularGrid", "WarpedGrid",
