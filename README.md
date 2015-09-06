@@ -6,8 +6,8 @@
 
 It contains clean vector and raster data types that are coordinate system-aware,
 implementations of frequently-used geospatial analysis methods, and the
-read/write interfaces to several formats, including GeoJSON, shapefiles, and
-ESRI ASCII.
+read/write interfaces to several common formats, including GeoJSON, shapefiles,
+and ESRI ASCII.
 
 *Karta* works with Python 2.7 and Python 3.3+. Suggestions, bug reports, test
 cases, and pull requests are welcome.
@@ -44,7 +44,7 @@ documentation requires [Sphinx](http://sphinx-doc.org/),
 ## FORMATS
 
 *Karta* provides a basic working interface to several of common file formats.
-Currently partially-supported are:
+Currently implemented are:
 
 - vector
     - GeoJSON (r,w)
@@ -53,15 +53,14 @@ Currently partially-supported are:
     - ASCII tables (XYZ) (r,w)
 - raster
     - ESRI ASCII Grid (r,w)
-    - GeoTiff (via GDAL) (r,w)
-    - USGS DEM (WIP)
+    - GeoTiff (requires GDAL) (r,w)
 
-*Karta* implements [Python
-`__geo_interface__`](https://gist.github.com/sgillies/2217756) for vector
-geometries. External modules that also implement `__geo_interface__` (e.g.
+*Karta* implements the Python [`__geo_interface__`
+attribute](https://gist.github.com/sgillies/2217756) for vector geometries. This
+permits data to be exchanged between *Karta* and external modules that also
+implement `__geo_interface__` (e.g.
 [shapely](https://github.com/Toblerity/Shapely),
-[fastkml](https://fastkml.readthedocs.org/en/latest/)) can be directly used to
-read and write additional formats.
+[fastkml](https://fastkml.readthedocs.org/en/latest/)).
 
 ## INSTALLATION
 
@@ -74,9 +73,15 @@ To install the latest release from PyPI, run
 
     pip install karta
 
-To build from source,
+### Building from source
 
-    git clone https://github.com/njwilson23/karta.git
+Building from source requires Cython to be available.
+
+    pip install Cython
+
+Then, clone the repository and install,
+
+    git clone https://github.com/njwilson23/karta.git karta
     pip install -r karta/requirements.txt
     pip install karta/
 
@@ -88,14 +93,12 @@ To build from source,
 - numpy
 - pyshp
 - pyproj
+- C-compiler
 
 ### Recommended
 
-- cython
-- gdal (for geotiff I/O)
-
-### Optional
-
+- osgeom.gdal (for geotiff I/O)
+- osgeo.osr (for coordinate system interchange)
 - scipy
 
 When installing from PyPI, Cython-compiled C source code is provided and will be
@@ -124,4 +127,3 @@ FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
 COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
 IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
 CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-
