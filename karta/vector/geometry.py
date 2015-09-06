@@ -14,6 +14,7 @@ from . import geojson
 from . import xyfile
 from . import shp
 from .metadata import Metadata, Indexer
+from . import quadtree
 from . import _cvectorgeo
 from ..crs import GeographicalCRS, Cartesian, SphericalEarth
 from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
@@ -312,6 +313,8 @@ class MultipointBase(Geometry):
             self.properties = {}
         else:
             raise GInitError("value provided as 'properties' must be a hash")
+
+        self.quadtree = None
         return
 
     def __repr__(self):
@@ -455,6 +458,7 @@ class MultipointBase(Geometry):
         """ Removes a vertex from the register by index. """
         pt = Point(self.vertices.pop(index), data=self.data[index])
         del self.data[index]
+        self.quadtree = None
         return pt
 
     def shift(self, shift_vector):
@@ -469,6 +473,7 @@ class MultipointBase(Geometry):
             f = lambda pt: (pt[0] + shift_vector[0], pt[1] + shift_vector[1],
                             pt[2] + shift_vector[2])
         self.vertices = list(map(f, self.vertices))
+        self.quadtree = None
         return self
 
     def _matmult(self, A, x):
@@ -493,6 +498,7 @@ class MultipointBase(Geometry):
 
         # Shift back
         self.shift(origin)
+        self.quadtree = None
         return self
 
     def apply_affine_transform(self, M):
@@ -685,6 +691,12 @@ class Multipoint(MultipointBase):
     """
     _geotype = "Multipoint"
 
+    def __contains__(self, other):
+        if other in (pt for pt in self):
+            return True
+        else:
+            return False
+
     @property
     def __geo_interface__(self):
         return {"type" : "MultiPoint", "bbox" : self.bbox, "coordinates" : self.vertices}
@@ -692,18 +704,54 @@ class Multipoint(MultipointBase):
     def within_radius(self, pt, radius):
         """ Return Multipoint of subset that is within *radius* of *pt*.
         """
-        distances = self.distances_to(pt)
-        indices = [i for i,d in enumerate(distances) if d <= radius]
+        if self.quadtree is None:
+            distances = self.distances_to(pt)
+            indices = [i for i,d in enumerate(distances) if d <= radius]
+        else:
+            search_bbox = (pt.x-radius, pt.x+radius, pt.y-radius, pt.y+radius)
+            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
+            possible_pts = []
+            for t in possible_pt_tuples:
+                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
+                                                        crs=self.crs))
+            indices = [p.properties["idx"] for p in possible_pts
+                            if pt.distance(p) <= radius]
+
         return self._subset(indices)
 
     def within_bbox(self, bbox):
         """ Return Multipoint subset that is within a square bounding box
-        given by (xmin, xymin, xmax, ymax). """
+        given by (xmin, xymin, xmax, ymax).
+        """
         filtbbox = lambda pt: (bbox[0] <= pt.vertex[0] <= bbox[2]) and \
                               (bbox[1] <= pt.vertex[1] <= bbox[3])
         indices = [i for (i, pt) in enumerate(self) if filtbbox(pt)]
         return self._subset(indices)
 
+    def within_polygon(self, poly):
+        """ Return Multipoint subset that is within a polygon.
+        """
+        indices = [i for (i, pt) in enumerate(self) if poly.contains(pt)]
+        return self._subset(indices)
+
+    def build_quadtree(self, buffer=1e-8):
+        """ Construct an internal quadtree with the current geometry data.
+
+        Optional *buffer* keyword specifies a spatial buffer to create around
+        the current point bounding box, permitting the geometry to grow after
+        the quadtree has been initialized. *buffer* may be a scalar or a
+        sequence of (left, right, bottom, top).
+        """
+        try:
+            bf = (buffer[0], buffer[1], buffer[2], buffer[3])
+        except TypeError:
+            bf = (buffer, buffer, buffer, buffer)
+
+        x0, x1, y0, y1 = self.get_extents()
+        self.quadtree = quadtree.QuadTree((x0-bf[0], x1+bf[1], y0-bf[2], y1+bf[3]))
+        for i, pt in enumerate(self):
+            self.quadtree.addpt((pt.x, pt.y, i))
+        return
 
 class ConnectedMultipoint(MultipointBase):
     """ Class for Multipoints in which vertices are assumed to be connected. """
