@@ -30,6 +30,7 @@ class TestGeometry(unittest.TestCase):
         self.mp = Multipoint(self.vertices, data=self.data)
         self.line = Line(self.vertices, data=self.data)
         self.poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
+        self.poly3 = Polygon([(0.0, 8.0, 0.5), (0.0, 5.0, 0.8), (6.0, 1.0, 0.6)])
         self.ring = Polygon([(2.0, 2.0), (4.0, 2.0), (3.0, 6.0)])
         self.ringed_poly = Polygon([(0.0, 0.0), (10, 0.0),
                                     (10.0, 10.0), (0.0, 10.0)],
@@ -369,11 +370,13 @@ class TestGeometry(unittest.TestCase):
 
     def test_poly_extents(self):
         self.assertEqual(self.poly.get_extents(), (0.0, 6.0, 1.0, 8.0))
+        self.assertEqual(self.poly3.get_extents(), (0.0, 6.0, 1.0, 8.0))
         return
 
     def test_poly_extents_foreign_crs(self):
         x, y = zip(*self.poly.get_vertices(crs=NSIDCNorth))
         self.assertEqual(self.poly.get_extents(NSIDCNorth), (min(x), max(x), min(y), max(y)))
+        self.assertEqual(self.poly3.get_extents(NSIDCNorth), (min(x), max(x), min(y), max(y)))
         return
 
     def test_poly_length(self):
@@ -611,7 +614,7 @@ class TestGeoInterface(unittest.TestCase):
                           "coordinates": list(zip(x,y))})
         line = line[:5]
         self.assertEqual(line.__geo_interface__,
-                         {"type":"LineString", 
+                         {"type":"LineString",
                           "bbox":(0, 0, 4, 16),
                           "coordinates": list(zip(x[:5],y[:5]))})
 
@@ -751,7 +754,7 @@ class VectorCRSTests(unittest.TestCase):
         UTM31N = Proj4CRS("+proj=utm +zone=31 +ellps=WGS84 "
                     "+datum=WGS84 +units=m +no_defs", "+ellps=WGS84")
         self.assertEqual(line.get_coordinate_lists(UTM31N),
-                    ((407650.39665729366, 421687.71905896586, 472328.1095127584), 
+                    ((407650.39665729366, 421687.71905896586, 472328.1095127584),
                      (3762606.6598763773, 3784658.467084308, 3773284.485241791)))
         return
 
@@ -778,4 +781,3 @@ class MetadataAttributeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
