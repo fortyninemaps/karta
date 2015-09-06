@@ -4,14 +4,14 @@ from os.path import exists
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
-VERSION = "0.4.4"
+VERSION = "0.5.0alpha"
 
 class build_ext(_build_ext):
 
     # solution taken from http://stackoverflow.com/questions/19919905/ \
-    #   how-to-bootstrap-numpy-installation-in-setup-py 
+    #   how-to-bootstrap-numpy-installation-in-setup-py
     def finalize_options(self):
-        """ Unsets __NUMPY_SETUP__ so that the get_include function can be used 
+        """ Unsets __NUMPY_SETUP__ so that the get_include function can be used
         """
         _build_ext.finalize_options(self)
 
@@ -53,10 +53,7 @@ class build_ext(_build_ext):
         # attribute to each extension for setuptools.
         for ext in self.extensions:
             if not all(exists(src) for src in ext.sources):
-                self.extensions = []
-                print("Extension sources not found: %s" % extension.sources)
-                print("Not building accelerated modules")
-                break
+                raise Exception("Extension sources not found - Cython required for install")
         return
 
 # File extension is added to sources at overloaded build_ext.run()
@@ -107,12 +104,15 @@ The manual can also be built offline with Sphinx by running ``make`` from the
 information in the `Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`_.
 """,
     download_url = "https://github.com/njwilson23/karta/archive/master.zip",
-    classifiers = ["Programming Language :: Python",
+    classifiers = ["Programming Language :: Python :: 2",
+                   "Programming Language :: Python :: 2.7"
                    "Programming Language :: Python :: 3",
+                   "Programming Language :: Python :: 3.2",
+                   "Programming Language :: Python :: 3.3",
+                   "Programming Language :: Python :: 3.4",
                    "Development Status :: 4 - Beta",
                    "Topic :: Scientific/Engineering"],
     license = "MIT License",
     ext_modules = extensions,
     cmdclass = {"build_ext": build_ext},
 )
-
