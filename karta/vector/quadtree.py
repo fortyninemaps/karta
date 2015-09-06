@@ -10,8 +10,8 @@ class Node(object):
 
 class QuadTree(object):
     """ Implements a convenience class that wraps a quadtree data structure and
-    the methods needs to grow or query it. 
-    
+    the methods needed to grow or query it.
+
     Initialize with bbox (xmin, xmax, ymin, ymax).
 
     Optional parameters
@@ -55,7 +55,9 @@ def addpt(node, pt, depth, maxchildren, maxdepth):
     node, depending on whether a split occurred, as well as the depth at which
     the point was inserted. """
     if not iswithin(node.bbox, pt):
-        raise BBoxError
+        raise BBoxError("({x},{y}) is not within bounds {bbox}".format(x=pt[0],
+                                                                       y=pt[1],
+                                                                       bbox=node.bbox))
 
     if node.leaf:
 
@@ -142,5 +144,7 @@ def querypt_hash(parent, pt):
             parent = parent.children[quad]
 
 class BBoxError(Exception):
-    pass
-
+    def __init__(self, message):
+        self.message = message
+    def __repr__(self):
+        return self.message
