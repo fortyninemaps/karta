@@ -210,6 +210,21 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(sub, Multipoint(ans))
         return
 
+    def test_multipoint_within_polygon(self):
+        np.random.seed(42)
+        x = (np.random.random(100) - 0.5) * 180.0
+        y = (np.random.random(100) - 0.5) * 30.0
+        xp = [-80, -50, 20, 35, 55, -45, -60]
+        yp = [0, -10, -8, -17, 15, 18, 12]
+        poly = Polygon(zip(xp, yp), crs=LonLatWGS84)
+        mp = Multipoint(zip(x, y), crs=LonLatWGS84)
+
+        subset = mp.within_polygon(poly)
+        excluded = [pt for pt in mp if pt not in subset]
+        self.assertTrue(all(poly.contains(pt) for pt in subset))
+        self.assertFalse(any(poly.contains(pt) for pt in excluded))
+        return
+
     def test_multipoint_convex_hull(self):
         vertices = [(953, 198), (986, 271), (937, 305), (934, 464), (967, 595),
                 (965, 704), (800, 407), (782, 322), (863, 979), (637, 689),

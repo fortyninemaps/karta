@@ -13,16 +13,11 @@ from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
-from ..crs import GeographicalCRS, Cartesian, SphericalEarth
 from .metadata import Metadata, Indexer
-from . import _vectorgeo
+from . import quadtree
+from . import _cvectorgeo
+from ..crs import GeographicalCRS, Cartesian, SphericalEarth
 from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
-
-try:
-    from . import _cvectorgeo as _vecgeo
-except ImportError:
-    sys.stderr.write("falling back on slow _vectorgeo")
-    _vecgeo = _vectorgeo
 
 class Geometry(object):
     """ This is the abstract base class for all geometry types """
@@ -318,6 +313,8 @@ class MultipointBase(Geometry):
             self.properties = {}
         else:
             raise GInitError("value provided as 'properties' must be a hash")
+
+        self.quadtree = None
         return
 
     def __repr__(self):
@@ -461,6 +458,7 @@ class MultipointBase(Geometry):
         """ Removes a vertex from the register by index. """
         pt = Point(self.vertices.pop(index), data=self.data[index])
         del self.data[index]
+        self.quadtree = None
         return pt
 
     def shift(self, shift_vector):
@@ -475,6 +473,7 @@ class MultipointBase(Geometry):
             f = lambda pt: (pt[0] + shift_vector[0], pt[1] + shift_vector[1],
                             pt[2] + shift_vector[2])
         self.vertices = list(map(f, self.vertices))
+        self.quadtree = None
         return self
 
     def _matmult(self, A, x):
@@ -499,6 +498,7 @@ class MultipointBase(Geometry):
 
         # Shift back
         self.shift(origin)
+        self.quadtree = None
         return self
 
     def apply_affine_transform(self, M):
@@ -583,11 +583,11 @@ class MultipointBase(Geometry):
 
         # Sort CCW relative to pt0, and drop all but farthest of any duplicates
         points.sort(key=lambda pt: pt0.distance(pt))
-        points.sort(key=lambda pt: _vecgeo.polarangle(pt0.vertex, pt.vertex))
+        points.sort(key=lambda pt: _cvectorgeo.polarangle(pt0.vertex, pt.vertex))
         alpha = -1
         drop = []
         for i,pt in enumerate(points):
-            a = _vecgeo.polarangle(pt0.vertex, pt.vertex)
+            a = _cvectorgeo.polarangle(pt0.vertex, pt.vertex)
             if a == alpha:
                 drop.append(i)
             else:
@@ -606,7 +606,7 @@ class MultipointBase(Geometry):
 
             S = [pt0, points[0], points[1]]
             for pt in points[2:]:
-                while not _vecgeo.isleft(S[-2].vertex, S[-1].vertex, pt.vertex):
+                while not _cvectorgeo.isleft(S[-2].vertex, S[-1].vertex, pt.vertex):
                     S.pop()
                 S.append(pt)
 
@@ -691,6 +691,12 @@ class Multipoint(MultipointBase):
     """
     _geotype = "Multipoint"
 
+    def __contains__(self, other):
+        if other in (pt for pt in self):
+            return True
+        else:
+            return False
+
     @property
     def __geo_interface__(self):
         return {"type" : "MultiPoint", "bbox" : self.bbox, "coordinates" : self.vertices}
@@ -698,18 +704,64 @@ class Multipoint(MultipointBase):
     def within_radius(self, pt, radius):
         """ Return Multipoint of subset that is within *radius* of *pt*.
         """
-        distances = self.distances_to(pt)
-        indices = [i for i,d in enumerate(distances) if d <= radius]
+        if self.quadtree is None:
+            distances = self.distances_to(pt)
+            indices = [i for i,d in enumerate(distances) if d <= radius]
+        else:
+            search_bbox = (pt.x-radius, pt.x+radius, pt.y-radius, pt.y+radius)
+            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
+            possible_pts = []
+            for t in possible_pt_tuples:
+                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
+                                                        crs=self.crs))
+            indices = [p.properties["idx"] for p in possible_pts
+                            if pt.distance(p) <= radius]
+
         return self._subset(indices)
 
     def within_bbox(self, bbox):
         """ Return Multipoint subset that is within a square bounding box
-        given by (xmin, xymin, xmax, ymax). """
+        given by (xmin, xymin, xmax, ymax).
+        """
         filtbbox = lambda pt: (bbox[0] <= pt.vertex[0] <= bbox[2]) and \
                               (bbox[1] <= pt.vertex[1] <= bbox[3])
         indices = [i for (i, pt) in enumerate(self) if filtbbox(pt)]
         return self._subset(indices)
 
+    def within_polygon(self, poly):
+        """ Return Multipoint subset that is within a polygon.
+        """
+        if self.quadtree is None:
+            indices = [i for (i, pt) in enumerate(self) if poly.contains(pt)]
+        else:
+            search_bbox = poly.get_extents(crs=self.crs)
+            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
+            possible_pts = []
+            for t in possible_pt_tuples:
+                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
+                                                        crs=self.crs))
+            indices = [p.properties["idx"] for p in possible_pts
+                            if poly.contains(p)]
+        return self._subset(indices)
+
+    def build_quadtree(self, buffer=1e-8):
+        """ Construct an internal quadtree with the current geometry data.
+
+        Optional *buffer* keyword specifies a spatial buffer to create around
+        the current point bounding box, permitting the geometry to grow after
+        the quadtree has been initialized. *buffer* may be a scalar or a
+        sequence of (left, right, bottom, top).
+        """
+        try:
+            bf = (buffer[0], buffer[1], buffer[2], buffer[3])
+        except TypeError:
+            bf = (buffer, buffer, buffer, buffer)
+
+        x0, x1, y0, y1 = self.get_extents()
+        self.quadtree = quadtree.QuadTree((x0-bf[0], x1+bf[1], y0-bf[2], y1+bf[3]))
+        for i, pt in enumerate(self):
+            self.quadtree.addpt((pt.x, pt.y, i))
+        return
 
 class ConnectedMultipoint(MultipointBase):
     """ Class for Multipoints in which vertices are assumed to be connected. """
@@ -734,7 +786,7 @@ class ConnectedMultipoint(MultipointBase):
 
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
-        interxbool = (np.nan in _vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+        interxbool = (np.nan in _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                                      a[0][1], a[1][1], b[0][1], b[1][1])
                     for a in self.segments for b in other.segments)
         if self._bbox_overlap(other) and (True not in interxbool):
@@ -744,7 +796,7 @@ class ConnectedMultipoint(MultipointBase):
 
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
-        interx = (_vecgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+        interx = (_cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                           a[0][1], a[1][1], b[0][1], b[1][1])
                      for a in self.segments for b in other.segments)
         if not keep_duplicates:
@@ -756,47 +808,20 @@ class ConnectedMultipoint(MultipointBase):
                                            crs=self.crs))
         return Multipoint(interx_points)
 
-    def shortest_distance_to(self, pt):
-        """ Return the shortest distance from any position on the Multipoint
-        boundary to *pt* (Point).
-        """
-        ptvertex = pt.crs.project(*pt.vertex, inverse=True)
-        vertices = list(zip(*self.crs.project(*self.coordinates, inverse=True)))
-        segments = zip(vertices[:-1], vertices[1:])
+    def _nearest_to_point(self, pt):
+        """ Return a tuple of the shortest distance on the geometry boundary to
+        *pt*, and the vertex at that location. """
+        ptvertex = pt.get_vertex(crs=self.crs)
+        segments = zip(self.vertices[:-1], self.vertices[1:])
 
         if self.crs == Cartesian:
-            func = _vecgeo.pt_nearest_planar
-            func = lambda ptseg: _vecgeo.pt_nearest_planar(ptseg[0],
+            func = _cvectorgeo.pt_nearest_planar
+            func = lambda ptseg: _cvectorgeo.pt_nearest_planar(ptseg[0],
                                             ptseg[1][0], ptseg[1][1])
         else:
             fwd = self.crs.forward
             inv = self.crs.inverse
-            func = lambda ptseg: _vecgeo.pt_nearest_proj(fwd, inv, ptseg[0],
-                                            ptseg[1][0], ptseg[1][1], tol=0.01)
-
-        point_dist = map(func, zip(itertools.repeat(ptvertex), segments))
-        mindist = -1.0
-        for i, (_, d) in enumerate(point_dist):
-            if d < mindist or (i == 0):
-                mindist = d
-        return mindist
-
-    def nearest_on_boundary(self, pt):
-        """ Returns the position on the Multipoint boundary that is nearest to
-        pt (Point). If two points are equidistant, only one will be returned.
-        """
-        ptvertex = pt.crs.project(*pt.vertex, inverse=True)
-        vertices = list(zip(*self.crs.project(*self.coordinates, inverse=True)))
-        segments = zip(vertices[:-1], vertices[1:])
-
-        if self.crs == Cartesian:
-            func = _vecgeo.pt_nearest_planar
-            func = lambda ptseg: _vecgeo.pt_nearest_planar(ptseg[0],
-                                            ptseg[1][0], ptseg[1][1])
-        else:
-            fwd = self.crs.forward
-            inv = self.crs.inverse
-            func = lambda ptseg: _vecgeo.pt_nearest_proj(fwd, inv, ptseg[0],
+            func = lambda ptseg: _cvectorgeo.pt_nearest_proj(fwd, inv, ptseg[0],
                                             ptseg[1][0], ptseg[1][1], tol=0.01)
 
         point_dist = map(func, zip(itertools.repeat(ptvertex), segments))
@@ -806,10 +831,24 @@ class ConnectedMultipoint(MultipointBase):
             if d < mindist or (i == 0):
                 minpt = pt
                 mindist = d
+        return mindist, minpt
+
+    def shortest_distance_to(self, pt):
+        """ Return the shortest distance from any position on the geometry
+        boundary to *pt* (Point).
+        """
+        return self._nearest_to_point(pt)[0]
+
+    def nearest_on_boundary(self, pt):
+        """ Returns the position on the geometry boundary that is nearest to
+        *pt* (Point). If two points are equidistant, only one will be returned.
+        """
+        _, minpt = self._nearest_to_point(pt)
         return Point(minpt, crs=self.crs)
 
     def within_distance(self, pt, distance):
-        """ Test whether a point is within *distance* of a ConnectedMultipoint. """
+        """ Test whether a point is within *distance* of a ConnectedMultipoint.
+        """
         return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments)
 
 
@@ -1080,7 +1119,7 @@ class Polygon(ConnectedMultipoint):
         cnt = 0
         for seg in self.segment_tuples:
             (a, b) = seg
-            if _vecgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
+            if _cvectorgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
                 cnt += 1
         return cnt % 2 == 1 and not any(p.contains(pt) for p in self.subs)
 
