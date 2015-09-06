@@ -978,9 +978,10 @@ class Polygon(ConnectedMultipoint):
 
             lon1 = vertex[0]
 
-            if sign(lon0) == -sign(lon1):       # Dateline
+            if (sign(lon0) == -sign(lon1)) and \
+                ((min(abs(lon0-180), abs(lon0+180)) + min(abs(lon1-180), abs(lon1+180))) < (abs(lon0) + abs(lon1))):
+                # Longitudes span the dateline
                 sum_angle += 360.0 + lon1 - lon0
-
             else:
                 sum_angle += lon1 - lon0
 

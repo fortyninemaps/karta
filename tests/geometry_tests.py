@@ -349,19 +349,22 @@ class TestGeometry(unittest.TestCase):
 
     def test_poly_polar(self):
         p = Polygon([(0.0, 80.0), (30.0, 80.0), (60.0, 80.0), (90.0, 80.0),
-                     (120.0, 80.0), (150.0, 80.0), (180.0, 80.0), (-150.0, 80.0),
-                     (-120.0, 80.0), (-90.0, 80.0), (-60.0, 80.0), (-30.0, 80.0)],
-                    crs=SphericalEarth)
+                     (120.0, 80.0), (150.0, 80.0), (180.0, 80.0),
+                     (-150.0, 80.0), (-120.0, 80.0), (-90.0, 80.0),
+                     (-60.0, 80.0), (-30.0, 80.0)], crs=SphericalEarth)
         self.assertTrue(p.ispolar())
 
-        p = Polygon([(0.0, 85.0, 0.0), (90.0, 85.0, 0.0), (180.0, 85.0, 0.0), (-90.0, 85.0, 0.0)],
-                    crs=SphericalEarth)
+        p = Polygon([(0.0, 85.0, 0.0), (90.0, 85.0, 0.0), (180.0, 85.0, 0.0),
+                     (-90.0, 85.0, 0.0)], crs=SphericalEarth)
         self.assertTrue(p.ispolar())
 
         p = Polygon([(45.0, 30.0), (40.0, 25.0), (45.0, 20.0), (35.0, 25.0)],
                     crs=SphericalEarth)
         self.assertFalse(p.ispolar())
 
+        p = Polygon([(-80, 0), (-50, -10), (20, -8), (35, -17), (55, 15),
+                     (-45, 18), (-60, 12)], crs=LonLatWGS84)
+        self.assertFalse(p.ispolar())
 
         p = Polygon([(45.0, 30.0), (40.0, 25.0), (45.0, 20.0), (35.0, 25.0)],
                     crs=Cartesian)
