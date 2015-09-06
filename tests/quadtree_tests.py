@@ -168,23 +168,26 @@ class TestGeometryWithQuadTree(unittest.TestCase):
             self.assertTrue(subset[i] in subset_qt)
         return
 
-    # def test_polygon_contains(self):
-    #     """ Search for points contained within a polygon, using a quadtree. """
-    #     th = np.linspace(-np.pi, np.pi, 18)
-    #     xp = 5*np.cos(th)
-    #     yp = 5*np.sin(th)
-    #     poly = karta.Polygon(zip(xp, yp), crs=karta.crs.SphericalEarth)
+    def test_polygon_contains(self):
+        """ Search for points contained within a polygon, using a quadtree. """
+        th = np.linspace(-np.pi, np.pi, 18)
+        xp = 5*np.cos(th)
+        yp = 5*np.sin(th)
+        poly = karta.Polygon(zip(xp, yp), crs=karta.crs.SphericalEarth)
 
-    #     np.random.seed(42)
-    #     x = (np.random.random(1000) - 0.5) * 180.0
-    #     y = (np.random.random(1000) - 0.5) * 30.0
-    #     mp = karta.Multipoint(zip(x, y), crs=karta.crs.LonLatWGS84)
+        np.random.seed(42)
+        x = (np.random.random(1000) - 0.5) * 180.0
+        y = (np.random.random(1000) - 0.5) * 30.0
+        mp = karta.Multipoint(zip(x, y), crs=karta.crs.SphericalEarth)
 
-    #     contained = mp.within_polygon(poly)
-    #     mp.build_quadtree()
-    #     contained_qt = mp.within_polygon(poly)
-    #     self.assertEqual(contained, contained_qt)
-    #     return
+        contained = mp.within_polygon(poly)
+        mp.build_quadtree()
+        contained_qt = mp.within_polygon(poly)
+        self.assertEqual(len(contained), len(contained_qt))
+        print(len(contained))
+        for i in range(len(contained)):
+            self.assertTrue(contained[i] in contained_qt)
+        return
 
 if __name__ == "__main__":
     unittest.main()

@@ -731,7 +731,17 @@ class Multipoint(MultipointBase):
     def within_polygon(self, poly):
         """ Return Multipoint subset that is within a polygon.
         """
-        indices = [i for (i, pt) in enumerate(self) if poly.contains(pt)]
+        if self.quadtree is None:
+            indices = [i for (i, pt) in enumerate(self) if poly.contains(pt)]
+        else:
+            search_bbox = poly.get_extents(crs=self.crs)
+            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
+            possible_pts = []
+            for t in possible_pt_tuples:
+                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
+                                                        crs=self.crs))
+            indices = [p.properties["idx"] for p in possible_pts
+                            if poly.contains(p)]
         return self._subset(indices)
 
     def build_quadtree(self, buffer=1e-8):
