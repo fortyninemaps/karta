@@ -49,7 +49,7 @@ def intersection(double x0, double x1, double x2, double x3,
     """
     cdef double m0, m1
     cdef double x, y
-    
+
     if x1 != x0:
         m0 = float(y1-y0) / float(x1-x0)
     else:
@@ -61,7 +61,7 @@ def intersection(double x0, double x1, double x2, double x3,
     if m0 == m1:
         return (np.nan, np.nan)
     x = float(m0*x0 - m1*x2 + y2 - y0) / float(m0 - m1)
-    
+
     cdef bool iswithinx
     cdef bool iswithiny
     iswithinx = False
@@ -91,7 +91,7 @@ def intersection(double x0, double x1, double x2, double x3,
                 iswithiny = True
         elif abs(y - y0) < 1e-15 and isbetween_inc(y2, y, y3):
             iswithiny = True
-            
+
     if iswithinx and iswithiny:
         return (x, y)
     else:
@@ -113,7 +113,7 @@ def intersects_cn(double xp, double yp, double x0, double x1, double y0, double 
 
     if y < yp:
         return False
-    
+
     cdef bool iswithinx
     cdef bool iswithiny
     iswithinx = False
@@ -150,10 +150,10 @@ def pt_nearest_planar(tuple pt, tuple endpt1, tuple endpt2):
     and endpt2 nearest to a point defined by tuple pt.
     Returns the a nested tuple of (point, distance)
     """
-    
+
     cdef tuple u, v, u_int
     cdef tuple u_on_v
-    
+
     dist = lambda u,v: sqrt((u[0]-v[0])**2. + (u[1]-v[1])**2.)
 
     u = (pt[0] - endpt1[0], pt[1] - endpt1[1])
@@ -202,14 +202,14 @@ def pt_nearest_proj(fwd, inv, pt, endpt0, endpt1, float tol=1.0, int maxiter=50)
         (trialx, trialy, _) = fwd(endpt0[0], endpt0[1], az, x*L)
         (_, _, d) = inv(trialx, trialy, pt[0], pt[1])
         return d
-    
+
     def ddx(double x):
         cdef double dx, d1, d2
         dx = 1e-8
         d1 = distance(x)
         d2 = distance(x+dx)
         return (d2-d1) / dx
-    
+
     # Detect whether the nearest point is at an endpoint
     cdef double dx0, dx1
     dx0, dx1 = ddx(0), ddx(1)
@@ -217,7 +217,7 @@ def pt_nearest_proj(fwd, inv, pt, endpt0, endpt1, float tol=1.0, int maxiter=50)
         return endpt0, distance(0)
     elif dx1 < 0:
         return endpt1, distance(1)
-    
+
     # Bisection iteration
     cdef float x0, x1, xm, xn, yn
     cdef int i = 0
@@ -249,12 +249,12 @@ class ConvergenceError(Exception):
 
 def iswithin(tuple bbox, tuple pt):
     """ Return whether a point is within a bounding box (planar approximation). """
-    cdef float xmn = bbox[0]
-    cdef float xmx = bbox[1]
-    cdef float ymn = bbox[2]
-    cdef float ymx = bbox[3]
-    cdef float x = pt[0]
-    cdef float y = pt[1]
+    cdef double xmn = bbox[0]
+    cdef double xmx = bbox[1]
+    cdef double ymn = bbox[2]
+    cdef double ymx = bbox[3]
+    cdef double x = pt[0]
+    cdef double y = pt[1]
     if (xmn <= x < xmx and ymn <= y < ymx):
         return True
     else:
@@ -293,7 +293,6 @@ def hashpt(float xmin, float xmax, float ymin, float ymax, float x, float y):
         else:
             raise HashError
         yield geohash
-        
+
 class HashError(Exception):
     pass
-
