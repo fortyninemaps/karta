@@ -750,38 +750,11 @@ class ConnectedMultipoint(MultipointBase):
                                            crs=self.crs))
         return Multipoint(interx_points)
 
-    def shortest_distance_to(self, pt):
-        """ Return the shortest distance from any position on the Multipoint
-        boundary to *pt* (Point).
-        """
-        ptvertex = pt.crs.project(*pt.vertex, inverse=True)
-        vertices = list(zip(*self.crs.project(*self.coordinates, inverse=True)))
-        segments = zip(vertices[:-1], vertices[1:])
-
-        if self.crs == Cartesian:
-            func = _cvectorgeo.pt_nearest_planar
-            func = lambda ptseg: _cvectorgeo.pt_nearest_planar(ptseg[0],
-                                            ptseg[1][0], ptseg[1][1])
-        else:
-            fwd = self.crs.forward
-            inv = self.crs.inverse
-            func = lambda ptseg: _cvectorgeo.pt_nearest_proj(fwd, inv, ptseg[0],
-                                            ptseg[1][0], ptseg[1][1], tol=0.01)
-
-        point_dist = map(func, zip(itertools.repeat(ptvertex), segments))
-        mindist = -1.0
-        for i, (_, d) in enumerate(point_dist):
-            if d < mindist or (i == 0):
-                mindist = d
-        return mindist
-
-    def nearest_on_boundary(self, pt):
-        """ Returns the position on the Multipoint boundary that is nearest to
-        pt (Point). If two points are equidistant, only one will be returned.
-        """
-        ptvertex = pt.crs.project(*pt.vertex, inverse=True)
-        vertices = list(zip(*self.crs.project(*self.coordinates, inverse=True)))
-        segments = zip(vertices[:-1], vertices[1:])
+    def _nearest_to_point(self, pt):
+        """ Return a tuple of the shortest distance on the geometry boundary to
+        *pt*, and the vertex at that location. """
+        ptvertex = pt.get_vertex(crs=self.crs)
+        segments = zip(self.vertices[:-1], self.vertices[1:])
 
         if self.crs == Cartesian:
             func = _cvectorgeo.pt_nearest_planar
@@ -800,10 +773,24 @@ class ConnectedMultipoint(MultipointBase):
             if d < mindist or (i == 0):
                 minpt = pt
                 mindist = d
+        return mindist, minpt
+
+    def shortest_distance_to(self, pt):
+        """ Return the shortest distance from any position on the geometry
+        boundary to *pt* (Point).
+        """
+        return self._nearest_to_point(pt)[0]
+
+    def nearest_on_boundary(self, pt):
+        """ Returns the position on the geometry boundary that is nearest to
+        *pt* (Point). If two points are equidistant, only one will be returned.
+        """
+        _, minpt = self._nearest_to_point(pt)
         return Point(minpt, crs=self.crs)
 
     def within_distance(self, pt, distance):
-        """ Test whether a point is within *distance* of a ConnectedMultipoint. """
+        """ Test whether a point is within *distance* of a ConnectedMultipoint.
+        """
         return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments)
 
 
