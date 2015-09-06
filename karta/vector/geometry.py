@@ -548,7 +548,7 @@ class MultipointBase(Geometry):
             return xmin, xmax, ymin, ymax
 
         if (crs is None) or (crs == self.crs):
-            xmin, xmax, ymin, ymax = gen_minmax(c for c in self.vertices)
+            xmin, xmax, ymin, ymax = gen_minmax(c[:2] for c in self.vertices)
         else:
             fprj = lambda c: crs.project(*self.crs.project(*c, inverse=True))
             xmin, xmax, ymin, ymax = gen_minmax(fprj(c[:2]) for c in self.vertices)
@@ -761,7 +761,7 @@ class ConnectedMultipoint(MultipointBase):
         if self.crs == Cartesian:
             func = _cvectorgeo.pt_nearest_planar
             func = lambda ptseg: _cvectorgeo.pt_nearest_planar(ptseg[0],
-                                            ptseg[1][0], ptseg[1][1]) 
+                                            ptseg[1][0], ptseg[1][1])
         else:
             fwd = self.crs.forward
             inv = self.crs.inverse
@@ -786,7 +786,7 @@ class ConnectedMultipoint(MultipointBase):
         if self.crs == Cartesian:
             func = _cvectorgeo.pt_nearest_planar
             func = lambda ptseg: _cvectorgeo.pt_nearest_planar(ptseg[0],
-                                            ptseg[1][0], ptseg[1][1]) 
+                                            ptseg[1][0], ptseg[1][1])
         else:
             fwd = self.crs.forward
             inv = self.crs.inverse
@@ -966,8 +966,8 @@ class Polygon(ConnectedMultipoint):
 
     def ispolar(self, pole=None):
         """ Return True if polygon contains one pole. If the polygon contains
-        neither or both poles, returns False. 
-        
+        neither or both poles, returns False.
+
         Currently expects geographical coordinates with longitude ranging from
         (-180, 180].
         """
@@ -1127,4 +1127,3 @@ def affine_matrix(mpa, mpb):
         A[2*i:2*i+2,:] = np.kron(np.eye(2), [x, y, 1])
     M, res, rank, singvals = np.linalg.lstsq(A, vecp)
     return np.vstack([np.reshape(M, [2, 3]), np.atleast_2d([0, 0, 1])])
-
