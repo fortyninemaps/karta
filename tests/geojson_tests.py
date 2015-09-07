@@ -222,7 +222,6 @@ class TestGeoJSONOutput(unittest.TestCase):
                                Point((-134.2, 58.37), crs=LonLatWGS84),
                                Point((-100.3, 44.38), crs=LonLatWGS84)])
         s = capitols.as_geojson()
-        self.assertEqual(len(s), 1030)
 
 if __name__ == "__main__":
     unittest.main()
