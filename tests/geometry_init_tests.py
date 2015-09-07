@@ -1,8 +1,6 @@
 """ Test constructing geometry instances """
 
 import unittest
-import numpy as np
-import karta
 from karta import Point, Multipoint, Line, Polygon
 from karta.crs import LonLatWGS84
 
@@ -62,4 +60,3 @@ class TestVectorGeometry(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
