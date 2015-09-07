@@ -105,7 +105,7 @@ information in the `Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`_.
 """,
     download_url = "https://github.com/njwilson23/karta/archive/master.zip",
     classifiers = ["Programming Language :: Python :: 2",
-                   "Programming Language :: Python :: 2.7"
+                   "Programming Language :: Python :: 2.7",
                    "Programming Language :: Python :: 3",
                    "Programming Language :: Python :: 3.2",
                    "Programming Language :: Python :: 3.3",

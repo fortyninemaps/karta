@@ -50,7 +50,6 @@ Currently implemented are:
     - GeoJSON (r,w)
     - ESRI Shapefiles (via pyshp) (r,w)
     - GPS eXchange (GPX) (r,w)
-    - ASCII tables (XYZ) (r,w)
 - raster
     - ESRI ASCII Grid (r,w)
     - GeoTiff (requires GDAL) (r,w)
