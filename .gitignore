@@ -3,6 +3,7 @@
 *.c
 *.swp
 *.png
+*.lprof
 
 *.html
 *.ipynb_checkpoints
