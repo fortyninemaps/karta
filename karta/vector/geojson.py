@@ -84,6 +84,7 @@ class GeoJSONWriter(object):
         self.supobj = {}
 
         self.crs = None     # Becomes not None if a non-native CRS is added
+
         if 'urn' in kwargs:
             self.add_crs(urn=kwargs['urn'])
         elif gpobj.crs is None:
@@ -206,9 +207,11 @@ class GeoJSONWriter(object):
         """ Dump internal dict-object to JSON using the builtin `json` module.
         """
         if self.crs is not None:
+            # Indicates that a CRS object should be used to create a linked CRS
+            fout_crs = fout+".proj4"
             self.supobj["crs"]["properties"]["href"] = fout_crs
             with open(fout_crs, "w") as f:
-                f.write(crs.get_proj4())
+                f.write(self.crs.get_proj4())
         json.dump(self.supobj, fout, indent=2, cls=ExtendedJSONEncoder)
         return
 
@@ -383,5 +386,3 @@ def geojson2csv(fin, fout):
             f.close()
 
     return
-
-
