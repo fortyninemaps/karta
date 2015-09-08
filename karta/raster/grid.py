@@ -411,7 +411,7 @@ class RegularGrid(Grid):
              self.values[i0,j1]*(i1-i)*(j-j0) + self.values[i1,j1]*(i-i0)*(j-j0))
         return z
 
-    def sample(self, *args, crs=None, method="bilinear"):
+    def sample(self, *args, **kwargs):
         """ Return the values nearest positions. Positions may be:
 
         - a karta.Point instance
@@ -424,6 +424,8 @@ class RegularGrid(Grid):
 
         Keyword *method* may be one of 'nearest', 'bilinear' (default).
         """
+        crs = kwargs.get("crs", None)
+        method = kwargs.get("method", "bilinear")
 
         argerror = TypeError("`grid` takes a Point, a Multipoint, or x, y coordinate lists")
         if hasattr(args[0], "_geotype"):
