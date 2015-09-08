@@ -398,7 +398,7 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_poly_length(self):
-        self.assertEqual(self.poly.length, 19.430647008220866)
+        self.assertEqual(self.poly.perimeter, 19.430647008220866)
         return
 
     def test_poly_contains1(self):

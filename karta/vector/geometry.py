@@ -1061,9 +1061,9 @@ class Polygon(ConnectedMultipoint):
         """ Returns an generator of adjacent line segments as coordinate tuples. """
         return ((self.vertices[i-1], self.vertices[i]) for i in range(len(self.vertices)))
 
-    # @property
-    # def length(self):
-    #     return self.perimeter
+    @property
+    def length(self):
+        raise AttributeError("%s instance has no attribute 'length'" % type(self))
 
     @property
     def perimeter(self):
