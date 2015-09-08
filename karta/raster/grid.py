@@ -364,7 +364,7 @@ class RegularGrid(Grid):
 
     def get_indices(self, x, y):
         """ Return the column and row indices for the point nearest
-        geographical coordinates (x, y). """
+        geographical coordinates (`x`, `y`). """
         ny, nx = self.size
         i, j = self.get_positions(x, y)
 
@@ -411,12 +411,42 @@ class RegularGrid(Grid):
              self.values[i0,j1]*(i1-i)*(j-j0) + self.values[i1,j1]*(i-i0)*(j-j0))
         return z
 
-    def sample(self, x, y, crs=None, method="bilinear"):
-        """ Return the values nearest (*x*, *y*), where *x* and *y* may be
-        equal length vectors. Keyword *method* may be one of 'nearest',
-        'bilinear' (default).
+    def sample(self, *args, crs=None, method="bilinear"):
+        """ Return the values nearest positions. Positions may be:
+
+        - a karta.Point instance
+        - a karta.Multipoint instance, or
+        - a pair of x, y coordinate lists
+
+        Keyword *crs* used when coordinate lists are provided, otherwise the
+        coordinate system is assumed to be the same as the grid's coordinate
+        system and no transformation is performed.
+
+        Keyword *method* may be one of 'nearest', 'bilinear' (default).
         """
-        if crs is not None:
+
+        argerror = TypeError("`grid` takes a Point, a Multipoint, or x, y coordinate lists")
+        if hasattr(args[0], "_geotype"):
+            crs = args[0].crs
+            if args[0]._geotype == "Point":
+                x = args[0].x
+                y = args[0].y
+            elif args[0]._geotype == "Multipoint":
+                x, y = args[0].coordinates
+            else:
+                raise argerror
+        else:
+            try:
+                x = args[0]
+                y = args[1]
+                if crs is None:
+                    crs = self.crs
+            except IndexError:
+                raise argerror
+            if len(x) != len(y):
+                raise argerror
+
+        if crs is not self.crs:
             xg, yg = crs.project(x, y, inverse=True)
             x, y = self.crs.project(xg, yg)
 
@@ -607,4 +637,3 @@ def get_nodata(T):
         return np.nan
     else:
         raise ValueError("No default NODATA value for type {0}".format(T))
-
