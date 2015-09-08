@@ -779,28 +779,6 @@ class ConnectedMultipoint(MultipointBase):
     """ Class for Multipoints in which vertices are assumed to be connected. """
 
     @property
-    def bbox(self):
-        if isinstance(self.crs, GeographicalCRS):
-            # Define inner area as a smaller area on a sphere
-            pta = self[0]
-            minx, maxx, miny, maxy = pta.x, pta.x, pta.y, pta.y
-
-            for seg, ondateline in zip(self.segments, self.crosses_dateline):
-                if ondateline:
-                    # TODO: decide how this should be handled
-
-                else:
-                    minx = min(minx, seg[1].x)
-                    maxx = max(maxx, seg[1].x)
-                    miny = min(miny, seg[1].y)
-                    maxy = max(maxy, seg[1].y)
-
-            return (minx, miny, maxx, maxy)
-
-        else:
-            return super(ConnectedMultipoint, self).bbox
-
-    @property
     def length(self):
         """ Returns the length of the line/boundary. """
         points = [Point(v, crs=self.crs) for v in self.vertices]
@@ -886,7 +864,7 @@ class ConnectedMultipoint(MultipointBase):
         return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments)
 
     def crosses_dateline(self):
-        """ Return a generator at indicates whether each segment crosses the
+        """ Return a boolean that indicates whether any segment crosses the
         dateline """
         if not isinstance(self.crs, GeographicalCRS):
             raise CRSError("Dateline detection only defined for geographical "
@@ -894,13 +872,9 @@ class ConnectedMultipoint(MultipointBase):
 
         def seg_crosses_dateline(seg):
             a, b = seg[0], seg[1]
-            ret = False
-            if sign(a.x) != sign(b.x):
-                if abs(a-b) > 180.0:
-                    ret = True
-            return ret
+            return sign(a.x) != sign(b.x)) and abs(a-b) > 180.0
 
-        return (seg_crosses_dateline(seg) for seg in self.segments)
+        return any(seg_crosses_dateline(seg) for seg in self.segments)
 
 
 class Line(ConnectedMultipoint):
