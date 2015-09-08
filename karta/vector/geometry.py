@@ -1061,9 +1061,9 @@ class Polygon(ConnectedMultipoint):
         """ Returns an generator of adjacent line segments as coordinate tuples. """
         return ((self.vertices[i-1], self.vertices[i]) for i in range(len(self.vertices)))
 
-    @property
-    def length(self):
-        return self.perimeter
+    # @property
+    # def length(self):
+    #     return self.perimeter
 
     @property
     def perimeter(self):
@@ -1076,11 +1076,13 @@ class Polygon(ConnectedMultipoint):
     def area(self):
         """ Return the two-dimensional area of the polygon, excluding
         sub-polygons. """
+        if isinstance(self.crs, GeographicalCRS):
+            raise CRSError("Area computation not implemented with geographical coordinates")
         x, y = self.coordinates
         x0 = np.min(x)
         a = (0.5*(x[0] + x[-1]) - x0) * (y[0] - y[-1])
         a += sum((0.5*(x[i+1]+x[i]) - x0) * (y[i+1] - y[i]) for i in range(len(x)-1))
-        return abs(a) - sum(map(lambda p: p.area, self.subs))
+        return abs(a) - sum(sub.area for sub in self.subs)
 
     @property
     def centroid(self):
