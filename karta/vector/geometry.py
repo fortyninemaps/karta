@@ -872,7 +872,7 @@ class ConnectedMultipoint(MultipointBase):
 
         def seg_crosses_dateline(seg):
             a, b = seg[0], seg[1]
-            return sign(a.x) != sign(b.x)) and abs(a-b) > 180.0
+            return (sign(a.x) != sign(b.x)) and (abs(a-b) > 180.0)
 
         return any(seg_crosses_dateline(seg) for seg in self.segments)
 
@@ -1216,13 +1216,9 @@ def affine_matrix(mpa, mpb):
         A[2*i:2*i+2,:] = np.kron(np.eye(2), [x, y, 1])
     M, res, rank, singvals = np.linalg.lstsq(A, vecp)
     return np.vstack([np.reshape(M, [2, 3]), np.atleast_2d([0, 0, 1])])
-<<<<<<< HEAD
-=======
 
 def sign(a):
     if a == 0.0:
         return 1
     else:
         return a/abs(a)
-
->>>>>>> 2ad6466... WIP: handle dateline in bbox code
