@@ -22,7 +22,9 @@ def SRS_from_WKT(s):
 def numpy_dtype(dt_int):
     """ Return a numpy dtype that matches the band data type. """
     name = osgeo.gdal.GetDataTypeName(dt_int)
-    if name == "UInt16":
+    if name == "Byte":
+        return np.uint8
+    elif name == "UInt16":
         return np.uint16
     elif name == "Int16":
         return np.int16
