@@ -386,15 +386,15 @@ class TestGeometry(unittest.TestCase):
         self.assertRaises(CRSError, p.ispolar)
         return
 
-    def test_poly_extents(self):
-        self.assertEqual(self.poly.get_extents(), (0.0, 6.0, 1.0, 8.0))
-        self.assertEqual(self.poly3.get_extents(), (0.0, 6.0, 1.0, 8.0))
+    def test_poly_extent(self):
+        self.assertEqual(self.poly.get_extent(), (0.0, 6.0, 1.0, 8.0))
+        self.assertEqual(self.poly3.get_extent(), (0.0, 6.0, 1.0, 8.0))
         return
 
-    def test_poly_extents_foreign_crs(self):
+    def test_poly_extent_foreign_crs(self):
         x, y = zip(*self.poly.get_vertices(crs=NSIDCNorth))
-        self.assertEqual(self.poly.get_extents(NSIDCNorth), (min(x), max(x), min(y), max(y)))
-        self.assertEqual(self.poly3.get_extents(NSIDCNorth), (min(x), max(x), min(y), max(y)))
+        self.assertEqual(self.poly.get_extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
+        self.assertEqual(self.poly3.get_extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
         return
 
     def test_poly_length(self):

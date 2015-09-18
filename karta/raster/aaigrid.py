@@ -499,7 +499,7 @@ class AAIGrid(grid.RegularGrid):
         return
 
     def resize(self, te):
-        """ Resize array to fit within extents given by te. If the new
+        """ Resize array to fit within extent given by te. If the new
         dimensions are smaller, the data is clipped. If they are larger,
         nan padding is added.
 

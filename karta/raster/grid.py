@@ -2,6 +2,7 @@
 
 import copy
 import numbers
+import warnings
 import numpy as np
 from . import _gtiff
 from .. import errors
@@ -167,10 +168,10 @@ class RegularGrid(Grid):
 
     @property
     def bbox(self):
-        extents = self.get_extents(reference="edge")
-        return extents[0], extents[2], extents[1], extents[3]
+        extent = self.get_extent(reference="edge")
+        return extent[0], extent[2], extent[1], extent[3]
 
-    def get_extents(self, reference='center', crs=None):
+    def get_extent(self, reference='center', crs=None):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
         ymax). *reference* is a string and may be 'center' or 'edge'. """
         if reference == 'center':
@@ -208,6 +209,11 @@ class RegularGrid(Grid):
             c = min(yg0, yg1, yg2, yg3)
             d = max(yg0, yg1, yg2, yg3)
         return a, b, c, d
+
+    def get_extents(self, crs=None):
+        warnings.warn("method `get_extents` has been renamed `get_extent`",
+                FutureWarning)
+        return self.get_extent(crs=crs)
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
         """ Return a clipped version of grid constrained to a bounding box

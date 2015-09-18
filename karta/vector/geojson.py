@@ -138,11 +138,11 @@ class GeoJSONWriter(object):
         *bbox* should be in the form (xmin, xmax, ....) for all dimensions.
         """
         if bbox is None:
-            if hasattr(self.gpobj, 'get_extents'):
-                xmn, xmx, ymn, ymx = self.gpobj.get_extents()
+            if hasattr(self.gpobj, 'get_extent'):
+                xmn, xmx, ymn, ymx = self.gpobj.get_extent()
                 bbox = ((xmn, xmx), (ymn, ymx))
             else:
-                raise AttributeError("Type {0} has no 'get_extents' "
+                raise AttributeError("Type {0} has no 'get_extent' "
                                      "method".format(type(self.gpobj)))
         self.supobj['bbox'] = bbox
         return

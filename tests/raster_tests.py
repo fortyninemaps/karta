@@ -84,20 +84,20 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.sum(self.rast.vertex_coords()[1] - ans[1]) < 1e-10)
         return
 
-    def test_get_extents(self):
+    def test_get_extent(self):
         creg = (15.0, 1455.0, 15.0, 1455.0)
         ereg = (0.0, 1470.0, 0.0, 1470.0)
-        self.assertEqual(self.rast.get_extents(reference='center'), creg)
-        self.assertEqual(self.rast.get_extents(reference='edge'), ereg)
+        self.assertEqual(self.rast.get_extent(reference='center'), creg)
+        self.assertEqual(self.rast.get_extent(reference='edge'), ereg)
         return
 
-    def test_get_extents_crs(self):
+    def test_get_extent_crs(self):
         pe = karta.raster.peaks(n=49)
         crs = karta.crs.Proj4CRS("+proj=utm +zone=12 +north=True", "+ellps=WGS84")
         rast_utm12N = karta.RegularGrid((0.0, 0.0, 10000.0, 10000.0, 0.0, 0.0),
                                         values=pe,
                                         crs=crs)
-        a,b,c,d = rast_utm12N.get_extents(reference='center',
+        a,b,c,d = rast_utm12N.get_extent(reference='center',
                                           crs=karta.crs.LonLatWGS84)
         self.assertAlmostEqual(a, -115.50152876)
         self.assertAlmostEqual(b, -111.17973465)
@@ -121,9 +121,9 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(Y[-1,0], 915)
         return
 
-    def test_clip_to_extents(self):
+    def test_clip_to_extent(self):
         proto = karta.RegularGrid((495, 495, 30, 30, 0, 0), np.zeros((15,15)))
-        clipped = self.rast.clip(*proto.get_extents())
+        clipped = self.rast.clip(*proto.get_extent())
         self.assertEqual(clipped.size, (15, 15))
         self.assertEqual(clipped.transform, (495, 495, 30, 30, 0, 0))
         X, Y = clipped.center_coords()

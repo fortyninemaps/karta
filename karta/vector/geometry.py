@@ -8,6 +8,7 @@ from __future__ import division
 import math
 import sys
 import itertools
+import warnings
 import numpy as np
 from . import vtk
 from . import geojson
@@ -405,7 +406,7 @@ class MultipointBase(Geometry):
 
     @property
     def bbox(self):
-        """ Return the extents of a bounding box as
+        """ Return the extent of a bounding box as
             (xmin, ymin, xmax, ymax)
         """
         x, y = self.get_coordinate_lists()
@@ -541,7 +542,7 @@ class MultipointBase(Geometry):
         idx = np.argmin(distances)
         return self[idx]
 
-    def get_extents(self, crs=None):
+    def get_extent(self, crs=None):
         """ Calculate a bounding box. """
         def gen_minmax(G):
             """ Get the min/max from a single pass through a generator. """
@@ -559,6 +560,11 @@ class MultipointBase(Geometry):
             fprj = lambda c: crs.project(*self.crs.project(*c, inverse=True))
             xmin, xmax, ymin, ymax = gen_minmax(fprj(c[:2]) for c in self.vertices)
         return xmin, xmax, ymin, ymax
+
+    def get_extents(self, crs=None):
+        warnings.warn("method `get_extents` has been renamed `get_extent`",
+                FutureWarning)
+        return self.get_extent(crs=crs)
 
     def any_within_poly(self, poly):
         """ Return whether any vertices are inside *poly* """
@@ -734,7 +740,7 @@ class Multipoint(MultipointBase):
         if self.quadtree is None:
             indices = [i for (i, pt) in enumerate(self) if poly.contains(pt)]
         else:
-            search_bbox = poly.get_extents(crs=self.crs)
+            search_bbox = poly.get_extent(crs=self.crs)
             possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
             possible_pts = []
             for t in possible_pt_tuples:
@@ -757,7 +763,7 @@ class Multipoint(MultipointBase):
         except TypeError:
             bf = (buffer, buffer, buffer, buffer)
 
-        x0, x1, y0, y1 = self.get_extents()
+        x0, x1, y0, y1 = self.get_extent()
         self.quadtree = quadtree.QuadTree((x0-bf[0], x1+bf[1], y0-bf[2], y1+bf[3]))
         for i, pt in enumerate(self):
             self.quadtree.addpt((pt.x, pt.y, i))
