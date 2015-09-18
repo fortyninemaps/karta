@@ -1,4 +1,4 @@
-setuptools >= 0.7.0
-numpy >= 1.6
+setuptools >= 17.0
+numpy >= 1.7
 pyproj >= 1.9
-pyshp >= 1.2
+pyshp >= 1.2.3
