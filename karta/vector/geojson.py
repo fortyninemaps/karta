@@ -16,7 +16,7 @@ LineString = namedtuple('LineString', ['coordinates', 'crs'])
 MultiLineString = namedtuple('MultiLineString', ['coordinates', 'crs'])
 Polygon = namedtuple('Polygon', ['coordinates', 'crs'])
 MultiPolygon = namedtuple('MultiPolygon', ['coordinates', 'crs'])
-GeometryCollection = namedtuple('GeometryCollection', ['geometries'])
+GeometryCollection = namedtuple('GeometryCollection', ['geometries', 'crs'])
 Feature = namedtuple('Feature', ['geometry', 'properties', 'id', 'crs'])
 FeatureCollection = namedtuple('FeatureCollection', ['features', 'crs'])
 
@@ -276,13 +276,17 @@ class GeoJSONReader(object):
 
     def parseGeometryCollection(self, o):
         crs = o.get("crs", self.defaultcrs)
-        geoms = [self.parseGeometry(g) for g in o["geometries"]]
+        geoms = [self.parse(g) for g in o["geometries"]]
         return GeometryCollection(geoms, crs)
 
     def parseFeature(self, o):
         crs = o.get("crs", self.defaultcrs)
-        geom = self.parseGeometry(o["geometry"])
-        prop = self.parseProperties(o["properties"], len(geom.coordinates))
+        geom = self.parse(o["geometry"])
+        if isinstance(geom, GeometryCollection):
+            n = 1
+        else:
+            n = len(geom.coordinates)
+        prop = self.parseProperties(o["properties"], n)
         fid = o.get("id", None)
         return Feature(geom, prop, fid, crs)
 
@@ -302,15 +306,17 @@ class GeoJSONReader(object):
                 d["scalar"][key] = value
         return d
 
-    def parse(self):
-        if self.jsondict["type"] == "GeometryCollection":
-            res = self.parseGeometryCollection(self.jsondict)
-        elif self.jsondict["type"] == "FeatureCollection":
-            res = self.parseFeatureCollection(self.jsondict)
-        elif self.jsondict["type"] == "Feature":
-            res = self.parseFeature(self.jsondict)
+    def parse(self, d=None):
+        if d is None:
+            d = self.jsondict
+        if d["type"] == "GeometryCollection":
+            res = self.parseGeometryCollection(d)
+        elif d["type"] == "FeatureCollection":
+            res = self.parseFeatureCollection(d)
+        elif d["type"] == "Feature":
+            res = self.parseFeature(d)
         else:
-            res = self.parseGeometry(self.jsondict)
+            res = self.parseGeometry(d)
         return res
 
 def list_rec(A):
