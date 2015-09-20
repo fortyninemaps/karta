@@ -177,7 +177,7 @@ class TestCRS(unittest.TestCase):
 
     def test_EllipsoidalForward(self):
         np.random.seed(43)
-        for i in range(500):
+        for i in range(1000):
             x = 360*np.random.rand() - 180
             y = 180*np.random.rand() - 90
             az = 360*np.random.rand() - 180
@@ -191,7 +191,7 @@ class TestCRS(unittest.TestCase):
 
     def test_EllipsoidalInverse(self):
         np.random.seed(43)
-        for i in range(500):
+        for i in range(1000):
             x1 = 360*np.random.rand() - 180
             y1 = 178*np.random.rand() - 89
             x2 = 360*np.random.rand() - 180
