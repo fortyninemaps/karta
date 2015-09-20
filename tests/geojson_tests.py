@@ -95,6 +95,15 @@ class TestGeoJSON(unittest.TestCase):
     def setUp(self):
         self.default_crs = GeoJSONNamedCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 
+    def test_geometrycollection2geometry(self):
+        path = os.path.join(TESTDATA, "geojson_input/geometrycollection.json")
+        geoms = vector.read_geojson(path)
+
+        self.assertEqual(len(geoms), 2)
+        self.assertTrue(isinstance(geoms[0], vector.Point))
+        self.assertTrue(isinstance(geoms[1], vector.Line))
+        return
+
     def test_featurecollection2geometry(self):
         path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
         features = vector.read_geojson(path)

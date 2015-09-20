@@ -58,6 +58,17 @@ def read_geojson(f):
                                            crsdict["properties"]["type"])
         return crs
 
+    def convert(geom, **kw):
+        if isinstance(geom, geojson.Feature):
+            res = [convert_feature(geom)]
+        elif isinstance(geom, geojson.FeatureCollection):
+            res = [convert_feature(f, **kw) for f in geom.features]
+        elif isinstance(geom, geojson.GeometryCollection):
+            res = [convert(item, **kw) for item in geom.geometries]
+        else:
+            res = convert_geometry(geom, **kw)
+        return res
+
     def convert_geometry(geom, **kw):
         crs = convert_crs(geom.crs)
         if isinstance(geom, geojson.Point):
@@ -71,7 +82,7 @@ def read_geojson(f):
                                     subs=geom.coordinates[1:],
                                     crs=crs, **kw)
         else:
-            raise TypeError("Argument to convert_geometry is a not a JSON geometry")
+            raise TypeError("{0} is a not a JSON geometry".format(geom))
 
     def convert_feature(feat, **kw):
         data = feat.properties["vector"]
@@ -84,17 +95,13 @@ def read_geojson(f):
                         if val[i] is None:
                             val[i] = float('nan')
         prop = feat.properties["scalar"]
-        return convert_geometry(feat.geometry, data=data, properties=prop, **kw)
+        kw["data"] = data
+        kw["properties"] = prop
+        return convert(feat.geometry, **kw)
 
     R = geojson.GeoJSONReader(f)
     geom = R.parse()
-    if isinstance(geom, geojson.Feature):
-        res = [convert_feature(geom)]
-    elif isinstance(geom, geojson.FeatureCollection):
-        res = [convert_feature(f) for f in geom.features]
-    else:
-        res = [convert_geometry(item)]
-    return res
+    return convert(geom)
 
 def _geojson_properties2karta(properties, n):
     """ Takes a dictionary (derived from a GeoJSON properties object) and
