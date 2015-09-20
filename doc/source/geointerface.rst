@@ -14,11 +14,13 @@ to apply a buffer to a *Karta* polygon.
     from karta.examples import greenland
     from karta.vector.read import from_shape
     import shapely.geometry
+
 Pass the data in the ``greenland`` Polygon to shapely.
 
 .. code:: python
 
     shapely_poly = shapely.geometry.shape(greenland)
+
 .. code:: python
 
     shapely_poly

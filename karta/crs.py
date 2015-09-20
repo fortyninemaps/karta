@@ -6,6 +6,7 @@ Implements CRS classes for different kinds of spatial reference systems:
     - CartesianCRS
     - GeographicalCRS
     - SphericalCRS
+    - EllipsoidalCRS
     - Proj4CRS
 
 Coordinate reference system (CRS) objects represent mappings geographical
@@ -91,11 +92,12 @@ class CartesianCRS(CRS):
 
     @staticmethod
     def project(x, y, inverse=False):
+        # Projection on a cartesian coordinate system is the identity
         return x, y
 
     @staticmethod
     def forward(x, y, az, dist, radians=False):
-        """ Returns x, y, and back azimuths """
+        """ Forward geodetic problem from a point """
         if not radians:
             az = np.array(az) / 180 * np.pi
 
@@ -109,7 +111,7 @@ class CartesianCRS(CRS):
 
     @staticmethod
     def inverse(x1, y1, x2, y2, radians=False):
-        """ Returns forward and back azimuths and distances """
+        """ Inverse geodetic problem to find the geodesic between points """
         dist = geodesy.plane_distance(x1, y1, x2, y2)
         az = geodesy.plane_azimuth(x1, y1, x2, y2)
         baz = geodesy.unroll_angle(az + np.pi)
@@ -132,19 +134,22 @@ class GeographicalCRS(CRS):
 
     @staticmethod
     def project(x, y, inverse=False, radians=False):
+        # Projection on a geographical coordinate system is the identity
         if not radians:
             return x, y
         else:
             return np.array(x)/180 * np.pi, np.array(y)/180 * np.pi
 
     def forward(self, *args, **kwargs):
+        """ Forward geodetic problem from a point """
         return self._geod.fwd(*args, **kwargs)
 
     def inverse(self, *args, **kwargs):
+        """ Inverse geodetic problem to find the geodesic between points """
         return self._geod.inv(*args, **kwargs)
 
 class SphericalCRS(GeographicalCRS):
-    """ Spherical (θ, φ) coordinate system. """
+    """ Spherical geographic coordinate system defined by a radius. """
     name = "Spherical"
 
     def __init__(self, radius):
@@ -162,7 +167,7 @@ class SphericalCRS(GeographicalCRS):
                 'UNIT["degree",0.0174532925199433]]' % self.radius)
 
     def forward(self, lons, lats, az, dist, radians=False):
-        """ Returns lons, lats, and back azimuths """
+        """ Forward geodetic problem from a point """
         if not radians:
             lons = np.array(lons) * np.pi / 180.0
             lats = np.array(lats) * np.pi / 180.0
@@ -192,7 +197,7 @@ class SphericalCRS(GeographicalCRS):
         return lons2, lats2, baz
 
     def inverse(self, lons1, lats1, lons2, lats2, radians=False):
-        """ Returns forward and back azimuths and distances """
+        """ Inverse geodetic problem to find the geodesic between points """
         if not radians:
             lons1 = lons1 * np.pi / 180.0
             lons2 = lons2 * np.pi / 180.0
@@ -209,6 +214,9 @@ class SphericalCRS(GeographicalCRS):
         return az, baz, dist
 
 class EllipsoidalCRS(GeographicalCRS):
+    """ Ellipsoidal geographic coordinate system defined by equatorial and
+    polar radii.
+    """
 
     def __init__(self, a, b):
         """ Define a geographical coordinate system on an ellipse. *a* is the
@@ -222,10 +230,11 @@ class EllipsoidalCRS(GeographicalCRS):
         return self.ref_proj4
 
     def project(self, x, y, **kw):
-        """ Projection on a geographical coordinate system is the identity """
+        # Projection on a geographical coordinate system is the identity
         return x, y
 
     def forward(self, x, y, azimuth, distance, radians=False):
+        """ Forward geodetic problem from a point """
         if radians:
             x *= 180.0/pi
             y *= 180.0/pi
@@ -241,6 +250,7 @@ class EllipsoidalCRS(GeographicalCRS):
         return x2, y2, baz
 
     def inverse(self, x1, y1, x2, y2, radians=False):
+        """ Inverse geodetic problem to find the geodesic between points """
         if radians:
             x1 *= 180.0/pi
             y1 *= 180.0/pi
@@ -316,9 +326,11 @@ class Proj4CRS(CRS):
         return not self.__eq__(other)
 
     def forward(self, *args, **kwargs):
+        """ Forward geodetic problem from a point """
         return self._geod.fwd(*args, **kwargs)
 
     def inverse(self, *args, **kwargs):
+        """ Inverse geodetic problem to find the geodesic between points """
         return self._geod.inv(*args, **kwargs)
 
 def crs_from_wkt(wkt):

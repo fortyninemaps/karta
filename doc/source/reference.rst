@@ -27,6 +27,9 @@ The following predefined coordinate systems instances are available:
     - *UPSSouth*
     - *NSIDCNorth*
     - *NSIDCSouth*
+    - *LambertEqualArea*
+    - *GallPetersEqualArea*
+    - *WebMercator*
 
 Additionally, the *Cartesian* class can be used without instantiation.
 
@@ -126,6 +129,6 @@ A more specialized grid class, *WarpedGrid*, is experimental.
 .. automodule:: karta.raster.aaigrid
     :members:
 
-.. automodule:: karta.raster.raster
+.. automodule:: karta.raster.misc
     :members:
 

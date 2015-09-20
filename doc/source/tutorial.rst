@@ -54,6 +54,7 @@ Let's experiment with some vector data.
 .. code:: python
 
     from karta.vector import Point, Multipoint, Line, Polygon
+
 The ``Point``, ``Multipoint``, ``Line``, and ``Polygon`` classes can all
 be instantiated by providing vertices, and optionally, associated data
 and metadata.
@@ -211,6 +212,7 @@ American state capitols are within 2000 km of Mexico City?
 
     from karta.examples import us_capitols
     mexico_city = Point((-99.13, 19.43), crs=crs.LonLatWGS84)
+
 .. code:: python
 
     # List all US state capitols
@@ -371,6 +373,7 @@ associated with a vector geometry.
     mp = Multipoint([(1, 1), (3, 1), (4, 3), (2, 2)],
                     data={"species": ["T. officianale", "C. tectorum",
                                       "M. alba", "V. cracca"]})
+
 The data can be a list or a dictionary of lists, and are propogated
 through subsequent operations.
 
@@ -419,6 +422,7 @@ make is easy to visualize a geometry.
     import matplotlib.pyplot as plt
     %matplotlib qt
     plt.plot(*line.coordinates)
+
 Data can be read from several common formats, including ESRI shapefiles
 (through bindings to the *pyshp* module), GeoJSON, GPX, and comma
 separated value tables. Convenience functions are kept in the
