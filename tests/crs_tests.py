@@ -1,6 +1,7 @@
 
 import unittest
 import math
+import numpy as np
 import karta.crs as crs
 import karta.geodesy as geodesy
 import karta.errors
@@ -165,6 +166,42 @@ class TestCRS(unittest.TestCase):
         self.assertEqual(az2, -90)
         self.assertEqual(baz2, 90)
         return
+
+    def test_EllipsoidalNearAntipodalInverse(self):
+        az, baz, d = crs.LonLatWGS84.inverse(0.0, 30.0, 179.9, -29.9)
+        az_, baz_, d_ = crs.LonLatWGS84_proj4.inverse(0.0, 30.0, 179.9, -29.9)
+        self.assertAlmostEqual(az, az_, places=4)
+        self.assertAlmostEqual(baz, baz_, places=4)
+        self.assertAlmostEqual(d, d_, places=4)
+        return
+
+    def test_EllipsoidalForward(self):
+        np.random.seed(43)
+        for i in range(500):
+            x = 360*np.random.rand() - 180
+            y = 180*np.random.rand() - 90
+            az = 360*np.random.rand() - 180
+            d = 2e7*np.random.rand()
+            x1, y1, baz = crs.LonLatWGS84.forward(x, y, az, d)
+            x1_, y1_, baz_ = crs.LonLatWGS84_proj4.forward(x, y, az, d)
+
+            self.assertAlmostEqual(x1, x1_, places=4)
+            self.assertAlmostEqual(y1, y1_, places=4)
+            self.assertAlmostEqual(baz, baz_, places=4)
+
+    def test_EllipsoidalInverse(self):
+        np.random.seed(43)
+        for i in range(500):
+            x1 = 360*np.random.rand() - 180
+            y1 = 178*np.random.rand() - 89
+            x2 = 360*np.random.rand() - 180
+            y2 = 178*np.random.rand() - 89
+            az, baz, d = crs.LonLatWGS84.inverse(x1, y1, x2, y2)
+            az_, baz_, d_ = crs.LonLatWGS84_proj4.inverse(x1, y1, x2, y2)
+
+            self.assertAlmostEqual(az, az_, places=4)
+            self.assertAlmostEqual(baz, baz_, places=4)
+            self.assertAlmostEqual(d, d_, places=2)
 
     def test_ConstructProj4(self):
         # Canonical constructor

@@ -9,6 +9,7 @@
 from __future__ import division
 import numpy as np
 from math import sqrt, sin, cos, tan, asin, acos, atan, atan2, pi
+import warnings
 
 # ---------------------------------
 # Functions for planar geometry
@@ -359,7 +360,7 @@ def ellipsoidal_inverse(a, b, x1, y1, x2, y2, tol=None):
     niter = 0
     maxiter = 100
     if tol is None:
-        tol = 1e-10
+        tol = 1e-12
 
     if y1 == y2 == 0:
         # Equatorial case
@@ -492,7 +493,9 @@ def ellipsoidal_inverse(a, b, x1, y1, x2, y2, tol=None):
             niter += 1
 
     if niter == maxiter:
-        warnings.warn("Convergence failure", warnings.RuntimeWarning)
+        warnings.warn(
+            "Convergence failure (%f, %f) -> (%f, %f)" % (x1, y1, x2, y2), 
+            RuntimeWarning)
 
     k2 = second_eccn2 * cos(alpha0)**2
     _rad = sqrt(1+k2)
