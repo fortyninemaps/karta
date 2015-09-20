@@ -71,39 +71,90 @@ setup(
     url = "http://www.ironicmtn.com/karta.html",
     description = "Geospatial analysis in Python",
     long_description = """
-Karta - tidy package for geospatial computation
-===============================================
-
 *Karta* is a simple and fast framework for spatial analysis in Python.
 
-Components:
+Create vector geometries:
 
-- Clean geographically-aware vector and gridded data types
-- Integration with pyproj to support a wide range of coordinate systems and
-  transformations
-- A selection of geographical analysis methods including geodetic length and
-  area calculations, intersections, convex hulls, raster sampling and profiling,
-  and grid warping
-- IO for several common geographical formats, including GeoJSON, shapefiles
-  (through pyshp), ESRI ASCII, and GeoTiff (through GDAL). Vector geometries
-  implement ``__geo_interface__``.
+.. code:: python
 
-*Karta* works with Python 2.7 and Python 3.3+.
+    point = Point((-130.0, 52.0), crs=LonLatWGS84)
+
+    line = read_geojson("linedata.json")
+
+    polygon = Polygon([(-515005.78, -1301130.53),
+                       (-579174.89, -1282271.94),
+                       (-542977.83, -1221147.82),
+                       (-437864.05, -1251641.55),
+                       (-438160.72, -1252421.48),
+                       (-437961.28, -1285314.00)],
+                       crs=NSIDCNorth)
+
+Perform simple queries:
+
+.. code:: python
+
+    point2 = Point((-25.0, 48.0), crs=LonLatWGS84)
+    point.distance(point2)          # Distance in geographical units
+
+    line.intersects(polygon)        # True or False
+
+    ch = polygon.convex_hull()      # Returns a new polygon
+    ch.to_shapefile("poly.shp")
+
+Work with raster data:
+
+.. code:: python
+
+    grid = read_gtiff("landsat_scene.tif")  # Leverages GDAL
+
+    grid.profile(line)              # Collect data along a line
+
+    grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
+
+*Karta* works with Python 2.7 and Python 3.3+. Suggestions, bug reports,
+test cases, and pull requests are welcome.
 
 DOCUMENTATION
 -------------
 
-See the `online manual <http://www.ironicmtn.com/kartadocs/karta-manual.html>`_,
-read the tutorial_, or search the `API documentation`_.
+See the `online
+manual <http://www.ironicmtn.com/kartadocs/karta-manual.html>`__, the
+`tutorial <http://www.ironicmtn.com/kartadocs/tutorial.html>`__, or read
+the `API
+documentation <http://www.ironicmtn.com/kartadocs/reference.html>`__.
 
-.. _tutorial: http://www.ironicmtn.com/kartadocs/tutorial.html
-.. _API documentation: http://www.ironicmtn.com/kartadocs/reference.html
+The manual can also be built offline using Sphinx by running ``make``
+from the ``doc/`` subdirectory. The documentation is built from source
+code docstrings and the example IPython notebooks, which are also
+reproduced in the
+`Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`__. Building
+the documentation requires `Sphinx <http://sphinx-doc.org/>`__,
+`alabaster <https://github.com/bitprophet/alabaster>`__ and
+`numpydoc <https://github.com/numpy/numpydoc>`__.
 
-The manual can also be built offline with Sphinx by running ``make`` from the
-``doc/`` directory. The documentation is built from source code docstrings and
-information in the `Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`_.
+DEPENDENCIES
+------------
+
+Required
+~~~~~~~~
+
+-  Python 2.6+ or Python 3.3+
+-  numpy
+-  pyshp
+-  pyproj
+-  C-compiler
+
+Recommended
+~~~~~~~~~~~
+
+-  osgeom.gdal (for geotiff I/O)
+-  osgeo.osr (for coordinate system interchange)
+-  scipy
+
+When installing from PyPI, Cython-compiled C source code is provided and
+will be automatically compiled to improve performance if a suitable C
+compiler is available.
 """,
-    download_url = "https://github.com/njwilson23/karta/archive/master.zip",
     classifiers = ["Programming Language :: Python :: 2",
                    "Programming Language :: Python :: 2.7",
                    "Programming Language :: Python :: 3",
@@ -111,7 +162,9 @@ information in the `Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`_.
                    "Programming Language :: Python :: 3.3",
                    "Programming Language :: Python :: 3.4",
                    "Development Status :: 4 - Beta",
-                   "Topic :: Scientific/Engineering"],
+                   "Topic :: Scientific/Engineering",
+                   "Topic :: Scientific/Engineering :: GIS",
+                   "License :: OSI Approved :: MIT License"],
     license = "MIT License",
     ext_modules = extensions,
     cmdclass = {"build_ext": build_ext},

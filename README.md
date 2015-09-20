@@ -4,11 +4,41 @@
 
 *Karta* is a simple and fast framework for spatial analysis in Python.
 
-It contains clean vector and raster data types that are coordinate system-aware,
-implementations of frequently-used geospatial analysis methods, and the
-read/write interfaces to several common formats, including GeoJSON, shapefiles,
-and ESRI ASCII.
+Create vector geometries:
 
+```python
+point = Point((-130.0, 52.0), crs=LonLatWGS84)
+
+line = read_geojson("linedata.json")
+
+polygon = Polygon([(-515005.78, -1301130.53),
+                   (-579174.89, -1282271.94),
+                   (-542977.83, -1221147.82),
+                   (-437864.05, -1251641.55),
+                   (-438160.72, -1252421.48),
+                   (-437961.28, -1285314.00)],
+                   crs=NSIDCNorth)
+```
+Perform simple queries:
+```python
+point2 = Point((-25.0, 48.0), crs=LonLatWGS84)
+point.distance(point2)          # Distance in geographical units
+
+line.intersects(polygon)        # True or False
+
+ch = polygon.convex_hull()      # Returns a new polygon
+ch.to_shapefile("poly.shp")
+```
+Work with raster data:
+```python
+grid = read_gtiff("landsat_scene.tif")  # Leverages GDAL
+
+grid.profile(line)              # Collect data along a line
+
+grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
+```
+
+The latest release is on PyPI (see [Installation](#installation)).
 *Karta* works with Python 2.7 and Python 3.3+. Suggestions, bug reports, test
 cases, and pull requests are welcome.
 
