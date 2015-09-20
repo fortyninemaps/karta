@@ -2,6 +2,7 @@
 import unittest
 import math
 import karta.crs as crs
+import karta.geodesy as geodesy
 import karta.errors
 
 class TestCRS(unittest.TestCase):
@@ -155,6 +156,16 @@ class TestCRS(unittest.TestCase):
         self.assertAlmostEqual(dist, 2533572.0748, places=2)
         return
 
+    def test_EllipsoidalEquatorialAzimuth(self):
+        az, baz, _ = crs.LonLatWGS84.inverse(-40.0, 0.0, 55.0, 0.0)
+        self.assertEqual(az, 90)
+        self.assertEqual(baz, -90)
+
+        az2, baz2, _ = crs.LonLatWGS84.inverse(180.0, 0.0, 5, 0.0)
+        self.assertEqual(az2, -90)
+        self.assertEqual(baz2, 90)
+        return
+
     def test_ConstructProj4(self):
         # Canonical constructor
         crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs", "+ellps=WGS84")
@@ -199,6 +210,34 @@ class TestCRS(unittest.TestCase):
                                "+ellps=WGS84", name="WGS84 (Geographical)")
         self.assertTrue(not WGS84 != WGS84_)
         return
+
+    def test_brent1(self):
+        def forsythe(x):
+            return x**3 - 2*x - 5
+        self.assertAlmostEqual(2.094551482,
+                geodesy.fzero_brent(2, 3, forsythe, 1e-12))
+        return
+
+    def test_brent2(self):
+        self.assertAlmostEqual(0.7390851332,
+                geodesy.fzero_brent(0, 1, lambda x: math.cos(x)-x, 1e-12))
+        return
+
+    def test_brent3(self):
+        self.assertAlmostEqual(0.0,
+                geodesy.fzero_brent(-1, 1, lambda x: math.sin(x)-x, 1e-12))
+        return
+
+    def test_brent4(self):
+        self.assertAlmostEqual(0.0,
+                geodesy.fzero_brent(0, 1, lambda x: math.sin(x)-x, 1e-12))
+        return
+
+    def test_brent_bracket_error(self):
+        self.assertRaises(ValueError,
+                geodesy.fzero_brent, 0.2, 2, lambda x: math.sin(x)-x, 1e-12)
+        return
+
 
 if __name__ == "__main__":
     unittest.main()

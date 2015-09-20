@@ -58,7 +58,7 @@ def plane_azimuth(xs1, ys1, xs2, ys2):
 
 
 # ---------------------------------
-# Functions for planar geodesy
+# Functions for spherical geodesy
 # ---------------------------------
 
 def _sphere_distance(lon1, lat1, lon2, lat2, radius):
@@ -328,11 +328,11 @@ def ellipsoidal_forward(a, b, x, y, azimuth, distance):
 def _ellipsoidal_inverse_equatorial(a, x1, x2):
     diff = (x2-x1 + 180) % 360 - 180
     if diff < 0:
-        az = 270.0
+        az = -90.0
         baz = 90.0
     else:
         az = 90.0
-        baz = 270.0
+        baz = -90.0
     s12 = 2 * pi * a * abs(x1-x2)/360.0
     return az, baz, s12
 
@@ -547,7 +547,11 @@ def _degrees(r):
 def fzero_brent(a, b, f, tol):
     fa = f(a)
     fb = f(b)
-    if fa * fb >= 0:
+    if fa == 0:
+        return a
+    elif fb == 0:
+        return b
+    elif fa * fb > 0:
         raise ValueError("root not bracketed")
     if abs(fa) < abs(fb):
         a,b = b,a
