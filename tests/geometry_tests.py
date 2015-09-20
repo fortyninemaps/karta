@@ -650,9 +650,9 @@ class TestGeometryProj(unittest.TestCase):
         d3 = self.whitehorse.distance(self.ottawa)
         d4 = self.whitehorse.distance(self.vancouver)
         self.assertTrue(abs(d1 - 3549030.70541) < 1e-5)
-        self.assertTrue(abs(d2 - 1483327.53922) < 1e-5)
+        self.assertTrue(abs(d2 - 1483327.53925) < 1e-5)
         self.assertTrue(abs(d3 - 4151366.88185) < 1e-5)
-        self.assertTrue(abs(d4 - 1483327.53922) < 1e-5)
+        self.assertTrue(abs(d4 - 1483327.53925) < 1e-5)
         return
 
     def test_azimuth_lonlat(self):

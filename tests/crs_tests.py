@@ -14,7 +14,7 @@ class TestCRS(unittest.TestCase):
         proj4 = c1.get_proj4()
         self.assertTrue("+proj=lonlat" in proj4)
         self.assertTrue("+a=6378137.0" in proj4)
-        self.assertTrue("+f=0.0033528" in proj4)
+        self.assertTrue("+b=6356752.314245" in proj4)
 
         c2 = crs.NSIDCNorth
         proj4 = c2.get_proj4()

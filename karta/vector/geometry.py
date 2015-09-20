@@ -154,7 +154,7 @@ class Point(Geometry):
         """ Returns the compass azimuth from self to other in radians (i.e.
         clockwise, with north at 0). Returns NaN if points are coincident. """
 
-        if self.coordsxy() == other.coordsxy():
+        if (self.x, self.y) == (other.x, other.y):
             az = np.nan
 
         elif self.crs == other.crs:

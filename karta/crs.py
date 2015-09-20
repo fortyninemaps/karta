@@ -208,6 +208,53 @@ class SphericalCRS(GeographicalCRS):
             baz = baz * 180 / np.pi
         return az, baz, dist
 
+class EllipsoidalCRS(GeographicalCRS):
+
+    def __init__(self, a, b):
+        """ Define a geographical coordinate system on an ellipse. *a* is the
+        equatorial radius, and *b* is the polar radius. """
+        self.a = a
+        self.b = b
+        self.ref_proj4 = "+proj=lonlat +units=m +a=%f +b=%f +no_defs" % (a, b)
+        return
+
+    def get_proj4(self):
+        return self.ref_proj4
+
+    def project(self, x, y, **kw):
+        """ Projection on a geographical coordinate system is the identity """
+        return x, y
+
+    def forward(self, x, y, azimuth, distance, radians=False):
+        if radians:
+            x *= 180.0/pi
+            y *= 180.0/pi
+            azimuth *= 180.0/pi
+
+        x2, y2, baz = geodesy.ellipsoidal_forward(self.a, self.b, x, y, azimuth, distance)
+
+        if radians:
+            x2 *= pi/180.0
+            y2 *= pi/180.0
+            baz *= pi/180.0
+
+        return x2, y2, baz
+
+    def inverse(self, x1, y1, x2, y2, radians=False):
+        if radians:
+            x1 *= 180.0/pi
+            y1 *= 180.0/pi
+            x2 *= 180.0/pi
+            y2 *= 180.0/pi
+
+        az, baz, dist = geodesy.ellipsoidal_inverse(self.a, self.b, x1, y1, x2, y2)
+
+        if radians:
+            az *= pi/180.0
+            baz *= pi/180.0
+
+        return az, baz, dist
+
 class Proj4CRS(CRS):
     """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
     or a custom projection function.
@@ -293,9 +340,13 @@ def crs_from_wkt(wkt):
 
 Cartesian = CartesianCRS()
 SphericalEarth = SphericalCRS(6371009.0)
-LonLatWGS84 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)")
-LonLatNAD27 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
-LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")
+LonLatWGS84 = EllipsoidalCRS(6378137.0, 6356752.314245)
+LonLatNAD83 = EllipsoidalCRS(6378137.0, 6356752.314140)
+LonLatNAD27 = EllipsoidalCRS(6378206.4, 6356583.8)
+
+LonLatWGS84_proj4 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)")
+LonLatNAD27_proj4 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
+LonLatNAD83_proj4 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")
 
 UPSNorth = Proj4CRS(proj="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
         spheroid="+ellps=WGS84", name="Universal Polar Stereographic (North)")
