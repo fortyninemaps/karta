@@ -217,6 +217,7 @@ class EllipsoidalCRS(GeographicalCRS):
     """ Ellipsoidal geographic coordinate system defined by equatorial and
     polar radii.
     """
+    name = "Ellipsoidal"
 
     def __init__(self, a, b):
         """ Define a geographical coordinate system on an ellipse. *a* is the

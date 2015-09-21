@@ -8,7 +8,7 @@
 
 from __future__ import division
 import numpy as np
-from math import sqrt, sin, cos, tan, asin, acos, atan, atan2, pi
+from math import sqrt, sin, cos, tan, asin, acos, atan, atan2, atanh, pi
 import warnings
 
 # ---------------------------------
@@ -109,6 +109,18 @@ def sphere_azimuth(lons1, lats1, lons2, lats2):
                         in zip(lons1, lats1, lons2, lats2)])
     else:
         return _sphere_azimuth(lons1, lats1, lons2, lats2)
+
+def _spherical_area(r, alpha1, alpha2):
+    return r**2*dalpha
+
+
+def spherical_area(r, x1, y1, x2, y2):
+    _, x1, y1, x2, y2 = _canonical_configuration(x1, y1, x2, y2)
+    phi1 = y1*pi/180.0
+    phi2 = y2*pi/180.0
+    lambda12 = (x2-x1)*pi/180.0
+    alpha1, alpha2, _ = solve_vicenty(r, 0, lambda12, phi1, phi2)
+    return r**2 * (alpha2-alpha1)
 
 # ---------------------------------
 # Functions for ellipsoidal geodesy
@@ -532,6 +544,80 @@ def ellipsoidal_inverse(a, b, x1, y1, x2, y2, tol=None):
     az = (alpha1*180/pi + 180) % 360 - 180
     backaz = ((alpha2+pi)*180/pi + 180) % 360 - 180
     return az, backaz, s12
+
+def _ellipsoidal_area(a, b, lambda12, phi1, phi2, alpha1, alpha2):
+    """ Area of a single quatrilateral defined by two meridians, the equator,
+    and another geodesic.
+    """
+    f = (a-b)/a
+    e2 = f*(2-f)
+    ep2 = e2/(1-e2)
+    e = sqrt(e2)
+
+    # Authalic radius
+    c = sqrt(a**2/2 + b**2/2*atanh(e)/e)
+
+    beta1 = atan((1-f)*tan(phi1))
+    beta2 = atan((1-f)*tan(phi2))
+
+    _i = sqrt(cos(alpha1)**2 + (sin(alpha1)*sin(beta1))**2)
+    alpha0 = atan2(sin(alpha1)*cos(beta1), _i)
+
+    sigma1, omega1 = _solve_NEA(alpha0, alpha1, beta1)
+    _, sigma2, omega2 = _solve_NEB(alpha0, alpha1, beta1, beta2)
+    omega12 = omega2 - omega1
+
+    # Bessel identity for alpha2 - alpha1
+    alpha12 = 2*atan(sin(0.5*beta1+0.5*beta2)/cos(0.5*beta2-0.5*beta1) \
+            * tan(0.5*omega12))
+    sph_term = c**2 * alpha12
+
+    # compute integrals for ellipsoidal correction
+    k2 = ep2*cos(alpha0)**2
+
+    C40 = (2.0/3 - ep2/15 + 4*ep2**2/105 - 8*ep2**3/315 + 64*ep2**4/3465 - 128*ep2**5/9009) \
+        - (1.0/20 - ep2/35 + 2*ep2**2/105 - 16*ep2**3/1155 + 32*ep2**4/3003) * k2 \
+        + (1.0/42 - ep2/63 + 8*ep2**2/693 - 90*ep2**3/9009) * k2**2 \
+        - (1.0/72 - ep2/99 + 10*ep2**2/1287) * k2**3 \
+        + (1.0/110 - ep2/143) * k2**4 - k2**5/156
+
+    C41 = (1.0/180 - ep2/315 + 2*ep2**2/945 - 16*ep2**3/10395 + 32*ep2**4/27027) * k2 \
+        - (1.0/252 - ep2/378 + 4*ep2**2/2079 - 40*ep2**3/27027) * k2**2 \
+        + (1.0/360 - ep2/495 + 2*ep2**2/1287) * k2**3 \
+        - (1.0/495 - 2*ep2/1287) * k2**4 + 5*k2**5/3276
+
+    C42 = (1.0/2100 - ep2/3150 + 4*ep2**2/17325 - 8*ep2**3/45045) * k2**2 \
+        - (1.0/1800 - ep2/2475 + 2*ep2**2/6435) * k2**3 \
+        + (1.0/1925 - 2*ep2/5005) * k2**4 - k2**5/2184
+
+    C43 = (1.0/17640 - ep2/24255 + 2*ep2**2/63063) * k2**3 \
+        - (1.0/10780 - ep2/14014) * k2**4 + 5*k2**5/45864
+
+    C44 = (1.0/124740 - ep2/162162) * k2**4 - 1*k2**5/58968
+
+    C45 = k2**5/792792
+
+    Cs = [C40, C41, C42, C43, C44, C45]
+    I4s1 = sum(c*cos((2*i+1)*sigma1) for i,c in enumerate(Cs))
+    I4s2 = sum(c*cos((2*i+1)*sigma2) for i,c in enumerate(Cs))
+
+    S12 = sph_term + e**2*a**2 * cos(alpha0)*sin(alpha0) * (I4s2-I4s1)
+    return S12
+
+
+def ellipsoidal_area(a, b, x1, y1, x2, y2):
+    """ Area of a single quatrilateral defined by two meridians, the equator,
+    and another geodesic.
+    """
+    _, x1, y1, x2, y2 = _canonical_configuration(x1, y1, x2, y2)
+    phi1 = y1*pi/180.0
+    phi2 = y2*pi/180.0
+    lambda12 = (x2-x1)*pi/180.0
+
+    az, baz, _ = ellipsoidal_inverse(a, b, x1, y1, x2, y2)
+    alpha1 = az * pi/180
+    alpha2 = (baz-pi) * pi/180
+    return _ellipsoidal_area(a, b, lambda12, phi1, phi2, alpha1, alpha2)
 
 
 ###### Utility functions ######

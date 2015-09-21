@@ -157,6 +157,16 @@ class TestCRS(unittest.TestCase):
         self.assertAlmostEqual(dist, 2533572.0748, places=2)
         return
 
+    def test_SphericalArea(self):
+        r = 6378137.0
+        x1 = 0.0
+        x2 = 137.84490004377
+        y1 = 40.0
+        y2 = 41.79331020506
+        S12 = karta.geodesy.spherical_area(r, x1, y1, x2, y2)
+        self.assertAlmostEqual(abs(S12)/1e6, 84516702.1955, places=4)
+        return
+
     def test_EllipsoidalEquatorialAzimuth(self):
         az, baz, _ = crs.LonLatWGS84.inverse(-40.0, 0.0, 55.0, 0.0)
         self.assertEqual(az, 90)
@@ -202,6 +212,17 @@ class TestCRS(unittest.TestCase):
             self.assertAlmostEqual(az, az_, places=4)
             self.assertAlmostEqual(baz, baz_, places=4)
             self.assertAlmostEqual(d, d_, places=2)
+
+    def test_EllipsoidalArea(self):
+        a = 6378137.0
+        b = 6356752.314245
+        x1 = 0.0
+        x2 = 137.84490004377
+        y1 = 40.0
+        y2 = 41.79331020506
+        S12 = karta.geodesy.ellipsoidal_area(a, b, x1, y1, x2, y2)
+        self.assertAlmostEqual(abs(S12)/1e6, 84275623.42235, places=4)
+        return
 
     def test_ConstructProj4(self):
         # Canonical constructor
