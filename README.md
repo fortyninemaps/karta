@@ -94,7 +94,7 @@ implement `__geo_interface__` (e.g.
 ## INSTALLATION
 
 The easiest way to install in production is to use `pip`. Installation requires
-a version of `setuptools>=0.7.0`.
+a version of `setuptools>=17.0`.
 
     pip install -U setuptools
 
