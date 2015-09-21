@@ -631,7 +631,7 @@ class TestDateline(unittest.TestCase):
             poly1 = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
             self.assertAlmostEqual(poly0.area, poly1.area)
 
-    def test_bbox(self):
+    def test_bbox_geographical(self):
         for crs in (SphericalEarth, LonLatWGS84):
             poly = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
             self.assertEqual(poly.bbox, (179, -1, -179, 1))

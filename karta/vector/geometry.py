@@ -411,12 +411,8 @@ class MultipointBase(Geometry):
         """ Return the extent of a bounding box as
             (xmin, ymin, xmax, ymax)
         """
-        if isinstance(self.crs, GeographicalCRS):
-            raise CRSError("Subclasses of Multipoint must provide a bbox "
-                           "method for geographical coordinates")
-        else:
-            x, y = self.get_coordinate_lists()
-            bbox = (min(x), min(y), max(x), max(y))
+        x, y = self.get_coordinate_lists()
+        bbox = (min(x), min(y), max(x), max(y))
         return bbox
 
     @property
@@ -779,6 +775,31 @@ class ConnectedMultipoint(MultipointBase):
     """ Class for Multipoints in which vertices are assumed to be connected. """
 
     @property
+    def bbox(self):
+        if isinstance(self.crs, GeographicalCRS):
+            xmin = xmax = self[0].x
+            ymin = ymax = self[0].y
+            rot = 0
+            for seg in self.segments:
+                x0, x1 = seg[0].x, seg[1].x
+                ymin = min(ymin, seg[1].y)
+                ymax = max(ymax, seg[1].y)
+                if self._seg_crosses_dateline(seg):
+                    if x0 > x1:     # east to west
+                        rot += 360
+                    else:           # west to east
+                        rot -= 360
+
+                    xmin = min(xmin, x1+rot)
+                    xmax = max(xmax, x1+rot)
+
+            xmin = (xmin+180) % 360 - 180
+            xmax = (xmax+180) % 360 - 180
+            return (xmin, ymin, xmax, ymax)
+        else:
+            return super(ConnectedMultipoint, self).bbox
+
+    @property
     def length(self):
         """ Returns the length of the line/boundary. """
         points = [Point(v, crs=self.crs) for v in self.vertices]
@@ -863,6 +884,11 @@ class ConnectedMultipoint(MultipointBase):
         """
         return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments)
 
+    @staticmethod
+    def _seg_crosses_dateline(seg):
+        a, b = seg[0], seg[1]
+        return (sign(a.x) != sign(b.x)) and (abs(a.x-b.x) > 180.0)
+
     def crosses_dateline(self):
         """ Return a boolean that indicates whether any segment crosses the
         dateline """
@@ -870,11 +896,7 @@ class ConnectedMultipoint(MultipointBase):
             raise CRSError("Dateline detection only defined for geographical "
                            "coordinates")
 
-        def seg_crosses_dateline(seg):
-            a, b = seg[0], seg[1]
-            return (sign(a.x) != sign(b.x)) and (abs(a-b) > 180.0)
-
-        return any(seg_crosses_dateline(seg) for seg in self.segments)
+        return any(self._seg_crosses_dateline(seg) for seg in self.segments)
 
 
 class Line(ConnectedMultipoint):
