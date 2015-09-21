@@ -445,25 +445,6 @@ class MultipointBase(Geometry):
             x, y = crs.project(xg, yg)
         return x, y
 
-    def append(self, point):
-        """ Add a vertex to self.vertices. """
-        if self.crs != point.crs:
-            raise crs.CRSError("CRS mismatch ({0} != {1})".format(self.crs, point.crs))
-        if self.rank == point.rank:
-            self.vertices.append(point.vertex)
-            if self.data is not None:
-                self.data.extend(point.data)
-        else:
-            raise GeometryError("geometries have incompatible rank")
-        return self
-
-    def pop(self, index=-1):
-        """ Removes a vertex from the register by index. """
-        pt = Point(self.vertices.pop(index), data=self.data[index])
-        del self.data[index]
-        self.quadtree = None
-        return pt
-
     def shift(self, shift_vector):
         """ Shift feature by the amount given by a vector. Operation
         occurs in-place """
@@ -929,9 +910,10 @@ class Line(ConnectedMultipoint):
         else:
             raise GGeoError('Cannot add geometries with mismatched metadata')
         self.vertices.extend(other.vertices)
+        self.quadtree = None
         return self
 
-    def cumlength(self):
+    def cumulength(self):
         """ Returns the cumulative length by vertex. """
         d = [0.0]
         pta = self[0]
@@ -944,7 +926,7 @@ class Line(ConnectedMultipoint):
     def subsection(self, n):
         """ Return *n* equally spaced Point instances along line. """
         segments = self.segments
-        Ltotal = self.cumlength()[-1]
+        Ltotal = self.cumulength()[-1]
         step = Ltotal / float(n-1)
         step_remaining = step
 

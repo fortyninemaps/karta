@@ -294,22 +294,6 @@ class TestGeometry(unittest.TestCase):
     #     self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=LonLatWGS84))
     #     return
 
-    def test_line_append2d(self):
-        ln0 = Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0)])
-        ln1 = Line([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
-                    (0.0, 1.0)])
-        ln0.append(Point((0.0, 1.0)))
-        self.assertEqual(ln0, ln1)
-        return
-
-    def test_line_append3d(self):
-        ln0 = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0)])
-        ln1 = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
-                    (0.0, 1.0, 3.0)])
-        ln0.append(Point((0.0, 1.0, 3.0)))
-        self.assertEqual(ln0, ln1)
-        return
-
     def test_line_extend(self):
         ln0a = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0)])
         ln0b = Line([(4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
@@ -317,19 +301,6 @@ class TestGeometry(unittest.TestCase):
                     (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
         ln0a.extend(ln0b)
         self.assertEqual(ln0a, ln1)
-
-    def test_pop(self):
-        ln = Multipoint([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
-                         (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)],
-                        data=["red", "green", "blue", "chartreuse", "aquamarine"])
-        lnresult = Multipoint([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
-                               (0.0, 1.0, 3.0)],
-                              data=["red", "green", "blue", "aquamarine"])
-        pt = ln.pop(3)
-        ptresult = Point((4.0, 4.0, 6.0), data="chartreuse")
-        self.assertEqual(pt, ptresult)
-        self.assertEqual(ln, lnresult)
-        return
 
     def test_line_intersection(self):
         line0 = Line([(0.0, 0.0), (3.0, 3.0)])
