@@ -38,9 +38,12 @@ class Geometry(object):
         if pos0.crs == pos1.crs:
             (x0,y0) = pos0.x, pos0.y
             (x1,y1) = pos1.x, pos1.y
-            ((x0,x1), (y0,y1)) = pos0.crs.project([x0, x1], [y0, y1],
-                                                  inverse=True)
-            _, _, dist = pos0.crs.inverse(x0, y0, x1, y1, radians=False)
+            if isinstance(pos0.crs, GeographicalCRS):
+                ((x0,x1), (y0,y1)) = pos0.crs.project([x0, x1], [y0, y1],
+                                                      inverse=True)
+                _, _, dist = pos0.crs.inverse(x0, y0, x1, y1, radians=False)
+            else:
+                dist = math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
         else:
             raise CRSError("Positions must use the same CRS")
         return dist
@@ -822,29 +825,39 @@ class ConnectedMultipoint(MultipointBase):
                                            crs=self.crs))
         return Multipoint(interx_points)
 
-    def _nearest_to_point(self, pt):
+    def _nearest_to_point(self, pt, geographical=False):
         """ Return a tuple of the shortest distance on the geometry boundary to
         *pt*, and the vertex at that location. """
         ptvertex = pt.get_vertex(crs=self.crs)
         segments = zip(self.vertices[:-1], self.vertices[1:])
+        if not (self.crs == pt.crs):
+            raise errors.CRSError("Geometries must use the same CRS")
 
-        if self.crs == Cartesian:
-            func = _cvectorgeo.pt_nearest_planar
-            func = lambda ptseg: _cvectorgeo.pt_nearest_planar(ptseg[0],
-                                            ptseg[1][0], ptseg[1][1])
-        else:
+        if geographical or isinstance(self.crs, GeographicalCRS):
             fwd = self.crs.forward
             inv = self.crs.inverse
-            func = lambda ptseg: _cvectorgeo.pt_nearest_proj(fwd, inv, ptseg[0],
-                                            ptseg[1][0], ptseg[1][1], tol=0.01)
+            pt = self.crs.project(*ptvertex, inverse=True)
+            def func(seg):
+                s0 = self.crs.project(*seg[0], inverse=True)
+                s1 = self.crs.project(*seg[1], inverse=True)
+                return _cvectorgeo.pt_nearest_proj(fwd, inv, pt, s0, s1,
+                                                   tol=0.01)
+        else:
+            func = _cvectorgeo.pt_nearest_planar
+            func = lambda seg: _cvectorgeo.pt_nearest_planar(ptvertex,
+                                            seg[0], seg[1])
 
-        point_dist = map(func, zip(itertools.repeat(ptvertex), segments))
+        point_dist = map(func, segments)
         minpt = None
         mindist = -1.0
         for i, (pt, d) in enumerate(point_dist):
             if d < mindist or (i == 0):
                 minpt = pt
                 mindist = d
+
+        if geographical:
+            # Return to projected coordinates
+            minpt = self.crs.project(*minpt)
         return mindist, minpt
 
     def shortest_distance_to(self, pt):
