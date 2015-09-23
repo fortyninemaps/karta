@@ -28,6 +28,12 @@ try:
 except ImportError:
     HASOSR = False
 
+# proj.4 keys for ellipsoids used by named datum definitions
+DATUM_ELLIPSOIDS = {"WGS84": "WGS84", "GGRS87": "GRS80", "NAD83": "GRS80",
+                    "NAD27": "clrk66", "potsdam": "bessel", "carthage": "clark80",
+                    "hermannskogel": "bessel", "ire65": "mod_airy",
+                    "nzgd49": "intl", "OSGB36": "airy"}
+
 class CRS(object):
     """ Base class for coordinate system instances.
 
@@ -288,7 +294,7 @@ class Proj4CRS(CRS):
                 for kv in proj.split():
                     if "+datum" in kv:
                         k,v = kv.split("=")
-                        spheroid = "+ellps=%s" % v
+                        spheroid = "+ellps=%s" % DATUM_ELLIPSOIDS[v]
                         break
             elif ("+a" in proj) and ("+b" in proj):
                 a, b = None, None
@@ -344,7 +350,7 @@ def crs_from_wkt(wkt):
                 return GeographicalCRS(arg, "unnamed")
             if "+datum" in arg:
                 _,v = arg.split("=")
-                return GeographicalCRS("+ellps=%s" % v, "unnamed")
+                return GeographicalCRS("+ellps=%s" % DATUM_ELLIPSOIDS[v], v)
         raise errors.CRSError("Could not interpret %s as geographical CRS" % proj4)
     else:
         return Proj4CRS(srs.ExportToProj4())
