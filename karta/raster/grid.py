@@ -42,6 +42,12 @@ class Grid(object):
         """ Return the minimum and maximum value of data array. """
         return (self.min(), self.max())
 
+    def apply(self, func):
+        """ Apply a function *func* to grid values """
+        g = self.copy()
+        g.values = func(g.values)
+        return g
+
     def copy(self):
         """ Return a copy. """
         return copy.deepcopy(self)
