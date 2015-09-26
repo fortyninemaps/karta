@@ -258,7 +258,7 @@ class TestGeometry(unittest.TestCase):
     def test_connected_multipoint_shortest_distance_to2(self):
         line = Line([(127.0, -35.0), (132.0, -28.0), (142.0, -29.0)], crs=LonLatWGS84)
         dist = line.shortest_distance_to(Point((98.0, -7.0), crs=LonLatWGS84))
-        self.assertAlmostEqual(dist, 324151.6069966, places=6)
+        self.assertAlmostEqual(dist, 4257313.5324397, places=6)
         return
 
     def test_connected_multipoint_nearest_on_boundary(self):
