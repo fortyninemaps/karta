@@ -2,14 +2,9 @@
 
 import numpy as np
 cimport numpy as np
+from cython.view cimport array as cyarray
 from cpython cimport bool
 from libc.math cimport atan, sqrt
-
-cpdef double cdot2(tuple v1, tuple v2):
-    return v1[0] * v2[0] + v1[1] * v2[1]
-
-cpdef double cross2(tuple pt1, tuple pt2):
-    return pt1[0]*pt2[1] - pt1[1]*pt2[0]
 
 def isleft(tuple pt0, tuple pt1, tuple pt2):
     return (pt1[0]-pt0[0])*(pt2[1]-pt0[1]) - (pt1[1]-pt0[1])*(pt2[0]-pt0[0]) > 0.0
@@ -131,60 +126,86 @@ def intersects_cn(double xp, double yp, double x0, double x1, double y0, double 
 
     return iswithinx and iswithiny
 
-cdef tuple cproj2(tuple u, tuple v):
+cdef struct point:
+    double x
+    double y
+
+cdef struct vector:
+    double x
+    double y
+
+cdef double cdot2(vector u, vector v):
+    return u.x * v.x + u.y * v.y
+
+cdef double cross2(vector u, vector v):
+    return u.x * v.y - u.y * v.x
+
+cdef point cproj2(vector u, vector v):
     cdef double uv, vv
-    uv = cdot2(u,v)
-    vv = cdot2(v,v)
-    return (uv / vv * v[0], uv / vv * v[1])
+    uv = cdot2(u, v)
+    vv = cdot2(v, v)
+    return point(uv/vv*v.x, uv/vv*v.y)
 
-def distance(tuple pt0, tuple pt1):
-    """ Calculate the distance between two points (tuples) """
-    cdef float dsq
-    dsq = 0.0
-    for i in range(min(len(pt0), len(pt1))):
-        dsq += abs(pt0[i] - pt1[i])**2
-    return sqrt(dsq)
+cdef double dist2(point pt0, point pt1):
+    return sqrt((pt0.x-pt1.x)**2 + (pt0.y-pt1.y)**2)
 
-def pt_nearest_planar(tuple pt, tuple endpt1, tuple endpt2):
-    """ Determines the point on a segment defined by tuples endpt1
-    and endpt2 nearest to a point defined by tuple pt.
+def pt_nearest_planar(double x, double y,
+                      double endpt0_0, double endpt0_1,
+                      double endpt1_0, double endpt1_1):
+    """ Determines the point on a segment defined by pairs endpt1
+    and endpt2 nearest to a point defined by x, y.
     Returns the a nested tuple of (point, distance)
     """
 
-    cdef tuple u, v, u_int
-    cdef tuple u_on_v
+    cdef double u0, u1, v0, v1
+    cdef point u_on_v, u_int, pt, pt0, pt1
+    cdef vector u, v
 
-    dist = lambda u,v: sqrt((u[0]-v[0])**2. + (u[1]-v[1])**2.)
+    pt = point(x, y)
+    pt0 = point(endpt0_0, endpt0_1)
+    pt1 = point(endpt1_0, endpt1_1)
 
-    u = (pt[0] - endpt1[0], pt[1] - endpt1[1])
-    v = (endpt2[0] - endpt1[0], endpt2[1] - endpt1[1])
-    u_on_v = cproj2(u,v)
-    u_int = (u_on_v[0] + endpt1[0], u_on_v[1] + endpt1[1])
+    #dist = lambda u,v: sqrt((u[0]-v[0])**2. + (u[1]-v[1])**2.)
+
+    u = vector(x - pt0.x, y - pt0.y)
+    v = vector(pt1.x - pt0.x, pt1.y - pt0.y)
+    u_on_v = cproj2(u, v)
+    u_int = point(u_on_v.x + pt0.x, u_on_v.y + pt0.y)
 
     # Determine whether u_int is inside the segment
     # Otherwise return the nearest endpoint
-    if endpt1[0] == endpt2[0]:  # Segment is vertical
-        if u_int[1] > max(endpt1[1], endpt2[1]):
-            return (endpt1[1] > endpt2[1]
-                    and (endpt1, dist(endpt1, pt))
-                    or (endpt2, dist(endpt2, pt)))
-        elif u_int[1] < min(endpt1[1], endpt2[1]):
-            return (endpt1[1] < endpt2[1]
-                    and (endpt1, dist(endpt1, pt))
-                    or (endpt2, dist(endpt2, pt)))
+    if abs(pt0.x - pt1.x) < 1e-4:  # Segment is near vertical
+        if u_int.y > max(pt0.y, pt1.y):
+            if pt0.y > pt1.y:
+                return ((pt0.x, pt0.y), dist2(pt0, pt))
+            else:
+                return ((pt1.x, pt1.y), dist2(pt1, pt))
+
+        elif u_int.y < min(pt0.y, pt1.y):
+            if pt0.y < pt1.y:
+                return ((pt0.x, pt0.y), dist2(pt0, pt))
+            else:
+                return ((pt1.x, pt1.y), dist2(pt1, pt))
+
         else:
-            return (u_int, dist(u_int, pt))
+            return ((u_int.x, u_int.y), dist2(u_int, pt))
+
     else:
-        if u_int[0] > max(endpt1[0], endpt2[0]):
-            return (endpt1[0] > endpt2[0]
-                    and (endpt1, dist(endpt1, pt))
-                    or (endpt2, dist(endpt2, pt)))
-        elif u_int[0] < min(endpt1[0], endpt2[0]):
-            return (endpt1[0] < endpt2[0]
-                    and (endpt1, dist(endpt1, pt))
-                    or (endpt2, dist(endpt2, pt)))
+
+        if u_int.x > max(pt0.x, pt1.x):
+            if pt0.x > pt1.x:
+                return ((pt0.x, pt0.y), dist2(pt0, pt))
+            else:
+                return ((pt1.x, pt1.y), dist2(pt1, pt))
+
+        elif u_int.x < min(pt0.x, pt1.x):
+            if pt0.x < pt1.x:
+                return ((pt0.x, pt0.y), dist2(pt0, pt))
+            else:
+                return ((pt1.x, pt1.y), dist2(pt1, pt))
+
         else:
-            return (u_int, dist(u_int, pt))
+            return ((u_int.x, u_int.y), dist2(u_int, pt))
 
 def pt_nearest_proj(fwd, inv, pt, endpt0, endpt1, float tol=1.0, int maxiter=50):
     """ Given geodetic functions *fwd* and *inv*, a Point *pt*, and an arc from

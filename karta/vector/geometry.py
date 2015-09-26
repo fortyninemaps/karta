@@ -844,8 +844,8 @@ class ConnectedMultipoint(MultipointBase):
                                                    tol=0.01)
         else:
             func = _cvectorgeo.pt_nearest_planar
-            func = lambda seg: _cvectorgeo.pt_nearest_planar(ptvertex,
-                                            seg[0], seg[1])
+            func = lambda seg: _cvectorgeo.pt_nearest_planar(ptvertex[0], ptvertex[1], 
+                                seg[0][0], seg[0][1], seg[1][0], seg[1][1])
 
         point_dist = map(func, segments)
         minpt = None
