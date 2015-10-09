@@ -524,11 +524,11 @@ class RegularGrid(Grid):
         Xc, Yc = self.center_coords()
         return WarpedGrid(Xc, Yc, self.values.copy(), crs=self.crs)
 
-    def gtiffwrite(self, fnm):
+    def to_gtiff(self, fnm):
         """ Write data to a GeoTiff file using GDAL """
         return _gtiff.write(fnm, self)
 
-    def aaiwrite(self, f, reference='corner', nodata_value=-9999):
+    def to_aai(f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
         only isometric grids (i.e. `hdr['dx'] == hdr['dy']` can be saved,
         otherwise `GridIOError` is thrown.
@@ -576,6 +576,16 @@ class RegularGrid(Grid):
         finally:
             f.close()
         return
+
+    def gtiffwrite(self, fnm):
+        warnings.warn("method `gtiffwrite` has been renamed `to_gtiff`",
+                FutureWarning)
+        return self.to_gtiff(fnm)
+
+    def aaiwrite(self, *args, **kwargs):
+        warnings.warn("method `aaiwrite` has been renamed `to_aai`",
+                FutureWarning)
+        return self.to_aai(*args, **kwargs)
 
 class WarpedGrid(Grid):
     """ Warped Grid class. A WarpedGrid contains a fixed number of rows
