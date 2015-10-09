@@ -105,11 +105,10 @@ def read(fnm, band):
     return arr, hdr
 
 def srs_from_crs(crs):
-    try:
-        srs = osgeo.osr.SpatialReference()
-        srs.ImportFromProj4(crs.project.srs)
-    except AttributeError:
-        raise TypeError("Right now, GDAL projection can only be set from CRS instances backed by proj.4")
+    srs = osgeo.osr.SpatialReference()
+    # SpatialReference can't parse 'lonlat'
+    proj4 = crs.get_proj4().replace("lonlat", "latlong")
+    srs.ImportFromProj4(proj4)
     return srs
 
 def write(fnm, grid):
@@ -125,7 +124,7 @@ def write(fnm, grid):
                              t[1] + (ny - 0.5)*t[3] + 0.5*t[5], t[5], -t[3]])
     try:
         srs = srs_from_crs(grid.crs)
-    except TypeError as e:
+    except Exception as e:
         sys.stderr.write("Writing GeoTiff failed:\n\t{0}\n".format(e))
         return
     dataset.SetProjection(srs.ExportToWkt())
