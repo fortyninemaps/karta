@@ -132,6 +132,18 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(Y[0,0], 495)
         self.assertEqual(Y[-1,0], 915)
 
+    def test_mask_poly(self):
+        t = -np.linspace(0, 2*np.pi, 200)
+        xp = ((2+np.cos(7*t)) * np.cos(t+0.3) + 4) * 12
+        yp = ((2+np.cos(7*t)) * np.sin(t+0.2) + 4) * 12
+        poly = karta.Polygon(zip(xp, yp), crs=karta.crs.Cartesian)
+        grid = karta.RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
+                                 values=np.arange(1e6).reshape(1000, 1000),
+                                 crs=karta.crs.Cartesian)
+        masked_grid = grid.mask_by_poly(poly)
+        self.assertEqual(np.nansum(masked_grid.values), 97186599119)
+        return
+
     def test_get_indices(self):
         ind = self.rast.get_indices(15.0, 15.0)
         self.assertEqual(tuple(ind), (0, 0))

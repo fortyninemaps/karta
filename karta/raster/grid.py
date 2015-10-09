@@ -1,6 +1,7 @@
 """ Classes for basic grid types """
 
 import copy
+import math
 import numbers
 import warnings
 import numpy as np
@@ -223,9 +224,11 @@ class RegularGrid(Grid):
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
         """ Return a clipped version of grid constrained to a bounding box
-        defined by *xmin*, *xmax*, *ymin*, *ymax*. If *crs* is not provided, it
-        is assumed that the bounding box shares the same coordinate system as
-        the grid. """
+        defined by *xmin*, *xmax*, *ymin*, *ymax*.
+
+        Optional *crs* argument defines the coordinate reference system of the
+        bounding box.
+        """
         if crs is None:
             crs = self.crs
         else:
@@ -254,6 +257,27 @@ class RegularGrid(Grid):
         y0 = t[1] + i0*t[3] + j0*t[5]
         tnew = (x0, y0, t[2], t[3], t[4], t[5])
         return RegularGrid(tnew, values, crs=self.crs)
+
+    def mask_by_poly(self, poly, inplace=False):
+        """ Return a grid with all elements outside the bounds of a polygon masked """
+        if not poly.isclockwise():
+            vertices = poly.get_vertices(self.crs)[::-1]
+        else:
+            vertices = poly.get_vertices(self.crs)
+        x = [a[0] for a in vertices]
+        y = [a[1] for a in vertices]
+
+        ny, nx = self.size
+
+        msk = mask_poly(x, y, nx, ny, self.transform)
+
+        if inplace:
+            self.values[~msk] = self.nodata
+            return self
+        else:
+            return RegularGrid(self.transform,
+                               values=np.where(msk, self.values, self.nodata),
+                               crs=self.crs)
 
     def resample_griddata(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy' using *scipy.griddata*
@@ -661,3 +685,78 @@ def get_nodata(T):
         return np.nan
     else:
         raise ValueError("No default NODATA value for type {0}".format(T))
+
+def mask_poly(xpoly, ypoly, nx, ny, transform):
+    """ Create a grid mask based on a clockwise-oriented polygon.
+
+    Arguments
+    ---------
+    xpoly: list[float]
+    ypoly: list[float]
+        sequences of points representing polygon
+    nx: int
+    ny: int
+        size of grid
+    transform: list[float]
+        affine transformation describing grid layout and origin
+        T == [x0, y0, dx, dy, sx, sy]
+    """
+
+    grid_x0 = transform[0]
+    grid_y0 = transform[1]
+    grid_dx = transform[2]
+    grid_dy = transform[3]
+    grid_sx = transform[4]
+    grid_sy = transform[5]
+
+    mask = np.zeros((ny, nx), dtype=np.int8)
+
+    # find southernmost index (will end on this point)
+    v = max(ypoly)
+    i_end = -1
+    for i in range(len(ypoly)):
+        if ypoly[i] < v:
+            v = ypoly[i]
+            i_end = i
+
+    x0 = xpoly[i_end]
+    y0 = ypoly[i_end]
+
+    ta, tb, tc, td, te, tf = transform
+    i0 = int(math.ceil((y0 - min(y0, tb) - tf/tc*(x0 - min(x0, ta))) / (td - tf*te/tc)))
+    j0 = int(math.ceil((x0 - min(x0, ta) - te/td*(y0 - min(y0, tb))) / (tc - te*tf/td)))
+
+    for el in range(1, len(xpoly)+1):
+        idx = (el + i_end) % len(xpoly)
+        x1 = xpoly[idx]
+        y1 = ypoly[idx]
+
+        # if segment is horizontal, ignore
+        if y1 != y0:
+
+
+            # Grid coordinates of the segment end points
+            i1 = int(math.ceil((y1 - min(y1, tb) - tf/tc*(x1 - min(x1, ta)))
+                        / (td - tf*te/tc)))
+            j1 = int(math.ceil((x1 - min(x1, ta) - te/td*(y1 - min(y1, tb)))
+                        / (tc - te*tf/td)))
+
+            if y1 > y0:     # mark grid cells to the left
+
+                for i in range(i0, i1):
+                    j = int(round((i-i0) * (x1-x0)/(y1-y0) + j0))
+                    mask[i,j:] += 1
+
+            if y0 > y1:     # unmark grid cells to the left
+
+                for i in range(i1, i0):
+                    j = int(round((i-i1) * (x1-x0)/(y1-y0) + j1))
+                    mask[i,j:] -= 1
+
+        x0 = x1
+        y0 = y1
+        i0 = i1
+        j0 = j1
+
+    return mask
+
