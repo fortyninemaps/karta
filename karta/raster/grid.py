@@ -702,13 +702,6 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
         T == [x0, y0, dx, dy, sx, sy]
     """
 
-    grid_x0 = transform[0]
-    grid_y0 = transform[1]
-    grid_dx = transform[2]
-    grid_dy = transform[3]
-    grid_sx = transform[4]
-    grid_sy = transform[5]
-
     mask = np.zeros((ny, nx), dtype=np.int8)
 
     # find southernmost index (will end on this point)
@@ -734,7 +727,6 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
         # if segment is horizontal, ignore
         if y1 != y0:
 
-
             # Grid coordinates of the segment end points
             i1 = int(math.ceil((y1 - min(y1, tb) - tf/tc*(x1 - min(x1, ta)))
                         / (td - tf*te/tc)))
@@ -745,13 +737,13 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
 
                 for i in range(i0, i1):
                     j = int(round((i-i0) * (x1-x0)/(y1-y0) + j0))
-                    mask[i,j:] += 1
+                    mask[max(0, min(i, ny-1)), max(0, min(j, nx-1)):] += 1
 
             if y0 > y1:     # unmark grid cells to the left
 
                 for i in range(i1, i0):
                     j = int(round((i-i1) * (x1-x0)/(y1-y0) + j1))
-                    mask[i,j:] -= 1
+                    mask[max(0, min(i, ny-1)), max(0, min(j, nx-1)):] -= 1
 
         x0 = x1
         y0 = y1
