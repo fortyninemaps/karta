@@ -128,7 +128,9 @@ def write(fnm, grid):
         sys.stderr.write("Writing GeoTiff failed:\n\t{0}\n".format(e))
         return
     dataset.SetProjection(srs.ExportToWkt())
-    dataset.GetRasterBand(1).WriteArray(grid.values[::-1])
+    band = dataset.GetRasterBand(1)
+    band.SetNoDataValue(grid.nodata)
+    band.WriteArray(grid.values[::-1])
     dataset = None
     return
 
