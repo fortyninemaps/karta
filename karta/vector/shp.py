@@ -120,7 +120,7 @@ def write_line3(line, fstem):
 
 def write_poly2(poly, fstem):
     w = shapefile.Writer(shapeType=shapefile.POLYGON)
-    w.poly(shapeType=shapefile.POLYGON, parts=[poly.vertices])
+    w.poly(shapeType=shapefile.POLYGON, parts=[[v for v in poly.vertices]])
     addfields(w, poly.properties)
     w.save(fstem)
     write_projection(poly, fstem)
@@ -128,7 +128,7 @@ def write_poly2(poly, fstem):
 
 def write_poly3(poly, fstem):
     w = shapefile.Writer(shapeType=shapefile.POLYGONZ)
-    w.poly(shapeType=shapefile.POLYGONZ, parts=[poly.vertices])
+    w.poly(shapeType=shapefile.POLYGONZ, parts=[[v for v in poly.vertices]])
     addfields(w, poly.properties)
     w.save(fstem)
     write_projection(poly, fstem)
