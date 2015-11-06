@@ -733,13 +733,13 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
             j1 = int(math.ceil((x1 - min(x1, ta) - te/td*(y1 - min(y1, tb)))
                         / (tc - te*tf/td)))
 
-            if y1 > y0:     # mark grid cells to the left
+            if y1 > y0:     # mark grid cells to the right
 
                 for i in range(i0, i1):
                     j = int(round((i-i0) * (x1-x0)/(y1-y0) + j0))
                     mask[max(0, min(i, ny-1)), max(0, min(j, nx-1)):] += 1
 
-            if y0 > y1:     # unmark grid cells to the left
+            if y0 > y1:     # unmark grid cells to the right
 
                 for i in range(i1, i0):
                     j = int(round((i-i1) * (x1-x0)/(y1-y0) + j1))
