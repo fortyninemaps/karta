@@ -67,9 +67,9 @@ class RegularGrid(Grid):
     X = a + j * c + i * e
     Y = b + i * d + j * f
 
-    in which *(a,b)* defines the grid origin, *(c,d)* defines the resolution in
-    the horizontal and vertical directions, and *(e,f)* can be used to define a
-    rotation. In the common case of an orthogonal grid with north "up",
+    in which *(a,b)* defines the lower-left grid cell corner, *(c,d)* defines
+    the resolution in the horizontal and vertical directions, and *(e,f)* can
+    be used to define a rotation. In the common case of a "north-up" grid,
 
     e = f = 0
     """

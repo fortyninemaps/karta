@@ -118,7 +118,7 @@ Then, clone the repository and install,
 
 ### Required
 
-- Python 2.6+ or Python 3.3+
+- Python 2.7 or Python 3.3+
 - numpy
 - pyshp
 - pyproj
@@ -126,7 +126,7 @@ Then, clone the repository and install,
 
 ### Recommended
 
-- osgeom.gdal (for geotiff I/O)
+- osgeo.gdal (for geotiff I/O)
 - osgeo.osr (for coordinate system interchange)
 - scipy
 

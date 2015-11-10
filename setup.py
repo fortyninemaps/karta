@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
-VERSION = "0.5.1dev"
+VERSION = "0.5.2dev"
 
 class build_ext(_build_ext):
 
@@ -138,7 +138,7 @@ DEPENDENCIES
 Required
 ~~~~~~~~
 
--  Python 2.6+ or Python 3.3+
+-  Python 2.7 or Python 3.3+
 -  numpy
 -  pyshp
 -  pyproj
@@ -147,7 +147,7 @@ Required
 Recommended
 ~~~~~~~~~~~
 
--  osgeom.gdal (for geotiff I/O)
+-  osgeo.gdal (for geotiff I/O)
 -  osgeo.osr (for coordinate system interchange)
 -  scipy
 
