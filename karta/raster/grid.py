@@ -548,9 +548,16 @@ class RegularGrid(Grid):
         Xc, Yc = self.center_coords()
         return WarpedGrid(Xc, Yc, self.values.copy(), crs=self.crs)
 
-    def to_gtiff(self, fnm):
-        """ Write data to a GeoTiff file using GDAL """
-        return _gtiff.write(fnm, self)
+    def to_gtiff(self, fnm, compress="LZW", **kw):
+        """ Write data to a GeoTiff file using GDAL.
+        
+        Parameters
+        ----------
+        fnm: output file name
+
+        compress: "LZW", "PACKBITS", or None
+        """
+        return _gtiff.write(fnm, self, compress=compress, **kw)
 
     def to_aai(f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,

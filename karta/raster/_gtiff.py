@@ -176,14 +176,20 @@ def srs_from_crs(crs):
     srs.ImportFromProj4(proj4)
     return srs
 
-def write(fnm, grid):
+def write(fnm, grid, compress=None, **kw):
     """ Write a grid-like object to *fnm* """
     if not HASGDAL:
         raise errors.MissingDependencyError("requires osgeo.gdal")
 
+    co = []
+    if compress == "LZW":
+        co.append("COMPRESS=LZW")
+    elif compress == "PACKBITS":
+        co.append("COMPRESS=PACKBITS")
+
     driver = osgeo.gdal.GetDriverByName("GTiff")
     ny, nx = grid.size
-    dataset = driver.Create(fnm, nx, ny, 1, gdal_type(grid.values.dtype))
+    dataset = driver.Create(fnm, nx, ny, 1, gdal_type(grid.values.dtype), co)
     t = grid.transform
     dataset.SetGeoTransform([t[0] - 0.5*(t[2] + t[4]), t[2], -t[4],
                              t[1] + (ny - 0.5)*t[3] + 0.5*t[5], t[5], -t[3]])
@@ -196,6 +202,7 @@ def write(fnm, grid):
     band = dataset.GetRasterBand(1)
     band.SetNoDataValue(grid.nodata)
     band.WriteArray(grid.values[::-1])
+    band = None
     dataset = None
     return
 
