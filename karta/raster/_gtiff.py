@@ -13,6 +13,59 @@ try:
 except ImportError:
     HASGDAL = False
 
+class GdalBandArrayInterface(object):
+    """ Imitates an ndarray well-enough to back a Grid instance, but reads data
+    from an disk-bound datasource """
+
+    def __init__(self, band, dataset):
+        self.band = band
+        self.dataset = dataset
+        return
+
+    def __del__(self):
+        self.dataset = None
+        self.band = None
+
+    def __getitem__(self, idx):
+        if isinstance(idx, tuple):
+            if isinstance(idx[0], slice):
+                yslc, xslc = idx
+            else:
+                yslc = slice(idx[0], idx[0]+1, 1)
+                xslc = slice(idx[1], idx[1]+1, 1)
+        else:
+            yslc = idx
+            xslc = slice(0, None)
+
+        ny, nx = self.shape
+        xstart, xend, xstep = xslc.indices(nx)
+        ystart, yend, ystep = yslc.indices(ny)
+        x0 = min(xstart, xend)
+        y0 = min(ny-ystart, ny-yend)
+        ret = self.band.ReadAsArray(x0, y0,
+                                    abs(xend-xstart), abs(yend-ystart))
+        if xstep < 0:
+            ret = ret[:,::-1]
+
+        if ystep > 0:       # Flip from GDAL convention to karta convention
+            ret = ret[::-1]
+
+        if xstep != 1:
+            ret = ret[::abs(ystep)]
+
+        if ystep != 1:
+            ret = ret[:,::abs(xstep)]
+        return ret
+
+    @property
+    def shape(self):
+        return (self.dataset.RasterYSize, self.dataset.RasterXSize)
+
+    @property
+    def dtype(self):
+        return np.dtype(numpy_dtype(self.band.DataType))
+
+
 def SRS_from_WKT(s):
     """ Return Proj.4 string, semimajor axis, and flattening """
     sr = osgeo.osr.SpatialReference()
@@ -60,9 +113,16 @@ def gdal_type(dtype):
     else:
         raise TypeError("GDAL equivalent to type {0} unknown".format(dtype))
 
-def read(fnm, band):
+def read(fnm, band, in_memory):
     """ Read a GeoTiff file and return a numpy array and a dictionary of header
-    information. """
+    information.
+    
+    fnm: input datasource
+    band: band number (1...)
+    in_memory: boolean indicating whether array should be read fully into memory
+
+    Returns and array-like object and a dictionary of metadata
+    """
     if not HASGDAL:
         raise errors.MissingDependencyError("requires osgeo.gdal")
 
@@ -96,12 +156,17 @@ def read(fnm, band):
         if rasterband.DataType > max_dtype:
             max_dtype = rasterband.DataType
 
-        arr = np.empty((hdr["ny"], hdr["nx"]), dtype=numpy_dtype(max_dtype))
-        dtype = numpy_dtype(rasterband.DataType)
-        arr[:,:] = rasterband.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype))
+        if in_memory:
+            arr = np.empty((hdr["ny"], hdr["nx"]), dtype=numpy_dtype(max_dtype))
+            dtype = numpy_dtype(rasterband.DataType)
+            arr[:,:] = rasterband.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype))
+        else:
+            arr = GdalBandArrayInterface(rasterband, dataset)
 
     finally:
-        dataset = None
+        if in_memory:
+            rasterband = None
+            dataset = None
     return arr, hdr
 
 def srs_from_crs(crs):

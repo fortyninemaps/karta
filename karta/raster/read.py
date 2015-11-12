@@ -24,7 +24,7 @@ def proj4_isgeodetic(s):
     return ("lonlat" in s) or ("longlat" in s) or \
             ("latlon" in s) or ("latlong" in s)
 
-def read_gtiff(fnm, band=1):
+def read_gtiff(fnm, band=1, in_memory=True):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
     instance.
 
@@ -34,8 +34,13 @@ def read_gtiff(fnm, band=1):
     fnm : GeoTiff file path
 
     band : band to open (default 1)
+
+    in_memory : if True (default), read entire dataset into memory
     """
-    arr, hdr = _gtiff.read(fnm, band)
+    arr, hdr = _gtiff.read(fnm, band, in_memory)
+    if isinstance(arr, np.ndarray):
+        arr = arr.squeeze()[::-1]
+
     t = {'xllcenter'  : hdr['xulcorner'] + 0.5 * (hdr['dx'] + hdr['sx']),
          'yllcenter'  : hdr['yulcorner'] + (hdr['ny'] - 0.5) * hdr['dy'] - 0.5 * hdr['sy'],
          'dx'         : hdr['dx'],
@@ -49,7 +54,7 @@ def read_gtiff(fnm, band=1):
         crs = GeographicalCRS(geodstr, name="Imported GTiff")
     else:
         crs = Proj4CRS(hdr["srs"]["proj4"], geodstr, name="Imported GTiff")
-    return RegularGrid(t, values=arr.squeeze()[::-1], crs=crs)
+    return RegularGrid(t, values=arr, crs=crs)
 
 # Aliases for backwards compat.
 gtiffread = read_gtiff

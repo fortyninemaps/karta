@@ -28,7 +28,7 @@ class GdalTests(unittest.TestCase):
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TESTDATA, "test.tif")
-        g.gtiffwrite(fpath)
+        g.to_gtiff(fpath)
         gnew = karta.read_gtiff(fpath)
 
         self.assertTrue("+proj=utm" in gnew.crs.project.srs)
@@ -36,6 +36,28 @@ class GdalTests(unittest.TestCase):
         self.assertEqual(g.transform, gnew.transform)
         self.assertEqual(g.values.dtype, gnew.values.dtype)
         self.assertTrue(np.all(g.values == gnew.values))
+        return
+
+    def test_io_virtual(self):
+        # try writing a file, then open it without loading into memory and verify
+        v = karta.raster.peaks(500)[:100,:]
+        utm7 = karta.crs.Proj4CRS("+proj=utm +zone=7 +north", "+ellps=WGS84")
+        g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
+
+        fpath = os.path.join(TESTDATA, "test.tif")
+        g.to_gtiff(fpath)
+        gnew = karta.read_gtiff(fpath, in_memory=False)
+
+        self.assertEqual(g.transform, gnew.transform)
+        self.assertEqual(g.values.dtype, gnew.values.dtype)
+        self.assertEqual(g.size, gnew.size)
+        print(g.values[10:50:3, 45:15:-2])
+        print(gnew.values[10:50:3, 45:15:-2])
+        self.assertTrue(np.all(g.values[10:50:3, 15:45:2] ==
+                               gnew.values[10:50:3, 15:45:2]))
+        self.assertTrue(np.all(g.values[10:50:3, 45:15:-2] ==
+                               gnew.values[10:50:3, 45:15:-2]))
+        self.assertTrue(np.all(g.values[:,:] == gnew.values[:,:]))
         return
 
 if __name__ == "__main__":
