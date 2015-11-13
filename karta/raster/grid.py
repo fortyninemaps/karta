@@ -683,11 +683,17 @@ class WarpedGrid(Grid):
 
 
 def get_nodata(T):
-    """ Return a default value for NODATA given a type (e.g. int, float,
-    complex).
+    """ Return a default value for NODATA given a type
+
+    For unsigned integer types, returns largest representable value.
+    For signed integer types, returns smallest negative representable value.
+    For floating point types (incl. complex), returns NaN.
+    Otherwise, raises ValeError.
     """
-    if issubclass(T, IntegerType):
-        return -9999
+    if T in (np.uint8, np.uint16, np.uint32, np.uint64):
+        return np.iinfo(T).max
+    elif issubclass(T, IntegerType):
+        return np.iinfo(T).min
     elif issubclass(T, (numbers.Real, numbers.Complex)):
         return np.nan
     else:

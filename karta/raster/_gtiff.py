@@ -86,24 +86,27 @@ def SRS_from_WKT(s):
     return sr
 
 def py_type(dt_int):
+    """ Return a fmt character based on a gdal type integer. """
     if dt_int == 1:
         return "B"
     elif dt_int == 3:
         return "h"
     elif dt_int == 2:
         return "H"
-    #elif dt_int == 5:
-    #    return "i"
-    #elif dt_int == 4:
-    #    return "I"
     elif dt_int == 5:
-        return "l"
+        return "i"
     elif dt_int == 4:
-        return "L"
+        return "I"
+    #elif dt_int == 5:
+    #    return "l"
+    #elif dt_int == 4:
+    #    return "L"
     elif dt_int == 6:
         return "f"
     elif dt_int == 7:
         return "d"
+    else:
+        raise KeyError("No Python type to coerce from GDT_Int %d" % dt_int)
 
 def numpy_dtype(dt_int):
     """ Return a numpy dtype that matches the band data type. """
