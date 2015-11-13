@@ -1,5 +1,6 @@
 """ IO interface to GeoTiffs using GDAL. """
 
+import struct
 import sys
 import numpy as np
 from .. import errors
@@ -40,21 +41,33 @@ class GdalBandArrayInterface(object):
         ny, nx = self.shape
         xstart, xend, xstep = xslc.indices(nx)
         ystart, yend, ystep = yslc.indices(ny)
-        x0 = min(xstart, xend)
-        y0 = min(ny-ystart, ny-yend)
-        ret = self.band.ReadAsArray(x0, y0,
-                                    abs(xend-xstart), abs(yend-ystart))
-        if xstep < 0:
-            ret = ret[:,::-1]
 
-        if ystep > 0:       # Flip from GDAL convention to karta convention
-            ret = ret[::-1]
+        if (abs(xstep) == 1) and (abs(ystep) == 1):
+            # Fast path for contiguous blocks
+            x0 = min(xstart, xend)
+            y0 = min(ny-ystart, ny-yend)
+            ret = self.band.ReadAsArray(x0, y0,
+                                        abs(xend-xstart), abs(yend-ystart))
+            if xstep < 0:
+                ret = ret[:,::-1]
 
-        if xstep != 1:
-            ret = ret[::abs(ystep)]
+            if ystep > 0:       # Flip from GDAL convention to karta convention
+                ret = ret[::-1]
 
-        if ystep != 1:
-            ret = ret[:,::abs(xstep)]
+        else:
+            t = self.band.DataType
+            values = map(lambda xy: self.band.ReadRaster(xy[0], ny-xy[1]-1, 1, 1, 1, 1, t),
+                         ((x, y) for y in range(ystart, yend, ystep)
+                                 for x in range(xstart, xend, xstep)))
+
+            # temporary
+            outnx = len(range(xstart, xend, xstep))
+            outny = len(range(ystart, yend, ystep))
+
+            pt = py_type(t)
+            values_py = [struct.unpack(pt, a) for a in values]
+            ret = np.array(values_py).reshape([outny, outnx])
+
         return ret
 
     @property
@@ -71,6 +84,26 @@ def SRS_from_WKT(s):
     sr = osgeo.osr.SpatialReference()
     sr.ImportFromWkt(s)
     return sr
+
+def py_type(dt_int):
+    if dt_int == 1:
+        return "B"
+    elif dt_int == 3:
+        return "h"
+    elif dt_int == 2:
+        return "H"
+    #elif dt_int == 5:
+    #    return "i"
+    #elif dt_int == 4:
+    #    return "I"
+    elif dt_int == 5:
+        return "l"
+    elif dt_int == 4:
+        return "L"
+    elif dt_int == 6:
+        return "f"
+    elif dt_int == 7:
+        return "d"
 
 def numpy_dtype(dt_int):
     """ Return a numpy dtype that matches the band data type. """
