@@ -28,21 +28,45 @@ class GdalBandArrayInterface(object):
         self.band = None
 
     def __getitem__(self, idx):
-        if isinstance(idx, tuple):
-            if isinstance(idx[0], slice):
-                yslc, xslc = idx
-            else:
-                yslc = slice(idx[0], idx[0]+1, 1)
-                xslc = slice(idx[1], idx[1]+1, 1)
-        else:
-            yslc = idx
-            xslc = slice(0, None)
-
         ny, nx = self.shape
-        xstart, xend, xstep = xslc.indices(nx)
-        ystart, yend, ystep = yslc.indices(ny)
 
-        if (abs(xstep) == 1) and (abs(ystep) == 1):
+        if isinstance(idx, tuple):
+            iidx, jidx = idx
+        else:
+            iidx = idx
+            jidx = slice(0, nx, 1)
+
+        if isinstance(iidx, int):
+            ystart = iidx
+            yend = iidx+1
+            ystep = 1
+        else:
+            ystart, yend, ystep = iidx.indices(ny)
+
+        if isinstance(jidx, int):
+            xstart = jidx
+            xend = jidx+1
+            xstep = 1
+        else:
+            xstart, xend, xstep = jidx.indices(nx)
+
+
+        if abs(yend-ystart) == 1:
+            # Extracting a row vector
+            x0 = min(xstart, xend)
+            y0 = min(ny-ystart, ny-yend)
+            ret = self.band.ReadAsArray(x0, y0, abs(xend-xstart), 1)[0,::xstep]
+
+            if abs(xend-xstart) == 1:
+                ret = ret[0]
+
+        elif abs(xend-xstart) == 1:
+            # Extracting a column vector
+            x0 = min(xstart, xend)
+            y0 = min(ny-ystart, ny-yend)
+            ret = self.band.ReadAsArray(x0, y0, 1, abs(yend-ystart))[::ystep].ravel()
+
+        elif (abs(xstep) == 1) and (abs(ystep) == 1):
             # Fast path for contiguous blocks
             x0 = min(xstart, xend)
             y0 = min(ny-ystart, ny-yend)
@@ -55,6 +79,7 @@ class GdalBandArrayInterface(object):
                 ret = ret[::-1]
 
         else:
+            # Sparse extraction
             t = self.band.DataType
             values = map(lambda xy: self.band.ReadRaster(xy[0], ny-xy[1]-1, 1, 1, 1, 1, t),
                          ((x, y) for y in range(ystart, yend, ystep)

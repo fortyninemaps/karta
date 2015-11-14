@@ -68,5 +68,30 @@ class GdalTests(unittest.TestCase):
         g.to_gtiff(fpath, compress="PACKBITS")
         return
 
+class GdalVirtualArrayTests(unittest.TestCase):
+
+    def setUp(self):
+        v = karta.raster.peaks(500)[:100,:]
+        utm7 = karta.crs.Proj4CRS("+proj=utm +zone=7 +north", "+ellps=WGS84")
+        g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
+
+        fpath = os.path.join(TESTDATA, "test.tif")
+        g.to_gtiff(fpath, compress=None)
+        self.grid = karta.read_gtiff(fpath, in_memory=False)
+
+    def test_slicing_virtual(self):
+        self.grid.values[5:10, 7:15]
+        self.grid.values[5:10:2, 7:15]
+        self.grid.values[10:5:-1, 7:15]
+
+        a1 = self.grid.values[12, 7:15]
+        self.assertEqual(a1.shape, (8,))
+        a2 = self.grid.values[5:10, 9]
+        self.assertEqual(a2.shape, (5,))
+
+        b = self.grid.values[12, 13]
+        self.assertEqual(type(b), np.float64)
+        return
+
 if __name__ == "__main__":
     unittest.main()
