@@ -548,14 +548,14 @@ class RegularGrid(Grid):
         Xc, Yc = self.center_coords()
         return WarpedGrid(Xc, Yc, self.values.copy(), crs=self.crs)
 
-    def to_gtiff(self, fnm, compress="LZW", **kw):
+    def to_gtiff(self, fnm, compress="PACKBITS", **kw):
         """ Write data to a GeoTiff file using GDAL.
         
         Parameters
         ----------
         fnm: output file name
 
-        compress: "LZW", "PACKBITS", or None
+        compress: "PACKBITS" (default), "DEFLATE", "LZW", "LZMA", or None
         """
         return _gtiff.write(fnm, self, compress=compress, **kw)
 

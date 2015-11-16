@@ -247,6 +247,10 @@ def write(fnm, grid, compress=None, **kw):
         co.append("COMPRESS=LZW")
     elif compress == "PACKBITS":
         co.append("COMPRESS=PACKBITS")
+    elif compress == "DEFLATE":
+        co.append("COMPRESS=DEFLATE")
+    elif compress == "LZMA":
+        co.append("COMPRESS=LZMA")
 
     driver = osgeo.gdal.GetDriverByName("GTiff")
     ny, nx = grid.size
