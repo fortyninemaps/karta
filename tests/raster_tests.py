@@ -39,15 +39,16 @@ class RegularGridTests(unittest.TestCase):
     def test_resample(self):
         # use linear function so that nearest neighbour and linear interp are
         # exact
-        def makegrid(s, f, n):
-            xx, yy = np.meshgrid(np.linspace(s, f, n),
-                                 np.linspace(s, f, n))
-            zz = 2.0*xx + -3.0*yy
-            return karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 0.0, 0.0), values=zz)
+        def makegrid(start, finish, n, res):
+            xx, yy = np.meshgrid(np.linspace(start, finish, n),
+                                 np.linspace(start, finish, n))
+            zz = 2.0*xx - 3.0*yy
+            return karta.RegularGrid((0.0, 0.0, res, res, 0.0, 0.0), values=zz)
 
-        g = makegrid(0.0, 1.0, 129)
-        sol = makegrid(1.0/128.0, 1.0-1.0/128.0, 64)
-        gnew = g.resample(60.0, 60.0)
+        # node numbers from a line with extreme edges at [0, 1]
+        g = makegrid(1.0/300, 1.0-1.0/300, 150, 1.0)
+        sol = makegrid(3.0/300, 1.0-3.0/300, 50, 3.0)
+        gnew = g.resample(3.0, 3.0)
         residue = gnew.values - sol.values
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return

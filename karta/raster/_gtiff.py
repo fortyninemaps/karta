@@ -157,8 +157,12 @@ def numpy_dtype(dt_int):
 
 def gdal_type(dtype):
     """ Return a GDAL type that matches numpy dtype """
-    if dtype == np.uint16:
+    if dtype == np.uint8:
+        return osgeo.gdal.GDT_Byte
+    elif dtype == np.uint16:
         return osgeo.gdal.GDT_UInt16
+    elif dtype == np.int8:
+        return osgeo.gdal.GDT_Byte      # transform -127 -- 127 to 0 -- 255
     elif dtype == np.int16:
         return osgeo.gdal.GDT_Int16
     elif dtype == np.int32:

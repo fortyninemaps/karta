@@ -315,7 +315,8 @@ class RegularGrid(Grid):
         return RegularGrid(tnew, values)
 
     def resample(self, dx, dy, method='nearest'):
-        """ Resample array to have spacing `dx`, `dy'.
+        """ Resample array to have spacing `dx`, `dy'. The grid origin remains
+        in the same position.
 
         Parameters
         ----------
@@ -332,8 +333,9 @@ class RegularGrid(Grid):
 
         if method == 'nearest':
             rx, ry = dx / dx0, dy / dy0
-            I = np.around(np.arange(ry/2, self.values.shape[0], ry)).astype(int)
-            J = np.around(np.arange(rx/2, self.values.shape[1], rx)).astype(int)
+            ny, nx = self.values.shape
+            I = np.around(np.arange(ry/2, ny, ry)-0.5).astype(int)
+            J = np.around(np.arange(rx/2, nx, rx)-0.5).astype(int)
             if I[-1] == self.values.shape[0]:
                 I = I[:-1]
             if J[-1] == self.values.shape[1]:
