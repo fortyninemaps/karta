@@ -222,6 +222,33 @@ class RegularGrid(Grid):
                 FutureWarning)
         return self.get_extent(crs=crs)
 
+    def aschunks(self, size=(-1, -1), overlap=(0, 0)):
+        """ Generator for grid chunks.
+        """
+        ny, nx = self.size
+        if size == (-1, -1):
+            size = (nx//4, ny//4)
+
+        i0 = 0
+        j0 = 0
+
+        T0 = self.transform
+        while 1:
+            if j0 >= nx:
+                j0 = 0
+                i0 += size[1]-overlap[1]
+
+            if i0 >= ny:
+                break
+
+            T = [self.transform[0] + j0*T0[2] + i0*T0[4],
+                 self.transform[1] + i0*T0[3] + j0*T0[5],
+                 T0[2], T0[3], T0[4], T0[5]]
+            yield RegularGrid(T,
+                              values=self.values[i0:i0+size[1], j0:j0+size[0]].copy(),
+                              crs=self.crs)
+            j0 += size[0]-overlap[0]
+
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
         """ Return a clipped version of grid constrained to a bounding box
         defined by *xmin*, *xmax*, *ymin*, *ymax*.
