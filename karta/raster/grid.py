@@ -178,6 +178,11 @@ class RegularGrid(Grid):
         extent = self.get_extent(reference="edge")
         return extent[0], extent[2], extent[1], extent[3]
 
+    @property
+    def data_bbox(self):
+        extent = self.get_data_extent(reference="edge")
+        return extent[0], extent[2], extent[1], extent[3]
+
     def get_extent(self, reference='center', crs=None):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
         ymax). *reference* is a string and may be 'center' or 'edge'. """
@@ -216,6 +221,74 @@ class RegularGrid(Grid):
             c = min(yg0, yg1, yg2, yg3)
             d = max(yg0, yg1, yg2, yg3)
         return a, b, c, d
+
+    def get_data_extent(self, reference='center', nodata=None, crs=None):
+        """ Return the region characteristics as a tuple (xmin, xmax, ymin,
+        ymax). *reference* is a string and may be 'center' or 'edge'. """
+        if nodata is None:
+            nodata = self.nodata
+
+        if np.isnan(nodata):
+            isdata = lambda a: ~np.isnan(a)
+        else:
+            def isdata(a):
+                return a != nodata
+
+        dx, dy = self.transform[2:4]
+        sx, sy = self.transform[4:6]
+        x0 = x1 = self.transform[0] + 0.5*dx + 0.5*sx
+        y0 = y1 = self.transform[1] + 0.5*dy + 0.5*sy
+        ny, nx = self.size
+
+        # Reading a row is fast, so process from bottom to top
+        bx = x0
+        by = y0 + ny*dy
+        tx = x0
+        ty = y0
+        lx = x0 + nx*dx
+        ly = y0
+        rx = y0
+        ry = y0
+
+        jvec = np.arange(nx)
+
+        for i, row in enumerate(self.values):
+            x = (x0 + jvec*dx + i*sx)[isdata(row)]
+            y = (y0 + i*dy + jvec*sy)[isdata(row)]
+
+            if len(x) != 0:
+
+                xmax, xmin = x.max(), x.min()
+                ymax, ymin = y.max(), y.min()
+                if ymin < by:
+                    by = ymin
+                    bx = x[y==ymin]
+                if ymax > ty:
+                    ty = ymax
+                    tx = x[y==ymax]
+                if xmin < lx:
+                    lx = xmin
+                    ly = y[x==xmin]
+                if xmax > rx:
+                    rx = xmax
+                    ry = y[x==xmax]
+
+        if reference == 'center':
+            pass
+        elif reference == 'edge':
+            lx -= 0.5*dx - 0.5*sx
+            rx += 0.5*dx + 0.5*sx
+            by -= 0.5*dy - 0.5*sy
+            ty += 0.5*dy + 0.5*sy
+        else:
+            raise errors.GridError("`reference` must be 'center' or 'edge'")
+
+        if (crs is not None) and (crs != self.crs):
+            lx, ly = crs.project(*self.crs.project(lx, ly, inverse=True))
+            rx, ry = crs.project(*self.crs.project(rx, ry, inverse=True))
+            bx, by = crs.project(*self.crs.project(bx, by, inverse=True))
+            tx, ty = crs.project(*self.crs.project(tx, ty, inverse=True))
+        return (lx, rx, by, ty)
 
     def get_extents(self, crs=None):
         warnings.warn("method `get_extents` has been renamed `get_extent`",
