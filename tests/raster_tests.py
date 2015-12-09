@@ -36,6 +36,15 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(0.0, np.sum(self.rast.center_coords()[1] - ans[1]))
         return
 
+    def test_merge(self):
+        grid1 = karta.RegularGrid([10, 20, 1, 1, 0, 0], values=np.ones([8, 8]))
+        grid2 = karta.RegularGrid([7, 22, 1, 1, 0, 0], values=2*np.ones([4, 6]))
+        grid3 = karta.RegularGrid([12, 15, 1, 1, 0, 0], values=3*np.ones([5, 5]))
+        grid_combined = karta.raster.merge([grid1, grid2, grid3])
+        self.assertEqual(grid_combined.size, (13, 11))
+        self.assertEqual(np.sum(np.isnan(grid_combined.values)), 42)
+        return
+
     def test_resample(self):
         # use linear function so that nearest neighbour and linear interp are
         # exact

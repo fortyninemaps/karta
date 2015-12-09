@@ -6,7 +6,7 @@ from . import grid
 from . import aaigrid
 from . import misc
 
-from .grid import RegularGrid, WarpedGrid
+from .grid import RegularGrid, WarpedGrid, merge
 from .read import read_aai, read_gtiff, aairead, gtiffread
 from .aaigrid import AAIGrid
 from .misc import witch_of_agnesi, peaks, pad, slope, aspect, grad, div

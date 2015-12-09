@@ -783,6 +783,53 @@ class WarpedGrid(Grid):
         """ Resample internal grid to the points defined by *X*, *Y*. """
         raise NotImplementedError
 
+def merge(grids, reduction=np.mean):
+    """ Perform a basic grid merge. Currently limited to grids whose sampling
+    is an integer translation from each other. """
+    # Check grid class
+    if not all(isinstance(grid, RegularGrid) for grid in grids):
+        raise NotImplementedError("All grids must by type RegularGrid")
+
+    T = grids[0].transform
+    # Check grid stretch and skew
+    for i, grid in enumerate(grids[1:]):
+        if grid.transform[2:6] != T[2:6]:
+            raise NotImplementedError("grid %d transform stretch and skew "
+                    "does not match grid 1" % (i+2,))
+
+    # Check grid offset
+    excmsg = "grid %d not an integer translation from grid 1"
+    for i, grid in enumerate(grids[1:]):
+        if ((grid.transform[0]-T[0]) / float(T[2])) % 1 > 1e-15:
+            raise NotImplementedError(excmsg % (i+2,))
+        if ((grid.transform[1]-T[1]) / float(T[3])) % 1 > 1e-15:
+            raise NotImplementedError(excmsg % (i+2,))
+
+    # Compute final grid extent
+    xmin, xmax, ymin, ymax = grids[0].get_extent()
+    for grid in grids[1:]:
+        _xmin, _xmax, _ymin, _ymax = grid.get_extent()
+        xmin = min(xmin, _xmin)
+        xmax = max(xmax, _xmax)
+        ymin = min(ymin, _ymin)
+        ymax = max(ymax, _ymax)
+
+    nx = int((xmax-xmin) / T[2]) + 1
+    ny = int((ymax-ymin) / T[3]) + 1
+
+    # Allocate data array and copy each grid's data
+    nodata = grids[0].nodata
+    values = np.nan*np.empty([ny, nx], dtype=grids[0].values.dtype)
+    for grid in grids:
+        _xmin, _xmax, _ymin, _ymax = grid.get_extent()
+        offx = int((_xmin-xmin) / T[2])
+        offy = int((_ymin-ymin) / T[3])
+        _ny, _nx = grid.size
+        values[offy:offy+_ny,offx:offx+_nx] = grid.values
+
+    Tmerge = [xmin, ymin] + list(T[2:])
+    return RegularGrid(Tmerge, values=values, crs=grids[0].crs,
+                       nodata_value=grids[0].nodata)
 
 def get_nodata(T):
     """ Return a default value for NODATA given a type
