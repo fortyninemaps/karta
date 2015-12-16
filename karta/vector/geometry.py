@@ -142,8 +142,7 @@ class Point(Geometry):
         if crs is None or crs==self.crs:
             return self.vertex
         else:
-            vg = self.crs.project(self.x, self.y, inverse=True)
-            return crs.project(*vg)
+            return _reproject((self.x, self.y), self.crs, crs)
 
     def coordsxy(self, convert_to=False):
         """ Returns the x,y coordinates. Convert_to may be set to 'deg'
@@ -432,8 +431,7 @@ class MultipointBase(Geometry):
         if (crs is None) or (crs is self.crs):
             return np.array(self.vertices)
         else:
-            vertices = [crs.project(*self.crs.project(*v[:2], inverse=True))
-                        for v in self.vertices]
+            vertices = [_reproject(v[:2], self.crs, crs) for v in self.vertices]
             return np.array(vertices)
 
     def get_coordinate_lists(self, crs=None):
@@ -444,8 +442,7 @@ class MultipointBase(Geometry):
         else:
             x, y, _ = tuple(zip(*self.vertices))
         if crs is not None and (crs != self.crs):
-            xg, yg = self.crs.project(x, y, inverse=True)
-            x, y = crs.project(xg, yg)
+            x, y = _reproject((x,y), self.crs, crs)
         return x, y
 
     def shift(self, shift_vector):
@@ -543,8 +540,8 @@ class MultipointBase(Geometry):
         if (crs is None) or (crs == self.crs):
             xmin, xmax, ymin, ymax = gen_minmax(c[:2] for c in self.vertices)
         else:
-            fprj = lambda c: crs.project(*self.crs.project(*c, inverse=True))
-            xmin, xmax, ymin, ymax = gen_minmax(fprj(c[:2]) for c in self.vertices)
+            xmin, xmax, ymin, ymax = gen_minmax(_reproject(v[:2], self.crs, crs)
+                                                for v in self.vertices)
         return xmin, xmax, ymin, ymax
 
     def get_extents(self, crs=None):
@@ -827,11 +824,14 @@ class ConnectedMultipoint(MultipointBase):
 
     def _nearest_to_point(self, pt, geographical=False):
         """ Return a tuple of the shortest distance on the geometry boundary to
-        *pt*, and the vertex at that location. """
+        *pt*, and the vertex at that location.
+
+        If necessary, project coordinates to the coordinate system of *self*.
+        """
         ptvertex = pt.get_vertex(crs=self.crs)
         segments = zip(self.vertices[:-1], self.vertices[1:])
         if not (self.crs == pt.crs):
-            raise errors.CRSError("Geometries must use the same CRS")
+            pt = Point(_reproject(pt.vertex, pt.crs, self.crs), crs=self.crs)
 
         if geographical or isinstance(self.crs, GeographicalCRS):
             fwd = self.crs.forward
@@ -1202,6 +1202,10 @@ class Polygon(ConnectedMultipoint):
             raise IOError("rank must be 2 or 3 to write as a shapefile")
         return
 
+def _reproject(xy, crs1, crs2):
+    """ Reproject a coordinate (or 2-tuple of x and y vectors) from *crs1* to
+    *crs2*. """
+    return crs2.project(*crs1.project(*xy, inverse=True))
 
 def points_to_multipoint(points):
     """ Merge *points* into a Multipoint instance. Point properties are stored
