@@ -887,14 +887,14 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
         x1 = xpoly[idx]
         y1 = ypoly[idx]
 
+        # Grid coordinates of the segment end points
+        i1 = int(math.ceil((y1 - min(y1, tb) - tf/tc*(x1 - min(x1, ta)))
+                    / (td - tf*te/tc)))
+        j1 = int(math.ceil((x1 - min(x1, ta) - te/td*(y1 - min(y1, tb)))
+                    / (tc - te*tf/td)))
+
         # if segment is horizontal, ignore
         if y1 != y0:
-
-            # Grid coordinates of the segment end points
-            i1 = int(math.ceil((y1 - min(y1, tb) - tf/tc*(x1 - min(x1, ta)))
-                        / (td - tf*te/tc)))
-            j1 = int(math.ceil((x1 - min(x1, ta) - te/td*(y1 - min(y1, tb)))
-                        / (tc - te*tf/td)))
 
             if y1 > y0:     # mark grid cells to the right
 
