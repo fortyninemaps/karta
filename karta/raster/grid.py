@@ -451,7 +451,7 @@ class RegularGrid(Grid):
         return RegularGrid(tnew, values, crs=self.crs)
 
     def get_positions(self, x, y):
-        """ Return the column and row indices for the point nearest
+        """ Return the float column and row indices for the point nearest
         geographical coordinates (x, y). """
         # Calculate this by forming block matrices
         #       | dx sy          |
@@ -501,8 +501,9 @@ class RegularGrid(Grid):
         return i, j
 
     def get_indices(self, x, y):
-        """ Return the column and row indices for the point nearest
-        geographical coordinates (`x`, `y`). """
+        """ Return the integer column and row indices for the point nearest
+        geographical coordinates (`x`, `y`). Raises GridError if points outside
+        grid bounding box. """
         ny, nx = self.size
         i, j = self.get_positions(x, y)
 
@@ -595,7 +596,7 @@ class RegularGrid(Grid):
         elif method == "bilinear":
             return self.sample_bilinear(x, y)
         else:
-            raise ValueError("method \"{0}\" not available".format(method))
+            raise ValueError("method '{0}' not available".format(method))
 
     def profile(self, line, resolution=None, **kw):
         """ Sample along a *line* at *resolution*.
