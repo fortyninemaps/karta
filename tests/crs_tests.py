@@ -35,7 +35,7 @@ class TestCRS(unittest.TestCase):
 
     def test_get_wkt(self):
         c0 = crs.SphericalEarth
-        self.assertEqual(c0.get_wkt(), '+proj=lonlat +a=6371009.000000 +b=6371009.000000 +no_defs')
+        self.assertEqual(c0.get_wkt(), 'GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371009.000000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
 
         c1 = crs.LonLatWGS84
         wkt = c1.get_wkt()
@@ -46,7 +46,7 @@ class TestCRS(unittest.TestCase):
         wkt = c2.get_wkt()
         self.assertTrue('PROJCS["unnamed",GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.25722' in wkt)
         self.assertTrue('AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.01745329' in wkt)
-        self.assertTrue('AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",70],PARAMETER["central_meridian",0],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]' in wkt)
+        self.assertTrue('AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]],PROJECTION["Polar_Stereographic"],PARAMETER["latitude_of_origin",70],PARAMETER["central_meridian",-45],PARAMETER["scale_factor",1],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["Meter",1]]' in wkt)
         return
 
     def test_CartesianProj(self):
@@ -289,6 +289,24 @@ class TestCRS(unittest.TestCase):
                                "+ellps=WGS84", name="WGS84 (Geographical)")
         self.assertTrue(not WGS84 != WGS84_)
         return
+
+    def test_export_wkt_same_as_parent(self):
+        # Checks for bug that occured where shapefiles saved with NSIDCNorth
+        # (WKT) were not loaded properly because some of the projection
+        # information was mangled
+
+        def proj4_asdict(s):
+            keys = [a.split("=")[0] for a in s.split() if "=" in a]
+            values = [a.split("=")[1] for a in s.split() if "=" in a]
+            return dict(list(zip(keys, values)))
+
+        wkt = crs.NSIDCNorth.get_wkt()
+        new_crs = crs.crs_from_wkt(wkt)
+
+        crsdict1 = proj4_asdict(crs.NSIDCNorth.get_proj4())
+        crsdict2 = proj4_asdict(new_crs.get_proj4())
+        for key in ("+proj", "+lat_0", "+lon_0", "+lat_ts", "+a", "+f"):
+            self.assertEqual(crsdict1[key], crsdict2[key])
 
     def test_brent1(self):
         def forsythe(x):

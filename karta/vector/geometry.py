@@ -6,6 +6,7 @@ measurements such as distance, area, and bearing.
 from __future__ import division
 
 import math
+import os
 import sys
 import itertools
 import warnings
@@ -659,6 +660,8 @@ class MultipointBase(Geometry):
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
+        if fstem.endswith(".shp"):
+            fstem = os.path.splitext(fstem)[0]
         if self.rank == 2:
             shp.write_multipoint2(self, fstem)
         elif self.rank == 3:
@@ -989,6 +992,8 @@ class Line(ConnectedMultipoint):
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
+        if fstem.endswith(".shp"):
+            fstem = os.path.splitext(fstem)[0]
         if self.rank == 2:
             shp.write_line2(self, fstem)
         elif self.rank == 3:
@@ -1194,6 +1199,8 @@ class Polygon(ConnectedMultipoint):
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
+        if fstem.endswith(".shp"):
+            fstem = os.path.splitext(fstem)[0]
         if self.rank == 2:
             shp.write_poly2(self, fstem)
         elif self.rank == 3:

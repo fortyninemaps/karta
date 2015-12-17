@@ -78,13 +78,15 @@ class CRS(object):
 
     def get_wkt(self):
         if hasattr(self, "ref_wkt"):
-            return self.ref_proj4
+            return self.ref_wkt
         else:
             if not HASOSR:
                 raise errors.CRSError("no ref_wkt attribute and no conversion possible (osgeo.osr not installed)")
             srs = osgeo.osr.SpatialReference()
             if hasattr(self, "ref_proj4"):
-                srs.ImportFromProj4(self.ref_proj4.replace("lon", "long"))
+                _proj4 = self.ref_proj4.replace("latlon", "latlong")\
+                                       .replace("lonlat", "longlat")
+                srs.ImportFromProj4(_proj4)
             else:
                 raise AttributeError("incomplete CRS definition (missing ref_proj4, ref_wkt attributes)")
             return srs.ExportToWkt()
