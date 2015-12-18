@@ -359,7 +359,8 @@ class RegularGrid(Grid):
         return RegularGrid(tnew, values, crs=self.crs)
 
     def mask_by_poly(self, poly, inplace=False):
-        """ Return a grid with all elements outside the bounds of a polygon masked """
+        """ Return a grid with all elements outside the bounds of a polygon
+        masked by nodata """
         if not poly.isclockwise():
             vertices = poly.get_vertices(self.crs)[::-1]
         else:
@@ -412,7 +413,7 @@ class RegularGrid(Grid):
         values = idata.reshape(ny, nx)
         t = self._transform
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
-        return RegularGrid(tnew, values)
+        return RegularGrid(tnew, values=values, crs=self.crs)
 
     def resample(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy'. The grid origin remains
@@ -448,7 +449,7 @@ class RegularGrid(Grid):
 
         t = self._transform
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
-        return RegularGrid(tnew, values, crs=self.crs)
+        return RegularGrid(tnew, values=values, crs=self.crs)
 
     def get_positions(self, x, y):
         """ Return the float column and row indices for the point nearest
@@ -840,8 +841,9 @@ def merge(grids):
         values[offy:offy+_ny,offx:offx+_nx][mask] += grid.values[mask]
         del mask
 
-    values = values / counts
-    values[counts==0] = grids[0].nodata
+    validcountmask = (counts!=0)
+    values[validcountmask] = values[validcountmask] / counts[validcountmask]
+    values[~validcountmask] = grids[0].nodata
     Tmerge = [xmin, ymin] + list(T[2:])
     return RegularGrid(Tmerge, values=values, crs=grids[0].crs,
                        nodata_value=grids[0].nodata)
@@ -927,5 +929,5 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
         i0 = i1
         j0 = j1
 
-    return mask
+    return mask.astype(np.bool)
 
