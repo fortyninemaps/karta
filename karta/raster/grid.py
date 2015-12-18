@@ -784,7 +784,13 @@ class WarpedGrid(Grid):
         """ Resample internal grid to the points defined by *X*, *Y*. """
         raise NotImplementedError
 
-def merge(grids, reduction=np.mean):
+def _generate_nodata_func(nodata):
+    if np.isnan(nodata):
+        return np.isnan
+    else:
+        return lambda a: a==nodata
+
+def merge(grids):
     """ Perform a basic grid merge. Currently limited to grids whose sampling
     is an integer translation from each other. """
     # Check grid class
@@ -806,6 +812,8 @@ def merge(grids, reduction=np.mean):
         if ((grid.transform[1]-T[1]) / float(T[3])) % 1 > 1e-15:
             raise NotImplementedError(excmsg % (i+2,))
 
+    nodata_funcs = [_generate_nodata_func(grid.nodata) for grid in grids]
+
     # Compute final grid extent
     xmin, xmax, ymin, ymax = grids[0].get_extent()
     for grid in grids[1:]:
@@ -819,15 +827,21 @@ def merge(grids, reduction=np.mean):
     ny = int((ymax-ymin) / T[3]) + 1
 
     # Allocate data array and copy each grid's data
-    nodata = grids[0].nodata
-    values = np.nan*np.empty([ny, nx], dtype=grids[0].values.dtype)
-    for grid in grids:
+    values = np.zeros([ny, nx], dtype=grids[0].values.dtype)
+    counts = np.zeros([ny, nx], dtype=np.int16)
+    for grid, nf in zip(grids, nodata_funcs):
         _xmin, _xmax, _ymin, _ymax = grid.get_extent()
         offx = int((_xmin-xmin) / T[2])
         offy = int((_ymin-ymin) / T[3])
         _ny, _nx = grid.size
-        values[offy:offy+_ny,offx:offx+_nx] = grid.values
 
+        mask = ~nf(grid.values)
+        counts[offy:offy+_ny,offx:offx+_nx][mask] += 1
+        values[offy:offy+_ny,offx:offx+_nx][mask] += grid.values[mask]
+        del mask
+
+    values = values / counts
+    values[counts==0] = grids[0].nodata
     Tmerge = [xmin, ymin] + list(T[2:])
     return RegularGrid(Tmerge, values=values, crs=grids[0].crs,
                        nodata_value=grids[0].nodata)
