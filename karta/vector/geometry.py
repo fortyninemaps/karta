@@ -1254,3 +1254,25 @@ def sign(a):
     else:
         return a/abs(a)
 
+def get_tile_tuple(pt, zoom):
+    """ Return the (z, x, y) locator for an OpenStreetMap tile containing *pt*.
+    
+    Parameters
+    ----------
+    pt : geographic point to be contained within tile (Point)
+    zoom : non-negative zoom level (typically 0-18) (int)
+    """
+    z = int(zoom)
+    ntiles = 2**z
+    dlon = 256
+    dlat = 256
+
+    lon0, lat0 = pt.crs.project(*pt.vertex, inverse=True)
+    c = 128/math.pi * 2**z
+    x0 = c * (lon0*math.pi/180+math.pi)
+    y0 = c * (pi-math.log(math.tan(math.pi/4+lat0*math.pi/360)))
+
+    x = int(x0 // dlon)
+    y = int(y0 // dlat)
+    return z, x, y
+
