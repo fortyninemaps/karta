@@ -329,9 +329,7 @@ class RegularGrid(Grid):
         Optional *crs* argument defines the coordinate reference system of the
         bounding box.
         """
-        if crs is None:
-            crs = self.crs
-        else:
+        if crs is not None:
             xg, yg = crs.project([xmin, xmin, xmax, xmax],
                                  [ymin, ymax, ymin, ymax],
                                  inverse=True)
