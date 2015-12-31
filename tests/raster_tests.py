@@ -122,7 +122,6 @@ class RegularGridTests(unittest.TestCase):
 
     def test_clip(self):
         clipped = self.rast.clip(500, 950, 500, 950)
-        # print(clipped.get_extent())
         self.assertEqual(clipped.size, (15, 15))
         self.assertEqual(clipped.transform, (510, 510, 30, 30, 0, 0))
         X, Y = clipped.center_coords()

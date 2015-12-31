@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
-VERSION = "0.5.2dev"
+VERSION = "0.5.2"
 
 class build_ext(_build_ext):
 
@@ -161,7 +161,7 @@ compiler is available.
                    "Programming Language :: Python :: 3.2",
                    "Programming Language :: Python :: 3.3",
                    "Programming Language :: Python :: 3.4",
-                   "Development Status :: 4 - Beta",
+                   "Programming Language :: Python :: 3.5",
                    "Topic :: Scientific/Engineering",
                    "Topic :: Scientific/Engineering :: GIS",
                    "License :: OSI Approved :: MIT License"],
