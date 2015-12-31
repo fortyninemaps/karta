@@ -12,7 +12,7 @@ class RegularGridTests(unittest.TestCase):
 
     def setUp(self):
         pe = karta.raster.peaks(n=49)
-        self.rast = karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 0.0, 0.0), values=pe)
+        self.rast = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
         return
 
     def test_add_rgrid(self):
@@ -63,7 +63,7 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_sample_nearest(self):
-        grid = karta.RegularGrid([0.5, 0.5, 1.0, 1.0, 0.0, 0.0],
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_nearest(0.6, 0.7), 0.0)
         self.assertEqual(grid.sample_nearest(0.6, 1.3), 1.0)
@@ -72,13 +72,13 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_sample_bilinear(self):
-        grid = karta.RegularGrid([0.5, 0.5, 1.0, 1.0, 0.0, 0.0],
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 0.625)
         return
 
     def test_sample_bilinear2(self):
-        grid = karta.RegularGrid([0.5, 0.5, 1.0, 1.0, 0.0, 0.0],
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.array([[0, 1], [1, 0.5]]))
         xi, yi = np.meshgrid(np.linspace(0.5, 1.5), np.linspace(0.5, 1.5))
         z = grid.sample_bilinear(xi.ravel(), yi.ravel())
@@ -95,8 +95,8 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_get_extent(self):
-        creg = (15.0, 1455.0, 15.0, 1455.0)
         ereg = (0.0, 1470.0, 0.0, 1470.0)
+        creg = (15.0, 1455.0, 15.0, 1455.0)
         self.assertEqual(self.rast.get_extent(reference='center'), creg)
         self.assertEqual(self.rast.get_extent(reference='edge'), ereg)
         return
@@ -109,10 +109,10 @@ class RegularGridTests(unittest.TestCase):
                                         crs=crs)
         a,b,c,d = rast_utm12N.get_extent(reference='center',
                                           crs=karta.crs.LonLatWGS84)
-        self.assertAlmostEqual(a, -115.50152876)
-        self.assertAlmostEqual(b, -111.17973465)
-        self.assertAlmostEqual(c, 0.0)
-        self.assertAlmostEqual(d, 4.3426056159)
+        self.assertAlmostEqual(a, -115.45687156)
+        self.assertAlmostEqual(b, -111.13480112)
+        self.assertAlmostEqual(c, 0.0450996517)
+        self.assertAlmostEqual(d, 4.3878488543)
         return
 
     def test_minmax(self):
@@ -121,26 +121,27 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_clip(self):
-        clipped = self.rast.clip(500, 900, 500, 900)
+        clipped = self.rast.clip(500, 950, 500, 950)
+        # print(clipped.get_extent())
         self.assertEqual(clipped.size, (15, 15))
-        self.assertEqual(clipped.transform, (495, 495, 30, 30, 0, 0))
+        self.assertEqual(clipped.transform, (510, 510, 30, 30, 0, 0))
         X, Y = clipped.center_coords()
-        self.assertEqual(X[0,0], 495)
-        self.assertEqual(X[0,-1], 915)
-        self.assertEqual(Y[0,0], 495)
-        self.assertEqual(Y[-1,0], 915)
+        self.assertEqual(X[0,0], 525)
+        self.assertEqual(X[0,-1], 945)
+        self.assertEqual(Y[0,0], 525)
+        self.assertEqual(Y[-1,0], 945)
         return
 
     def test_clip_to_extent(self):
-        proto = karta.RegularGrid((495, 495, 30, 30, 0, 0), np.zeros((15,15)))
-        clipped = self.rast.clip(*proto.get_extent())
+        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), np.zeros((15,15)))
+        clipped = self.rast.clip(*proto.get_extent("edge"))
         self.assertEqual(clipped.size, (15, 15))
-        self.assertEqual(clipped.transform, (495, 495, 30, 30, 0, 0))
+        self.assertEqual(clipped.transform, (510, 510, 30, 30, 0, 0))
         X, Y = clipped.center_coords()
-        self.assertEqual(X[0,0], 495)
-        self.assertEqual(X[0,-1], 915)
-        self.assertEqual(Y[0,0], 495)
-        self.assertEqual(Y[-1,0], 915)
+        self.assertEqual(X[0,0], 525)
+        self.assertEqual(X[0,-1], 945)
+        self.assertEqual(Y[0,0], 525)
+        self.assertEqual(Y[-1,0], 945)
 
     def test_mask_poly(self):
         t = -np.linspace(0, 2*np.pi, 200)
@@ -165,6 +166,15 @@ class RegularGridTests(unittest.TestCase):
                                  values=np.arange(1e6).reshape(1000, 1000),
                                  crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
+        return
+
+    def test_get_positions(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.zeros((3,3)))
+        (i, j) = grid.get_positions(1.5, 1.5)
+        self.assertEqual((i,j), (1.0, 1.0))
+        (i, j) = grid.get_positions(2.0, 1.5)
+        self.assertEqual((i,j), (1.0, 1.5))
         return
 
     def test_get_indices(self):

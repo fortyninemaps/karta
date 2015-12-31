@@ -84,13 +84,13 @@ class RegularGrid(Grid):
         crs : Grid coordinate reference system [default None]
         """
         if hasattr(transform, "keys"):
-            self._transform = tuple([transform[f] for f in
+            self._transform = tuple([float(transform[f]) for f in
                     ("xllcenter", "yllcenter", "dx", "dy", "xrot", "yrot")])
         elif len(transform) == 6:
-            self._transform = tuple(transform)
+            self._transform = tuple(float(a) for a in transform)
         elif len(transform) == 4:
-            self._transform = (transform[0], transform[1],
-                               transform[2], transform[3], 0, 0)
+            self._transform = (float(transform[0]), float(transform[1]),
+                               float(transform[2]), float(transform[3]), 0, 0)
         else:
             raise errors.GridError("RegularGrid must be initialized with a "
                                    " transform iterable or dictionary")
@@ -140,14 +140,15 @@ class RegularGrid(Grid):
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
         """
-        return self._transform[0], self._transform[1]
+        T = self._transform
+        xllcenter = self._transform[0] + 0.5 * (T[2] + T[4])
+        yllcenter = self._transform[1] + 0.5 * (T[3] + T[5])
+        return xllcenter, yllcenter
 
     def corner_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
         """
-        xllcorner = self._transform[0] - 0.5 * self._transform[2]
-        yllcorner = self._transform[1] - 0.5 * self._transform[3]
-        return (xllcorner, yllcorner)
+        return self._transform[:2]
 
     def coordmesh(self, *args, **kwargs):
         """ Alias for center_coords() """
@@ -159,8 +160,8 @@ class RegularGrid(Grid):
         ycoords = np.empty(self.values.shape[:2])
         irow = np.arange(self.values.shape[0])
         for i in range(self.values.shape[1]):
-            xcoords[:,i] = t[0] + i*t[2] + irow*t[4]
-            ycoords[:,i] = (t[1] + irow*t[3] + i*t[5])
+            xcoords[:,i] = t[0] + (i+0.5)*t[2] + (irow+0.5)*t[4]
+            ycoords[:,i] = (t[1] + (irow+0.5)*t[3] + (i+0.5)*t[5])
         return xcoords, ycoords
 
     def vertex_coords(self):
@@ -168,8 +169,8 @@ class RegularGrid(Grid):
         xllcorner, yllcorner = self.corner_llref()
         t = self._transform
         ny, nx = self.values.shape[:2]
-        xurcorner = xllcorner + (nx+1) * t[2] + (ny+1) * t[4]
-        yurcorner = yllcorner + (ny+1) * t[3] + (nx+1) * t[5]
+        xurcorner = xllcorner + nx * t[2] + ny * t[4]
+        yurcorner = yllcorner + ny * t[3] + nx * t[5]
         return np.meshgrid(np.linspace(xllcorner, xurcorner, nx + 1),
                            np.linspace(yurcorner, yllcorner, ny + 1))
 
@@ -323,8 +324,8 @@ class RegularGrid(Grid):
             j0 += size[0]-overlap[0]
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
-        """ Return a clipped version of grid constrained to a bounding box
-        defined by *xmin*, *xmax*, *ymin*, *ymax*.
+        """ Return a clipped version of grid wit cell centers constrained to a
+        bounding box defined by *xmin*, *xmax*, *ymin*, *ymax*.
 
         Optional *crs* argument defines the coordinate reference system of the
         bounding box.
@@ -339,18 +340,20 @@ class RegularGrid(Grid):
             ymin = min(y)
             ymax = max(y)
 
-        ll = self.get_indices(xmin, ymin)
-        lr = self.get_indices(xmax, ymin)
-        ul = self.get_indices(xmin, ymax)
-        ur = self.get_indices(xmax, ymax)
+        # Convert to center coords
+        t = self.transform
 
-        i0 = min(ll[0], lr[0], ul[0], ur[0])
-        i1 = max(ll[0], lr[0], ul[0], ur[0]) + 1
-        j0 = min(ll[1], lr[1], ul[1], ur[1])
-        j1 = max(ll[1], lr[1], ul[1], ur[1]) + 1
+        ll = self.get_positions(xmin, ymin)
+        lr = self.get_positions(xmax, ymin)
+        ul = self.get_positions(xmin, ymax)
+        ur = self.get_positions(xmax, ymax)
+
+        i0 = int(np.ceil(min(ll[0], lr[0], ul[0], ur[0])))
+        i1 = int(np.floor(max(ll[0], lr[0], ul[0], ur[0]))) + 1
+        j0 = int(np.ceil(min(ll[1], lr[1], ul[1], ur[1])))
+        j1 = int(np.floor(max(ll[1], lr[1], ul[1], ur[1]))) + 1
 
         values = self.values[i0:i1,j0:j1].copy()
-        t = self.transform
         x0 = t[0] + j0*t[2] + i0*t[4]
         y0 = t[1] + i0*t[3] + j0*t[5]
         tnew = (x0, y0, t[2], t[3], t[4], t[5])
@@ -459,11 +462,11 @@ class RegularGrid(Grid):
         #       |          dx sy |
         #       |          sx dy |
         #
-        #       | x0 |
-        #       | y0 |
-        #   S = | .. |
-        #       | x0 |
-        #       | y0 |
+        #       | x0 + (dx+dy)/2 |
+        #       | y0 + (dx+dy)/2 |
+        #   S = |    .......     |
+        #       | x0 + (dx+dy)/2 |
+        #       | y0 + (dx+dy)/2 |
         #
         # where the grid transform is t = (x0, y0, dx, dy, sy, sx)
         #
@@ -479,7 +482,7 @@ class RegularGrid(Grid):
         T = (np.diag(np.tile([t[2], t[3]], n)) +
              np.diag(np.tile([t[4], 0], n)[:-1], 1) +
              np.diag(np.tile([t[5], 0], n)[:-1], -1))
-        S = np.tile([t[0], t[1]], n)
+        S = np.tile([t[0]+0.5*(t[2]+t[4]), t[1]+0.5*(t[3]+t[5])], n)
 
         if npts == 1:
             ind = np.linalg.solve(T, np.array([x, y]) - S)
