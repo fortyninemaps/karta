@@ -547,6 +547,11 @@ class RegularGrid(Grid):
         j0[mska&~mskb] -= 1
         j1[mska&mskb] += 1
 
+        ny, nx = self.size
+        if np.any(i1>=ny) or np.any(j1>=nx) or np.any(i0<0) or np.any(j0<0):
+            raise errors.GridError("Coordinates outside grid extent({0})"
+                    .format(self.get_extent()))
+
         dx, dy = self._transform[2:4]
         z = (self.values[i0,j0]*(i1-i)*(j1-j) + self.values[i1,j0]*(i-i0)*(j1-j) + \
              self.values[i0,j1]*(i1-i)*(j-j0) + self.values[i1,j1]*(i-i0)*(j-j0))
