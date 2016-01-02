@@ -5,6 +5,8 @@ Implements an R-tree data structure
 import itertools
 import numpy as np
 
+from ._cvectorgeo import bbox_intersection_area
+
 MIN_CHILDREN  = 2
 
 class Node(object):

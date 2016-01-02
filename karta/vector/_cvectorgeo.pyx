@@ -265,23 +265,19 @@ class ConvergenceError(Exception):
     def __str__(self):
         return self.message
 
-
-# QuadTree functions
+# Tree functions
+def bbox_intersection_area(tuple bb0, tuple bb1):
+    cdef float dx, dy
+    dx = max(min(bb0[2], bb1[2]) - max(bb0[0], bb1[0]), 0.0)
+    dy = max(min(bb0[3], bb1[3]) - max(bb0[1], bb1[1]), 0.0)
+    return dx*dy
 
 def iswithin(tuple bbox, tuple pt):
     """ Return whether a point is within a bounding box (planar approximation). """
-    cdef double xmn = bbox[0]
-    cdef double xmx = bbox[1]
-    cdef double ymn = bbox[2]
-    cdef double ymx = bbox[3]
-    cdef double x = pt[0]
-    cdef double y = pt[1]
-    if (xmn <= x < xmx and ymn <= y < ymx):
-        return True
-    else:
-        return False
+    return (bbox[0] <= pt[0] < bbox[2] and bbox[1] <= pt[1] < bbox[3])
 
-def hashpt(float xmin, float xmax, float ymin, float ymax, float x, float y):
+# QuadTree-specific
+def hashpt(float xmin, float ymin, float xmax, float ymax, float x, float y):
     """ Returns a generator that returns successive quadrants [0-3] that
     constitute a geohash for *pt* in a global *bbox*. """
     cdef float xm, ym
