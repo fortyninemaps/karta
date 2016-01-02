@@ -288,11 +288,11 @@ class TestGeometry(unittest.TestCase):
     #     self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=LonLatWGS84))
     #     return
 
-    # def test_connected_multipoint_nearest_on_boundary4(self):
-    #     line = Line([(-20.0, 32.0), (-26.0, 43.0), (-38.0, 39.0)], crs=LonLatWGS84)
-    #     npt = line.nearest_on_boundary(Point((-34.0, 52.0), crs=LonLatWGS84))
-    #     self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=LonLatWGS84))
-    #     return
+    def test_connected_multipoint_nearest_on_boundary4(self):
+        line = Line([(-20.0, 32.0), (-26.0, 43.0), (-38.0, 39.0)], crs=LonLatWGS84)
+        npt = line.nearest_on_boundary(Point((-34.0, 52.0), crs=LonLatWGS84))
+        self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=LonLatWGS84))
+        return
 
     def test_line_extend(self):
         ln0a = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0)])

@@ -18,8 +18,11 @@ build/
 data/
 dist/
 doc/build/
+figures/
+papers/
 tests/.coverage
 tests/data/
+tests/reference_data/
 tests/htmlcov/
 
 karta.egg-info/
