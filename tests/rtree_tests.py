@@ -50,5 +50,29 @@ class RTreeTests(unittest.TestCase):
         self.assertTrue(newnodes[0].parent is None)
         self.assertTrue(newnodes[1].parent is None)
 
+    def test_intersection(self):
+        self.assertEqual(rtree.intersection((0, 0, 1, 1), (1, 1, 2, 2)), 0.0)
+        self.assertEqual(rtree.intersection((0, 0, 1, 1),
+                                            (0.5, 0.5, 1.5, 1.5)), 0.25)
+        self.assertEqual(rtree.intersection((0.5, 0.5, 1, 1),
+                                            (0.0, 0.0, 1.5, 1.5)), 0.25)
+        return
+
+    def test_search(self):
+        np.random.seed(49)
+        geoms = []
+        for i in range(1000):
+            offset = np.random.rand(1, 2)*5
+            line = karta.Line(np.random.rand(5, 2)+offset)
+            geoms.append(line)
+
+        tree = rtree.build_tree(geoms, 25)
+        corner_geoms = rtree.search(tree, (4, 4, 6, 6))
+        corner_geoms_exhaustive = [g for g in geoms
+                                   if rtree.overlaps(g.bbox, (4, 4, 6, 6))]
+        self.assertEqual(len(corner_geoms), len(corner_geoms_exhaustive))
+        #self.assertEqual(set(corner_geoms), set(corner_geoms_exhaustive))
+        return
+
 if __name__ == "__main__":
     unittest.main()
