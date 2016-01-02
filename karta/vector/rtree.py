@@ -2,7 +2,10 @@
 Implements an R-tree data structure
 """
 
+import itertools
 import numpy as np
+
+MIN_CHILDREN  = 2
 
 class Node(object):
     def __init__(self, bbox, parent, max_children=50):
@@ -42,31 +45,31 @@ class LeafNode(Node):
     def split(self, kind="linear"):
         """ Split and return new nodes. """
         bbs = [c.bbox for c in self.children]
-        seeds = linear_pick_seeds(self.children)
+        if kind == "linear":
+            seeds = linear_pick_seeds(self.children)
+            pick_next = linear_pick_next
+        elif kind == "quadratic":
+            seeds = quadratic_pick_seeds(self.children)
+            pick_next = quadratic_pick_next
+        else:
+            raise KeyError("kind must be one of 'linear', 'quadratic'")
         node0 = LeafNode(bbs[seeds[0]], self.parent, max_children=self.max_children)
         node1 = LeafNode(bbs[seeds[1]], self.parent, max_children=self.max_children)
 
-        # add each child to one of the two nodes
-        children0 = []
-        children1 = []
+        # add each child to a node
+        children = self.children
+        newnodes = [node0, node1]
+        while len(children) != 0:
+            i, j = pick_next(node0.bbox, node1.bbox, children)
+            newnodes[j].add(children.pop(i))
 
-        for i, (bb, child) in enumerate(zip(bbs, self.children)):
-            if volume_expanded(node0, child) < volume_expanded(node1, child):
-                children0.append(child)
-            else:
-                children1.append(child)
-
-        for child in children0:
-            bb = child.bbox
-            node0.bbox = [min(node0.bbox[0], bb[0]), min(node0.bbox[1], bb[1]), 
-                          max(node0.bbox[2], bb[2]), max(node0.bbox[3], bb[3])]
-            node0.children.append(child)
-
-        for child in children1:
-            bb = child.bbox
-            node1.bbox = [min(node1.bbox[0], bb[0]), min(node1.bbox[1], bb[1]), 
-                          max(node1.bbox[2], bb[2]), max(node1.bbox[3], bb[3])]
-            node1.children.append(child)
+            # Ensure that each node gets a minimum number of children
+            if len(node0) + len(children) == MIN_CHILDREN:
+                for i in range(len(children)-1, -1, -1):
+                    node0.add(children.pop(i))
+            elif len(node1) + len(children) == MIN_CHILDREN:
+                for i in range(len(children)-1, -1, -1):
+                    node1.add(children.pop(i))
 
         return [node0, node1]
 
@@ -81,7 +84,7 @@ class NonLeafNode(Node):
         newnodes = []
 
         # choose a child node to add to
-        v = [volume_expanded(c, geom) for c in self.children]
+        v = [volume_expanded(c.bbox, geom.bbox) for c in self.children]
         i = v.index(min(v))
         target = self.children[i]
         flag, newchildnodes = target.add(geom)
@@ -99,34 +102,44 @@ class NonLeafNode(Node):
 
         return retval, newnodes
 
-    def split(self):
+    def split(self, kind="linear"):
         """ Split and return new nodes. """
         bbs = [c.bbox for c in self.children]
-        seeds = linear_pick_seeds(self.children)
+        if kind == "linear":
+            seeds = linear_pick_seeds(self.children)
+            pick_next = linear_pick_next
+        elif kind == "quadratic":
+            seeds = quadratic_pick_seeds(self.children)
+            pick_next = quadratic_pick_next
+        else:
+            raise KeyError("kind must be one of 'linear', 'quadratic'")
         node0 = NonLeafNode(bbs[seeds[0]], self.parent, max_children=self.max_children)
         node1 = NonLeafNode(bbs[seeds[1]], self.parent, max_children=self.max_children)
 
-        # add each child to one of the two nodes
-        children0 = []
-        children1 = []
+        # add each child to a node
+        children = self.children
+        newnodes = [node0, node1]
+        while len(children) != 0:
+            i, j = pick_next(node0.bbox, node1.bbox, children)
+            _bb = children[i].bbox
+            _node = newnodes[j]
+            _node.children.append(children.pop(i))
+            _node.bbox = [min(_node.bbox[0], _bb[0]), min(_node.bbox[1], _bb[1]), 
+                          max(_node.bbox[2], _bb[2]), max(_node.bbox[3], _bb[3])]
 
-        for i, (bb, child) in enumerate(zip(bbs, self.children)):
-            if volume_expanded(node0, child) < volume_expanded(node1, child):
-                children0.append(child)
-            else:
-                children1.append(child)
-
-        for child in children0:
-            bb = child.bbox
-            node0.bbox = [min(node0.bbox[0], bb[0]), min(node0.bbox[1], bb[1]), 
-                          max(node0.bbox[2], bb[2]), max(node0.bbox[3], bb[3])]
-            node0.children.append(child)
-
-        for child in children1:
-            bb = child.bbox
-            node1.bbox = [min(node1.bbox[0], bb[0]), min(node1.bbox[1], bb[1]), 
-                          max(node1.bbox[2], bb[2]), max(node1.bbox[3], bb[3])]
-            node1.children.append(child)
+            # Ensure that each node gets a minimum number of children
+            if len(node0) + len(children) == MIN_CHILDREN:
+                for i in range(len(children)-1, -1, -1):
+                    _bb = children[i].bbox
+                    node0.children.append(children.pop(i))
+                    node0.bbox = [min(_node.bbox[0], _bb[0]), min(_node.bbox[1], _bb[1]), 
+                                  max(node0.bbox[2], _bb[2]), max(_node.bbox[3], _bb[3])]
+            elif len(node1) + len(children) == MIN_CHILDREN:
+                for i in range(len(children)-1, -1, -1):
+                    _bb = children[i].bbox
+                    node1.children.append(children.pop(i))
+                    node1.bbox = [min(_node.bbox[0], _bb[0]), min(_node.bbox[1], _bb[1]), 
+                                  max(node1.bbox[2], _bb[2]), max(_node.bbox[3], _bb[3])]
 
         return [node0, node1]
 
@@ -177,14 +190,49 @@ def linear_pick_seeds(geoms):
     else:
         return extreme_y0, extreme_y1
 
+def linear_pick_next(bb0, bb1, geoms):
+    """ Simply return the last geometry, as well as the index of the bbox that
+    it should be placed in. """
+    n = len(geoms)-1
+    if volume_expanded(bb0, geoms[n].bbox) > volume_expanded(bb1, geoms[n].bbox):
+        return n, 1
+    else:
+        return n, 0
+
+def quadratic_pick_seeds(geoms):
+    """ Choose the seeds for splitting a list of geometries using the quadratic
+    approximation of Guttman (1984). """
+    d = -1.0
+    I, J = None, None
+    for (i, j) in itertools.combinations(range(len(geoms)), 2):
+        bbi = geoms[i].bbox
+        bbj = geoms[j].bbox
+        bbc = [min(bbi[0], bbj[0]), min(bbi[1], bbj[1]),
+               max(bbi[2], bbj[2]), max(bbi[3], bbj[3])]
+        d_ = area(bbc) - area(bbi) - area(bbj)
+        if d_ > d:
+            d = d_
+            I, J = i, j
+    return I, J
+
+def quadratic_pick_next(bb0, bb1, geoms):
+    """ Choose an index from *geoms* to place in one of *bb0*, *bb1*.
+    Return the best entry to index next, and the bbox to place it in. """
+    d0 = [volume_expanded(bb0, g.bbox) for g in geoms]
+    d1 = [volume_expanded(bb1, g.bbox) for g in geoms]
+    diff = [abs(a-b) for (a,b) in zip(d0, d1)]
+    i = diff.index(max(diff))
+    if d0[i] > d1[i]:
+        return i, 1
+    else:
+        return i, 0
+
 def area(bbox):
     return (bbox[2]-bbox[0])*(bbox[3]-bbox[1])
 
-def volume_expanded(geom0, geom1):
-    """ Return the volume by which the union bounding box of geom0, geom1 is
-    larger than the bounding box of geom0. """
-    bb0 = geom0.bbox
-    bb1 = geom1.bbox
+def volume_expanded(bb0, bb1):
+    """ Return the volume by which the union of two bounding boxes larger than
+    the bounding box of geom0. """
     union_bbox = [min(bb0[0], bb1[0]), min(bb0[1], bb1[1]),
                   max(bb0[2], bb1[2]), max(bb0[3], bb1[3])]
     return area(union_bbox)-area(bb0)

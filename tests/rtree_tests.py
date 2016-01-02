@@ -1,4 +1,5 @@
 import unittest
+import random
 import numpy as np
 
 import karta
@@ -21,16 +22,18 @@ class RTreeTests(unittest.TestCase):
         tree = rtree.build_tree(geoms, max_children=25)
         self.assertEqual(type(tree), rtree.NonLeafNode)
         self.assertEqual(rtree.depth(tree), 3)
-        self.assertEqual(len(tree.children), 4)
+        self.assertEqual(len(tree.children), 6)
         return
 
     def test_leaf_split(self):
         node = rtree.LeafNode((0, 0, 1, 1), None, max_children=10)
         node.children = [TestGeom((0.1*i, 0.1*i, 0.1*i+0.05, 0.1*i+0.05))
                          for i in range(10)]
+        random.seed(49)
+        random.shuffle(node.children)
         newnodes = node.split()
-        self.assertEqual(len(newnodes[0].children), 5)
-        self.assertEqual(len(newnodes[1].children), 5)
+        self.assertEqual(len(newnodes[0].children), 6)
+        self.assertEqual(len(newnodes[1].children), 4)
         for child in node.children:
             self.assertTrue((child in newnodes[0].children) or
                             (child in newnodes[1].children))
@@ -41,9 +44,11 @@ class RTreeTests(unittest.TestCase):
         node = rtree.NonLeafNode((0, 0, 1, 1), None, max_children=10)
         node.children = [rtree.LeafNode((0.1*i, 0.1*i, 0.1*i+0.05, 0.1*i+0.05), None)
                          for i in range(10)]
+        random.seed(49)
+        random.shuffle(node.children)
         newnodes = node.split()
-        self.assertEqual(len(newnodes[0].children), 5)
-        self.assertEqual(len(newnodes[1].children), 5)
+        self.assertEqual(len(newnodes[0].children), 6)
+        self.assertEqual(len(newnodes[1].children), 4)
         for child in node.children:
             self.assertTrue((child in newnodes[0].children) or
                             (child in newnodes[1].children))
