@@ -1,6 +1,6 @@
-""" Implements a simple quadtree datastructure, with emphasis on performance. """
+""" Implements a simple QuadTree datastructure. """
 
-from ._cvectorgeo import iswithin, hashpt
+from ._cvectorgeo import iswithin, hashpt, bbox_intersection_area
 
 class Node(object):
     def __init__(self, children, bbox, leaf):
@@ -85,25 +85,19 @@ def mean(x):
     else:
         None
 
-def overlaps(bbox0, bbox1):
-    pts0 = ((x, y) for x in bbox0[:2] for y in bbox0[2:])
-    if any(iswithin(bbox1, pt) for pt in pts0):
-        return True
-    pts1 = ((x, y) for x in bbox1[:2] for y in bbox1[2:])
-    if any(iswithin(bbox0, pt) for pt in pts1):
-        return True
-    return False
+def overlaps(bb0, bb1):
+    return bbox_intersection_area(bb0, bb1) != 0.0
 
 def split(node):
     """ Return a new node with the bbox of *node* and *node*'s children split
     between four child nodes. """
-    (x0, x1, y0, y1) = node.bbox
+    (x0, y0, x1, y1) = node.bbox
     xm = 0.5 * (x0+x1)
     ym = 0.5 * (y0+y1)
 
     branch = Node([], node.bbox, False)
-    bboxes = ((x0, xm, y0, ym), (xm, x1, y0, ym),
-              (x0, xm, ym, y1), (xm, x1, ym, y1))
+    bboxes = ((x0, y0, xm, ym), (xm, y0, x1, ym),
+              (x0, ym, xm, y1), (xm, ym, x1, y1))
 
     for bbox in bboxes:
         pts = [pt for pt in node.children if iswithin(bbox, pt)]

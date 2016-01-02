@@ -700,7 +700,7 @@ class Multipoint(MultipointBase):
             distances = self.distances_to(pt)
             indices = [i for i,d in enumerate(distances) if d <= radius]
         else:
-            search_bbox = (pt.x-radius, pt.x+radius, pt.y-radius, pt.y+radius)
+            search_bbox = (pt.x-radius, pt.y-radius, pt.x+radius, pt.y+radius)
             possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
             possible_pts = []
             for t in possible_pt_tuples:
@@ -726,7 +726,8 @@ class Multipoint(MultipointBase):
         if self.quadtree is None:
             indices = [i for (i, pt) in enumerate(self) if poly.contains(pt)]
         else:
-            search_bbox = poly.get_extent(crs=self.crs)
+            ext = poly.get_extent(crs=self.crs)
+            search_bbox = (ext[0], ext[2], ext[1], ext[3])
             possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
             possible_pts = []
             for t in possible_pt_tuples:
@@ -736,21 +737,21 @@ class Multipoint(MultipointBase):
                             if poly.contains(p)]
         return self._subset(indices)
 
-    def build_quadtree(self, buffer=1e-8):
+    def build_quadtree(self, buff=1e-8):
         """ Construct an internal quadtree with the current geometry data.
 
-        Optional *buffer* keyword specifies a spatial buffer to create around
+        Optional *buff* keyword specifies a spatial buffer to create around
         the current point bounding box, permitting the geometry to grow after
-        the quadtree has been initialized. *buffer* may be a scalar or a
+        the quadtree has been initialized. *buff* may be a scalar or a
         sequence of (left, right, bottom, top).
         """
         try:
-            bf = (buffer[0], buffer[1], buffer[2], buffer[3])
+            bf = (buff[0], buff[1], buff[2], buff[3])
         except TypeError:
-            bf = (buffer, buffer, buffer, buffer)
+            bf = (buff, buff, buff, buff)
 
-        x0, x1, y0, y1 = self.get_extent()
-        self.quadtree = quadtree.QuadTree((x0-bf[0], x1+bf[1], y0-bf[2], y1+bf[3]))
+        x0, y0, x1, y1 = self.bbox
+        self.quadtree = quadtree.QuadTree((x0-bf[0], y0-bf[1], x1+bf[2], y1+bf[3]))
         for i, pt in enumerate(self):
             self.quadtree.addpt((pt.x, pt.y, i))
         return

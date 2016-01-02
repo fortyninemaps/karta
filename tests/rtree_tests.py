@@ -55,11 +55,11 @@ class RTreeTests(unittest.TestCase):
         self.assertTrue(newnodes[1].parent is None)
 
     def test_intersection(self):
-        self.assertEqual(rtree.intersection((0, 0, 1, 1), (1, 1, 2, 2)), 0.0)
-        self.assertEqual(rtree.intersection((0, 0, 1, 1),
-                                            (0.5, 0.5, 1.5, 1.5)), 0.25)
-        self.assertEqual(rtree.intersection((0.5, 0.5, 1, 1),
-                                            (0.0, 0.0, 1.5, 1.5)), 0.25)
+        self.assertEqual(rtree.bbox_intersection_area((0, 0, 1, 1), (1, 1, 2, 2)), 0.0)
+        self.assertEqual(rtree.bbox_intersection_area((0, 0, 1, 1),
+                                                      (0.5, 0.5, 1.5, 1.5)), 0.25)
+        self.assertEqual(rtree.bbox_intersection_area((0.5, 0.5, 1, 1),
+                                                      (0.0, 0.0, 1.5, 1.5)), 0.25)
         return
 
     def test_search(self):

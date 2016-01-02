@@ -248,13 +248,13 @@ def depth(tree, d=0):
         else:
             return d
 
-def intersection(bb0, bb1):
-    dx = max(min(bb0[2], bb1[2]) - max(bb0[0], bb1[0]), 0.0)
-    dy = max(min(bb0[3], bb1[3]) - max(bb0[1], bb1[1]), 0.0)
-    return dx*dy
+# def bbox_intersection_area(bb0, bb1):
+#     dx = max(min(bb0[2], bb1[2]) - max(bb0[0], bb1[0]), 0.0)
+#     dy = max(min(bb0[3], bb1[3]) - max(bb0[1], bb1[1]), 0.0)
+#     return dx*dy
 
 def overlaps(bb0, bb1):
-    return intersection(bb0, bb1) != 0.0
+    return bbox_intersection_area(bb0, bb1) != 0.0
 
 def search(tree, bbox):
     """ Return all geometries overlapping *bbox*. """
