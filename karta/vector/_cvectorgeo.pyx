@@ -207,7 +207,29 @@ def pt_nearest_planar(double x, double y,
         else:
             return ((u_int.x, u_int.y), dist2(u_int, pt))
 
-def pt_nearest_proj(fwd, inv, pt, endpt0, endpt1, float tol=1.0, int maxiter=50):
+# These types could be used for Cython-wrapped Python functions in the future
+ctypedef tuple (*fwd_t)(double, double, double, double)
+ctypedef tuple (*inv_t)(double, double, double, double)
+
+cdef double _along_distance(object fwd, object inv, double x0, double y0,
+        double xp, double yp, double az, double f):
+    """ Return the distance between a point distance f along azimuth az away
+    from (x0, y0) from (xp, yp). """
+    cdef double trialx, trialy, _, d
+    (trialx, trialy, _) = fwd(x0, y0, az, f)
+    (_, _, d) = inv(trialx, trialy, xp, yp)
+    return d
+
+cdef double _along_distance_gradient(object fwd, object inv, double x0, double y0,
+        double xp, double yp, double az, double f, double dx):
+    """ Return the numerical gradient in terms of f of _along_distance """
+    cdef double d1, d2
+    d1 = _along_distance(fwd, inv, x0, y0, xp, yp, az, f)
+    d2 = _along_distance(fwd, inv, x0, y0, xp, yp, az, f+dx)
+    return (d2-d1)/dx
+
+def pt_nearest_proj(object fwd, object inv, tuple pt, tuple endpt0, tuple endpt1,
+        float tol=0.1, int maxiter=100):
     """ Given geodetic functions *fwd* and *inv*, a Point *pt*, and an arc from
     *endpt1* to *endpt2*, return the point on the arc that is nearest *pt*.
 
@@ -218,38 +240,30 @@ def pt_nearest_proj(fwd, inv, pt, endpt0, endpt1, float tol=1.0, int maxiter=50)
     cdef double az, az2, L
     (az, az2, L) = inv(endpt0[0], endpt0[1], endpt1[0], endpt1[1])
 
-    def distance(double x):
-        cdef double trialx, trialy, _, d
-        (trialx, trialy, _) = fwd(endpt0[0], endpt0[1], az, x*L)
-        (_, _, d) = inv(trialx, trialy, pt[0], pt[1])
-        return d
-
-    def ddx(double x):
-        cdef double dx, d1, d2
-        dx = 1e-8
-        d1 = distance(x)
-        d2 = distance(x+dx)
-        return (d2-d1) / dx
-
     # Detect whether the nearest point is at an endpoint
-    cdef double dx0, dx1
-    dx0, dx1 = ddx(0), ddx(1)
-    if dx0 > 0:
-        return endpt0, distance(0)
-    elif dx1 < 0:
-        return endpt1, distance(1)
+    cdef double grad0, grad1, d
+    grad0 = _along_distance_gradient(fwd, inv, endpt0[0], endpt0[1], pt[0], pt[1], az, 0, 1e-7*L)
+    grad1 = _along_distance_gradient(fwd, inv, endpt0[0], endpt0[1], pt[0], pt[1], az, L, 1e-7*L)
+    if grad0 > 0:
+        d = _along_distance(fwd, inv, endpt0[0], endpt0[1], pt[0], pt[1], az, 0)
+        return endpt0, d
+    elif grad1 < 0:
+        d = _along_distance(fwd, inv, endpt0[0], endpt0[1], pt[0], pt[1], az, L)
+        return endpt1, d
 
     # Bisection iteration
-    cdef float x0, x1, xm, xn, yn
+    cdef double x0, x1, xm, xn, yn
     cdef int i = 0
-    cdef float dx = tol + 1.0
+    cdef double dx = tol + 1.0
+    cdef double grad
     x0, x1 = 0.0, 1.0
     while dx > tol:
         if i == maxiter:
             raise ConvergenceError("Maximum iterations exhausted in bisection "
                                    "method.")
         xm = 0.5 * (x0 + x1)
-        if ddx(xm) > 0:
+        grad = _along_distance_gradient(fwd, inv, endpt0[0], endpt0[1], pt[0], pt[1], az, xm*L, 1e-7*L)
+        if grad > 0:
             dx = abs(x1-xm) * L
             x1 = xm
         else:
@@ -257,7 +271,8 @@ def pt_nearest_proj(fwd, inv, pt, endpt0, endpt1, float tol=1.0, int maxiter=50)
             x0 = xm
         i += 1
     (xn, yn, _) = fwd(endpt0[0], endpt0[1], az, xm*L)
-    return (xn, yn), distance(xm)
+    d = _along_distance(fwd, inv, endpt0[0], endpt0[1], pt[0], pt[1], az, xm*L)
+    return (xn, yn), d
 
 class ConvergenceError(Exception):
     def __init__(self, message=''):
