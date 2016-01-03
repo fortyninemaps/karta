@@ -122,6 +122,12 @@ class Point(Geometry):
     def __neq__(self, other):
         return ~(self == other)
 
+    def __hash__(self):
+        ht = hash(self._geotype)
+        hd = hash(self.vertex)
+        hc = hash(str(self.crs))
+        return ht + (hd << 1) + hd + hc
+
     @property
     def __geo_interface__(self):
         return {"type" : "Point", "coordinates" : self.vertex}
@@ -399,6 +405,12 @@ class MultipointBase(Geometry):
 
     def __neq__(self, other):
         return ~(self == other)
+
+    def __hash__(self):
+        ht = hash(self._geotype)
+        hd = hash(tuple(self.vertices))
+        hc = hash(str(self.crs))
+        return ht + (hd << 1) + hd + hc
 
     def _bbox_overlap(self, other):
         """ Return whether bounding boxes between self and another geometry

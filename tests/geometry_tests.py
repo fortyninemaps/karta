@@ -638,6 +638,28 @@ class TestGeoInterface(unittest.TestCase):
                           "bbox":(0, 0, 4, 16),
                           "coordinates": list(zip(x[:5],y[:5]))})
 
+
+class TestHashing(unittest.TestCase):
+
+    def test_hashing(self):
+        np.random.seed(49)
+        vertices = [(np.random.random(), np.random.random()) for i in range(1000)]
+        line0 = Line(vertices, crs=SphericalEarth)
+        line1 = Line(vertices, crs=LonLatWGS84)
+        mp = Multipoint(vertices, crs=SphericalEarth)
+        line2 = Line(vertices, crs=SphericalEarth)
+        poly = Polygon(vertices, crs=SphericalEarth)
+        point = Point(vertices[0], crs=SphericalEarth)
+
+        self.assertEqual(hash(line0), hash(line2))
+        self.assertNotEqual(hash(line0), hash(line1))
+
+        self.assertNotEqual(hash(line0), hash(mp))
+        self.assertNotEqual(hash(line0), hash(poly))
+
+        self.assertEqual(hash(point), hash(mp[0]))
+        return
+
 class TestGeometryProj(unittest.TestCase):
 
     def setUp(self):
