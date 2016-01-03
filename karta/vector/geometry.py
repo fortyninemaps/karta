@@ -941,8 +941,13 @@ class Line(ConnectedMultipoint):
             self.data = None
         else:
             raise GGeoError('Cannot add geometries with mismatched metadata')
+        i = len(self)
         self.vertices.extend(other.vertices)
-        self.quadtree = None
+
+        if self.quadtree is not None:
+            for pt in other:
+                self.quadtree.addpt((pt.x, pt.y, i))
+                i += 1
         return self
 
     def cumulength(self):
