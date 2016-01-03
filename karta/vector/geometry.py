@@ -30,6 +30,7 @@ class Geometry(object):
     def __init__(self, crs=Cartesian):
         self.properties = {}
         self.crs = crs
+        self._cache = {}
         return
 
     @staticmethod
@@ -426,9 +427,13 @@ class MultipointBase(Geometry):
         """ Return the extent of a bounding box as
             (xmin, ymin, xmax, ymax)
         """
-        x, y = self.get_coordinate_lists()
-        bbox = (min(x), min(y), max(x), max(y))
-        return bbox
+        if "bbox" in self._cache:
+            return self._cache["bbox"]
+        else:
+            x, y = self.get_coordinate_lists()
+            bbox = (min(x), min(y), max(x), max(y))
+            self._cache["bbox"] = bbox
+            return bbox
 
     @property
     def coordinates(self):
@@ -471,6 +476,7 @@ class MultipointBase(Geometry):
                             pt[2] + shift_vector[2])
         self.vertices = list(map(f, self.vertices))
         self.quadtree = None
+        self._cache = {}
         return self
 
     def _matmult(self, A, x):
@@ -496,6 +502,7 @@ class MultipointBase(Geometry):
         # Shift back
         self.shift(origin)
         self.quadtree = None
+        self._cache = {}
         return self
 
     def apply_affine_transform(self, M):
@@ -773,35 +780,48 @@ class ConnectedMultipoint(MultipointBase):
 
     @property
     def bbox(self):
-        if isinstance(self.crs, GeographicalCRS):
-            xmin = xmax = self[0].x
-            ymin = ymax = self[0].y
-            rot = 0
-            for seg in self.segments:
-                x0, x1 = seg[0].x, seg[1].x
-                ymin = min(ymin, seg[1].y)
-                ymax = max(ymax, seg[1].y)
-                if self._seg_crosses_dateline(seg):
-                    if x0 > x1:     # east to west
-                        rot += 360
-                    else:           # west to east
-                        rot -= 360
-
-                    xmin = min(xmin, x1+rot)
-                    xmax = max(xmax, x1+rot)
-
-            xmin = (xmin+180) % 360 - 180
-            xmax = (xmax+180) % 360 - 180
-            return (xmin, ymin, xmax, ymax)
+        if "bbox" in self._cache:
+            return self._cache["bbox"]
         else:
-            return super(ConnectedMultipoint, self).bbox
+            if isinstance(self.crs, GeographicalCRS):
+                xmin = xmax = self[0].x
+                ymin = ymax = self[0].y
+                rot = 0
+                for seg in self.segments:
+                    x0, x1 = seg[0].x, seg[1].x
+                    ymin = min(ymin, seg[1].y)
+                    ymax = max(ymax, seg[1].y)
+                    if self._seg_crosses_dateline(seg):
+                        if x0 > x1:     # east to west
+                            rot += 360
+                        else:           # west to east
+                            rot -= 360
+
+                        xmin = min(xmin, x1+rot)
+                        xmax = max(xmax, x1+rot)
+                    else:
+                        xmin = min(xmin, seg[1].x)
+                        xmax = max(xmax, seg[1].x)
+
+                xmin = (xmin+180) % 360 - 180
+                xmax = (xmax+180) % 360 - 180
+                bbox = (xmin, ymin, xmax, ymax)
+            else:
+                bbox = super(ConnectedMultipoint, self).bbox
+            self._cache["bbox"] = bbox
+            return bbox
 
     @property
     def length(self):
         """ Returns the length of the line/boundary. """
-        points = [Point(v, crs=self.crs) for v in self.vertices]
-        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
-        return sum(distances)
+        if "length" in self._cache:
+            length = self._cache["length"]
+        else:
+            points = [Point(v, crs=self.crs) for v in self.vertices]
+            distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
+            length = sum(distances)
+            self._cache["length"] = length
+        return length
 
     @property
     def segments(self):
@@ -948,6 +968,7 @@ class Line(ConnectedMultipoint):
             for pt in other:
                 self.quadtree.addpt((pt.x, pt.y, i))
                 i += 1
+        self._cache = {}
         return self
 
     def cumulength(self):
