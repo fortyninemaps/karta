@@ -800,8 +800,10 @@ class ConnectedMultipoint(MultipointBase):
                         xmin = min(xmin, x1+rot)
                         xmax = max(xmax, x1+rot)
                     else:
-                        xmin = min(xmin, seg[1].x)
-                        xmax = max(xmax, seg[1].x)
+                        if x0 > x1:
+                            xmin = min(xmin, seg[1].x)
+                        else:
+                            xmax = max(xmax, seg[1].x)
 
                 xmin = (xmin+180) % 360 - 180
                 xmax = (xmax+180) % 360 - 180
