@@ -1300,6 +1300,33 @@ def _segment_generator(vertices, dateline=False):
         for i in range(n-1):
             yield (vertices[i], vertices[i+1])
 
+def _dateline_unroll_geometry(geom):
+    """ Given a geometry, return a list of points that have been unrolled
+    over the dateline. """
+    c = 0.0
+    unrolled_points = []
+    for seg in geom.segments:
+        if _seg_crosses_dateline(seg):
+            if seg[0].x > seg[1].x: # west to east
+                c += 360.0
+            else:
+                c -= 360.0
+            pt = Point((seg[0].x+c, seg[0].y), crs=geom.crs)
+        else:
+            pt = seg[0]
+        unrolled_points.append(pt)
+    return unrolled_points
+
+def _dateline_bisect_geometry(geom):
+    """ Given a geometry, return a list of geometries cut by the dateline. """
+    # Find all intersections with the dateline
+    # Starting at the northernmost intersection, build geometries cw (western hemisphere)
+    #   Whenever the dateline is encountered, make it a segment and continue cw
+    #   Take care to mark which intersections have been visited (and from which side)
+    # Repeat starting at the southernmost intersection in the eastern hemisphere
+    # De-dupe (unecessary if sufficiently clever with intersection marking)
+    raise NotImplementedError()
+
 def points_to_multipoint(points):
     """ Merge *points* into a Multipoint instance. Point properties are stored
     as Multipoint data. All points must use the same CRS.
