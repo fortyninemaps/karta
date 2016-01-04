@@ -208,7 +208,7 @@ class GeoJSONWriter(object):
         """
         if self.crs is not None:
             # Indicates that a CRS object should be used to create a linked CRS
-            fout_crs = fout+".proj4"
+            fout_crs = fout.name+".proj4"
             self.supobj["crs"]["properties"]["href"] = fout_crs
             with open(fout_crs, "w") as f:
                 f.write(self.crs.get_proj4())
