@@ -791,7 +791,7 @@ class ConnectedMultipoint(MultipointBase):
                     x0, x1 = seg[0].x, seg[1].x
                     ymin = min(ymin, seg[1].y)
                     ymax = max(ymax, seg[1].y)
-                    if self._seg_crosses_dateline(seg):
+                    if _seg_crosses_dateline(seg):
                         if x0 > x1:     # east to west
                             rot += 360
                         else:           # west to east
@@ -833,14 +833,28 @@ class ConnectedMultipoint(MultipointBase):
     @property
     def segment_tuples(self):
         """ Returns an generator of adjacent line segments as coordinate tuples. """
-        return ((self.vertices[i], self.vertices[i+1])
-                for i in range(len(self.vertices)-1))
+        return _segment_generator(self.vertices, dateline=False)
+
+    @property
+    def segment_dateline_tuples(self):
+        """ Returns an generator of adjacent line segments as coordinate tuples. """
+        for seg in _segment_generator(self.vertices, dateline=True):
+            print(seg)
+            yield seg
+        #return _segment_generator(self.vertices, dateline=True)
 
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
-        interxbool = (np.nan in _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
-                                                     a[0][1], a[1][1], b[0][1], b[1][1])
-                    for a in self.segments for b in other.segments)
+        if isinstance(self.crs, GeographicalCRS):
+            selfsegments = self.segment_dateline_tuples
+            othersegments = other.segment_dateline_tuples
+        else:
+            selfsegments = self.segment_tuples
+            othersegments = other.segment_tuples
+        interxbool = (np.nan in _cvectorgeo.intersection(
+                                            a[0][0], a[1][0], b[0][0], b[1][0],
+                                            a[0][1], a[1][1], b[0][1], b[1][1])
+                    for a in selfsegments for b in othersegments)
         if self._bbox_overlap(other) and (True not in interxbool):
             return True
         else:
@@ -848,9 +862,15 @@ class ConnectedMultipoint(MultipointBase):
 
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
+        if isinstance(self.crs, GeographicalCRS):
+            selfsegments = self.segment_dateline_tuples
+            othersegments = other.segment_dateline_tuples
+        else:
+            selfsegments = self.segment_tuples
+            othersegments = other.segment_tuples
         interx = (_cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                           a[0][1], a[1][1], b[0][1], b[1][1])
-                     for a in self.segments for b in other.segments)
+                     for a in selfsegments for b in othersegments)
         if not keep_duplicates:
             interx = set(interx)
         interx_points = []
@@ -919,11 +939,6 @@ class ConnectedMultipoint(MultipointBase):
         """
         return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments)
 
-    @staticmethod
-    def _seg_crosses_dateline(seg):
-        a, b = seg[0], seg[1]
-        return (sign(a.x) != sign(b.x)) and (abs(a.x-b.x) > 180.0)
-
     def crosses_dateline(self):
         """ Return a boolean that indicates whether any segment crosses the
         dateline """
@@ -931,7 +946,7 @@ class ConnectedMultipoint(MultipointBase):
             raise CRSError("Dateline detection only defined for geographical "
                            "coordinates")
 
-        return any(self._seg_crosses_dateline(seg) for seg in self.segments)
+        return any(_seg_crosses_dateline(seg) for seg in self.segments)
 
 
 class Line(ConnectedMultipoint):
@@ -1254,6 +1269,36 @@ def _reproject(xy, crs1, crs2):
     """ Reproject a coordinate (or 2-tuple of x and y vectors) from *crs1* to
     *crs2*. """
     return crs2.project(*crs1.project(*xy, inverse=True))
+
+def _seg_crosses_dateline(seg):
+    a, b = seg[0], seg[1]
+    return (sign(a[0]) != sign(b[0])) and (abs(a[0]-b[0]) > 180.0)
+
+def _segment_generator(vertices, dateline=False):
+    n = len(vertices)
+    if dateline:
+        for i in range(n-1):
+            seg = (vertices[i], vertices[i+1])
+            if _seg_crosses_dateline(seg):
+                # compute intersection between dateline and seg
+                # move the eastern point 360 degrees so that a planar line
+                # crosses 180 at the dateline
+                if seg[0][0] > seg[1][0]:   # west to east
+                    _a = 0.0
+                    _b = 360.0
+                else:
+                    _a = 360.0
+                    _b = 0.0
+                ix, iy = _cvectorgeo.intersection(
+                                seg[0][0]+_a, seg[1][0]+_b, 180, 180,
+                                seg[0][1], seg[1][1], -89.99, 89.99)
+                yield (seg[0], (ix, iy))
+                yield ((ix-360.0, iy), seg[1])
+            else:
+                yield seg
+    else:
+        for i in range(n-1):
+            yield (vertices[i], vertices[i+1])
 
 def points_to_multipoint(points):
     """ Merge *points* into a Multipoint instance. Point properties are stored

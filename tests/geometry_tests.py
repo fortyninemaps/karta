@@ -607,6 +607,21 @@ class TestDateline(unittest.TestCase):
             poly = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
             self.assertEqual(poly.bbox, (179, -1, -179, 1))
 
+    def test_intersection(self):
+        for crs in (SphericalEarth, LonLatWGS84):
+            line = Line([(-178, 20), (-174, 22)], crs=crs)
+            line2 = Line([(-177, 21), (-174, 19)], crs=crs)
+
+            line_dl = Line([(178, 20), (-178, 22)], crs=crs)
+            line_dl2 = Line([(179, 21), (-174, 19)], crs=crs)
+
+            print("\ndoing non-dateline", crs)
+            pt = line.intersections(line2)
+            print(pt)
+            print("\ndoing dateline", crs)
+            pt_dl = line_dl.intersections(line_dl2)
+            print(pt_dl)
+
 class TestGeoInterface(unittest.TestCase):
 
     def test_point(self):
