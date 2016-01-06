@@ -424,15 +424,19 @@ class MultipointBase(Geometry):
 
     @property
     def bbox(self):
+        return self.get_bbox()
+
+    def get_bbox(self, crs=None):
         """ Return the extent of a bounding box as
             (xmin, ymin, xmax, ymax)
         """
-        if "bbox" in self._cache:
+        if "bbox" in self._cache and (crs is None):
             return self._cache["bbox"]
         else:
-            x, y = self.get_coordinate_lists()
+            x, y = self.get_coordinate_lists(crs)
             bbox = (min(x), min(y), max(x), max(y))
-            self._cache["bbox"] = bbox
+            if crs is None:
+                self._cache["bbox"] = bbox
             return bbox
 
     @property
@@ -547,6 +551,10 @@ class MultipointBase(Geometry):
         idx = np.argmin(distances)
         return self[idx]
 
+    @property
+    def extent(self):
+        return self.get_extent()
+
     def get_extent(self, crs=None):
         """ Calculate a bounding box. """
         def gen_minmax(G):
@@ -565,11 +573,6 @@ class MultipointBase(Geometry):
             xmin, xmax, ymin, ymax = gen_minmax(_reproject(v[:2], self.crs, crs)
                                                 for v in self.vertices)
         return xmin, xmax, ymin, ymax
-
-    def get_extents(self, crs=None):
-        warnings.warn("method `get_extents` has been renamed `get_extent`",
-                FutureWarning)
-        return self.get_extent(crs=crs)
 
     def any_within_poly(self, poly):
         """ Return whether any vertices are inside *poly* """
@@ -782,17 +785,22 @@ class ConnectedMultipoint(MultipointBase):
 
     @property
     def bbox(self):
-        if "bbox" in self._cache:
+        return self.get_bbox()
+
+    def get_bbox(self, crs=None):
+        if "bbox" in self._cache and (crs is None):
             return self._cache["bbox"]
         else:
             if isinstance(self.crs, GeographicalCRS):
-                xmin = xmax = self[0].x
-                ymin = ymax = self[0].y
+                X, Y = self.get_coordinate_lists(crs)
+                xmin = xmax = X[0]
+                ymin = ymax = Y[0]
                 rot = 0
-                for seg in self.segments:
-                    x0, x1 = seg[0].x, seg[1].x
-                    ymin = min(ymin, seg[1].y)
-                    ymax = max(ymax, seg[1].y)
+                for i in range(len(X)-1):
+                    x0, x1 = X[i], X[i+1]
+                    ymin = min(ymin, Y[i+1])
+                    ymax = max(ymax, Y[i+1])
+                    seg = Line([(X[i], Y[i]), (X[i+1], Y[i+1])], crs=crs)
                     if self._seg_crosses_dateline(seg):
                         if x0 > x1:     # east to west
                             rot += 360
@@ -803,16 +811,17 @@ class ConnectedMultipoint(MultipointBase):
                         xmax = max(xmax, x1+rot)
                     else:
                         if x0 > x1:
-                            xmin = min(xmin, seg[1].x)
+                            xmin = min(xmin, x1)
                         else:
-                            xmax = max(xmax, seg[1].x)
+                            xmax = max(xmax, x1)
 
                 xmin = (xmin+180) % 360 - 180
                 xmax = (xmax+180) % 360 - 180
                 bbox = (xmin, ymin, xmax, ymax)
+                if crs is None:
+                    self._cache["bbox"] = bbox
             else:
-                bbox = super(ConnectedMultipoint, self).bbox
-            self._cache["bbox"] = bbox
+                bbox = super(ConnectedMultipoint, self).get_bbox()
             return bbox
 
     @property
