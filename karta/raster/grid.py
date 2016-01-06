@@ -184,6 +184,13 @@ class RegularGrid(Grid):
         extent = self.get_data_extent(reference="edge")
         return extent[0], extent[2], extent[1], extent[3]
 
+    @property
+    def extent(self):
+        return self.get_extent()
+
+    def get_bbox(self, crs=None):
+        return self.get_extent(reference="edge", crs=crs)
+
     def get_extent(self, reference='center', crs=None):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
         ymax). *reference* is a string and may be 'center' or 'edge'. """
@@ -290,11 +297,6 @@ class RegularGrid(Grid):
             bx, by = crs.project(*self.crs.project(bx, by, inverse=True))
             tx, ty = crs.project(*self.crs.project(tx, ty, inverse=True))
         return (lx, rx, by, ty)
-
-    def get_extents(self, crs=None):
-        warnings.warn("method `get_extents` has been renamed `get_extent`",
-                FutureWarning)
-        return self.get_extent(crs=crs)
 
     def aschunks(self, size=(-1, -1), overlap=(0, 0)):
         """ Generator for grid chunks.
