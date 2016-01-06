@@ -775,6 +775,12 @@ class TestAffineTransforms(unittest.TestCase):
 
 class VectorCRSTests(unittest.TestCase):
 
+    def assertTupleAlmostEqual(self, t1, t2):
+        self.assertEqual(len(t1), len(t2))
+        for (a,b) in zip(t1, t2):
+            self.assertAlmostEqual(a, b)
+        return
+
     def test_vertices_in_crs(self):
         point = Point((-123.0, 49.0), crs=SphericalEarth)
         self.assertEqual(point.get_vertex(SphericalEarth),
@@ -785,8 +791,8 @@ class VectorCRSTests(unittest.TestCase):
         BCAlbers = Proj4CRS("+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
                     "+lon_0=-126 +x_0=1000000 +y_0=0 +ellps=GRS80 +datum=NAD83 "
                     "+units=m +no_defs", "+ellps=GRS80")
-        self.assertEqual(point.get_vertex(BCAlbers),
-                         (1219731.770879303, 447290.49891930853))
+        self.assertTupleAlmostEqual(point.get_vertex(BCAlbers),
+                                    (1219731.770879303, 447290.49891930853))
         return
 
     def test_vertices_in_crs3(self):
@@ -795,9 +801,11 @@ class VectorCRSTests(unittest.TestCase):
                      (2.7, 34.1)], crs=SphericalEarth)
         UTM31N = Proj4CRS("+proj=utm +zone=31 +ellps=WGS84 "
                     "+datum=WGS84 +units=m +no_defs", "+ellps=WGS84")
-        self.assertEqual(line.get_coordinate_lists(UTM31N),
-                    ((407650.39665729366, 421687.71905896586, 472328.1095127584),
-                     (3762606.6598763773, 3784658.467084308, 3773284.485241791)))
+        ans = [[407650.39665729, 3762606.65987638],
+               [421687.71905897, 3784658.46708431],
+               [472328.10951276, 3773284.48524179]]
+        for v0, v1 in zip(line.get_vertices(UTM31N), ans):
+            self.assertTupleAlmostEqual(v0, v1)
         return
 
 class MetadataAttributeTests(unittest.TestCase):
