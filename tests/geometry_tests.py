@@ -775,10 +775,10 @@ class TestAffineTransforms(unittest.TestCase):
 
 class VectorCRSTests(unittest.TestCase):
 
-    def assertTupleAlmostEqual(self, t1, t2):
+    def assertTupleAlmostEqual(self, t1, t2, places=7):
         self.assertEqual(len(t1), len(t2))
         for (a,b) in zip(t1, t2):
-            self.assertAlmostEqual(a, b)
+            self.assertAlmostEqual(a, b, places=places)
         return
 
     def test_vertices_in_crs(self):
@@ -805,7 +805,7 @@ class VectorCRSTests(unittest.TestCase):
                [421687.71905897, 3784658.46708431],
                [472328.10951276, 3773284.48524179]]
         for v0, v1 in zip(line.get_vertices(UTM31N), ans):
-            self.assertTupleAlmostEqual(v0, v1)
+            self.assertTupleAlmostEqual(v0, v1, places=6)
         return
 
 class MetadataAttributeTests(unittest.TestCase):
