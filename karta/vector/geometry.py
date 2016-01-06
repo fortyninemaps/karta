@@ -516,9 +516,11 @@ class MultipointBase(Geometry):
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
+        if len(idxs) == 0:
+            raise ValueError("attempted to extract a zero-length subset")
         vertices = [self.vertices[i] for i in idxs]
         if self.data is not None:
-            data = Metadata([self.data[i] for i in idxs], fields=self.data._fields)
+            data = Metadata([self.data[i] for i in idxs], fields=self.data.fields)
         else:
             data = None
         subset = type(self)(vertices, data=data, properties=self.properties,
