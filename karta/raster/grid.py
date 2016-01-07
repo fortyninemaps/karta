@@ -26,11 +26,6 @@ class Grid(object):
     def nodata(self):
         return self._nodata
 
-    def clipz(self, bounds):
-        """ Clip the z-range in place to bounds = [min, max]. """
-        self.values = self.values.clip(bounds[0], bounds[1])
-        return
-
     def max(self):
         """ Return the maximum non-nan in self.data. """
         return np.nanmax(self.values)
@@ -326,7 +321,7 @@ class RegularGrid(Grid):
             j0 += size[0]-overlap[0]
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
-        """ Return a clipped version of grid wit cell centers constrained to a
+        """ Return a clipped version of grid with cell centers constrained to a
         bounding box defined by *xmin*, *xmax*, *ymin*, *ymax*.
 
         Optional *crs* argument defines the coordinate reference system of the
