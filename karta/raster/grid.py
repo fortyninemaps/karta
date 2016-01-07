@@ -184,7 +184,8 @@ class RegularGrid(Grid):
         return self.get_extent()
 
     def get_bbox(self, crs=None):
-        return self.get_extent(reference="edge", crs=crs)
+        a, b, c, d = self.get_extent(reference="edge", crs=crs)
+        return a, c, b, d
 
     def get_extent(self, reference='center', crs=None):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
