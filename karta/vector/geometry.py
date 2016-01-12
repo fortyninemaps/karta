@@ -852,7 +852,7 @@ class ConnectedMultipoint(MultipointBase):
         interxbool = (np.nan in _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                                      a[0][1], a[1][1], b[0][1], b[1][1])
                     for a in self.segments for b in other.segments)
-        if self._bbox_overlap(other) and (True not in interxbool):
+        if self._bbox_overlap(other) and (False in interxbool):
             return True
         else:
             return False

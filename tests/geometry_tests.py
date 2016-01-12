@@ -323,6 +323,12 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(line0.intersections(line1), Multipoint([(2.5, 0.0)]))
         return
 
+    def test_intersection_polygons(self):
+        poly0 = Polygon([(0, 0), (2, 0), (3, 1), (2, 1), (2, 2), (1, 0)])
+        poly1 = Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1)])
+        self.assertTrue(poly0.intersects(poly1))
+        return
+
     def test_poly_clockwise(self):
         p = Polygon([(0,0), (0,1), (1,1), (1,0)])
         self.assertTrue(p.isclockwise())
