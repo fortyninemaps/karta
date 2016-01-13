@@ -39,9 +39,8 @@ ctypedef bool (*isbetween_t)(double, double, double)
 
 def intersection(double x0, double x1, double x2, double x3,
                  double y0, double y1, double y2, double y3):
-    """ Return the point of intersection between two line segments. Returns NaN
-    if the lines do not intersect.
-    """
+    """ Return the point of intersection between two line segments on a plane.
+    Returns (NaN, NaN) if the lines do not intersect. """
     cdef double m0, m1
     cdef double x, y
 
