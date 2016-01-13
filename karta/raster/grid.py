@@ -830,7 +830,7 @@ def merge(grids, weights=None):
     if weights is None:
         weights = np.ones(len(grids))
     else:
-        weights = np.asarray(weights)
+        weights = np.asarray(weights, dtype=np.float32)
 
     normalizedweights = weights * len(weights) / weights.sum()
 
