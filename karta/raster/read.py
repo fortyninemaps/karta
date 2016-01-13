@@ -11,8 +11,8 @@ def read_aai(fnm):
     instance.
     """
     values, aschdr = _aai.aairead(fnm)
-    t = {'xllcenter': aschdr['xllcorner'] + 0.5 * aschdr['cellsize'],
-         'yllcenter': aschdr['yllcorner'] + 0.5 * aschdr['cellsize'],
+    t = {'xllcorner': aschdr['xllcorner'],
+         'yllcorner': aschdr['yllcorner'],
          'dx'       : aschdr['cellsize'],
          'dy'       : aschdr['cellsize'],
          'xrot'     : 0.0,
@@ -41,8 +41,8 @@ def read_gtiff(fnm, band=1, in_memory=True):
     if isinstance(arr, np.ndarray):
         arr = arr.squeeze()[::-1]
 
-    t = {'xllcenter'  : hdr['xulcorner'] + 0.5 * (hdr['dx'] + hdr['sx']),
-         'yllcenter'  : hdr['yulcorner'] + (hdr['ny'] - 0.5) * hdr['dy'] - 0.5 * hdr['sy'],
+    t = {'xllcorner'  : hdr['xulcorner'] - hdr['ny'] * hdr['sx'],
+         'yllcorner'  : hdr['yulcorner'] + hdr['ny'] * hdr['dy'],
          'dx'         : hdr['dx'],
          'dy'         : -hdr['dy'],
          'xrot'       : hdr['sx'],

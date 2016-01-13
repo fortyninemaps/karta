@@ -260,8 +260,8 @@ def write(fnm, grid, compress=None, **kw):
     ny, nx = grid.size
     dataset = driver.Create(fnm, nx, ny, 1, gdal_type(grid.values.dtype), co)
     t = grid.transform
-    dataset.SetGeoTransform([t[0] - 0.5*(t[2] + t[4]), t[2], -t[4],
-                             t[1] + (ny - 0.5)*t[3] + 0.5*t[5], t[5], -t[3]])
+    dataset.SetGeoTransform([t[0] + ny*t[4], t[2], -t[4],
+                             t[1] + ny*t[3], t[5], -t[3]])
     try:
         srs = srs_from_crs(grid.crs)
     except Exception as e:

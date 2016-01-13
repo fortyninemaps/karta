@@ -80,7 +80,7 @@ class RegularGrid(Grid):
         """
         if hasattr(transform, "keys"):
             self._transform = tuple([float(transform[f]) for f in
-                    ("xllcenter", "yllcenter", "dx", "dy", "xrot", "yrot")])
+                    ("xllcorner", "yllcorner", "dx", "dy", "xrot", "yrot")])
         elif len(transform) == 6:
             self._transform = tuple(float(a) for a in transform)
         elif len(transform) == 4:
