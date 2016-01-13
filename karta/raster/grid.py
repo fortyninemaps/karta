@@ -795,9 +795,18 @@ def _generate_nodata_func(nodata):
     else:
         return lambda a: a==nodata
 
-def merge(grids):
+def merge(grids, weights=None):
     """ Perform a basic grid merge. Currently limited to grids whose sampling
-    is an integer translation from each other. """
+    is an integer translation from each other.
+   
+    Parameters:
+    -----------
+
+    grids : iterable of Grid objects to combine
+
+    weights : (optional) iterable of weighting factors for computing grid averages
+    """
+
     # Check grid class
     if not all(isinstance(grid, RegularGrid) for grid in grids):
         raise NotImplementedError("All grids must by type RegularGrid")
@@ -817,6 +826,14 @@ def merge(grids):
         if ((grid.transform[1]-T[1]) / float(T[3])) % 1 > 1e-15:
             raise NotImplementedError(excmsg % (i+2,))
 
+    # Compute weighting coefficients by normalizing *weights*
+    if weights is None:
+        weights = np.ones(len(grids))
+    else:
+        weights = np.asarray(weights)
+
+    normalizedweights = weights * len(weights) / weights.sum()
+
     nodata_funcs = [_generate_nodata_func(grid.nodata) for grid in grids]
 
     # Compute final grid extent
@@ -833,19 +850,19 @@ def merge(grids):
 
     # Allocate data array and copy each grid's data
     values = np.zeros([ny, nx], dtype=grids[0].values.dtype)
-    counts = np.zeros([ny, nx], dtype=np.int16)
-    for grid, nf in zip(grids, nodata_funcs):
+    counts = np.zeros([ny, nx], dtype=np.float32)
+    for grid, nf, w in zip(grids, nodata_funcs, normalizedweights):
         _xmin, _xmax, _ymin, _ymax = grid.get_extent()
         offx = int((_xmin-xmin) / T[2])
         offy = int((_ymin-ymin) / T[3])
         _ny, _nx = grid.size
 
         mask = ~nf(grid.values)
-        counts[offy:offy+_ny,offx:offx+_nx][mask] += 1
-        values[offy:offy+_ny,offx:offx+_nx][mask] += grid.values[mask]
+        counts[offy:offy+_ny,offx:offx+_nx][mask] += w
+        values[offy:offy+_ny,offx:offx+_nx][mask] += grid.values[mask]*w
         del mask
 
-    validcountmask = (counts!=0)
+    validcountmask = (counts!=0.0)
     values[validcountmask] = values[validcountmask] / counts[validcountmask]
     values[~validcountmask] = grids[0].nodata
     Tmerge = [xmin, ymin] + list(T[2:])
