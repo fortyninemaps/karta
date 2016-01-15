@@ -235,13 +235,6 @@ class EllipsoidalCRS(GeographicalCRS):
         self.ref_proj4 = "+proj=lonlat +units=m +a=%f +b=%f +no_defs" % (a, b)
         return
 
-    def get_proj4(self):
-        return self.ref_proj4
-
-    def project(self, x, y, **kw):
-        # Projection on a geographical coordinate system is the identity
-        return x, y
-
     def forward(self, x, y, azimuth, distance, radians=False):
         """ Forward geodetic problem from a point """
         if radians:
