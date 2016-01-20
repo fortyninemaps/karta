@@ -25,9 +25,11 @@ from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
 
 class Geometry(object):
     """ This is the abstract base class for all geometry types """
-    _geotype = None
+
+    __slots__ = ["_geotype", "properties", "crs", "_cache"]
 
     def __init__(self, crs=Cartesian):
+        self._geotype = None
         self.properties = {}
         self.crs = crs
         self._cache = {}
@@ -83,7 +85,7 @@ class Point(Geometry):
     *properties*    Dictionary of geometry specific data [default None]
     *crs*           Coordinate reference system instance [default CARTESIAN]
     """
-    _geotype = "Point"
+    __slots__ = ["vertex", "data", "rank"]
 
     def __init__(self, coords, data=None, properties=None, copy_metadata=False,
                  **kwargs):
@@ -92,6 +94,7 @@ class Point(Geometry):
         except TypeError:
             raise TypeError("Point coordinates must be a sequence")
         super(Point, self).__init__(**kwargs)
+        self._geotype = "Point"
         self.vertex = coords
 
         if data is None:
