@@ -294,8 +294,8 @@ class RegularGrid(Grid):
             tx, ty = crs.project(*self.crs.project(tx, ty, inverse=True))
         return (lx, rx, by, ty)
 
-    def aschunks(self, size=(-1, -1), overlap=(0, 0)):
-        """ Generator for grid chunks.
+    def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
+        """ Generator for grid chunks of *size* and *overlap*.
         """
         ny, nx = self.size
         if size == (-1, -1):
@@ -316,9 +316,11 @@ class RegularGrid(Grid):
             T = [self.transform[0] + j0*T0[2] + i0*T0[4],
                  self.transform[1] + i0*T0[3] + j0*T0[5],
                  T0[2], T0[3], T0[4], T0[5]]
-            yield RegularGrid(T,
-                              values=self.values[i0:i0+size[1], j0:j0+size[0]].copy(),
-                              crs=self.crs)
+            if copy:
+                v = self.values[i0:i0+size[1], j0:j0+size[0]].copy()
+            else:
+                v = self.values[i0:i0+size[1], j0:j0+size[0]]
+            yield RegularGrid(T, values=v, crs=self.crs)
             j0 += size[0]-overlap[0]
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
