@@ -118,7 +118,7 @@ class RegularGridTests(unittest.TestCase):
 
     def test_get_extent_crs(self):
         pe = karta.raster.peaks(n=49)
-        crs = karta.crs.Proj4CRS("+proj=utm +zone=12 +north=True", "+ellps=WGS84")
+        crs = karta.crs.ProjectedCRS("+proj=utm +zone=12 +north=True", "+ellps=WGS84")
         rast_utm12N = karta.RegularGrid((0.0, 0.0, 10000.0, 10000.0, 0.0, 0.0),
                                         values=pe,
                                         crs=crs)

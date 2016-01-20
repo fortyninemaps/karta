@@ -1,7 +1,7 @@
 """ Functions for reading raster data sources as RegularGrid objects """
 import numpy as np
 from .grid import RegularGrid
-from ..crs import Proj4CRS, GeographicalCRS
+from ..crs import ProjectedCRS, GeographicalCRS
 from . import _gtiff
 from . import _aai
 # from . import _dem
@@ -53,7 +53,7 @@ def read_gtiff(fnm, band=1, in_memory=True):
     if proj4_isgeodetic(hdr["srs"]["proj4"]):
         crs = GeographicalCRS(geodstr, name="Imported GTiff")
     else:
-        crs = Proj4CRS(hdr["srs"]["proj4"], geodstr, name="Imported GTiff")
+        crs = ProjectedCRS(hdr["srs"]["proj4"], geodstr, name="Imported GTiff")
     return RegularGrid(t, values=arr, crs=crs)
 
 # Aliases for backwards compat.

@@ -7,7 +7,7 @@ import numpy as np
 
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 from karta.vector.geometry import affine_matrix
-from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, NSIDCNorth, Proj4CRS
+from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, NSIDCNorth, ProjectedCRS
 from karta.errors import CRSError
 
 class TestGeometry(unittest.TestCase):
@@ -506,7 +506,7 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_walk_albers(self):
-        AlaskaAlbers = Proj4CRS("+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 "
+        AlaskaAlbers = ProjectedCRS("+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 "
                                 "+x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs",
                                 "+ellps=GRS80")
         start = Point((-2658638, 2443580), crs=AlaskaAlbers)
@@ -794,7 +794,7 @@ class VectorCRSTests(unittest.TestCase):
 
     def test_vertices_in_crs2(self):
         point = Point((-123.0, 49.0), crs=SphericalEarth)
-        BCAlbers = Proj4CRS("+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
+        BCAlbers = ProjectedCRS("+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
                     "+lon_0=-126 +x_0=1000000 +y_0=0 +ellps=GRS80 +datum=NAD83 "
                     "+units=m +no_defs", "+ellps=GRS80")
         self.assertTupleAlmostEqual(point.get_vertex(BCAlbers),
@@ -805,7 +805,7 @@ class VectorCRSTests(unittest.TestCase):
         line = Line([(2.0, 34.0),
                      (2.15, 34.2),
                      (2.7, 34.1)], crs=SphericalEarth)
-        UTM31N = Proj4CRS("+proj=utm +zone=31 +ellps=WGS84 "
+        UTM31N = ProjectedCRS("+proj=utm +zone=31 +ellps=WGS84 "
                     "+datum=WGS84 +units=m +no_defs", "+ellps=WGS84")
         ans = [[407650.39665729, 3762606.65987638],
                [421687.71905897, 3784658.46708431],

@@ -19,7 +19,7 @@ from .metadata import Metadata, Indexer
 from . import quadtree
 from . import _cvectorgeo
 from .. import geodesy
-from ..crs import Cartesian, GeographicalCRS, SphericalCRS, EllipsoidalCRS
+from ..crs import Cartesian, GeographicalCRS
 from ..crs import SphericalEarth
 from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
 
@@ -1205,34 +1205,31 @@ class Polygon(ConnectedMultipoint):
         """ Return the two-dimensional area of the polygon, excluding
         sub-polygons. """
 
-        if isinstance(self.crs, EllipsoidalCRS):
-            a = 0.0
-            for seg in self.segment_tuples:
-                x1, y1 = seg[0]
-                x2, y2 = seg[1]
-                a_, b_ = self.crs.a, self.crs.b
-                a+= geodesy.ellipsoidal_area(a_, b_, x1, y1, x2, y2)
+        if isinstance(self.crs, GeographicalCRS):
+            major_axis = self.crs.ellipsoid.a
+            minor_axis = self.crs.ellipsoid.b
 
-        elif isinstance(self.crs, SphericalCRS):
-            a = 0.0
-            for seg in self.segment_tuples:
-                x1, y1 = seg[0]
-                x2, y2 = seg[1]
-                a += geodesy.spherical_area(self.crs.radius, x1, y1, x2, y2)
+            area = 0.0
+            if major_axis == minor_axis:    # Sphere
+                for seg in self.segment_tuples:
+                    x1, y1 = seg[0]
+                    x2, y2 = seg[1]
+                    area += geodesy.spherical_area(major_axis, x1, y1, x2, y2)
 
-        elif isinstance(self.crs, GeographicalCRS):
-            # Catch anything that's not spherical or ellipsoidal
-            raise CRSError("area not implemented for unknown geographical CRS\n"
-                           "try replacing the CRS with a known SphericalCRS or "
-                           "EllipsoidalCRS class")
+            else:
+                for seg in self.segment_tuples:
+                    x1, y1 = seg[0]
+                    x2, y2 = seg[1]
+                    area += geodesy.ellipsoidal_area(major_axis, minor_axis,
+                                                     x1, y1, x2, y2)
 
         else:
-            # All projected coordinate systems
+            # Cartesian coordinate systems
             x, y = self.coordinates
             x0 = np.min(x)
-            a = (0.5*(x[0] + x[-1]) - x0) * (y[0] - y[-1])
-            a += sum((0.5*(x[i+1]+x[i]) - x0) * (y[i+1] - y[i]) for i in range(len(x)-1))
-        return abs(a) - sum(sub.area for sub in self.subs)
+            area = (0.5*(x[0] + x[-1]) - x0) * (y[0] - y[-1])
+            area += sum((0.5*(x[i+1]+x[i]) - x0) * (y[i+1] - y[i]) for i in range(len(x)-1))
+        return abs(area) - sum(sub.area for sub in self.subs)
 
     @property
     def centroid(self):

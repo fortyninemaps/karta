@@ -7,7 +7,7 @@ Implements CRS classes for different kinds of spatial reference systems:
     - GeographicalCRS
     - SphericalCRS
     - EllipsoidalCRS
-    - Proj4CRS
+    - ProjectedCRS
 
 Coordinate reference system (CRS) objects represent mappings geographical
 positions to an x, y representation, and contain both projection and geodetic
@@ -34,6 +34,86 @@ DATUM_ELLIPSOIDS = {"WGS84": "WGS84", "GGRS87": "GRS80", "NAD83": "GRS80",
                     "hermannskogel": "bessel", "ire65": "mod_airy",
                     "nzgd49": "intl", "OSGB36": "airy"}
 
+ELLIPSOID_DATA = {
+ "MERIT": (6378137.0, None, 298.257, "MERIT 1983"),
+ "SGS85": (6378136.0, None, 298.257, "Soviet Geodetic System 85"),
+ "GRS80": (6378137.0, None, 298.257222101, "GRS 1980(IUGG, 1980)"),
+ "IAU76": (6378140.0, None, 298.257, "IAU 1976"),
+ "airy": (6377563.396, 6356256.910, None, "Airy 1830"),
+ "APL4.9": (6378137.0, None, 298.25, "Appl. Physics. 1965"),
+ "NWL9D": (6378145.0, None, 298.25, "Naval Weapons Lab., 1965"),
+ "mod_airy": (6377340.189, 6356034.446, None, "Modified Airy"),
+ "andrae": (6377104.43, None, 300.0, "Andrae 1876 (Den., Iclnd.)"),
+ "aust_SA": (6378160.0, None, 298.25, "Australian Natl & S. Amer. 1969"),
+ "GRS67": (6378160.0, None, 298.2471674270, "GRS 67(IUGG 1967)"),
+ "bessel": (6377397.155, None, 299.1528128, "Bessel 1841"),
+ "bess_nam": (6377483.865, None, 299.1528128, "Bessel 1841 (Namibia)"),
+ "clrk66": (6378206.4, 6356583.8, None, "Clarke 1866"),
+ "clrk80": (6378249.145, None, 293.4663, "Clarke 1880 mod."),
+ "clrk80ign": (6378249.2, None, 293.4660212936269, "Clarke 1880 (IGN)."),
+ "CPM": (6375738.7, None, 334.29, "Comm. des Poids et Mesures 1799"),
+ "delmbr": (6376428., None, 311.5, "Delambre 1810 (Belgium)"),
+ "engelis": (6378136.05, None, 298.2566, "Engelis 1985"),
+ "evrst30": (6377276.345, None, 300.8017, "Everest 1830"),
+ "evrst48": (6377304.063, None, 300.8017, "Everest 1948"),
+ "evrst56": (6377301.243, None, 300.8017, "Everest 1956"),
+ "evrst69": (6377295.664, None, 300.8017, "Everest 1969"),
+ "evrstSS": (6377298.556, None, 300.8017, "Everest (Sabah & Sarawak)"),
+ "fschr60": (6378166., None, 298.3, "Fischer (Mercury Datum) 1960"),
+ "fschr60m": (6378155., None, 298.3, "Modified Fischer 1960"),
+ "fschr68": (6378150., None, 298.3, "Fischer 1968"),
+ "helmert": (6378200., None, 298.3, "Helmert 1906"),
+ "hough": (6378270.0, None, 297., "Hough"),
+ "intl": (6378388.0, None, 297., "International 1909 (Hayford)"),
+ "krass": (6378245.0, None, 298.3, "Krassovsky, 1942"),
+ "kaula": (6378163., None, 298.24, "Kaula 1961"),
+ "lerch": (6378139., None, 298.257, "Lerch 1979"),
+ "mprts": (6397300., None, 191., "Maupertius 1738"),
+ "new_intl": (6378157.5, 6356772.2, None, "New International 1967"),
+ "plessis": (6376523., 6355863., None, "Plessis 1817 (France)"),
+ "SEasia": (6378155.0, 6356773.3205, None, "Southeast Asia"),
+ "walbeck": (6376896.0, 6355834.8467, None, "Walbeck"),
+ "WGS60": (6378165.0, None, 298.3, "WGS 60"),
+ "WGS66": (6378145.0, None, 298.25, "WGS 66"),
+ "WGS72": (6378135.0, None, 298.26, "WGS 72"),
+ "WGS84": (6378137.0, None, 298.257223563, "WGS 84"),
+ "sphere": (6370997.0, 6370997.0, None, "Normal Sphere (r=6370997)")}
+
+def ellipsoid_major_axis(name):
+    a, _, _ = ELLIPSOID_DATA[name]
+    return a
+
+def ellipsoid_minor_axis(name):
+    a, b, rf = ELLIPSOID_DATA[name]
+    if b is None:
+        b = a-a/rf
+    return b
+
+def ellipsoid_flattening(name):
+    a, b, rf = ELLIPSOID_DATA[name]
+    if rf is None:
+        rf = a/(a-b)
+    return 1.0/rf
+
+class Ellipsoid(object):
+    def __init__(self, name, a=None, b=None, f=None, rf=None):
+        if a is None:
+            raise ValueError("major axis (a) must be provided")
+
+        if b is not None:
+            f = (a-b)/a
+        elif f is not None:
+            b = a-a*f
+        elif rf is not None:
+            f = 1.0/rf
+            b = a-a*f
+
+        self.name = name
+        self.a = a
+        self.b = b
+        self.f = f
+        return
+
 class CRS(object):
     """ Base class for coordinate system instances.
 
@@ -41,6 +121,7 @@ class CRS(object):
 
     - name attribute
     - project(x, y) method
+    - transform(other, x, y) method
     - forward(x, y, azimuth, distance) method
     - inverse(x0, y0, x1, y1) method
 
@@ -68,7 +149,7 @@ class CRS(object):
             return self.ref_proj4
         else:
             if not HASOSR:
-                raise errors.CRSError("no ref_proj4 attribute and no conversion possible (osgeo.osr not installed)")
+                raise RuntimeError("no ref_proj4 attribute and no conversion possible (osgeo.osr not installed)")
             srs = osgeo.osr.SpatialReference()
             if hasattr(self, "ref_wkt"):
                 srs.ImportFromWkt(self.ref_wkt)
@@ -81,7 +162,7 @@ class CRS(object):
             return self.ref_wkt
         else:
             if not HASOSR:
-                raise errors.CRSError("no ref_wkt attribute and no conversion possible (osgeo.osr not installed)")
+                raise RuntimeError("no ref_wkt attribute and no conversion possible (osgeo.osr not installed)")
             srs = osgeo.osr.SpatialReference()
             if hasattr(self, "ref_proj4"):
                 _proj4 = self.ref_proj4.replace("latlon", "latlong")\
@@ -136,7 +217,10 @@ class GeographicalCRS(CRS):
     """
     def __init__(self, spheroid, name):
         self._geod = pyproj.Geod(spheroid)
+
         self.name = name
+        ela, elb, elrf, ename = ELLIPSOID_DATA[spheroid.split("=")[1]]
+        self.ellipsoid = Ellipsoid(ename, ela, b=elb, rf=elrf)
         self.ref_proj4 = "+proj=lonlat %s" % self._geod.initstring
         return
 
@@ -150,14 +234,76 @@ class GeographicalCRS(CRS):
 
     def forward(self, *args, **kwargs):
         """ Forward geodetic problem from a point """
-        return self._geod.fwd(*args, **kwargs)
+        x, y, baz = self._geod.fwd(*args, **kwargs)
+        baz = (baz + 180) % 360 - 180
+        return x, y, baz
 
     def inverse(self, *args, **kwargs):
         """ Inverse geodetic problem to find the geodesic between points """
-        return self._geod.inv(*args, **kwargs)
+        az, baz, dist = self._geod.inv(*args, **kwargs)
+        az = (az + 180) % 360 - 180
+        baz = (baz + 180) % 360 - 180
+        return az, baz, dist
+
+class ProjectedCRS(CRS):
+    """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
+    or a custom projection function.
+
+    `proj` is a dictionary or string used to define an instance of `pyproj.Proj`
+
+    `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
+    """
+    def __init__(self, proj, spheroid=None, name=None):
+        if spheroid is None:
+            ellipsoid = parse_ellipsoid(proj)
+        else:
+            ellipsoid = parse_ellipsoid(spheroid)
+
+        self.project = pyproj.Proj(proj)
+        self._geod = pyproj.Geod("+a=%s +b=%s" % (ellipsoid.a, ellipsoid.b))
+        self.ellipsoid = ellipsoid
+
+        self.initstring_proj = self.project.srs
+        self.initstring_geod = self._geod.initstring
+        self.ref_proj4 = "%s %s" % (self.project.srs, self._geod.initstring)
+
+        if name is not None:
+            self.name = name
+        else:
+            self.name = proj
+        return
+
+    def __eq__(self, other):
+        if (getattr(self.project, "srs", 0) == getattr(other.project, "srs", 1) and
+            getattr(self._geod, "initstring", 0) == getattr(other._geod, "initstring", 1)):
+            return True
+        else:
+            return False
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def forward(self, *args, **kwargs):
+        """ Forward geodetic problem from a point """
+        x, y, baz = self._geod.fwd(*args, **kwargs)
+        baz = (baz + 180) % 360 - 180
+        return x, y, baz
+
+    def inverse(self, *args, **kwargs):
+        """ Inverse geodetic problem to find the geodesic between points """
+        az, baz, dist = self._geod.inv(*args, **kwargs)
+        az = (az + 180) % 360 - 180
+        baz = (baz + 180) % 360 - 180
+        return az, baz, dist
+
+    def transform(self, other, x, y, z=None):
+        return pyproj.transform(self.project, other.project, x, y, z=z)
 
 class SphericalCRS(GeographicalCRS):
-    """ Spherical geographic coordinate system defined by a radius. """
+    """ Spherical geographic coordinate system defined by a radius.
+    
+    DEPRECATED 
+    """
     name = "Spherical"
 
     def __init__(self, radius):
@@ -224,6 +370,8 @@ class SphericalCRS(GeographicalCRS):
 class EllipsoidalCRS(GeographicalCRS):
     """ Ellipsoidal geographic coordinate system defined by equatorial and
     polar radii.
+
+    DEPRECATED
     """
     name = "Ellipsoidal"
 
@@ -243,6 +391,7 @@ class EllipsoidalCRS(GeographicalCRS):
             azimuth *= 180.0/pi
 
         x2, y2, baz = geodesy.ellipsoidal_forward(self.a, self.b, x, y, azimuth, distance)
+        baz = (baz + 180) % 360 - 180
 
         if radians:
             x2 *= pi/180.0
@@ -260,6 +409,8 @@ class EllipsoidalCRS(GeographicalCRS):
             y2 *= 180.0/pi
 
         az, baz, dist = geodesy.ellipsoidal_inverse(self.a, self.b, x1, y1, x2, y2)
+        az = (az + 180) % 360 - 180
+        baz = (baz + 180) % 360 - 180
 
         if radians:
             az *= pi/180.0
@@ -267,73 +418,39 @@ class EllipsoidalCRS(GeographicalCRS):
 
         return az, baz, dist
 
-class Proj4CRS(CRS):
-    """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
-    or a custom projection function.
+def parse_ellipsoid(projstring):
+    ename, ela, elb, elrf = None, None, None, None
+    if "+ellps" in projstring:
+        for kv in projstring.split():
+            if kv.startswith("+ellps"):
+                k,v = kv.split("=")
+                ela, elb, elrf, ename = ELLIPSOID_DATA[v]
+                break
+    elif "+datum" in projstring:
+        for kv in projstring.split():
+            if kv.startswith("+datum"):
+                k,v = kv.split("=")
+                ellps = DATUM_ELLIPSOIDS[v]
+                ela, elb, elrf, ename = ELLIPSOID_DATA[ellps]
+                break
+    elif ("+a" in projstring) and (("+b" in projstring) or ("+f" in projstring)):
+        ename = "Unknown"
+        for kv in projstring.split():
+            if kv.startswith("+a"):
+                _, ela = kv.split("=")
+                ela = float(ela)
+            elif kv.startswith("+b"):
+                _, elb = kv.split("=")
+                elb = float(elb)
+            elif kv.startswith("+f"):
+                _, elf = kv.split("=")
+                elrf = 1.0/float(elf)
+            if ela and (elb or elrf):
+                break
+    else:
+        raise errors.CRSError("ellipsoid could not be extracted from %s" % projstring)
+    return Ellipsoid(ename, ela, b=elb, rf=elrf)
 
-    `proj` is a dictionary used to define an instance of `pyproj.Proj`
-
-    `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
-    """
-    def __init__(self, proj, spheroid=None, name=None):
-        if spheroid is None:
-            # Extract the spheroid from the +ellps, +datum, or +a,+b parameters
-            # if present
-            if "+ellps" in proj:
-                for kv in proj.split():
-                    if "+ellps" in kv:
-                        k,v = kv.split("=")
-                        spheroid = "+ellps=%s" % v
-                        break
-            elif "+datum" in proj:
-                for kv in proj.split():
-                    if "+datum" in kv:
-                        k,v = kv.split("=")
-                        spheroid = "+ellps=%s" % DATUM_ELLIPSOIDS[v]
-                        break
-            elif ("+a" in proj) and ("+b" in proj):
-                a, b = None, None
-                for kv in proj.split():
-                    if "+a" in kv:
-                        _,a = kv.split("=")
-                    elif "+b" in kv:
-                        _,b = kv.split("=")
-                    if None not in (a,b):
-                        spheroid = "+a=%s +b=%s" % (a, b)
-                        break
-            else:
-                raise errors.CRSError("Spheroid must be provided: %s" % proj)
-
-        self.project = pyproj.Proj(proj)
-        self._geod = pyproj.Geod(spheroid)
-
-        self.initstring_proj = self.project.srs
-        self.initstring_geod = self._geod.initstring
-        self.ref_proj4 = "%s %s" % (self.project.srs, self._geod.initstring)
-
-        if name is not None:
-            self.name = name
-        else:
-            self.name = proj
-        return
-
-    def __eq__(self, other):
-        if (getattr(self.project, "srs", 0) == getattr(other.project, "srs", 1) and
-            getattr(self._geod, "initstring", 0) == getattr(other._geod, "initstring", 1)):
-            return True
-        else:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def forward(self, *args, **kwargs):
-        """ Forward geodetic problem from a point """
-        return self._geod.fwd(*args, **kwargs)
-
-    def inverse(self, *args, **kwargs):
-        """ Inverse geodetic problem to find the geodesic between points """
-        return self._geod.inv(*args, **kwargs)
 
 def crs_from_wkt(wkt):
     srs = osgeo.osr.SpatialReference(wkt)
@@ -348,41 +465,51 @@ def crs_from_wkt(wkt):
                 return GeographicalCRS("+ellps=%s" % DATUM_ELLIPSOIDS[v], v)
         raise errors.CRSError("Could not interpret %s as geographical CRS" % proj4)
     else:
-        return Proj4CRS(srs.ExportToProj4())
+        return ProjectedCRS(srs.ExportToProj4())
 
 ############ Predefined CRS instances ############
 
 Cartesian = CartesianCRS()
-SphericalEarth = SphericalCRS(6371009.0)
-LonLatWGS84 = EllipsoidalCRS(6378137.0, 6356752.314245)
-LonLatNAD83 = EllipsoidalCRS(6378137.0, 6356752.314140)
-LonLatNAD27 = EllipsoidalCRS(6378206.4, 6356583.8)
 
-LonLatWGS84_proj4 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)")
-LonLatNAD27_proj4 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
-LonLatNAD83_proj4 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")
+_SphericalEarth = SphericalCRS(6371009.0)
+_LonLatWGS84 = EllipsoidalCRS(6378137.0, 6356752.314245)
+_LonLatNAD83 = EllipsoidalCRS(6378137.0, 6356752.314140)
+_LonLatNAD27 = EllipsoidalCRS(6378206.4, 6356583.8)
 
-UPSNorth = Proj4CRS(proj="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
+SphericalEarth = GeographicalCRS("+ellps=sphere", "Normal Sphere")
+LonLatWGS84 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)")
+LonLatNAD27 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
+LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")
+
+UPSNorth = ProjectedCRS(proj="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 "
+                             "+k=0.994 +x_0=2000000 +y_0=2000000 +units=m "
+                             "+datum=WGS84 +no_defs",
         spheroid="+ellps=WGS84", name="Universal Polar Stereographic (North)")
 
-UPSSouth = Proj4CRS(proj="+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 +k=0.994 +x_0=2000000 +y_0=2000000 +units=m +datum=WGS84 +no_defs",
+UPSSouth = ProjectedCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 "
+                             "+k=0.994 +x_0=2000000 +y_0=2000000 +units=m "
+                             "+datum=WGS84 +no_defs",
         spheroid="+ellps=WGS84", name="Universal Polar Stereographic (South)")
 
-NSIDCNorth = Proj4CRS(proj="+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs",
+NSIDCNorth = ProjectedCRS(proj="+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 "
+                               "+k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 "
+                               "+no_defs",
         spheroid="+ellps=WGS84", name="NSIDC (North)")
 
-NSIDCSouth = Proj4CRS(proj="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs",
+NSIDCSouth = ProjectedCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 "
+                               "+k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 "
+                               "+no_defs",
         spheroid="+ellps=WGS84", name="NSIDC (South)")
 
-LambertEqualArea = Proj4CRS(proj="+proj=laea +lat_0=0 +lon_0=0 +x_0=0 +y_0=0",
+LambertEqualArea = ProjectedCRS(proj="+proj=laea +lat_0=0 +lon_0=0 +x_0=0 +y_0=0",
         spheroid="+ellps=WGS84", name="Lambert Equal Area")
 
-GallPetersEqualArea = Proj4CRS("+proj=cea +lon_0=0 +lat_ts=45 +x_0=0 +y_0=0 "
-                               "+ellps=WGS84 +units=m +no_defs",
+GallPetersEqualArea = ProjectedCRS("+proj=cea +lon_0=0 +lat_ts=45 +x_0=0 +y_0=0 "
+                                   "+ellps=WGS84 +units=m +no_defs",
         spheroid="+ellps=WGS84", name="Gall Peters Equal Area")
 
-WebMercator = Proj4CRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 "
-                       "+lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m "
-                       "+nadgrids=@null +wktext +no_defs",
+WebMercator = ProjectedCRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 "
+                           "+lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m "
+                           "+nadgrids=@null +wktext +no_defs",
         spheroid="+a=6378137 +b=6378137", name="Web Mercator")
 

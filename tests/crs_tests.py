@@ -10,13 +10,13 @@ class TestCRS(unittest.TestCase):
 
     def test_get_proj4(self):
         c0 = crs.SphericalEarth
-        self.assertEqual(c0.get_proj4(), "+proj=lonlat +a=6371009.000000 +b=6371009.000000 +no_defs")
+        self.assertEqual(c0.get_proj4(), "+proj=lonlat +a=6370997.0 +f=0.0")
 
         c1 = crs.LonLatWGS84
         proj4 = c1.get_proj4()
         self.assertTrue("+proj=lonlat" in proj4)
         self.assertTrue("+a=6378137.0" in proj4)
-        self.assertTrue("+b=6356752.314245" in proj4)
+        self.assertTrue("+f=0.0033528106647474805" in proj4)
 
         c2 = crs.NSIDCNorth
         proj4 = c2.get_proj4()
@@ -35,7 +35,7 @@ class TestCRS(unittest.TestCase):
 
     def test_get_wkt(self):
         c0 = crs.SphericalEarth
-        self.assertEqual(c0.get_wkt(), 'GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6371009.000000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
+        self.assertEqual(c0.get_wkt(), 'GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6370997,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
 
         c1 = crs.LonLatWGS84
         wkt = c1.get_wkt()
@@ -99,9 +99,9 @@ class TestCRS(unittest.TestCase):
         lat1 = 0.0
         lon2, lat2, baz = crs.SphericalEarth.forward(lon1, lat1, 90.0, 5003778.767588614,
                                                      radians=False)
-        self.assertAlmostEqual(lon2, 45.0, places=8)
+        self.assertAlmostEqual(lon2, 45.000084759104425, places=8)
         self.assertAlmostEqual(lat2, 0.0, places=8)
-        self.assertAlmostEqual(baz, 270.0, places=8)
+        self.assertAlmostEqual(baz, -90.0, places=8)
         return
 
     def test_SphericalForward2(self):
@@ -109,9 +109,9 @@ class TestCRS(unittest.TestCase):
         lat1 = 0.0
         lon2, lat2, baz = crs.SphericalEarth.forward(lon1, lat1, 90.0, 5003778.767588614,
                                                      radians=False)
-        self.assertAlmostEqual(lon2, 75.0, places=8)
+        self.assertAlmostEqual(lon2, 75.00008475910442, places=8)
         self.assertAlmostEqual(lat2, 0.0, places=8)
-        self.assertAlmostEqual(baz, 270.0, places=8)
+        self.assertAlmostEqual(baz, -90.0, places=8)
         return
 
     def test_SphericalForward3(self):
@@ -119,9 +119,9 @@ class TestCRS(unittest.TestCase):
         lat1 = 49.0
         lon2, lat2, baz = crs.SphericalEarth.forward(lon1, lat1, 310.0, 2000e3,
                                                      radians=False)
-        self.assertAlmostEqual(lon2, -146.5118, places=4)
-        self.assertAlmostEqual(lat2, 57.9998, places=4)
-        self.assertAlmostEqual(baz, 108.48895148, places=4)
+        self.assertAlmostEqual(lon2, -146.51186194714958, places=6)
+        self.assertAlmostEqual(lat2, 57.99979808258465, places=6)
+        self.assertAlmostEqual(baz, 108.48890006687964, places=6)
         return
 
     def test_SphericalInverse1(self):
@@ -130,9 +130,9 @@ class TestCRS(unittest.TestCase):
         lon2 = -45.0
         lat2 = 0.0
         az, baz, dist = crs.SphericalEarth.inverse(lon1, lat1, lon2, lat2, radians=False)
-        self.assertEqual(az, 270.0)
+        self.assertEqual(az, -90.0)
         self.assertEqual(baz, 90.0)
-        self.assertAlmostEqual(dist, 5003778.767589, places=6)
+        self.assertAlmostEqual(dist, 5003769.342810653, places=6)
         return
 
     def test_SphericalInverse2(self):
@@ -141,9 +141,9 @@ class TestCRS(unittest.TestCase):
         lon2 = 38.0
         lat2 = 5.0
         az, baz, dist = crs.SphericalEarth.inverse(lon1, lat1, lon2, lat2, radians=False)
-        self.assertAlmostEqual(az, 15.5977, places=4)
-        self.assertAlmostEqual(baz, 194.9583, places=4)
-        self.assertAlmostEqual(dist, 2533572.0748, places=2)
+        self.assertAlmostEqual(az, 15.597740818516172, places=6)
+        self.assertAlmostEqual(baz, -165.04174639642943, places=6)
+        self.assertAlmostEqual(dist, 2533567.302751705, places=6)
         return
 
     def test_SphericalInverse3(self):
@@ -152,9 +152,9 @@ class TestCRS(unittest.TestCase):
         lon2 = 38.0
         lat2 = -17.0
         az, baz, dist = crs.SphericalEarth.inverse(lon1, lat1, lon2, lat2, radians=False)
-        self.assertAlmostEqual(az, 165.0417, places=4)
-        self.assertAlmostEqual(baz, 344.4023, places=4)
-        self.assertAlmostEqual(dist, 2533572.0748, places=2)
+        self.assertAlmostEqual(az, 165.0417463964294, places=6)
+        self.assertAlmostEqual(baz, -15.597740818516172, places=6)
+        self.assertAlmostEqual(dist, 2533567.302751705, places=6)
         return
 
     def test_SphericalArea(self):
@@ -189,7 +189,7 @@ class TestCRS(unittest.TestCase):
 
     def test_EllipsoidalNearAntipodalInverse(self):
         az, baz, d = crs.LonLatWGS84.inverse(0.0, 30.0, 179.9, -29.9)
-        az_, baz_, d_ = crs.LonLatWGS84_proj4.inverse(0.0, 30.0, 179.9, -29.9)
+        az_, baz_, d_ = crs._LonLatWGS84.inverse(0.0, 30.0, 179.9, -29.9)
         self.assertAlmostEqual(az, az_, places=4)
         self.assertAlmostEqual(baz, baz_, places=4)
         self.assertAlmostEqual(d, d_, places=4)
@@ -203,7 +203,7 @@ class TestCRS(unittest.TestCase):
             az = 360*np.random.rand() - 180
             d = 2e7*np.random.rand()
             x1, y1, baz = crs.LonLatWGS84.forward(x, y, az, d)
-            x1_, y1_, baz_ = crs.LonLatWGS84_proj4.forward(x, y, az, d)
+            x1_, y1_, baz_ = crs._LonLatWGS84.forward(x, y, az, d)
 
             self.assertAlmostEqual(x1, x1_, places=4)
             self.assertAlmostEqual(y1, y1_, places=4)
@@ -217,7 +217,7 @@ class TestCRS(unittest.TestCase):
             x2 = 360*np.random.rand() - 180
             y2 = 178*np.random.rand() - 89
             az, baz, d = crs.LonLatWGS84.inverse(x1, y1, x2, y2)
-            az_, baz_, d_ = crs.LonLatWGS84_proj4.inverse(x1, y1, x2, y2)
+            az_, baz_, d_ = crs._LonLatWGS84.inverse(x1, y1, x2, y2)
 
             self.assertAlmostEqual(az, az_, places=4)
             self.assertAlmostEqual(baz, baz_, places=4)
@@ -247,45 +247,45 @@ class TestCRS(unittest.TestCase):
 
     def test_ConstructProj4(self):
         # Canonical constructor
-        crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs", "+ellps=WGS84")
+        crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs", "+ellps=WGS84")
 
         # Combine ellipsoid information into projection information
-        crs.Proj4CRS("+proj=longlat +ellps=WGS84 +no_defs")
+        crs.ProjectedCRS("+proj=longlat +ellps=WGS84 +no_defs")
 
         # Fail if no geodetic information given
         self.assertRaises(karta.errors.CRSError,
-                          lambda: crs.Proj4CRS("+proj=longlat +no_defs"))
+                          lambda: crs.ProjectedCRS("+proj=longlat +no_defs"))
         return
 
     def test_equal1(self):
-        WGS84 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+        WGS84 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
                               "+ellps=WGS84", name="WGS84 (Geographical)")
-        WGS84_ = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+        WGS84_ = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
                                "+ellps=WGS84", name="WGS84 (Geographical)")
         self.assertTrue(WGS84 == WGS84_)
         return
 
     def test_equal2(self):
-        WGS84 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+        WGS84 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
                               "+ellps=WGS84", name="WGS84 (Geographical)")
-        NAD83 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+        NAD83 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
                               "+ellps=GRS80", name="NAD83 (Geographical)")
         self.assertTrue(not WGS84 == NAD83)
         return
 
     def test_not_equal1(self):
-        WGS84 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+        WGS84 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
                               "+ellps=WGS84", name="WGS84 (Geographical)")
-        NAD83 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+        NAD83 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
                               "+ellps=GRS80", name="NAD83 (Geographical)")
         self.assertTrue(WGS84 != NAD83)
         return
 
     def test_not_equal2(self):
-        WGS84 = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+        WGS84 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
                               "+ellps=WGS84", name="WGS84 (Geographical)")
 
-        WGS84_ = crs.Proj4CRS("+proj=longlat +datum=WGS84 +no_defs",
+        WGS84_ = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
                                "+ellps=WGS84", name="WGS84 (Geographical)")
         self.assertTrue(not WGS84 != WGS84_)
         return
