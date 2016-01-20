@@ -258,7 +258,8 @@ class Point(Geometry):
 class MultipointBase(Geometry):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes. """
-    _geotype = "MultipointBase"
+
+    __slots__ = ["vertices", "data", "rank", "quadtree"]
 
     def __init__(self, vertices, data=None, properties=None, copy_metadata=False,
                  **kwargs):
@@ -266,6 +267,7 @@ class MultipointBase(Geometry):
         metadata attribute.
         """
         super(MultipointBase, self).__init__(**kwargs)
+        self._geotype = "MultipointBase"
         vertices = list(vertices)
         if len(vertices) > 0:
 
@@ -708,7 +710,20 @@ class Multipoint(MultipointBase):
     *properties*    Dictionary of geometry specific data [default None]
     *crs*           Coordinate reference system instance [default CARTESIAN]
     """
-    _geotype = "Multipoint"
+
+    __slots__ = []
+
+    def __init__(self, vertices, data=None, properties=None, copy_metadata=False,
+                 **kwargs):
+        """ Partial init function that establishes geometry rank and creates a
+        metadata attribute.
+        """
+        super(Multipoint, self).__init__(vertices, data=data,
+                                                   properties=properties,
+                                                   copy_metadata=copy_metadata,
+                                                   **kwargs)
+        self._geotype = "Multipoint"
+        return
 
     def __contains__(self, other):
         if other in (pt for pt in self):
@@ -785,6 +800,8 @@ class Multipoint(MultipointBase):
 
 class ConnectedMultipoint(MultipointBase):
     """ Class for Multipoints in which vertices are assumed to be connected. """
+
+    __slots__ = []
 
     @property
     def bbox(self):
@@ -957,7 +974,19 @@ class Line(ConnectedMultipoint):
     *properties*    Dictionary of geometry specific data [default None]
     *crs*           Coordinate reference system instance [default CARTESIAN]
     """
-    _geotype = "Line"
+    __slots__ = []
+
+    def __init__(self, vertices, data=None, properties=None, copy_metadata=False,
+                 **kwargs):
+        """ Partial init function that establishes geometry rank and creates a
+        metadata attribute.
+        """
+        super(ConnectedMultipoint, self).__init__(vertices, data=data,
+                                                  properties=properties,
+                                                  copy_metadata=copy_metadata,
+                                                  **kwargs)
+        self._geotype = "Line"
+        return
 
     @property
     def __geo_interface__(self):
@@ -1068,13 +1097,13 @@ class Polygon(ConnectedMultipoint):
     *subs*          List of sub-polygons [default None]
     *crs*           Coordinate reference system instance [default CARTESIAN]
     """
-    _geotype = "Polygon"
-    subs = []
+    __slots__ = ["subs"]
 
     def __init__(self, vertices, data=None, properties=None, subs=None, **kwargs):
         vertices = list(vertices)
         ConnectedMultipoint.__init__(self, vertices, data=data,
                                      properties=properties, **kwargs)
+        self._geotype = "Polygon"
         self.subs = subs if subs is not None else []
         return
 
