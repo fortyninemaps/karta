@@ -217,7 +217,7 @@ class Point(Geometry):
         self.vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
         return self
 
-    def as_geojson(self, **kwargs):
+    def as_geojson(self, indent=2, **kwargs):
         """ Write data as a GeoJSON string to a file-like object `f`.
 
         Parameters
@@ -229,9 +229,9 @@ class Point(Geometry):
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
         writer = geojson.GeoJSONWriter(self, **kwargs)
-        return writer.print_json()
+        return writer.print_json(indent)
 
-    def to_geojson(self, f, **kwargs):
+    def to_geojson(self, f, indent=None, **kwargs):
         """ Write data as a GeoJSON string to a file-like object `f`.
 
         Parameters
@@ -248,7 +248,7 @@ class Point(Geometry):
             else:
                 fobj = f
             writer = geojson.GeoJSONWriter(self, **kwargs)
-            writer.write_json(fobj)
+            writer.write_json(fobj, indent)
         finally:
             if not hasattr(f, "write"):
                 fobj.close()
@@ -644,7 +644,7 @@ class MultipointBase(Geometry):
         xyfile.write_xy(self.get_vertices(), fnm, delimiter=delimiter, header=header)
         return
 
-    def as_geojson(self, **kwargs):
+    def as_geojson(self, indent=2, **kwargs):
         """ Print representation of internal data as a GeoJSON string.
 
         Parameters
@@ -653,9 +653,9 @@ class MultipointBase(Geometry):
         bbox : an optional bounding box tuple in the form (w,e,s,n)
         """
         writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
-        return writer.print_json()
+        return writer.print_json(indent)
 
-    def to_geojson(self, f, **kwargs):
+    def to_geojson(self, f, indent=None, **kwargs):
         """ Write data as a GeoJSON string to a file-like object `f`.
 
         Parameters
@@ -672,7 +672,7 @@ class MultipointBase(Geometry):
             else:
                 fobj = f
             writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
-            writer.write_json(fobj)
+            writer.write_json(fobj, indent)
         finally:
             if not hasattr(f, "write"):
                 fobj.close()

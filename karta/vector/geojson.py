@@ -199,11 +199,11 @@ class GeoJSONWriter(object):
         target['id'] = list(range(len(self.gpobj.get_vertices())))
         return
 
-    def print_json(self):
+    def print_json(self, indent):
         """ Print GeoJSON representation. """
-        return json.dumps(self.supobj, indent=2, cls=ExtendedJSONEncoder)
+        return json.dumps(self.supobj, indent=indent, cls=ExtendedJSONEncoder)
 
-    def write_json(self, fout):
+    def write_json(self, fout, indent):
         """ Dump internal dict-object to JSON using the builtin `json` module.
         """
         if self.crs is not None:
@@ -212,7 +212,7 @@ class GeoJSONWriter(object):
             self.supobj["crs"]["properties"]["href"] = fout_crs
             with open(fout_crs, "w") as f:
                 f.write(self.crs.get_proj4())
-        json.dump(self.supobj, fout, indent=2, cls=ExtendedJSONEncoder)
+        json.dump(self.supobj, fout, indent=indent, cls=ExtendedJSONEncoder)
         return
 
 class GeoJSONReader(object):
@@ -224,11 +224,17 @@ class GeoJSONReader(object):
             with open(`fnm`, 'r') as f:
                 reader = GeoJSONReader(f)
         """
-        if not hasattr(finput, 'read'):
-            with open(finput) as f:
-                self.jsondict = json.load(f)
-        else:
+        if hasattr(finput, 'read'):
             self.jsondict = json.load(finput)
+        elif isinstance(finput, str):
+            try:
+                self.jsondict = json.loads(finput)
+            except ValueError:
+                with open(finput) as f:
+                    self.jsondict = json.load(f)
+        else:
+            raise TypeError("*finput* must be a file object, a JSON string, or "
+                            "a filename string")
 
         self.defaultcrs = defaultcrs
         return
