@@ -357,6 +357,31 @@ class RegularGrid(Grid):
         tnew = (x0, y0, t[2], t[3], t[4], t[5])
         return RegularGrid(tnew, values, crs=self.crs)
 
+    def resize(self, xll, yll, nx, ny):
+        """ Return a new grid grid with lower left corner at (*xll*, *yll*) and
+        ny x nx cells. Values are selected based on a nearest neighbour scheme.
+        """
+        dx, dy, sx, sy = self.transform[2:]
+        Tnew = [xll, yll, dx, dy, sx, sy]
+
+        x0 = xll+0.5*dx+0.5*sx
+        y0 = yll+0.5*dy+0.5*sy
+        extnew = [xll, yll, xll+(nx)*dx+(nx)*sx, yll+(ny)*dy+(ny)*sy]
+
+        # determine the indices that will be used
+        X, Y = self.center_coords()
+        m = (X>extnew[0]) & (X<extnew[2]) & (Y>extnew[1]) & (Y<extnew[3])
+        x = X[m]
+        y = Y[m]
+        i, j = self.get_indices(x, y)
+
+        newgrid = RegularGrid(Tnew,
+                        values=self.nodata * np.ones([ny, nx], dtype=self.values.dtype),
+                        crs=self.crs)
+        inew, jnew = newgrid.get_indices(x, y)
+        newgrid.values[inew, jnew] = self.values[i, j]
+        return newgrid
+
     def mask_by_poly(self, poly, inplace=False):
         """ Return a grid with all elements outside the bounds of a polygon
         masked by nodata """
