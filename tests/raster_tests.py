@@ -151,6 +151,23 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(X[0,-1], 945)
         self.assertEqual(Y[0,0], 525)
         self.assertEqual(Y[-1,0], 945)
+        return
+
+    def test_resize_smaller(self):
+        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0),
+                                  values=karta.raster.misc.peaks(50))
+        newgrid = proto.resize(620, 650, 25, 22)
+        self.assertEqual(newgrid.transform, (620.0, 650.0, 30.0, 30.0, 0.0, 0.0))
+        self.assertTrue(np.all(newgrid.values == proto.values[5:27,4:29]))
+        return
+
+    def test_resize_larger(self):
+        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0),
+                                  values=karta.raster.misc.peaks(50))
+        newgrid = proto.resize(380, 320, 60, 62)
+        self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
+        self.assertTrue(np.all(newgrid.values[6:56,4:54] == proto.values))
+        return
 
     def test_mask_poly(self):
         t = -np.linspace(0, 2*np.pi, 200)
@@ -253,7 +270,7 @@ class RegularGridTests(unittest.TestCase):
         return
 
 
-class TestWarpedGrid(unittest.TestCase):
+class WarpedGridTests(unittest.TestCase):
 
     def setUp(self):
         ii = np.arange(50.0)
@@ -277,7 +294,7 @@ class TestWarpedGrid(unittest.TestCase):
         self.assertTrue(np.all(res.values == self.rast.values-rast2.values))
         return
 
-class TestAAIGrid(unittest.TestCase):
+class AAIGridTests(unittest.TestCase):
 
     def setUp(self):
         pe = karta.raster.peaks(n=49)
@@ -312,7 +329,7 @@ class TestAAIGrid(unittest.TestCase):
         self.assertTrue(np.all(self.rast.data == orig[:25,:25]))
         return
 
-class TestDEMDriver(unittest.TestCase):
+class DEMDriverTests(unittest.TestCase):
 
     def setUp(self):
         pass
