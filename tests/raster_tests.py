@@ -15,6 +15,11 @@ class RegularGridTests(unittest.TestCase):
         self.rast = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
         return
 
+    def test_get_resolution(self):
+        grid = karta.RegularGrid([0.0, 0.0, 25.0, 35.0, 10.0, 10.0])
+        self.assertEqual(grid.resolution, (25.0, 35.0))
+        return
+
     def test_add_rgrid(self):
         rast2 = karta.RegularGrid(self.rast.transform,
                                   values=np.random.random(self.rast.values.shape)) 

@@ -170,6 +170,10 @@ class RegularGrid(Grid):
                            np.linspace(yurcorner, yllcorner, ny + 1))
 
     @property
+    def resolution(self):
+        return self.transform[2:4]
+
+    @property
     def bbox(self):
         extent = self.get_extent(reference="edge")
         return extent[0], extent[2], extent[1], extent[3]
