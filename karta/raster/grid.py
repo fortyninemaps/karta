@@ -363,30 +363,35 @@ class RegularGrid(Grid):
         tnew = (x0, y0, t[2], t[3], t[4], t[5])
         return RegularGrid(tnew, values, crs=self.crs)
 
-    def resize(self, xll, yll, nx, ny):
+    #def resize(self, xll, yll, nx, ny):
+    def resize(self, bboxnew):
         """ Return a new grid grid with lower left corner at (*xll*, *yll*) and
         ny x nx cells. Values are selected based on a nearest neighbour scheme.
         """
+        bb = self.bbox
         dx, dy, sx, sy = self.transform[2:]
-        Tnew = [xll, yll, dx, dy, sx, sy]
 
-        x0 = xll+0.5*dx+0.5*sx
-        y0 = yll+0.5*dy+0.5*sy
-        extnew = [xll, yll, xll+(nx)*dx+(nx)*sx, yll+(ny)*dy+(ny)*sy]
+        ny, nx = self.size
+        nxnew = int(math.ceil(bboxnew[2]-bboxnew[0])/dx)
+        nynew = int(math.ceil(bboxnew[3]-bboxnew[1])/dy)
+        Tnew = [bboxnew[0], bboxnew[1], dx, dy, sx, sy]
+        valnew = self.nodata * np.ones([nynew, nxnew], dtype=self.values.dtype)
 
-        # determine the indices that will be used
-        X, Y = self.center_coords()
-        m = (X>extnew[0]) & (X<extnew[2]) & (Y>extnew[1]) & (Y<extnew[3])
-        x = X[m]
-        y = Y[m]
-        i, j = self.get_indices(x, y)
+        # determine the indices of existing data on the new grid
+        j0new = max(0, int(round((bb[0]-bboxnew[0])/dx)))
+        j1new = min(nxnew, int(round((bb[2]-bboxnew[0])/dx)))
+        i0new = max(0, int(round((bb[1]-bboxnew[1])/dy)))
+        i1new = min(nynew, int(round((bb[3]-bboxnew[1])/dy)))
 
-        newgrid = RegularGrid(Tnew,
-                        values=self.nodata * np.ones([ny, nx], dtype=self.values.dtype),
-                        crs=self.crs)
-        inew, jnew = newgrid.get_indices(x, y)
-        newgrid.values[inew, jnew] = self.values[i, j]
-        return newgrid
+        # determine the indices of the data to copy on the old grid
+        j0 = max(0, int(round((bboxnew[0]-bb[0])/dx)))
+        j1 = min(nx, int(round((bboxnew[2]-bb[0])/dx)))
+        i0 = max(0, int(round((bboxnew[1]-bb[1])/dy)))
+        i1 = min(ny, int(round((bboxnew[3]-bb[1])/dy)))
+
+        valnew[i0new:i1new, j0new:j1new] = self.values[i0:i1,j0:j1]
+        gridnew = RegularGrid(Tnew, values=valnew, crs=self.crs)
+        return gridnew
 
     def mask_by_poly(self, poly, inplace=False):
         """ Return a grid with all elements outside the bounds of a polygon

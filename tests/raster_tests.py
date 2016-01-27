@@ -161,7 +161,7 @@ class RegularGridTests(unittest.TestCase):
     def test_resize_smaller(self):
         proto = karta.RegularGrid((500, 500, 30, 30, 0, 0),
                                   values=karta.raster.misc.peaks(50))
-        newgrid = proto.resize(620, 650, 25, 22)
+        newgrid = proto.resize([620, 650, 1370, 1310])
         self.assertEqual(newgrid.transform, (620.0, 650.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid.values == proto.values[5:27,4:29]))
         return
@@ -169,7 +169,7 @@ class RegularGridTests(unittest.TestCase):
     def test_resize_larger(self):
         proto = karta.RegularGrid((500, 500, 30, 30, 0, 0),
                                   values=karta.raster.misc.peaks(50))
-        newgrid = proto.resize(380, 320, 60, 62)
+        newgrid = proto.resize([380, 320, 380+30*60, 320+30*62])
         self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid.values[6:56,4:54] == proto.values))
         return
