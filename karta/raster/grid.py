@@ -6,6 +6,7 @@ import numbers
 import warnings
 import numpy as np
 from . import _gtiff
+from . import misc
 from .. import errors
 from ..crs import Cartesian
 
@@ -921,6 +922,24 @@ def get_nodata(T):
         return np.nan
     else:
         raise ValueError("No default NODATA value for type {0}".format(T))
+
+def hillshade(grid, **kw):
+    """ Return a hill-shaded version of *grid*.
+
+    Arguments
+    ---------
+    grid: RegularGrid instance
+    bearing: float, bearing of light source (default 330.0)
+    azimuth: float, azimuth of light source (default 60.0)
+    
+    Note: Currently assumes orthogonal coordinates.
+    """
+    hs = RegularGrid(grid.transform,
+                     values=misc.hillshade(grid.values, res=grid.resolution, **kw),
+                     crs=grid.crs)
+    q = np.percentile(hs.values[~np.isnan(hs.values)], [2, 98])
+    np.clip(hs.values, q[0], q[1], out=hs.values)
+    return hs
 
 def mask_poly(xpoly, ypoly, nx, ny, transform):
     """ Create a grid mask based on a clockwise-oriented polygon.

@@ -145,7 +145,7 @@ def hillshade(D, res=(30.0, 30.0), bearing=330.0, azimuth=60.0):
                   np.sin(azimuth*pi/180.0)))
     smat = s*np.ones([wunit.shape[0], wunit.shape[1], 3])
     dprod = (wunit*smat).sum(axis=-1)
-    return dprod.T
+    return dprod
 
 def viewshed(D, i, j, r=-1):
     """ Return the viewshed on *D* at (i,j).
