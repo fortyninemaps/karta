@@ -208,14 +208,17 @@ class Point(Geometry):
         else:
             return math.sqrt(flat_dist**2. + (self.z-other.z)**2.)
 
-    def shift(self, shift_vector):
-        """ Shift point by the amount given by a vector. Operation occurs
-        in-place """
+    def shift(self, shift_vector, inplace=False):
+        """ Shift point by the amount given by a vector. """
         if len(shift_vector) != self.rank:
             raise GGeoError('Shift vector length must equal geometry rank.')
 
-        self.vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
-        return self
+        if inplace:
+            self.vertex = [a+b for a,b in zip(self.vertex, shift_vector)]
+            return self
+        else:
+            vertex = [a+b for a,b in zip(self.vertex, shift_vector)]
+            return Point(vertex, data=self.data, properties=self.properties, crs=self.crs)
 
     def as_geojson(self, indent=2, **kwargs):
         """ Write data as a GeoJSON string to a file-like object `f`.
@@ -472,9 +475,8 @@ class MultipointBase(Geometry):
             x, y = _reproject((x,y), self.crs, crs)
         return x, y
 
-    def shift(self, shift_vector):
-        """ Shift feature by the amount given by a vector. Operation
-        occurs in-place """
+    def shift(self, shift_vector, inplace=False):
+        """ Shift feature by the amount given by a vector. """
         if len(shift_vector) != self.rank:
             raise GGeoError('Shift vector length must equal geometry rank.')
 
@@ -483,10 +485,14 @@ class MultipointBase(Geometry):
         elif self.rank == 3:
             f = lambda pt: (pt[0] + shift_vector[0], pt[1] + shift_vector[1],
                             pt[2] + shift_vector[2])
-        self.vertices = list(map(f, self.vertices))
-        self.quadtree = None
-        self._cache = {}
-        return self
+        if inplace:
+            self.vertices = list(map(f, self.vertices))
+            self.quadtree = None
+            self._cache = {}
+            return self
+        else:
+            vertices = list(map(f, self.vertices))
+            return type(self)(vertices, data=self.data, properties=self.properties, crs=self.crs)
 
     def _matmult(self, A, x):
         """ Return Ax=b """

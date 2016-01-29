@@ -95,11 +95,18 @@ class TestGeometry(unittest.TestCase):
         self.assertAlmostEqual(point.azimuth(other), 45.036973, places=6)
         return
 
+    def test_point_shift_inplace(self):
+        point = Point((-3.0, 5.0, 2.5), data={"color":(43,67,10)},
+                      properties="apple")
+        point.shift((4.0, -3.0, 0.5), inplace=True)
+        self.assertEqual(self.point, point)
+        return
+
     def test_point_shift(self):
         point = Point((-3.0, 5.0, 2.5), data={"color":(43,67,10)},
                       properties="apple")
-        point.shift((4.0, -3.0, 0.5))
-        self.assertEqual(self.point, point)
+        point_shifted = point.shift((4.0, -3.0, 0.5))
+        self.assertEqual(self.point, point_shifted)
         return
 
     def test_nearest_to(self):
@@ -117,11 +124,17 @@ class TestGeometry(unittest.TestCase):
         Line(zip(x, y))
         return
 
+    def test_multipoint_shift_inplace(self):
+        vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
+        mp = Multipoint(vertices, data=self.data)
+        mp.shift((1, -2, 0.5), inplace=True)
+        self.assertEqual(mp, self.mp)
+
     def test_multipoint_shift(self):
         vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
         mp = Multipoint(vertices, data=self.data)
-        mp.shift((1, -2, 0.5))
-        self.assertEqual(mp, self.mp)
+        mp_shifted = mp.shift((1, -2, 0.5))
+        self.assertEqual(mp_shifted, self.mp)
         return
 
     def test_multipoint_subset(self):
