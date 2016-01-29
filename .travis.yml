@@ -19,7 +19,7 @@ before_install:
   - "conda info -a"
 
 install:
-  - "conda create --yes -n test-environment python=$TRAVIS_PYTHON_VERSION numpy pip gdal"
+  - "conda create --yes -n test-environment python=$TRAVIS_PYTHON_VERSION numpy pip gdal==2 libgdal==2"
   - "source activate test-environment"
     #- "pip install -U setuptools"
   - "pip install coveralls"
