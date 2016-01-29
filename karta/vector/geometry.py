@@ -87,8 +87,7 @@ class Point(Geometry):
     """
     __slots__ = ["vertex", "data", "rank"]
 
-    def __init__(self, coords, data=None, properties=None, copy_metadata=False,
-                 **kwargs):
+    def __init__(self, coords, data=None, properties=None, **kwargs):
         try:
             self.rank = 2 if len(coords) == 2 else 3
         except TypeError:
@@ -194,7 +193,7 @@ class Point(Geometry):
                                         radians=radians)
         x, y = self.crs.project(xg2, yg2)
         return Point((x, y), properties=self.properties, data=self.data,
-                     crs=self.crs, copy_metadata=False)
+                     crs=self.crs)
 
     def distance(self, other):
         """ Returns a distance to another Point. If the coordinate system is
@@ -264,8 +263,7 @@ class MultipointBase(Geometry):
 
     __slots__ = ["vertices", "data", "rank", "quadtree"]
 
-    def __init__(self, vertices, data=None, properties=None, copy_metadata=False,
-                 **kwargs):
+    def __init__(self, vertices, data=None, properties=None, **kwargs):
         """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
         """
@@ -539,7 +537,7 @@ class MultipointBase(Geometry):
         else:
             data = None
         subset = type(self)(vertices, data=data, properties=self.properties,
-                            crs=self.crs, copy_metadata=False)
+                            crs=self.crs)
         return subset
 
     def flat_distances_to(self, pt):
@@ -719,14 +717,12 @@ class Multipoint(MultipointBase):
 
     __slots__ = []
 
-    def __init__(self, vertices, data=None, properties=None, copy_metadata=False,
-                 **kwargs):
+    def __init__(self, vertices, data=None, properties=None, **kwargs):
         """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
         """
         super(Multipoint, self).__init__(vertices, data=data,
                                                    properties=properties,
-                                                   copy_metadata=copy_metadata,
                                                    **kwargs)
         self._geotype = "Multipoint"
         return
@@ -982,14 +978,12 @@ class Line(ConnectedMultipoint):
     """
     __slots__ = []
 
-    def __init__(self, vertices, data=None, properties=None, copy_metadata=False,
-                 **kwargs):
+    def __init__(self, vertices, data=None, properties=None, **kwargs):
         """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
         """
         super(ConnectedMultipoint, self).__init__(vertices, data=data,
                                                   properties=properties,
-                                                  copy_metadata=copy_metadata,
                                                   **kwargs)
         self._geotype = "Line"
         return
@@ -1078,7 +1072,7 @@ class Line(ConnectedMultipoint):
     def to_polygon(self):
         """ Returns a polygon. """
         return Polygon(self.vertices, data=self.data, properties=self.properties,
-                       crs=self.crs, copy_metadata=True)
+                       crs=self.crs)
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
@@ -1140,7 +1134,7 @@ class Polygon(ConnectedMultipoint):
         else:
             data = Metadata([self.data[i] for i in idxs], fields=self.data.fields)
         subset = Line(vertices, data=data, properties=self.properties,
-                      crs=self.crs, copy_metadata=False)
+                      crs=self.crs)
         return subset
 
     def isclockwise(self):
@@ -1281,8 +1275,7 @@ class Polygon(ConnectedMultipoint):
     def to_line(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
         v = self.vertices + self.vertices[0]
-        return Line(v, properties=self.properties, data=self.data,
-                    crs=self.crs, copy_metadata=True)
+        return Line(v, properties=self.properties, data=self.data, crs=self.crs)
 
     def to_shapefile(self, fstem):
         """ Save line to a shapefile """
@@ -1321,7 +1314,7 @@ def points_to_multipoint(points):
 
     vertices = [pt.vertex for pt in points]
 
-    return Multipoint(vertices, data=ptdata, crs=crs, copy_metadata=True)
+    return Multipoint(vertices, data=ptdata, crs=crs)
 
 def affine_matrix(mpa, mpb):
     """ Compute the affine transformation matrix that projects Multipoint mpa
