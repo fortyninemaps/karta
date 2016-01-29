@@ -19,9 +19,8 @@ before_install:
   - "conda info -a"
 
 install:
-  - "conda create --yes -n test-environment python=$TRAVIS_PYTHON_VERSION numpy pip"
+  - "conda create --yes -n test-environment python=$TRAVIS_PYTHON_VERSION numpy pip gdal==2 libgdal==2"
   - "source activate test-environment"
-  - "conda install --yes gdal"
     #- "pip install -U setuptools"
   - "pip install coveralls"
   - "pip install Cython"
