@@ -216,6 +216,7 @@ def read(fnm, band, in_memory):
 
         max_dtype = 0
         rasterband = dataset.GetRasterBand(band)
+        hdr["nodata"] = rasterband.GetNoDataValue()
         nx = rasterband.XSize
         ny = rasterband.YSize
         if rasterband.DataType > max_dtype:
