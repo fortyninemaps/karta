@@ -381,11 +381,12 @@ NSIDCNorth = Proj4CRS(proj="+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_
 NSIDCSouth = Proj4CRS(proj="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs",
         spheroid="+ellps=WGS84", name="NSIDC (South)")
 
-LambertEqualArea = Proj4CRS(proj="+proj=laea +lat_0=0 +lon_0=0 +x_0=0 +y_0=0",
+LambertEqualArea = Proj4CRS(proj="+proj=laea +lat_0=0 +lon_0=0 +x_0=0 "
+                                     "+y_0=0 +datum=WGS84",
         spheroid="+ellps=WGS84", name="Lambert Equal Area")
 
 GallPetersEqualArea = Proj4CRS("+proj=cea +lon_0=0 +lat_ts=45 +x_0=0 +y_0=0 "
-                               "+ellps=WGS84 +units=m +no_defs",
+                                   "+datum=WGS84 +units=m +no_defs",
         spheroid="+ellps=WGS84", name="Gall Peters Equal Area")
 
 WebMercator = Proj4CRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 "
