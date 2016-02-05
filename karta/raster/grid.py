@@ -394,19 +394,31 @@ class RegularGrid(Grid):
         gridnew = RegularGrid(Tnew, values=valnew, crs=self.crs)
         return gridnew
 
-    def mask_by_poly(self, poly, inplace=False):
+    def mask_by_poly(self, polys, inplace=False):
         """ Return a grid with all elements outside the bounds of a polygon
         masked by nodata """
-        if not poly.isclockwise():
-            vertices = poly.get_vertices(self.crs)[::-1]
-        else:
-            vertices = poly.get_vertices(self.crs)
-        x = [a[0] for a in vertices]
-        y = [a[1] for a in vertices]
 
-        ny, nx = self.size
+        if hasattr(polys, "_geotype"):
+            polys = [polys]
 
-        msk = mask_poly(x, y, nx, ny, self.transform)
+        msk = None
+        for poly in polys:
+
+            if not poly.isclockwise():
+                vertices = poly.get_vertices(self.crs)[::-1]
+            else:
+                vertices = poly.get_vertices(self.crs)
+            x = [a[0] for a in vertices]
+            y = [a[1] for a in vertices]
+
+            ny, nx = self.size
+
+            _msk = mask_poly(x, y, nx, ny, self.transform)
+
+            if msk is None:
+                msk = _msk
+            else:
+                msk = (msk | _msk)
 
         if inplace:
             self.values[~msk] = self.nodata
