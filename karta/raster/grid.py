@@ -899,7 +899,8 @@ def merge(grids, weights=None):
     ny = int(round((ymax-ymin) / T[3]))
 
     # Allocate data array and copy each grid's data
-    values = np.zeros([ny, nx], dtype=grids[0].values.dtype)
+    typ = grids[0].values.dtype.type
+    values = np.zeros([ny, nx], dtype=typ)
     counts = np.zeros([ny, nx], dtype=np.float32)
     for grid, w in zip(grids, normalizedweights):
         _xmin, _xmax, _ymin, _ymax = grid.get_extent(reference='edge')
@@ -909,7 +910,7 @@ def merge(grids, weights=None):
 
         mask = grid.data_mask
         counts[offy:offy+_ny,offx:offx+_nx][mask] += w
-        values[offy:offy+_ny,offx:offx+_nx][mask] += grid.values[mask]*w
+        values[offy:offy+_ny,offx:offx+_nx][mask] += typ(grid.values[mask]*w)
         del mask
 
     validcountmask = (counts!=0.0)
