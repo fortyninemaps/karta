@@ -54,7 +54,7 @@ def read_gtiff(fnm, band=1, in_memory=True):
         crs = GeographicalCRS(geodstr, name="Imported GTiff")
     else:
         crs = Proj4CRS(hdr["srs"]["proj4"], geodstr, name="Imported GTiff")
-    return RegularGrid(t, values=arr, crs=crs)
+    return RegularGrid(t, values=arr, crs=crs, nodata_value=hdr["nodata"])
 
 # Aliases for backwards compat.
 gtiffread = read_gtiff
