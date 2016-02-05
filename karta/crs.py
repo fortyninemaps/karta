@@ -501,11 +501,12 @@ NSIDCSouth = ProjectedCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 "
                                "+no_defs",
         spheroid="+ellps=WGS84", name="NSIDC (South)")
 
-LambertEqualArea = ProjectedCRS(proj="+proj=laea +lat_0=0 +lon_0=0 +x_0=0 +y_0=0",
+LambertEqualArea = ProjectedCRS(proj="+proj=laea +lat_0=0 +lon_0=0 +x_0=0 "
+                                     "+y_0=0 +datum=WGS84",
         spheroid="+ellps=WGS84", name="Lambert Equal Area")
 
 GallPetersEqualArea = ProjectedCRS("+proj=cea +lon_0=0 +lat_ts=45 +x_0=0 +y_0=0 "
-                                   "+ellps=WGS84 +units=m +no_defs",
+                                   "+datum=WGS84 +units=m +no_defs",
         spheroid="+ellps=WGS84", name="Gall Peters Equal Area")
 
 WebMercator = ProjectedCRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 "
