@@ -241,7 +241,7 @@ def srs_from_crs(crs):
     srs.ImportFromProj4(proj4)
     return srs
 
-def write(fnm, grid, compress=None, **kw):
+def write(fnm, grid, compress=None, tiled=False, **kw):
     """ Write a grid-like object to *fnm* """
     if not HASGDAL:
         raise errors.MissingDependencyError("requires osgeo.gdal")
@@ -255,6 +255,12 @@ def write(fnm, grid, compress=None, **kw):
         co.append("COMPRESS=DEFLATE")
     elif compress == "LZMA":
         co.append("COMPRESS=LZMA")
+
+    if tiled:
+        co.append("TILED=YES")
+
+    for k, v in kw.items():
+        co.append("{0}={1}".format(k,v))
 
     driver = osgeo.gdal.GetDriverByName("GTiff")
     ny, nx = grid.size

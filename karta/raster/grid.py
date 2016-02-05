@@ -691,7 +691,7 @@ class RegularGrid(Grid):
         Xc, Yc = self.center_coords()
         return WarpedGrid(Xc, Yc, self.values.copy(), crs=self.crs)
 
-    def to_gtiff(self, fnm, compress="PACKBITS", **kw):
+    def to_gtiff(self, fnm, compress="PACKBITS", tiled=False, **kw):
         """ Write data to a GeoTiff file using GDAL.
         
         Parameters
