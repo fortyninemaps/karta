@@ -382,9 +382,11 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_poly_extent_foreign_crs(self):
-        x, y = zip(*self.poly.get_vertices(crs=NSIDCNorth))
-        self.assertEqual(self.poly.get_extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
-        self.assertEqual(self.poly3.get_extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)], crs=LonLatWGS84)
+        poly3 = Polygon([(0.0, 8.0, 0.5), (0.0, 5.0, 0.8), (6.0, 1.0, 0.6)], crs=LonLatWGS84)
+        x, y = zip(*poly.get_vertices(crs=NSIDCNorth))
+        self.assertEqual(poly.get_extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
+        self.assertEqual(poly3.get_extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
         return
 
     def test_poly_length(self):

@@ -1292,7 +1292,7 @@ class Polygon(ConnectedMultipoint):
 def _reproject(xy, crs1, crs2):
     """ Reproject a coordinate (or 2-tuple of x and y vectors) from *crs1* to
     *crs2*. """
-    return crs2.project(*crs1.project(*xy, inverse=True))
+    return crs1.transform(crs2, *xy)
 
 def points_to_multipoint(points):
     """ Merge *points* into a Multipoint instance. Point properties are stored

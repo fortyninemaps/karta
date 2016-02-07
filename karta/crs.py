@@ -210,6 +210,10 @@ class CartesianCRS(CRS):
             baz = baz * 180 / np.pi
         return az, baz, dist
 
+    @staticmethod
+    def transform(*args):
+        raise NotImplementedError("Cartesian CRS cannot be accurately transformed")
+
 class GeographicalCRS(CRS):
     """ Reference systems with longitude-latitude (θ, φ) coordinates.
 
@@ -244,6 +248,9 @@ class GeographicalCRS(CRS):
         az = (az + 180) % 360 - 180
         baz = (baz + 180) % 360 - 180
         return az, baz, dist
+
+    def transform(self, other, x, y):
+        return other.project(*self.project(x, y, inverse=True))
 
 class ProjectedCRS(CRS):
     """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
