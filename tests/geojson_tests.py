@@ -161,6 +161,13 @@ class TestGeoJSON(unittest.TestCase):
         self.assertEqual(names, features[0].data.getfield("n"))
         return
 
+    def test_read_with_crs(self):
+        path = os.path.join(TESTDATA, "geojson_input/us-capitols.json")
+        features = vector.read_geojson(path, crs=LonLatWGS84)
+        for f in features:
+            self.assertEqual(f.crs, LonLatWGS84)
+        return
+
 class TestGeoJSONOutput(unittest.TestCase):
 
     def verifyJson(self, json1, json2):

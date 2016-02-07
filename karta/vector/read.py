@@ -45,7 +45,7 @@ def _from_shape(d, properties):
             raise NotImplementedError("Geometry type {0} not "
                                       "implemented".format(d["type"]))
 
-def read_geojson(f):
+def read_geojson(f, crs=None):
     """ Read a GeoJSON file object and return a list of geometries """
 
     def convert_crs(crsdict):
@@ -60,7 +60,7 @@ def read_geojson(f):
 
     def convert(geom, **kw):
         if isinstance(geom, geojson.Feature):
-            res = [convert_feature(geom)]
+            res = [convert_feature(geom, **kw)]
         elif isinstance(geom, geojson.FeatureCollection):
             res = [convert_feature(f, **kw) for f in geom.features]
         elif isinstance(geom, geojson.GeometryCollection):
@@ -69,8 +69,9 @@ def read_geojson(f):
             res = convert_geometry(geom, **kw)
         return res
 
-    def convert_geometry(geom, **kw):
-        crs = convert_crs(geom.crs)
+    def convert_geometry(geom, crs=None, **kw):
+        if crs is None:
+            crs = convert_crs(geom.crs)
         if isinstance(geom, geojson.Point):
             return geometry.Point(geom.coordinates, crs=crs, **kw)
         elif isinstance(geom, geojson.MultiPoint):
@@ -101,7 +102,7 @@ def read_geojson(f):
 
     R = geojson.GeoJSONReader(f)
     geom = R.parse()
-    return convert(geom)
+    return convert(geom, crs=crs)
 
 def _geojson_properties2karta(properties, n):
     """ Takes a dictionary (derived from a GeoJSON properties object) and
