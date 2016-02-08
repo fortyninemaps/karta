@@ -286,28 +286,26 @@ class MultipointBase(Geometry):
                 if len(pts) != 1 and any(rank != pt.rank for pt in pts[1:]):
                     raise GInitError("Input must have consistent rank")
 
-                # Data
-                if pts[0].data is not None:
-                    if all(pt.data._fields == pts[0].data._fields for pt in pts[1:]):
-                        if data is not None:
-                            raise GInitError("Data kweyword disallowed when constructing from points")
-                        d = [pt.data._data[0] for pt in pts]
-                        self.data = Metadata(d, fields=pts[0].data.fields)
-                    else:
-                        raise GInitError("Point have inconsistent data attributes")
-                elif data is not None:
-                    self.data = Metadata(data)
-                else:
-                    self.data = None
-
                 self.vertices = [pt.vertex for pt in pts]
                 self.rank = rank
                 self.crs = crs
 
+                # Data
+                if data is not None:
+                    raise ValueError("data kweyword disallowed when "
+                                     "constructing from points")
+                keys = set.intersection(
+                            *map(lambda pt: set(pt.properties.keys()), pts))
+                if len(keys) != 0:
+                    d = {}
+                    for k in keys:
+                        d[k] = [pt.properties[k] for pt in pts]
+                    self.data = Metadata(d)
+                else:
+                    self.data = None
+
             else:
-
                 # Construct from a list of positions (tuples)
-
                 self.rank = len(vertices[0])
 
                 if not 2 <= self.rank <= 3:
