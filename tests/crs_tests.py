@@ -39,8 +39,8 @@ class TestCRS(unittest.TestCase):
 
         c1 = crs.LonLatWGS84
         wkt = c1.get_wkt()
-        self.assertTrue('GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6378137,298.25722' in wkt)
-        self.assertTrue('PRIMEM["Greenwich",0],UNIT["degree",0.01745329' in wkt)
+        self.assertTrue('GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.25722' in wkt)
+        self.assertTrue('PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]]' in wkt)
 
         c2 = crs.NSIDCNorth
         wkt = c2.get_wkt()
@@ -335,6 +335,10 @@ class TestCRS(unittest.TestCase):
                 geodesy.fzero_brent, 0.2, 2, lambda x: math.sin(x)-x, 1e-12)
         return
 
+    def test_datum_transform(self):
+        lng, lat = crs.LonLatNAD27.transform(crs.LonLatNAD83, -107.5, 43.14)
+        self.assertAlmostEqual(lng, -107.50062798611111)
+        self.assertAlmostEqual(lat, 43.13996053333333)
 
 if __name__ == "__main__":
     unittest.main()

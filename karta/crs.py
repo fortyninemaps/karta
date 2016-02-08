@@ -219,13 +219,14 @@ class GeographicalCRS(CRS):
 
     `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
     """
-    def __init__(self, spheroid, name):
+    def __init__(self, spheroid, name, datum=""):
+        self._proj = pyproj.Proj("+proj=lonlat {0} {1}".format(spheroid, datum).strip())
         self._geod = pyproj.Geod(spheroid)
 
         self.name = name
         ela, elb, elrf, ename = ELLIPSOID_DATA[spheroid.split("=")[1]]
         self.ellipsoid = Ellipsoid(ename, ela, b=elb, rf=elrf)
-        self.ref_proj4 = "+proj=lonlat %s" % self._geod.initstring
+        self.ref_proj4 = "+proj=lonlat {0} {1}".format(self._geod.initstring, datum).strip()
         return
 
     @staticmethod
@@ -250,7 +251,7 @@ class GeographicalCRS(CRS):
         return az, baz, dist
 
     def transform(self, other, x, y):
-        return other.project(*self.project(x, y, inverse=True))
+        return pyproj.transform(self._proj, other._proj, x, y)
 
 class ProjectedCRS(CRS):
     """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
@@ -484,9 +485,9 @@ _LonLatNAD83 = EllipsoidalCRS(6378137.0, 6356752.314140)
 _LonLatNAD27 = EllipsoidalCRS(6378206.4, 6356583.8)
 
 SphericalEarth = GeographicalCRS("+ellps=sphere", "Normal Sphere")
-LonLatWGS84 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)")
-LonLatNAD27 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)")
-LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)")
+LonLatWGS84 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)", datum="+datum=WGS84")
+LonLatNAD27 = GeographicalCRS("+ellps=clrk66", "NAD27 (Geographical)", datum="+datum=NAD27")
+LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)", datum="+datum=NAD83")
 
 UPSNorth = ProjectedCRS(proj="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 "
                              "+k=0.994 +x_0=2000000 +y_0=2000000 +units=m "
