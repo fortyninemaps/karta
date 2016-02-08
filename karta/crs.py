@@ -219,14 +219,11 @@ class GeographicalCRS(CRS):
 
     `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
     """
-    def __init__(self, spheroid, name, datum=""):
-        self._proj = pyproj.Proj("+proj=lonlat {0} {1}".format(spheroid, datum).strip())
+    def __init__(self, spheroid, name, datum="+datum=WGS84"):
+        self.ref_proj4 = "+proj=lonlat {0} {1}".format(spheroid, datum).strip()
+        self._proj = pyproj.Proj(self.ref_proj4)
         self._geod = pyproj.Geod(spheroid)
-
         self.name = name
-        ela, elb, elrf, ename = ELLIPSOID_DATA[spheroid.split("=")[1]]
-        self.ellipsoid = Ellipsoid(ename, ela, b=elb, rf=elrf)
-        self.ref_proj4 = "+proj=lonlat {0} {1}".format(self._geod.initstring, datum).strip()
         return
 
     @staticmethod
