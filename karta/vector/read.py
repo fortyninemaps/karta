@@ -7,9 +7,20 @@ import shapefile
 from . import geometry
 from . import geojson
 from . import xyfile
+from . import shp
 from .metadata import Metadata
-from ..crs import LonLatWGS84, HASOSR, crs_from_wkt
+from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84, HASOSR, crs_from_wkt
+# from .._crs_osgeo import SRS_from_WKT
 from .. import errors
+
+try:
+    import osgeo
+    from osgeo import ogr
+    HAS_OSGEO = True
+except ImportError:
+    HAS_OSGEO = False
+
+### GeoInterface functions ###
 
 def from_shape(obj, properties=None):
     """ Read a __geo_interface__ dictionary and return an appropriate karta
@@ -44,6 +55,8 @@ def _from_shape(d, properties):
         else:
             raise NotImplementedError("Geometry type {0} not "
                                       "implemented".format(d["type"]))
+
+### GeoJSON functions ###
 
 def read_geojson(f, crs=None):
     """ Read a GeoJSON file object and return a list of geometries """
@@ -139,6 +152,8 @@ def read_xyfile(f, delimiter='', header_rows=0, astype=geometry.Multipoint, coor
 def get_filenames(stem, check=False):
     """ Given a filename basename, return the associated shapefile paths. If
     `check` is True, ensure that the files exist."""
+    if stem.endswith(".shp"):
+        stem = stem[:-4]
     shp = stem + '.shp'
     shx = stem + '.shx'
     dbf = stem + '.dbf'
@@ -148,137 +163,173 @@ def get_filenames(stem, check=False):
                 raise Exception('missing {0}'.format(fnm))
     return {'shp':shp, 'shx':shx, 'dbf':dbf}
 
-def open_file_dict(fdict):
-    """ Open each file in a dictionary of filenames and return a matching
-    dictionary of the file objects. """
-    files = {}
-    for ext in fdict.keys():
-        files[ext] = open(fdict[ext], 'rb')
-    return files
+def ogr_read_shapefile(stem):
+    fnms = get_filenames(stem)
+    driver = ogr.GetDriverByName("ESRI Shapefile")
+    ds = driver.Open(fnms["shp"], 0)
+    layer = ds.GetLayer()
 
-dBase_type_dict = {"I": int,
-                   "O": float,
-                   "C": str,
-                   "@": lambda a: a,    # Temporary
-                   "D": lambda a: a,
-                   "L": bool}
-
-def recordsasdata(reader):
-    """ Interpret shapefile records as a Metadata object """
-    d = {}
-    idfunc = lambda a: a
     try:
-        records = [rec for rec in reader.records()]
-        for (i,k) in enumerate(reader.fields[1:]):
-            f = dBase_type_dict.get(k[1], idfunc)
-            d[k[0]] = [f(rec[i]) for rec in records]
-    except ValueError:
-        # bug in QGIS/pyshp, fixed in dev version of pyshp but not on PyPI yet
-        # see pyshp commit d72723c9e38db8e859b79d95a65c00af1c2ba8ba
-        sys.stderr.write("Warning: failed to read records (see "
-                         "https://github.com/GeospatialPython/pyshp/pull/16)\n")
-        for (i,k) in enumerate(reader.fields[1:]):
-            f = dBase_type_dict.get(k[1], idfunc)
-            d[k[0]] = [None for i in range(reader.numRecords)]
-    return Metadata(d)
-
-def recordsasproperties(reader):
-    """ Interpret shapefile records as a list of properties dictionaries """
-    proplist = []
-    keys = reader.fields[1:]
-    idfunc = lambda a: a
-    try:
-        for (i,rec) in enumerate(reader.records()):
-            properties = {}
-            for (k,v) in zip(keys, rec):
-                f = dBase_type_dict.get(k[1], idfunc)
-                properties[k[0]] = f(v)
-            proplist.append(properties)
-    except ValueError:
-        # bug in QGIS/pyshp, fixed in dev version of pyshp but not on PyPI yet
-        # see pyshp commit d72723c9e38db8e859b79d95a65c00af1c2ba8ba
-        sys.stderr.write("Warning: failed to read records (see "
-                         "https://github.com/GeospatialPython/pyshp/pull/16)\n")
-        proplist = [None for i in range(reader.numRecords)]
-    return proplist
-
-def crs_from_prj(prjfnm):
-    """ Read a *.prj file and return a matching CRS instance """
-    if not HASOSR:
-        raise errors.MissingDependencyError("Parsing prj files is performed by osgeo.osr, which is not installed.")
-
-    with open(prjfnm, "r") as f:
-        wkt_str = f.read()
-    return crs_from_wkt(wkt_str)
-
-def read_shapefile(name, crs=None):
-    """ Read a shapefile given `name`, which may include or exclude the .shp
-    extension. The CRS must be specified, otherwise it is assumed to be
-    cartesian. """
-    if os.path.splitext(name)[1] == ".shp":
-        name = name[:-4]
-    fnms = get_filenames(name, check=True)
-
-    # Construct a CRS instance
-    if crs is None:
-        prjfnm = name + ".prj"
-        qpjfnm = name + ".qpj"
-
-        if os.path.exists(prjfnm):
-            try:
-                crs = crs_from_prj(prjfnm)
-            except errors.CRSError as e:
-                # attempt to recover with a warning
-                sys.stderr.write(str(e))
-                crs = LonLatWGS84
-
-        elif os.path.exists(qpjfnm):
-            raise NotImplementedError("Currently support for *.QPJ projection data is missing. Specify CRS explicitly with the 'crs' keyword")
-
-        else:
-            # Make a guess -- however it seems this could be harmful
-            crs = LonLatWGS84
-
-    # Read shapefile data
-    try:
-        files = open_file_dict(fnms)
-        reader = shapefile.Reader(shp=files['shp'], shx=files['shx'],
-                                  dbf=files['dbf'])
-
-        if reader.shapeType in (1, 11, 21):       # Points
-            verts = [shp.points[0] for shp in reader.shapes()]
-            d = recordsasdata(reader)
-            geoms = [geometry.Multipoint(verts, data=d, crs=crs)]
-
-        elif reader.shapeType in (3, 13, 23):     # Lines
-            plist = recordsasproperties(reader)
-            geoms = []
-            for (shp,prop) in zip(reader.shapes(), plist):
-                parts = list(shp.parts)
-                parts.append(len(shp.points))
-                for (i0, i1) in zip(parts[:-1], parts[1:]):
-                    points = shp.points[i0:i1]
-                    geoms.append(geometry.Line(points, properties=prop, crs=crs))
-
-        elif reader.shapeType in (5, 15, 25):     # Polygon
-            plist = recordsasproperties(reader)
-            geoms = []
-            for (shp,prop) in zip(reader.shapes(), plist):
-                parts = list(shp.parts)
-                parts.append(len(shp.points))
-                for (i0, i1) in zip(parts[:-1], parts[1:]):
-                    # Shapefile polygons are closed explicitly, while karta
-                    # polygons are closed implicitly
-                    points = shp.points[i0:i1-1]
-                    geoms.append(geometry.Polygon(points, properties=prop, crs=crs))
-
-        else:
-            raise NotImplementedError("Shapefile shape type {0} not "
-                "implemented".format(reader.shapeType))
-
+        geoms = [_from_shape(gi, p)
+                 for (gi,p) in zip(shp.ogr_read_geometries(layer),
+                                   shp.ogr_read_attributes(layer))]
+        crs = ogr_parse_srs(layer)
     finally:
-        for f in files.values():
-            f.close()
+        del ds, driver
+
+    for g in geoms:
+        g.crs = crs
 
     return geoms
+
+def ogr_parse_srs(lyr):
+    srs = lyr.GetSpatialRef()
+    if srs is None:
+        crs = LonLatWGS84
+    else:
+        name = srs.GetAttrValue('PROJCS')
+        spheroid = "+a={a} +f={f}".format(a=srs.GetSemiMajor(),
+                                         f=1.0/srs.GetInvFlattening())
+        if srs.IsGeographic():
+            crs = GeographicalCRS(spheroid, name)
+        else:
+            crs = ProjectedCRS(srs.ExportToProj4(), spheroid, name=name)
+    return crs
+
+# convenience binding
+read_shapefile = ogr_read_shapefile
+
+# def open_file_dict(fdict):
+#     """ Open each file in a dictionary of filenames and return a matching
+#     dictionary of the file objects. """
+#     files = {}
+#     for ext in fdict.keys():
+#         files[ext] = open(fdict[ext], 'rb')
+#     return files
+# 
+# dBase_type_dict = {"I": int,
+#                    "O": float,
+#                    "C": str,
+#                    "@": lambda a: a,    # Temporary
+#                    "D": lambda a: a,
+#                    "L": bool}
+# 
+# def recordsasdata(reader):
+#     """ Interpret shapefile records as a Metadata object """
+#     d = {}
+#     idfunc = lambda a: a
+#     try:
+#         records = [rec for rec in reader.records()]
+#         for (i,k) in enumerate(reader.fields[1:]):
+#             f = dBase_type_dict.get(k[1], idfunc)
+#             d[k[0]] = [f(rec[i]) for rec in records]
+#     except ValueError:
+#         # bug in QGIS/pyshp, fixed in dev version of pyshp but not on PyPI yet
+#         # see pyshp commit d72723c9e38db8e859b79d95a65c00af1c2ba8ba
+#         sys.stderr.write("Warning: failed to read records (see "
+#                          "https://github.com/GeospatialPython/pyshp/pull/16)\n")
+#         for (i,k) in enumerate(reader.fields[1:]):
+#             f = dBase_type_dict.get(k[1], idfunc)
+#             d[k[0]] = [None for i in range(reader.numRecords)]
+#     return Metadata(d)
+# 
+# def recordsasproperties(reader):
+#     """ Interpret shapefile records as a list of properties dictionaries """
+#     proplist = []
+#     keys = reader.fields[1:]
+#     idfunc = lambda a: a
+#     try:
+#         for (i,rec) in enumerate(reader.records()):
+#             properties = {}
+#             for (k,v) in zip(keys, rec):
+#                 f = dBase_type_dict.get(k[1], idfunc)
+#                 properties[k[0]] = f(v)
+#             proplist.append(properties)
+#     except ValueError:
+#         # bug in QGIS/pyshp, fixed in dev version of pyshp but not on PyPI yet
+#         # see pyshp commit d72723c9e38db8e859b79d95a65c00af1c2ba8ba
+#         sys.stderr.write("Warning: failed to read records (see "
+#                          "https://github.com/GeospatialPython/pyshp/pull/16)\n")
+#         proplist = [None for i in range(reader.numRecords)]
+#     return proplist
+# 
+# def crs_from_prj(prjfnm):
+#     """ Read a *.prj file and return a matching CRS instance """
+#     if not HASOSR:
+#         raise errors.MissingDependencyError("Parsing prj files is performed by osgeo.osr, which is not installed.")
+# 
+#     with open(prjfnm, "r") as f:
+#         wkt_str = f.read()
+#     return crs_from_wkt(wkt_str)
+# 
+# def read_shapefile(name, crs=None):
+#     """ Read a shapefile given `name`, which may include or exclude the .shp
+#     extension. The CRS must be specified, otherwise it is assumed to be
+#     cartesian. """
+#     if os.path.splitext(name)[1] == ".shp":
+#         name = name[:-4]
+#     fnms = get_filenames(name, check=True)
+# 
+#     # Construct a CRS instance
+#     if crs is None:
+#         prjfnm = name + ".prj"
+#         qpjfnm = name + ".qpj"
+# 
+#         if os.path.exists(prjfnm):
+#             try:
+#                 crs = crs_from_prj(prjfnm)
+#             except errors.CRSError as e:
+#                 # attempt to recover with a warning
+#                 sys.stderr.write(str(e))
+#                 crs = LonLatWGS84
+# 
+#         elif os.path.exists(qpjfnm):
+#             raise NotImplementedError("Currently support for *.QPJ projection data is missing. Specify CRS explicitly with the 'crs' keyword")
+# 
+#         else:
+#             # Make a guess -- however it seems this could be harmful
+#             crs = LonLatWGS84
+# 
+#     # Read shapefile data
+#     try:
+#         files = open_file_dict(fnms)
+#         reader = shapefile.Reader(shp=files['shp'], shx=files['shx'],
+#                                   dbf=files['dbf'])
+# 
+#         if reader.shapeType in (1, 11, 21):       # Points
+#             verts = [shp.points[0] for shp in reader.shapes()]
+#             d = recordsasdata(reader)
+#             geoms = [geometry.Multipoint(verts, data=d, crs=crs)]
+# 
+#         elif reader.shapeType in (3, 13, 23):     # Lines
+#             plist = recordsasproperties(reader)
+#             geoms = []
+#             for (shp,prop) in zip(reader.shapes(), plist):
+#                 parts = list(shp.parts)
+#                 parts.append(len(shp.points))
+#                 for (i0, i1) in zip(parts[:-1], parts[1:]):
+#                     points = shp.points[i0:i1]
+#                     geoms.append(geometry.Line(points, properties=prop, crs=crs))
+# 
+#         elif reader.shapeType in (5, 15, 25):     # Polygon
+#             plist = recordsasproperties(reader)
+#             geoms = []
+#             for (shp,prop) in zip(reader.shapes(), plist):
+#                 parts = list(shp.parts)
+#                 parts.append(len(shp.points))
+#                 for (i0, i1) in zip(parts[:-1], parts[1:]):
+#                     # Shapefile polygons are closed explicitly, while karta
+#                     # polygons are closed implicitly
+#                     points = shp.points[i0:i1-1]
+#                     geoms.append(geometry.Polygon(points, properties=prop, crs=crs))
+# 
+#         else:
+#             raise NotImplementedError("Shapefile shape type {0} not "
+#                 "implemented".format(reader.shapeType))
+# 
+#     finally:
+#         for f in files.values():
+#             f.close()
+# 
+#     return geoms
 

@@ -136,11 +136,12 @@ class TestShapefile(unittest.TestCase):
 
     def test_read_points(self):
         points = read_shapefile(os.path.join(TESTDATA, "shp_input", "points"))
-        mp = points[0]
-        self.assertEqual(len(mp), 4)
-        self.assertTrue("+proj=lonlat" in mp.crs.get_proj4())
-        self.assertTrue("+a=6378137.0" in mp.crs.get_proj4())
-        self.assertTrue("+f=0.00335281" in mp.crs.get_proj4())
+        self.assertEqual(len(points), 4)
+        pt = points[0]
+        self.assertTrue("+proj=lonlat" in pt.crs.get_proj4())
+        self.assertTrue("+a=6378137.0" in pt.crs.get_proj4())
+        self.assertTrue("+f=0.00335281" in pt.crs.get_proj4())
+        mp = Multipoint(points)
         self.assertEqual(mp.d["species"], ['T. officianale', 'C. tectorum', 'M. alba', 'V. cracca'])
         self.assertEqual(mp.d["ID"], ['0', '1', '2', '3'])
         self.assertEqual(mp.coordinates, ((1.0, 3.0, 4.0, 2.0), (1.0, 1.0, 3.0, 2.0)))
@@ -163,40 +164,37 @@ class TestShapefile(unittest.TestCase):
 
     def test_read_points_newp(self):
         # Read a multipoint with a projected cooridnate system
-        shps = read_shapefile(os.path.join(TESTDATA, "shp_input", "newp_nsidc_north"))
-        newp = shps[0]
+        newp = read_shapefile(os.path.join(TESTDATA, "shp_input", 
+                                                     "newp_nsidc_north"))
 
-        proj4 = '+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs  +a=6378273.0 +f=0.00335256126540836'
+        proj4 = ('+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 '
+                 '+y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs '
+                 '+a=6378273.0 +f=0.00335256126540836')
         for part in proj4.split():
-            self.assertTrue(part[:8] in newp.crs.get_proj4())
+            self.assertTrue(part[:8] in newp[0].crs.get_proj4())
 
-        self.assertEqual(newp.coordinates, ((521236.8297444395,
-                                             521236.8297444395,
-                                             521236.8297444395,
-                                             547490.4452879033,
-                                             547490.4452879033,
-                                             547490.4452879033,
-                                             587584.1578033275,
-                                             587584.1578033275,
-                                             587584.1578033275,
-                                             571828.4918982167,
-                                             571828.4918982167),
-                                            (-888853.1384770898,
-                                             -888853.1384770898,
-                                             -888853.1384770898,
-                                             -902049.3617542256,
-                                             -902049.3617542256,
-                                             -902049.3617542256,
-                                             -871214.0673764511,
-                                             -871214.0673764511,
-                                             -871214.0673764511,
-                                             -850080.914674058,
-                                             -850080.914674058)))
-        self.assertEqual(newp.d["meterno"],
-                         ['IMS1/1', 'IMS2/1', '5952/2', 'IMS4/1', '5953/2', '1963/13',
-                          'IMS5/1', '5213/A', '2121/13', 'IMS3/1', '3613/2'])
-        self.assertEqual(newp.d["depth_m"],
-                         ['73', '143', '247', '86', '147', '250', '74', '142', '235', '150', '248'])
+        coords = list(zip(*[pt.vertex[:2] for pt in newp]))
+        self.assertEqual(coords, [(521236.8297444395, 521236.8297444395,
+                                   521236.8297444395, 547490.4452879033,
+                                   547490.4452879033, 547490.4452879033,
+                                   587584.1578033275, 587584.1578033275,
+                                   587584.1578033275, 571828.4918982167,
+                                   571828.4918982167),
+                                  (-888853.1384770898, -888853.1384770898,
+                                   -888853.1384770898, -902049.3617542256,
+                                   -902049.3617542256, -902049.3617542256,
+                                   -871214.0673764511, -871214.0673764511,
+                                   -871214.0673764511, -850080.914674058,
+                                   -850080.914674058)])
+
+        meterno = [pt.properties["meterno"] for pt in newp]
+        self.assertEqual(meterno, ['IMS1/1', 'IMS2/1', '5952/2', 'IMS4/1',
+                                   '5953/2', '1963/13', 'IMS5/1', '5213/A',
+                                   '2121/13', 'IMS3/1', '3613/2'])
+
+        depth = [pt.properties["depth_m"] for pt in newp]
+        self.assertEqual(depth, ['73', '143', '247', '86', '147', '250', '74', 
+                                 '142', '235', '150', '248'])
         return
 
 if __name__ == "__main__":

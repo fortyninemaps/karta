@@ -9,12 +9,99 @@ from .. import errors
 
 try:
     import osgeo
+    from osgeo import ogr
     HAS_OSGEO = True
 except ImportError:
     HAS_OSGEO = False
 
 rankerror = IOError("feature must be in two or three dimensions to write "
                     "as shapefile")
+
+GEOMTYPES = {1: "Point",
+             2: "LineString",
+             3: "Polygon",
+             4: "MultiPoint",
+             5: "MultiLineString",
+             6: "MultiPolygon"}
+
+FIELDTYPES = {0: int,
+              1: list,      # IntegerList
+              2: float,
+              3: list,      # RealList
+              4: str,
+              5: list,      # StringList
+              6: str,       # WideString
+              7: list,      # WideStringList
+              8: bin,
+              9: datetime.date,
+              10: datetime.time,
+              11: datetime.datetime}
+
+def ogr_read_geometries(lyr):
+    """ Given an ogr.Layer instance, return a list of geointerace dictionaries """
+    gi_dicts = []
+
+    for feature in lyr:
+        geom = feature.GetGeometryRef()
+        t = GEOMTYPES[geom.GetGeometryType()]
+        if t == 'Point':
+            pts = geom.GetPoint()
+        elif t == 'Polygon':
+            nrings = geom.GetGeometryCount()
+            outer_ring = geom.GetGeometryRef(0)
+            if nrings != 1:
+                inner_rings = [geom.GetGeometryRef(i) for i in range(1, nrings)]
+            else:
+                inner_rings = []
+            pts = [outer_ring.GetPoints()[:-1]]
+            for ring in inner_rings:
+                pts.append(ring.GetPoints()[:-1])
+        else:
+            pts = geom.GetPoints()
+
+        xmin, xmax, ymin, ymax = geom.GetEnvelope()
+        d = {'type': t,
+             'bbox': (xmin, ymin, xmax, ymax),
+             'coordinates': pts}
+        gi_dicts.append(d)
+    return gi_dicts
+
+def ogr_read_attributes(lyr):
+    """ Given an ogr.Layer instance, return a list of dictionaries with fetaure
+    property data. """
+    lyr_defn = lyr.GetLayerDefn()
+    nfields = lyr_defn.GetFieldCount()
+    field_defns = [lyr_defn.GetFieldDefn(i) for i in range(nfields)]
+    fieldnames = [fd.GetName() for fd in field_defns]
+    fieldtypes = [FIELDTYPES[fd.GetType()] for fd in field_defns]
+
+    nfeat = lyr.GetFeatureCount()
+    propertylist = []
+    for i in range(nfeat):
+        p = {}
+        for j, (fn, t) in enumerate(zip(fieldnames, fieldtypes)):
+            p[fn] = t(lyr.GetFeature(i).GetField(j))
+        propertylist.append(p)
+
+    return propertylist
+
+def ogr_read_attribute_table(lyr):
+    """ Given an ogr.Layer instance, return a list of field names, a list of
+    field types, and a list of field data lists. """
+    lyr_defn = lyr.GetLayerDefn()
+    nfields = lyr_defn.GetFieldCount()
+    field_defns = [lyr_defn.GetFieldDefn(i) for i in range(nfields)]
+    fieldnames = [fd.GetName() for fd in field_defns]
+    fieldtypes = [FIELDTYPES[fd.GetType()] for fd in field_defns]
+
+    nfeat = lyr.GetFeatureCount()
+    fielddata = []
+    for i in range(nfeat):
+        feat = lyr.GetFeature(i)
+        fielddata.append([t(feat.GetField(j)) for (t, j)
+                          in zip(fieldtypes, range(nfields))])
+
+    return fieldnames, fieldtypes, fielddata
 
 def _isnumpyint(o):
     return hasattr(o, "dtype") and \

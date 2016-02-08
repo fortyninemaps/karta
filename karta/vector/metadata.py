@@ -144,17 +144,17 @@ class Metadata(Sequence):
 
 class Indexer(object):
 
-    def __init__(self, md):
-        if md is None:
+    def __init__(self, metadata):
+        if metadata is None:
             raise KeyError("cannot index data-less geometry")
         else:
-            self.md = md
+            self.metadata = metadata
 
     def __getitem__(self, key):
         if isinstance(key, str):
-            return self.md.getfield(key)
+            return self.metadata.getfield(key)
         elif isinstance(key, int):
-            return self.md.get(key)
+            return self.metadata.get(key)
         else:
             raise KeyError("invalid key type: {0}".format(type(key)))
 
