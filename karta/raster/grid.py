@@ -221,10 +221,10 @@ class RegularGrid(Grid):
         if crs is None or (crs == self.crs):
             (a, b, c, d) = min(x0, x1), max(x0, x1), min(y0, y1), max(y0, y1)
         else:
-            xg0, yg0 = crs.project(*self.crs.project(x0, y0, inverse=True))
-            xg1, yg1 = crs.project(*self.crs.project(x0, y1, inverse=True))
-            xg2, yg2 = crs.project(*self.crs.project(x1, y0, inverse=True))
-            xg3, yg3 = crs.project(*self.crs.project(x1, y1, inverse=True))
+            xg0, yg0 = self.crs.transform(crs, x0, y0)
+            xg1, yg1 = self.crs.transform(crs, x0, y1)
+            xg2, yg2 = self.crs.transform(crs, x1, y0)
+            xg3, yg3 = self.crs.transform(crs, x1, y1)
             a = min(xg0, xg1, xg2, xg3)
             b = max(xg0, xg1, xg2, xg3)
             c = min(yg0, yg1, yg2, yg3)
@@ -293,10 +293,10 @@ class RegularGrid(Grid):
             raise errors.GridError("`reference` must be 'center' or 'edge'")
 
         if (crs is not None) and (crs != self.crs):
-            lx, ly = crs.project(*self.crs.project(lx, ly, inverse=True))
-            rx, ry = crs.project(*self.crs.project(rx, ry, inverse=True))
-            bx, by = crs.project(*self.crs.project(bx, by, inverse=True))
-            tx, ty = crs.project(*self.crs.project(tx, ty, inverse=True))
+            lx, ly = self.crs.transform(crs, lx, ly)
+            rx, ry = self.crs.transform(crs, rx, ry)
+            bx, by = self.crs.transform(crs, bx, by)
+            tx, ty = self.crs.transform(crs, tx, ty)
         return (lx, rx, by, ty)
 
     def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
@@ -336,10 +336,8 @@ class RegularGrid(Grid):
         bounding box.
         """
         if crs is not None:
-            xg, yg = crs.project([xmin, xmin, xmax, xmax],
-                                 [ymin, ymax, ymin, ymax],
-                                 inverse=True)
-            x, y = self.crs.project(xg, yg)
+            x, y = crs.transform(self.crs, [xmin, xmin, xmax, xmax],
+                                           [ymin, ymax, ymin, ymax])
             xmin = min(x)
             xmax = max(x)
             ymin = min(y)
@@ -642,8 +640,7 @@ class RegularGrid(Grid):
                 raise argerror
 
         if crs is not self.crs:
-            xg, yg = crs.project(x, y, inverse=True)
-            x, y = self.crs.project(xg, yg)
+            x, y = crs.transform(self.crs, x, y)
 
         if method == "nearest":
             return self.sample_nearest(x, y)

@@ -168,8 +168,8 @@ class TestShapefile(unittest.TestCase):
                                                      "newp_nsidc_north"))
 
         proj4 = ('+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 '
-                 '+y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs '
-                 '+a=6378273.0 +f=0.00335256126540836')
+                 '+y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs')
+
         for part in proj4.split():
             self.assertTrue(part[:8] in newp[0].crs.get_proj4())
 

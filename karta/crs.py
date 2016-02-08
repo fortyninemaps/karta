@@ -220,15 +220,17 @@ class GeographicalCRS(CRS):
     `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
     """
     def __init__(self, spheroid, name, datum="+datum=WGS84"):
+        ellipsoid = parse_ellipsoid(spheroid)
         self.ref_proj4 = "+proj=lonlat {0} {1}".format(spheroid, datum).strip()
         self._proj = pyproj.Proj(self.ref_proj4)
         self._geod = pyproj.Geod(spheroid)
+        self.ellipsoid = ellipsoid
         self.name = name
         return
 
     @staticmethod
     def project(x, y, inverse=False, radians=False):
-        # Projection on a geographical coordinate system is the identity
+        # Projection on a non-projected system defined as the identity
         if not radians:
             return x, y
         else:
@@ -254,21 +256,14 @@ class ProjectedCRS(CRS):
     """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
     or a custom projection function.
 
-    `proj` is a dictionary or string used to define an instance of `pyproj.Proj`
-
-    `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
+    `proj` is a proj.4 string
     """
-    def __init__(self, proj, spheroid=None, name=None):
-        if spheroid is None:
-            ellipsoid = parse_ellipsoid(proj)
-        else:
-            ellipsoid = parse_ellipsoid(spheroid)
-
+    def __init__(self, proj, name=None):
+        ellipsoid = parse_ellipsoid(proj)
         self._proj = pyproj.Proj(proj)
         self._geod = pyproj.Geod("+a=%s +b=%s" % (ellipsoid.a, ellipsoid.b))
         self.ellipsoid = ellipsoid
-
-        self.ref_proj4 = "%s %s" % (self._proj.srs, self._geod.initstring)
+        self.ref_proj4 = proj
 
         if name is not None:
             self.name = name
@@ -303,7 +298,7 @@ class ProjectedCRS(CRS):
         return az, baz, dist
 
     def transform(self, other, x, y, z=None):
-        return pyproj.transform(self.project, other.project, x, y, z=z)
+        return pyproj.transform(self._proj, other._proj, x, y, z=z)
 
 class SphericalCRS(GeographicalCRS):
     """ Spherical geographic coordinate system defined by a radius.
@@ -489,34 +484,35 @@ LonLatNAD83 = GeographicalCRS("+ellps=GRS80", "NAD83 (Geographical)", datum="+da
 
 UPSNorth = ProjectedCRS(proj="+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 "
                              "+k=0.994 +x_0=2000000 +y_0=2000000 +units=m "
-                             "+datum=WGS84 +no_defs",
-        spheroid="+ellps=WGS84", name="Universal Polar Stereographic (North)")
+                             "+ellps=WGS84 +datum=WGS84 +no_defs",
+                        name="Universal Polar Stereographic (North)")
 
 UPSSouth = ProjectedCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 "
                              "+k=0.994 +x_0=2000000 +y_0=2000000 +units=m "
-                             "+datum=WGS84 +no_defs",
-        spheroid="+ellps=WGS84", name="Universal Polar Stereographic (South)")
+                             "+ellps=WGS84 +datum=WGS84 +no_defs",
+                        name="Universal Polar Stereographic (South)")
 
 NSIDCNorth = ProjectedCRS(proj="+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 "
                                "+k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 "
-                               "+no_defs",
-        spheroid="+ellps=WGS84", name="NSIDC (North)")
+                               "+ellps=WGS84 +no_defs",
+                          name="NSIDC (North)")
 
 NSIDCSouth = ProjectedCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 "
                                "+k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 "
-                               "+no_defs",
-        spheroid="+ellps=WGS84", name="NSIDC (South)")
+                               "+ellps=WGS84 +no_defs",
+                          name="NSIDC (South)")
 
 LambertEqualArea = ProjectedCRS(proj="+proj=laea +lat_0=0 +lon_0=0 +x_0=0 "
-                                     "+y_0=0 +datum=WGS84",
-        spheroid="+ellps=WGS84", name="Lambert Equal Area")
+                                     "+ellps=WGS84 +y_0=0 +datum=WGS84",
+                                name="Lambert Equal Area")
 
 GallPetersEqualArea = ProjectedCRS("+proj=cea +lon_0=0 +lat_ts=45 +x_0=0 +y_0=0 "
-                                   "+datum=WGS84 +units=m +no_defs",
-        spheroid="+ellps=WGS84", name="Gall Peters Equal Area")
+                                   "+ellps=WGS84 +datum=WGS84 +units=m +no_defs",
+                                   name="Gall Peters Equal Area")
 
 WebMercator = ProjectedCRS("+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 "
                            "+lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m "
+                           "+a=6378137 +b=6378137 "
                            "+nadgrids=@null +wktext +no_defs",
-        spheroid="+a=6378137 +b=6378137", name="Web Mercator")
+                           name="Web Mercator")
 

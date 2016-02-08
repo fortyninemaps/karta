@@ -188,12 +188,12 @@ def ogr_parse_srs(lyr):
         crs = LonLatWGS84
     else:
         name = srs.GetAttrValue('PROJCS')
-        spheroid = "+a={a} +f={f}".format(a=srs.GetSemiMajor(),
-                                         f=1.0/srs.GetInvFlattening())
         if srs.IsGeographic():
+            spheroid = "+a={a} +f={f}".format(a=srs.GetSemiMajor(),
+                                              f=1.0/srs.GetInvFlattening())
             crs = GeographicalCRS(spheroid, name)
         else:
-            crs = ProjectedCRS(srs.ExportToProj4(), spheroid, name=name)
+            crs = ProjectedCRS(srs.ExportToProj4(), name=name)
     return crs
 
 # convenience binding

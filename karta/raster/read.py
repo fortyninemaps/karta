@@ -48,12 +48,12 @@ def read_gtiff(fnm, band=1, in_memory=True):
          'xrot'       : hdr['sx'],
          'yrot'       : -hdr['sy']}
 
-    geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
-                                     f=hdr["srs"]["flattening"])
     if proj4_isgeodetic(hdr["srs"]["proj4"]):
+        geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
+                                         f=hdr["srs"]["flattening"])
         crs = GeographicalCRS(geodstr, name="Imported GTiff")
     else:
-        crs = ProjectedCRS(hdr["srs"]["proj4"], geodstr, name="Imported GTiff")
+        crs = ProjectedCRS(hdr["srs"]["proj4"], name="Imported GTiff")
     return RegularGrid(t, values=arr, crs=crs, nodata_value=hdr["nodata"])
 
 # Aliases for backwards compat.

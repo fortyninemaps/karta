@@ -18,7 +18,7 @@ class TestVectorGeometry(unittest.TestCase):
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
 
         mp = Multipoint(pts)
-        ans = Multipoint(self.vertices, data={"d":self.data}, crs=LonLatWGS84)
+        ans = Multipoint(self.vertices, data={"p":range(len(pts))}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)
         return
 
@@ -27,7 +27,7 @@ class TestVectorGeometry(unittest.TestCase):
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
 
         mp = Line(pts)
-        ans = Line(self.vertices, data={"d":self.data}, crs=LonLatWGS84)
+        ans = Line(self.vertices, data={"p":range(len(pts))}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)
         return
 
@@ -35,7 +35,7 @@ class TestVectorGeometry(unittest.TestCase):
         pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
         mp = Polygon(pts)
-        ans = Polygon(self.vertices, data={"d":self.data}, crs=LonLatWGS84)
+        ans = Polygon(self.vertices, data={"p":range(len(pts))}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)
         return
 

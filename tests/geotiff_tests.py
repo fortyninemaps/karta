@@ -24,7 +24,8 @@ class GdalTests(unittest.TestCase):
     def test_io(self):
         # try writing a file, then read it back in and verify that it matches
         v = karta.raster.peaks(500)[:100,:]
-        utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north", "+ellps=WGS84")
+        utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
+                                      "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TESTDATA, "test.tif")
@@ -41,7 +42,8 @@ class GdalTests(unittest.TestCase):
     def test_io_virtual(self):
         # try writing a file, then open it without loading into memory and verify
         v = karta.raster.peaks(500)[:100,:]
-        utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north", "+ellps=WGS84")
+        utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
+                                      "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TESTDATA, "test.tif")
@@ -60,7 +62,8 @@ class GdalTests(unittest.TestCase):
 
     def test_write_compress(self):
         v = karta.raster.peaks(500)[:100,:]
-        utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north", "+ellps=WGS84")
+        utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
+                                      "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TESTDATA, "test.tif")
@@ -72,7 +75,8 @@ class GdalVirtualArrayTests(unittest.TestCase):
 
     def setUp(self):
         v = karta.raster.peaks(500)[:100,:]
-        utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north", "+ellps=WGS84")
+        utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
+                                      "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TESTDATA, "test.tif")

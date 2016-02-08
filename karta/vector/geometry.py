@@ -75,6 +75,36 @@ class Geometry(object):
             del self.properties[name]
         return
 
+    def to_shapefile(self, fstem):
+        """ Save line to a shapefile """
+        if fstem.endswith(".shp"):
+            fstem = os.path.splitext(fstem)[0]
+        shp.write(fstem, self.__geo_interface__)
+        return
+
+    def to_geojson(self, f, indent=None, **kwargs):
+        """ Write data as a GeoJSON string to a file-like object `f`.
+
+        Parameters
+        ----------
+        f : file-like object to recieve the GeoJSON string
+
+        *kwargs* include:
+        crs : coordinate reference system
+        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        """
+        try:
+            if not hasattr(f, "write"):
+                fobj = open(f, "w")
+            else:
+                fobj = f
+            writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
+            writer.write_json(fobj, indent)
+        finally:
+            if not hasattr(f, "write"):
+                fobj.close()
+        return writer
+
 
 class Point(Geometry):
     """ Point object instantiated with:
@@ -217,7 +247,7 @@ class Point(Geometry):
             return self
         else:
             vertex = [a+b for a,b in zip(self.vertex, shift_vector)]
-            return Point(vertex, data=self.data, properties=self.properties, crs=self.crs)
+            return Point(tuple(vertex), data=self.data, properties=self.properties, crs=self.crs)
 
     def as_geojson(self, indent=2, **kwargs):
         """ Write data as a GeoJSON string to a file-like object `f`.
@@ -232,29 +262,6 @@ class Point(Geometry):
         """
         writer = geojson.GeoJSONWriter(self, **kwargs)
         return writer.print_json(indent)
-
-    def to_geojson(self, f, indent=None, **kwargs):
-        """ Write data as a GeoJSON string to a file-like object `f`.
-
-        Parameters
-        ----------
-        f : file-like object to recieve the GeoJSON string
-
-        *kwargs* include:
-        crs : coordinate reference system
-        bbox : an optional bounding box tuple in the form (w,e,s,n)
-        """
-        try:
-            if not hasattr(f, "write"):
-                fobj = open(f, "w")
-            else:
-                fobj = f
-            writer = geojson.GeoJSONWriter(self, **kwargs)
-            writer.write_json(fobj, indent)
-        finally:
-            if not hasattr(f, "write"):
-                fobj.close()
-        return writer
 
 
 class MultipointBase(Geometry):
@@ -657,29 +664,6 @@ class MultipointBase(Geometry):
         writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
         return writer.print_json(indent)
 
-    def to_geojson(self, f, indent=None, **kwargs):
-        """ Write data as a GeoJSON string to a file-like object `f`.
-
-        Parameters
-        ----------
-        f : file-like object to recieve the GeoJSON string
-
-        *kwargs* include:
-        crs : coordinate reference system
-        bbox : an optional bounding box tuple in the form (w,e,s,n)
-        """
-        try:
-            if not hasattr(f, "write"):
-                fobj = open(f, "w")
-            else:
-                fobj = f
-            writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
-            writer.write_json(fobj, indent)
-        finally:
-            if not hasattr(f, "write"):
-                fobj.close()
-        return writer
-
     def to_vtk(self, f, **kwargs):
         """ Write data to an ASCII VTK .vtp file. """
         if not hasattr(f, "write"):
@@ -687,18 +671,6 @@ class MultipointBase(Geometry):
                 vtk.mp2vtp(self, fobj, **kwargs)
         else:
             vtk.mp2vtp(self, f, **kwargs)
-        return
-
-    def to_shapefile(self, fstem):
-        """ Save line to a shapefile """
-        if fstem.endswith(".shp"):
-            fstem = os.path.splitext(fstem)[0]
-        if self.rank == 2:
-            shp.write_multipoint2(self, fstem)
-        elif self.rank == 3:
-            shp.write_multipoint3(self, fstem)
-        else:
-            raise IOError("Rank must be 2 or 3 to write as a shapefile")
         return
 
 
@@ -1072,18 +1044,6 @@ class Line(ConnectedMultipoint):
         return Polygon(self.vertices, data=self.data, properties=self.properties,
                        crs=self.crs)
 
-    def to_shapefile(self, fstem):
-        """ Save line to a shapefile """
-        if fstem.endswith(".shp"):
-            fstem = os.path.splitext(fstem)[0]
-        if self.rank == 2:
-            shp.write_line2(self, fstem)
-        elif self.rank == 3:
-            shp.write_line3(self, fstem)
-        else:
-            raise IOError("rank must be 2 or 3 to write as a shapefile")
-        return
-
 
 class Polygon(ConnectedMultipoint):
     """ Polygon, composed of a closed sequence of vertices.
@@ -1274,18 +1234,6 @@ class Polygon(ConnectedMultipoint):
         """ Returns a self-closing polyline. Discards sub-polygons. """
         v = self.vertices + self.vertices[0]
         return Line(v, properties=self.properties, data=self.data, crs=self.crs)
-
-    def to_shapefile(self, fstem):
-        """ Save line to a shapefile """
-        if fstem.endswith(".shp"):
-            fstem = os.path.splitext(fstem)[0]
-        if self.rank == 2:
-            shp.write_poly2(self, fstem)
-        elif self.rank == 3:
-            shp.write_poly3(self, fstem)
-        else:
-            raise IOError("rank must be 2 or 3 to write as a shapefile")
-        return
 
 def _reproject(xy, crs1, crs2):
     """ Reproject a coordinate (or 2-tuple of x and y vectors) from *crs1* to

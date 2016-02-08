@@ -633,7 +633,7 @@ class TestGeoInterface(unittest.TestCase):
     def test_point(self):
         pt = Point((1,2))
         self.assertEqual(pt.__geo_interface__, {"type":"Point", "coordinates":(1,2)})
-        pt.shift((2,2))
+        pt = pt.shift((2,2))
         self.assertEqual(pt.__geo_interface__, {"type":"Point", "coordinates":(3,4)})
 
     def test_poly(self):
@@ -808,10 +808,10 @@ class VectorCRSTests(unittest.TestCase):
                          (-123.0, 49.0))
 
     def test_vertices_in_crs2(self):
-        point = Point((-123.0, 49.0), crs=SphericalEarth)
+        point = Point((-123.0, 49.0), crs=LonLatWGS84)
         BCAlbers = ProjectedCRS("+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
                     "+lon_0=-126 +x_0=1000000 +y_0=0 +ellps=GRS80 +datum=NAD83 "
-                    "+units=m +no_defs", "+ellps=GRS80")
+                    "+units=m +no_defs", "BC Albers")
         self.assertTupleAlmostEqual(point.get_vertex(BCAlbers),
                                     (1219731.770879303, 447290.49891930853))
         return
@@ -819,9 +819,9 @@ class VectorCRSTests(unittest.TestCase):
     def test_vertices_in_crs3(self):
         line = Line([(2.0, 34.0),
                      (2.15, 34.2),
-                     (2.7, 34.1)], crs=SphericalEarth)
+                     (2.7, 34.1)], crs=LonLatWGS84)
         UTM31N = ProjectedCRS("+proj=utm +zone=31 +ellps=WGS84 "
-                    "+datum=WGS84 +units=m +no_defs", "+ellps=WGS84")
+                    "+datum=WGS84 +units=m +no_defs", "UTM 31N (WGS 84)")
         ans = [[407650.39665729, 3762606.65987638],
                [421687.71905897, 3784658.46708431],
                [472328.10951276, 3773284.48524179]]

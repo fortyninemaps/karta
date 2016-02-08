@@ -10,13 +10,12 @@ class TestCRS(unittest.TestCase):
 
     def test_get_proj4(self):
         c0 = crs.SphericalEarth
-        self.assertEqual(c0.get_proj4(), "+proj=lonlat +a=6370997.0 +f=0.0")
+        self.assertEqual(c0.get_proj4(), "+proj=lonlat +ellps=sphere +datum=WGS84")
 
         c1 = crs.LonLatWGS84
         proj4 = c1.get_proj4()
         self.assertTrue("+proj=lonlat" in proj4)
-        self.assertTrue("+a=6378137.0" in proj4)
-        self.assertTrue("+f=0.003352810664" in proj4)
+        self.assertTrue("+ellps=WGS84" in proj4)
 
         c2 = crs.NSIDCNorth
         proj4 = c2.get_proj4()
@@ -29,13 +28,12 @@ class TestCRS(unittest.TestCase):
         self.assertTrue("+y_0=0" in proj4)
         self.assertTrue("+units=m" in proj4)
         self.assertTrue("+datum=WGS84" in proj4)
-        self.assertTrue("+a=6378137.0" in proj4)
-        self.assertTrue("+f=0.0033528" in proj4)
+        self.assertTrue("+ellps=WGS84" in proj4)
         return
 
     def test_get_wkt(self):
         c0 = crs.SphericalEarth
-        self.assertEqual(c0.get_wkt(), 'GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6370997,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]]')
+        self.assertEqual(c0.get_wkt(), 'GEOGCS["WGS 84",DATUM["WGS_1984",SPHEROID["WGS 84",6378137,298.257223563,AUTHORITY["EPSG","7030"]],TOWGS84[0,0,0,0,0,0,0],AUTHORITY["EPSG","6326"]],PRIMEM["Greenwich",0,AUTHORITY["EPSG","8901"]],UNIT["degree",0.0174532925199433,AUTHORITY["EPSG","9108"]],AUTHORITY["EPSG","4326"]]')
 
         c1 = crs.LonLatWGS84
         wkt = c1.get_wkt()
@@ -259,34 +257,34 @@ class TestCRS(unittest.TestCase):
 
     def test_equal1(self):
         WGS84 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
-                              "+ellps=WGS84", name="WGS84 (Geographical)")
+                                name="WGS84 (Geographical)")
         WGS84_ = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
-                               "+ellps=WGS84", name="WGS84 (Geographical)")
+                                name="WGS84 (Geographical)")
         self.assertTrue(WGS84 == WGS84_)
         return
 
     def test_equal2(self):
         WGS84 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
-                              "+ellps=WGS84", name="WGS84 (Geographical)")
-        NAD83 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
-                              "+ellps=GRS80", name="NAD83 (Geographical)")
+                                name="WGS84 (Geographical)")
+        NAD83 = crs.ProjectedCRS("+proj=longlat +datum=NAD83 +no_defs",
+                                name="NAD83 (Geographical)")
         self.assertTrue(not WGS84 == NAD83)
         return
 
     def test_not_equal1(self):
         WGS84 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
-                              "+ellps=WGS84", name="WGS84 (Geographical)")
-        NAD83 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
-                              "+ellps=GRS80", name="NAD83 (Geographical)")
+                                name="WGS84 (Geographical)")
+        NAD83 = crs.ProjectedCRS("+proj=longlat +datum=NAD83 +no_defs",
+                                name="NAD83 (Geographical)")
         self.assertTrue(WGS84 != NAD83)
         return
 
     def test_not_equal2(self):
         WGS84 = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
-                              "+ellps=WGS84", name="WGS84 (Geographical)")
+                                name="WGS84 (Geographical)")
 
         WGS84_ = crs.ProjectedCRS("+proj=longlat +datum=WGS84 +no_defs",
-                               "+ellps=WGS84", name="WGS84 (Geographical)")
+                                name="WGS84 (Geographical)")
         self.assertTrue(not WGS84 != WGS84_)
         return
 
@@ -305,7 +303,7 @@ class TestCRS(unittest.TestCase):
 
         crsdict1 = proj4_asdict(crs.NSIDCNorth.get_proj4())
         crsdict2 = proj4_asdict(new_crs.get_proj4())
-        for key in ("+proj", "+lat_0", "+lon_0", "+lat_ts", "+a", "+f"):
+        for key in ("+proj", "+lat_0", "+lon_0", "+lat_ts", "+ellps"):
             self.assertEqual(crsdict1[key], crsdict2[key])
 
     def test_brent1(self):

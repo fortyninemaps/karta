@@ -118,12 +118,12 @@ class RegularGridTests(unittest.TestCase):
 
     def test_get_extent_crs(self):
         pe = karta.raster.peaks(n=49)
-        crs = karta.crs.ProjectedCRS("+proj=utm +zone=12 +north=True", "+ellps=WGS84")
+        crs = karta.crs.ProjectedCRS("+proj=utm +zone=12 +ellps=WGS84 +north=True", "UTM 12N (WGS 84)")
         rast_utm12N = karta.RegularGrid((0.0, 0.0, 10000.0, 10000.0, 0.0, 0.0),
                                         values=pe,
                                         crs=crs)
         a,b,c,d = rast_utm12N.get_extent(reference='center',
-                                          crs=karta.crs.LonLatWGS84)
+                                         crs=karta.crs.LonLatWGS84)
         self.assertAlmostEqual(a, -115.45687156)
         self.assertAlmostEqual(b, -111.13480112)
         self.assertAlmostEqual(c, 0.0450996517)
