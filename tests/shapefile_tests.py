@@ -103,8 +103,8 @@ class TestShapefile(unittest.TestCase):
         mp0 = copy(mp)
         mp1 = copy(mp.shift((4, 2)))
         mp2 = copy(mp.shift((-2, 3)))
-        shp.write_shapefile([mp0, mp1, mp2],
-                            os.path.join(TESTDIR, "data/points_collection"))
+        shp.write_shapefile(os.path.join(TESTDIR, "data/points_collection.shp"),
+                            mp0, mp1, mp2)
         for fnm in ("points_collection.shx", "points_collection.shx", "points_collection.dbf", "points_collection.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
@@ -113,26 +113,10 @@ class TestShapefile(unittest.TestCase):
         line0 = copy(self.line)
         line1 = copy(self.line.shift((4, 2)))
         line2 = copy(self.line.shift((-2, 3)))
-        shp.write_shapefile([line0, line1, line2],
-                            os.path.join(TESTDIR, "data/line_collection"))
+        shp.write_shapefile(os.path.join(TESTDIR, "data/line_collection.shp"),
+                            line0, line1, line2)
         for fnm in ("line_collection.shx", "line_collection.shx", "line_collection.dbf", "line_collection.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
-        return
-
-    def test_dbase_type(self):
-        self.assertEqual(shp.property_field_type(1.0), "N")
-        self.assertEqual(shp.property_field_type(1), "N")
-        self.assertEqual(shp.property_field_type(np.float32(1.0)), "N")
-        self.assertEqual(shp.property_field_type(np.int16(1)), "N")
-        #self.assertEqual(shp.property_field_type(1.0), "O")
-        #self.assertEqual(shp.property_field_type(1), "I")
-        #self.assertEqual(shp.property_field_type(np.float32(1.0)), "O")
-        #self.assertEqual(shp.property_field_type(np.int16(1)), "I")
-        #self.assertEqual(shp.property_field_type(True), "L")
-        #self.assertEqual(shp.property_field_type(False), "L")
-        self.assertEqual(shp.property_field_type("pale ale"), "C")
-        self.assertEqual(shp.property_field_type(datetime.date(1986, 8, 17)), "D")
-        self.assertEqual(shp.property_field_type(datetime.datetime(2013, 5, 4, 20, 40, 21)), "@")
         return
 
     def test_read_points(self):

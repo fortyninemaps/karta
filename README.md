@@ -78,7 +78,7 @@ Currently implemented are:
 
 - vector
     - GeoJSON (r,w)
-    - ESRI Shapefiles (via pyshp) (r,w)
+    - ESRI Shapefiles (requires OGR) (r,w)
     - GPS eXchange (GPX) (r,w)
 - raster
     - ESRI ASCII Grid (r,w)
@@ -120,13 +120,13 @@ Then, clone the repository and install,
 
 - Python 2.7 or Python 3.3+
 - numpy
-- pyshp
 - pyproj
 - C-compiler
 
 ### Recommended
 
-- osgeo.gdal (for geotiff I/O)
+- osgeo.gdal (for raster I/O)
+- osgeo.ogr (for vector I/O)
 - osgeo.osr (for coordinate system interchange)
 - scipy
 

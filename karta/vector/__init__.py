@@ -18,8 +18,7 @@ from .xyfile import load_xy, xyz2array_reg, array2xyz
 
 __all__ = ["geometry", "xyfile", "geojson", "gpx", "vtk",
            "Point", "Multipoint", "Line", "Polygon",
-           "read_geojson", "read_shapefile",
-           "write_shapefile",
+           "read_geojson", "read_shapefile", "write_shapefile",
            "GPX",
            "load_xy", "xyz2array_reg", "array2xyz"]
 

@@ -2,10 +2,8 @@
 geometry object. """
 
 import os
-import sys
 import datetime
 import numbers
-import shapefile
 from .. import errors
 
 try:
@@ -151,6 +149,11 @@ def ogr_read_attribute_table(lyr):
     return fieldnames, fieldtypes, fielddata
 
 def ogr_write(fnm, *objs):
+    """ Write features to shapefile using OGR backend. Features may be karta
+    geometry objects or __geo_interface__ features. """
+    objs = [obj.__geo_interface__ if hasattr(obj, "_geotype") else obj
+            for obj in objs]
+
     driver = ogr.GetDriverByName("ESRI Shapefile")
     if driver is None:
         raise ValueError("failure loading OGR driver for 'ESRI Shapefile'")
@@ -165,8 +168,13 @@ def ogr_write(fnm, *objs):
     proj4 = objs[0]["properties"]["_karta_proj4"]\
                 .replace("lonlat", "longlat")\
                 .replace("latlon", "latlong")
+    if len(proj4) == 0:
+        proj4 = "+proj=longlat +datum=WGS84"
     srs = osgeo.osr.SpatialReference()
-    srs.ImportFromProj4(proj4)
+    try:
+        srs.ImportFromProj4(proj4)
+    except RuntimeError:
+        raise errors.CRSError("invalid projection string: '{0}'".format(proj4))
     if srs is None:
         raise ValueError("failure creating osr.SpatialReference")
 
@@ -238,226 +246,4 @@ def _isnumpyfloat(o):
 def _isnumpytype(o):
     return hasattr(o, "dtype")
 
-### connections for the old pyshp backend ###
-
-import shapefile
-
-def property_field_type(value):
-    """ Determine the appropriate dBase field type for *value* """
-    if isinstance(value, numbers.Number) or _isnumpytype(value):
-        ## pyshp doesn't handle the full variety of numeric types
-        ## (float, double, long), only 'N'
-        #if isinstance(value, numbers.Integral) or _isnumpyint(value):
-        #    desc = "I"
-        #elif isinstance(value, numbers.Real) or _isnumpyfloat(value):
-        #    desc = "O"
-        if isinstance(value, (numbers.Integral, numbers.Real)) \
-                or _isnumpyint(value) or _isnumpyfloat(value):
-            desc = "N"
-        else:
-            raise TypeError("cannot choose the correct dBase type for "
-                            "{0}\n".format(type(value)))
-    elif isinstance(value, str):
-        desc = "C"
-    elif isinstance(value, datetime.datetime):
-        desc = "@"
-    elif isinstance(value, datetime.date):
-        desc = "D"
-    elif isinstance(value, bool):
-        desc = "L"
-    else:
-        raise TypeError("cannot choose the correct dBase type for "
-                        "{0}\n".format(type(value)))
-    return desc
-
-def addfields(writer, properties):
-    """ Add geometry properties *properties* to shapefile writer *writer*. """
-    writer.field("ID", "I", "8")
-    values = []
-    for key in properties:
-        value = properties[key]
-        typ = property_field_type(value)
-        dec = 0 if typ not in ("N", "F", "O", "I") else 16
-        writer.field(key.upper(), fieldType=typ, size="100", decimal=dec)
-        values.append(value)
-    writer.record("0", *values)
-    return
-
-def addfields_points(writer, points):
-    """ Add *points* data to shapefile writer *writer*. """
-    writer.field("ID", "I", "8")
-    if points.data is not None:
-        keys = points.data.fields
-        for key in keys:
-            t = property_field_type(points.data.get(0)[key])
-            dec = 0 if t not in ("N", "F", "O", "I") else 16
-            writer.field(key, fieldType=t, size="100", decimal=dec)
-        for i, pt in enumerate(points):
-            writer.record(str(i), *[pt.data.get(0)[key] for key in keys])
-    else:
-        for i in range(len(points)):
-            writer.record(str(i))
-    return
-
-def write_multipoint2(mp, fstem):
-    w = shapefile.Writer(shapeType=shapefile.POINT)
-    for vertex in mp.vertices:
-        w.point(*vertex)
-    addfields_points(w, mp)
-    w.save(fstem)
-    write_projection(mp, fstem)
-    return
-
-def write_multipoint3(mp, fstem):
-    w = shapefile.Writer(shapeType=shapefile.POINTZ)
-    for vertex in mp.vertices:
-        w.point(*vertex)
-    addfields_points(w, mp)
-    w.save(fstem)
-    write_projection(mp, fstem)
-    return
-
-def write_line2(line, fstem):
-    w = shapefile.Writer(shapeType=shapefile.POLYLINE)
-    w.poly(shapeType=shapefile.POLYLINE, parts=[line.vertices])
-    addfields(w, line.properties)
-    w.save(fstem)
-    write_projection(line, fstem)
-    return
-
-def write_line3(line, fstem):
-    w = shapefile.Writer(shapeType=shapefile.POLYLINEZ)
-    w.poly(shapeType=shapefile.POLYLINEZ, parts=[line.vertices])
-    addfields(w, line.properties)
-    w.save(fstem)
-    write_projection(line, fstem)
-    return
-
-def write_poly2(poly, fstem):
-    w = shapefile.Writer(shapeType=shapefile.POLYGON)
-    w.poly(shapeType=shapefile.POLYGON, parts=[[v for v in poly.vertices]])
-    addfields(w, poly.properties)
-    w.save(fstem)
-    write_projection(poly, fstem)
-    return
-
-def write_poly3(poly, fstem):
-    w = shapefile.Writer(shapeType=shapefile.POLYGONZ)
-    w.poly(shapeType=shapefile.POLYGONZ, parts=[[v for v in poly.vertices]])
-    addfields(w, poly.properties)
-    w.save(fstem)
-    write_projection(poly, fstem)
-    return
-
-def shapefile_type(feature):
-    """ Match a feature with a shapefile type identifier """
-    if feature._geotype == "Multipoint":
-        if feature.rank == 2:
-            return shapefile.POINT
-        elif feature.rank == 3:
-            return shapefile.POINTZ
-        else:
-            raise rankerror
-    elif feature._geotype == "Line":
-        if feature.rank == 2:
-            return shapefile.POLYLINE
-        elif feature.rank == 3:
-            return shapefile.POLYLINEZ
-        else:
-            raise rankerror
-    elif feature._geotype == "Polygon":
-        if feature.rank == 2:
-            return shapefile.POLYGON
-        elif feature.rank == 3:
-            return shapefile.POLYGONZ
-        else:
-            raise rankerror
-    else:
-        raise TypeError("Expected list with items of geotype 'Multipoint',"
-                        "'Line', or 'Polygon'")
-
-def write_shapefile(features, fstem):
-    """ Write *features* to a shapefile. All features must be of the same type
-    (i.e. Multipoints, Lines, Polygons). """
-    if len(features) == 1:
-        features[0].to_shapefile(fstem)
-        return
-    elif not all(f._geotype == features[0]._geotype for f in features[1:]):
-        raise IOError("all features must be of the same type")
-    elif not all(f.rank == features[0].rank for f in features[1:]):
-        raise IOError("all features must have the same dimensionality")
-
-    shapeType = shapefile_type(features[0])
-    w = shapefile.Writer(shapeType=shapeType)
-    if shapeType in (shapefile.POINT, shapefile.POINTZ):
-
-        # add geometry
-        for feature in features:
-            for pt in feature:
-                w.point(*pt.vertex)
-
-        # add records
-        w.field("ID", "I", "8")
-        if features[0].data is not None:
-            keys = set(features[0].data.fields)     # for testing similarity
-            keylist = features[0].data.fields       # preserves order
-        else:
-            keys = []
-
-        if len(keys) != 0 and all(keys == set(f.data.fields) for f in features[1:]):
-            for key in keylist:
-                testvalue = features[0].data[key][0]
-                w.field(key.upper(), property_field_type(testvalue), "100")
-            i = 0
-            for feature in features:
-                for pt in feature:
-                    w.record(str(i), *[pt.data[key] for key in keylist])
-                    i += 1
-        else:
-            i = 0
-            for feature in features:
-                for pt in feature:
-                    w.record(str(i))
-                    i += 1
-
-    else:
-
-        # add geometry
-        for feature in features:
-            w.poly([feature.vertices])
-
-        # add records
-        w.field("ID", "I", "8")
-        keys = set(features[0].properties.keys())   # for testing similarity
-        keylist = list(keys)                        # preserves order
-
-        if len(keys) != 0 and all(keys == set(f.properties.keys()) for f in features[1:]):
-            for key in features[0].properties:
-                value = features[0].properties[key]
-                propertyType = property_field_type(value)
-                length = "100"
-                w.field(key.upper(), propertyType, length)
-            for (i, feature) in enumerate(features):
-                values = []
-                for key in keylist:
-                    values.append(feature.properties[key])
-                w.record(str(i), *values)
-        else:
-            for (i, feature) in enumerate(features):
-                w.record(str(i))
-
-    w.save(fstem)
-    write_projection(features[0], fstem)
-    return
-
-def write_projection(geom, fstem):
-    try:
-        wkt = geom.crs.get_wkt()
-        with open(fstem+".prj", "w") as f:
-            f.write(wkt)
-    except errors.CRSError:
-        sys.stderr.write("Projection information not saved (requires osgeo)\n")
-    except AttributeError as e:
-        sys.stderr.write(str(e))
-        sys.stderr.write("\n")
-
+write_shapefile = ogr_write
