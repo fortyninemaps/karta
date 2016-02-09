@@ -75,11 +75,11 @@ class Geometry(object):
             del self.properties[name]
         return
 
-    def to_shapefile(self, fstem):
+    def to_shapefile(self, fnm):
         """ Save line to a shapefile """
-        if fstem.endswith(".shp"):
-            fstem = os.path.splitext(fstem)[0]
-        shp.write(fstem, self.__geo_interface__)
+        if not fnm.endswith(".shp"):
+            fnm = fnm + ".shp"
+        shp.ogr_write(fnm, self.__geo_interface__)
         return
 
     def to_geojson(self, f, indent=None, **kwargs):
@@ -163,6 +163,14 @@ class Point(Geometry):
 
     @property
     def __geo_interface__(self):
+        p = self.properties.copy()
+        p["_karta_proj4"] = self.crs.get_proj4()
+        return {"type": "Feature",
+                "geometry": self.geomdict,
+                "properties": p}
+
+    @property
+    def geomdict(self):
         return {"type" : "Point", "coordinates" : self.vertex}
 
     @property
@@ -705,7 +713,17 @@ class Multipoint(MultipointBase):
 
     @property
     def __geo_interface__(self):
-        return {"type" : "MultiPoint", "bbox" : self.bbox, "coordinates" : self.vertices}
+        p = self.properties.copy()
+        p["_karta_proj4"] = self.crs.get_proj4()
+        return {"type": "Feature",
+                "geometry": self.geomdict,
+                "properties": p}
+
+    @property
+    def geomdict(self):
+        return {"type" : "MultiPoint",
+                "bbox" : self.bbox,
+                "coordinates" : self.vertices}
 
     def within_radius(self, pt, radius):
         """ Return Multipoint of subset that is within *radius* of *pt*.
@@ -960,7 +978,17 @@ class Line(ConnectedMultipoint):
 
     @property
     def __geo_interface__(self):
-        return {"type" : "LineString", "bbox" : self.bbox, "coordinates" : self.vertices}
+        p = self.properties.copy()
+        p["_karta_proj4"] = self.crs.get_proj4()
+        return {"type": "Feature",
+                "geometry": self.geomdict,
+                "properties": p}
+
+    @property
+    def geomdict(self):
+        return {"type" : "LineString",
+                "bbox" : self.bbox,
+                "coordinates" : self.vertices}
 
     def extend(self, other):
         """ Combine two lines, provided that that the data formats are similar.
@@ -1079,10 +1107,20 @@ class Polygon(ConnectedMultipoint):
 
     @property
     def __geo_interface__(self):
+        p = self.properties.copy()
+        p["_karta_proj4"] = self.crs.get_proj4()
+        return {"type": "Feature",
+                "geometry": self.geomdict,
+                "properties": p}
+
+    @property
+    def geomdict(self):
         coords = [self.vertices]
         for geom in self.subs:
             coords.append(geom.vertices)
-        return {"type" : "Polygon", "bbox" : self.bbox, "coordinates" : coords}
+        return {"type" : "Polygon",
+                "bbox" : self.bbox,
+                "coordinates" : coords}
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """

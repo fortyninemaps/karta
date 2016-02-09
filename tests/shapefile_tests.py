@@ -47,6 +47,7 @@ class TestShapefile(unittest.TestCase):
         testfiles = [(self.multipoint, "points"),
                      (self.line, "line"),
                      (self.polygon, "polygon")]
+        os.makedirs(os.path.join(TESTDATA, "shapefiles"))
         for (geom, fnm) in testfiles:
             geom.to_shapefile(os.path.join(TESTDATA, "shapefiles", fnm))
         return

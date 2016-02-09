@@ -11,14 +11,14 @@ class TestGeoInterface(unittest.TestCase):
 
     def test_point_output(self):
         p = Point((4, 2))
-        sp = shapely.geometry.shape(p)
+        sp = shapely.geometry.shape(p.geomdict)
         self.assertEqual(sp.x, p.x)
         self.assertEqual(sp.y, p.y)
         return
 
     def test_multipoint_output(self):
         p = Multipoint([(4, 2), (3, 5), (3, 2), (7, 3)])
-        sp = shapely.geometry.shape(p)
+        sp = shapely.geometry.shape(p.geomdict)
         x, y = p.coordinates
         self.assertEqual(x, tuple([el.x for el in sp]))
         self.assertEqual(y, tuple([el.y for el in sp]))
@@ -26,7 +26,7 @@ class TestGeoInterface(unittest.TestCase):
 
     def test_line_output(self):
         p = Line([(4, 2), (3, 5), (3, 2), (7, 3)])
-        sp = shapely.geometry.shape(p)
+        sp = shapely.geometry.shape(p.geomdict)
         x, y = p.coordinates
         sx, sy = sp.xy
         self.assertEqual(x, tuple(sx))
@@ -35,7 +35,7 @@ class TestGeoInterface(unittest.TestCase):
 
     def test_poly_output(self):
         p = Polygon([(4, 2), (3, 5), (3, 2), (7, 3)])
-        sp = shapely.geometry.shape(p)
+        sp = shapely.geometry.shape(p.geomdict)
         self.assertEqual(p.bbox, sp.bounds)
         return
 
