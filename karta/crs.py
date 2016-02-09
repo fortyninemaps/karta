@@ -267,13 +267,11 @@ class ProjectedCRS(CRS):
         else:
             ellipsoid = parse_ellipsoid(spheroid)
 
-        self.project = pyproj.Proj(proj)
+        self._proj = pyproj.Proj(proj)
         self._geod = pyproj.Geod("+a=%s +b=%s" % (ellipsoid.a, ellipsoid.b))
         self.ellipsoid = ellipsoid
 
-        self.initstring_proj = self.project.srs
-        self.initstring_geod = self._geod.initstring
-        self.ref_proj4 = "%s %s" % (self.project.srs, self._geod.initstring)
+        self.ref_proj4 = "%s %s" % (self._proj.srs, self._geod.initstring)
 
         if name is not None:
             self.name = name
@@ -282,7 +280,7 @@ class ProjectedCRS(CRS):
         return
 
     def __eq__(self, other):
-        if (getattr(self.project, "srs", 0) == getattr(other.project, "srs", 1) and
+        if (getattr(self._proj, "srs", 0) == getattr(other._proj, "srs", 1) and
             getattr(self._geod, "initstring", 0) == getattr(other._geod, "initstring", 1)):
             return True
         else:
@@ -290,6 +288,9 @@ class ProjectedCRS(CRS):
 
     def __ne__(self, other):
         return not self.__eq__(other)
+
+    def project(self, x, y, inverse=False):
+        return self._proj(x, y, inverse=inverse)
 
     def forward(self, *args, **kwargs):
         """ Forward geodetic problem from a point """

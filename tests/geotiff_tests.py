@@ -31,8 +31,8 @@ class GdalTests(unittest.TestCase):
         g.to_gtiff(fpath, compress=None)
         gnew = karta.read_gtiff(fpath)
 
-        self.assertTrue("+proj=utm" in gnew.crs.project.srs)
-        self.assertTrue("+zone=7" in gnew.crs.project.srs)
+        self.assertTrue("+proj=utm" in gnew.crs.get_proj4())
+        self.assertTrue("+zone=7" in gnew.crs.get_proj4())
         self.assertEqual(g.transform, gnew.transform)
         self.assertEqual(g.values.dtype, gnew.values.dtype)
         self.assertTrue(np.all(g.values == gnew.values))
