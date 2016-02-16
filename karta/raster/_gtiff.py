@@ -212,7 +212,8 @@ def read(fnm, band, in_memory):
         sr = SRS_from_WKT(dataset.GetProjectionRef())
         hdr["srs"] = {"proj4": sr.ExportToProj4(),
                       "semimajor": sr.GetSemiMajor(),
-                      "flattening": sr.GetInvFlattening()}
+                      "flattening": sr.GetInvFlattening(),
+                      "name": sr.GetAttrValue('PROJCS')}
 
         max_dtype = 0
         rasterband = dataset.GetRasterBand(band)
