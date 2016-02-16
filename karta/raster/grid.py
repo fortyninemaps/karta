@@ -294,8 +294,18 @@ class RegularGrid(Grid):
             tx, ty = crs.project(*self.crs.project(tx, ty, inverse=True))
         return (lx, rx, by, ty)
 
-    def aschunks(self, size=(-1, -1), overlap=(0, 0)):
-        """ Generator for grid chunks.
+    @property
+    def data_mask(self):
+        """ 8-bit mask of valid data cells """
+        if np.isnan(self.nodata):
+            isdata = lambda a: ~np.isnan(a)
+        else:
+            def isdata(a):
+                return a != self.nodata
+        return isdata(self.values)
+
+    def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
+        """ Generator for grid chunks of *size* and *overlap*.
         """
         ny, nx = self.size
         if size == (-1, -1):
