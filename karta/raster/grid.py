@@ -299,6 +299,16 @@ class RegularGrid(Grid):
             tx, ty = self.crs.transform(crs, tx, ty)
         return (lx, rx, by, ty)
 
+    @property
+    def data_mask(self):
+        """ 8-bit mask of valid data cells """
+        if np.isnan(self.nodata):
+            isdata = lambda a: ~np.isnan(a)
+        else:
+            def isdata(a):
+                return a != self.nodata
+        return isdata(self.values)
+
     def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
         """ Generator for grid chunks of *size* and *overlap*.
         """

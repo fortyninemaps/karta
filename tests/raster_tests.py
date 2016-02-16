@@ -174,6 +174,22 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.all(newgrid.values[6:56,4:54] == proto.values))
         return
 
+    def test_data_mask_nan(self):
+        T = [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]
+        v = np.arange(64, dtype=np.float64).reshape([8, 8])
+        v[0,2:7] = np.nan
+        g = karta.RegularGrid(T, values=v, nodata_value=np.nan)
+        self.assertEqual(np.sum(g.data_mask), 59)
+        return
+
+    def test_data_mask_nonnan(self):
+        T = [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]
+        v = np.arange(64, dtype=np.int8).reshape([8, 8])
+        v[0,2:7] = -1
+        g = karta.RegularGrid(T, values=v, nodata_value=-1)
+        self.assertEqual(np.sum(g.data_mask), 59)
+        return
+
     def test_mask_poly(self):
         t = -np.linspace(0, 2*np.pi, 200)
         xp = ((2+np.cos(7*t)) * np.cos(t+0.3) + 4) * 12
