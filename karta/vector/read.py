@@ -31,19 +31,21 @@ def _from_shape(d, properties):
         return _from_shape(d["geometry"], p)
     else:
         c = d["coordinates"]
-        if d["type"] == "Point":
+        if c is None:
+            return None
+        elif d["type"] in ("Point", "Point25D", "NDR", "XDR"):
             return geometry.Point(c, properties=properties)
-        elif d["type"] == "MultiPoint":
+        elif d["type"] in ("MultiPoint", "Multipoint25D"):
             return geometry.Multipoint(c, properties=properties)
-        elif d["type"] == "LineString":
+        elif d["type"] in ("LineString", "LineString25D"):
             return geometry.Line(c, properties=properties)
-        elif d["type"] == "Polygon":
+        elif d["type"] in ("Polygon", "Polygon25D"):
             subs = [geometry.Polygon(c[i]) for i in range(1, len(c))]
             return geometry.Polygon(c[0], properties=properties, subs=subs)
-        elif d["type"] == "MultiLineString":
+        elif d["type"] in ("MultiLineString", "MultiLineString25D"):
             return [geometry.Line(c[i], properties=properties)
                     for i in range(len(c))]
-        elif d["type"] == "MultiPolygon":
+        elif d["type"] in ("MultiPolygon", "MultiPolygon25D"):
             polys = []
             for c_ in c:
                 subs = [geometry.Polygon(c_[i]) for i in range(1, len(c_))]
@@ -168,16 +170,18 @@ def ogr_read_shapefile(stem):
     layer = ds.GetLayer()
 
     try:
-        geoms = [_from_shape(gi, p)
+        _geoms = [_from_shape(gi, p)
                  for (gi,p) in zip(shp.ogr_read_geometries(layer),
                                    shp.ogr_read_attributes(layer))]
         crs = ogr_parse_srs(layer)
     finally:
         del ds, driver
 
-    for g in geoms:
-        g.crs = crs
-
+    geoms = []
+    for g in _geoms:
+        if g is not None:
+            g.crs = crs
+            geoms.append(g)
     return geoms
 
 def ogr_parse_srs(lyr):

@@ -182,5 +182,27 @@ class TestShapefile(unittest.TestCase):
                                  '142', '235', '150', '248'])
         return
 
+class ShapefileAttributeTests(unittest.TestCase):
+
+    def test_infer_ogr_fieldtype(self):
+        self.assertEqual(shp.ogr_get_fieldtype(1), 0)
+        self.assertEqual(shp.ogr_get_fieldtype([1, 2]), 1)
+
+        self.assertEqual(shp.ogr_get_fieldtype(1.0), 2)
+        self.assertEqual(shp.ogr_get_fieldtype([1.0, 1.5]), 3)
+
+        # everything should be interpretted as WideString
+        self.assertEqual(shp.ogr_get_fieldtype("hello"), 6)
+        self.assertEqual(shp.ogr_get_fieldtype(["list","of","strings"]), 7)
+
+        self.assertEqual(shp.ogr_get_fieldtype(b'0b110001'), 8)
+
+        # dates
+        self.assertEqual(shp.ogr_get_fieldtype(datetime.date(2013, 11, 17)), 9)
+        self.assertEqual(shp.ogr_get_fieldtype(datetime.time(8, 30, 0)), 10)
+        self.assertEqual(shp.ogr_get_fieldtype(datetime.datetime(2013, 11, 17, 8, 30, 0)), 11)
+        return
+
+
 if __name__ == "__main__":
     unittest.main()
