@@ -130,6 +130,15 @@ class RegularGridTests(unittest.TestCase):
         self.assertAlmostEqual(d, 4.3878488543)
         return
 
+    def test_minmax_nodata(self):
+        values = np.array([[4, 5, 3], [4, 2, -9], [3, 6, 1]])
+        
+        self.rast = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
+                                      values=values, nodata_value=-9)
+        minmax = self.rast.minmax()
+        self.assertEqual(minmax, (1, 6))
+        return
+
     def test_minmax(self):
         minmax = self.rast.minmax()
         self.assertEqual(minmax, (-6.5466445243204294, 8.075173545159231))
