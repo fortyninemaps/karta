@@ -33,19 +33,19 @@ def _from_shape(d, properties):
         c = d["coordinates"]
         if c is None:
             return None
-        elif d["type"] in ("Point", "Point25D", "NDR", "XDR"):
+        elif d["type"] == "Point":
             return geometry.Point(c, properties=properties)
-        elif d["type"] in ("MultiPoint", "Multipoint25D"):
+        elif d["type"] == "MultiPoint":
             return geometry.Multipoint(c, properties=properties)
-        elif d["type"] in ("LineString", "LineString25D"):
+        elif d["type"] == "LineString":
             return geometry.Line(c, properties=properties)
-        elif d["type"] in ("Polygon", "Polygon25D"):
+        elif d["type"] == "Polygon":
             subs = [geometry.Polygon(c[i]) for i in range(1, len(c))]
             return geometry.Polygon(c[0], properties=properties, subs=subs)
-        elif d["type"] in ("MultiLineString", "MultiLineString25D"):
+        elif d["type"] == "MultiLineString":
             return [geometry.Line(c[i], properties=properties)
                     for i in range(len(c))]
-        elif d["type"] in ("MultiPolygon", "MultiPolygon25D"):
+        elif d["type"] == "MultiPolygon":
             polys = []
             for c_ in c:
                 subs = [geometry.Polygon(c_[i]) for i in range(1, len(c_))]
@@ -175,7 +175,7 @@ def ogr_read_shapefile(stem):
                                    shp.ogr_read_attributes(layer))]
         crs = ogr_parse_srs(layer)
     finally:
-        del ds, driver
+        del ds, driver, layer
 
     geoms = []
     for g in _geoms:
