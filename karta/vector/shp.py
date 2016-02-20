@@ -97,44 +97,49 @@ def get_geometry_type(gi):
     else:
         return gi["type"]
 
+def ogr_get_polygon_points(poly):
+    geoms = [poly.GetGeometryRef(i) for i in range(poly.GetGeometryCount())]
+    pts = [geom.GetPoints()[:-1] for geom in geoms]
+    return pts
+
+def ogr_read_geometry(geom):
+    # convert this to ogr_read_singlepart and write and additional ogr_read_multipart
+    wkbtype = GEOMTYPES[geom.GetGeometryType()]
+    if wkbtype in ('Point', 'Point25D', 'NDR', 'XDR'):
+        jsontype = 'Point'
+        pts = geom.GetPoint()
+    elif wkbtype in ('LineString', 'LineString25D'):
+        jsontype = 'LineString'
+        pts = geom.GetPoints()
+    elif wkbtype in ('Polygon', 'Polygon25D'):
+        jsontype = 'Polygon'
+        pts = ogr_get_polygon_points(geom)
+    elif wkbtype in ('MultiPoint', 'MultiPoint25D'):
+        jsontype = 'MultiPoint'
+        pts = geom.GetPoints()
+    elif wkbtype in ('MultiLineString', 'MultiLineString25D'):
+        jsontype = 'MultiLineString'
+        pts = [geom.GetGeometryRef(i).GetPoints()
+               for i in range(geom.GetGeometryCount())]
+    elif wkbtype in ('MultiPolygon', 'MultiPolygon25D'):
+        jsontype = 'MultiPolygon'
+        pts = [ogr_get_polygon_points(geom.GetGeometryRef(i))
+               for i in range(geom.GetGeometryCount())]
+    else:
+        raise TypeError("WKB type {0} not handled".format(wkbtype))
+
+    xmin, xmax, ymin, ymax = geom.GetEnvelope()
+    return {'type': jsontype,
+            'bbox': (xmin, ymin, xmax, ymax),
+            'coordinates': pts}
+
 def ogr_read_geometries(lyr):
     """ Given an ogr.Layer instance, return a list of geointerface dictionaries
     """
     gi_dicts = []
-
     for feature in lyr:
         geom = feature.GetGeometryRef()
-        wkbtype = GEOMTYPES[geom.GetGeometryType()]
-        if wkbtype in ('Point', 'Point25D', 'NDR', 'XDR'):
-            jsontype = 'Point'
-            pts = geom.GetPoint()
-        elif wkbtype in ('LineString', 'LineString25D'):
-            pts = geom.GetPoints()
-            jsontype = 'LineString'
-        elif wkbtype in ('Polygon', 'Polygon25D'):
-            jsontype = 'Polygon'
-            nrings = geom.GetGeometryCount()
-            outer_ring = geom.GetGeometryRef(0)
-            if nrings != 1:
-                inner_rings = [geom.GetGeometryRef(i) for i in range(1, nrings)]
-            else:
-                inner_rings = []
-            pts = [outer_ring.GetPoints()[:-1]]
-            for ring in inner_rings:
-                pts.append(ring.GetPoints()[:-1])
-        elif wkbtype in ('MultiPoint', 'MultiPoint25D'):
-            jsontype = 'MultiPoint'
-            pts = geom.GetPoints()
-        else:
-            # need handlers for MultiLineString, MultiPolygon (and their 25D
-            # counterparts)
-            raise TypeError("WKB type {0} not handled".format(wkbtype))
-
-        xmin, xmax, ymin, ymax = geom.GetEnvelope()
-        d = {'type': jsontype,
-             'bbox': (xmin, ymin, xmax, ymax),
-             'coordinates': pts}
-        gi_dicts.append(d)
+        gi_dicts.append(ogr_read_geometry(geom))
     return gi_dicts
 
 def ogr_read_attributes(lyr):
@@ -155,6 +160,10 @@ def ogr_read_attributes(lyr):
                 p[fn] = t(lyr.GetFeature(i).GetField(j))
             except TypeError:
                 p[fn] = None
+            except UnicodeDecodeError:
+                # This is due to GDAL bug #5811 on Python 3
+                # https://trac.osgeo.org/gdal/ticket/5811
+                p[fn] = "gdal bug 5811"
         propertylist.append(p)
 
     return propertylist

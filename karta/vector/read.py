@@ -179,7 +179,11 @@ def ogr_read_shapefile(stem):
 
     geoms = []
     for g in _geoms:
-        if g is not None:
+        if isinstance(g, list):
+            for part in g:
+                part.crs = crs
+            geoms.append(g)
+        elif g is not None:
             g.crs = crs
             geoms.append(g)
     return geoms
