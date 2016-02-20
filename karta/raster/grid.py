@@ -373,12 +373,11 @@ class RegularGrid(Grid):
         x0 = t[0] + j0*t[2] + i0*t[4]
         y0 = t[1] + i0*t[3] + j0*t[5]
         tnew = (x0, y0, t[2], t[3], t[4], t[5])
-        return RegularGrid(tnew, values, crs=self.crs)
+        return RegularGrid(tnew, values, crs=self.crs, nodata_value=self.nodata)
 
-    #def resize(self, xll, yll, nx, ny):
     def resize(self, bboxnew):
-        """ Return a new grid grid with lower left corner at (*xll*, *yll*) and
-        ny x nx cells. Values are selected based on a nearest neighbour scheme.
+        """ Return a new grid grid with extents given by *bboxnew* (xmin, ymin,
+        xmax, ymax). Values are selected based on a nearest neighbour scheme.
         """
         bb = self.bbox
         dx, dy, sx, sy = self.transform[2:]
