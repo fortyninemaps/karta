@@ -309,6 +309,19 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.allclose(z, expected))
         return
 
+    def test_gridpoints(self):
+        np.random.seed(49)
+        x = np.random.rand(20000)*10.0-5.0
+        y = np.random.rand(20000)*10.0-5.0
+        z = x**2+y**3
+
+        T = [-5.0, -5.0, 0.25, 0.25, 0.0, 0.0]
+        grid = karta.raster.gridpoints(x, y, z, T, karta.crs.Cartesian)
+
+        Xg, Yg = grid.center_coords()
+        self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid.values))/Xg.size < 0.45)
+        return
+
     def test_read_aai(self):
         grid = karta.read_aai(os.path.join(TESTDATA,'peaks49.asc'))
         self.assertTrue(np.all(grid.values[::-1] == self.rast.values))

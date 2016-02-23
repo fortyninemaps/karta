@@ -945,6 +945,41 @@ def get_nodata(T):
     else:
         raise ValueError("No default NODATA value for type {0}".format(T))
 
+def gridpoints(x, y, z, transform, crs):
+    """ Return a grid computed by averaging point data over cells.
+
+    Parameters:
+    -----------
+
+    x : (iterable) point data x coordinates
+
+    y : (iterable) point data y coordinates
+
+    z : (iterable) point data values
+
+    transform : (iterable) geotransform of the form
+        [xllcorner, yllcorner, xres, yres, xskew, yskew]
+
+    crs : (karta.crs.CRS) coordinate reference system object
+    """
+    ny = int((np.max(y) - transform[1]) // transform[3]) + 1
+    nx = int((np.max(x) - transform[0]) // transform[2]) + 1
+    grid = RegularGrid(transform,
+                       values=np.zeros([ny, nx]),
+                       crs=crs,
+                       nodata_value=np.nan)
+    counts = np.zeros([ny, nx], dtype=np.int16)
+
+    (I, J) = grid.get_indices(x, y)
+    for (i,j,z_) in zip(I, J, z):
+        grid.values[i,j] += z_
+        counts[i,j] += 1
+
+    m = counts!=0
+    grid.values[m] /= counts[m]
+    grid.values[~m] = grid.nodata
+    return grid
+
 def hillshade(grid, **kw):
     """ Return a hill-shaded version of *grid*.
 
