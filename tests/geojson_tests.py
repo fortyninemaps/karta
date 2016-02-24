@@ -239,5 +239,64 @@ class TestGeoJSONOutput(unittest.TestCase):
                                Point((-100.3, 44.38), crs=LonLatWGS84)])
         s = capitols.as_geojson()
 
+class GeoJSONSerializerTests(unittest.TestCase):
+
+    def setUp(self):
+        self.serializer = geojson.GeoJSONSerializer()
+        return
+
+    def test_serialize_point(self):
+        pt = geojson.Point((44.0, 17.0), LonLatWGS84)
+        s = self.serializer.serialize(pt)
+        d = json.loads(s)
+        self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
+        return
+
+    def test_serialize_linestring(self):
+        linestring = geojson.LineString([[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
+                                        LonLatWGS84)
+        s = self.serializer.serialize(linestring)
+        d = json.loads(s)
+        self.assertEqual(list(linestring.coordinates), list(d["coordinates"]))
+        return
+
+    def test_serialize_polygon(self):
+        polygon = geojson.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
+                                   [[1.0, 1.0], [0.5, -0.5], [0.8, [-0.7]]]],
+                                  LonLatWGS84)
+        s = self.serializer.serialize(polygon)
+        d = json.loads(s)
+        self.assertEqual(list(polygon.coordinates), list(d["coordinates"]))
+        return
+
+    def test_serialize_multipoint(self):
+        multipoint = geojson.MultiPoint([[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
+                                        LonLatWGS84)
+        s = self.serializer.serialize(multipoint)
+        d = json.loads(s)
+        self.assertEqual(list(multipoint.coordinates), list(d["coordinates"]))
+        return
+
+    def test_serialize_multilinestring(self):
+        multilinestring = geojson.MultiLineString(
+                            [[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
+                             [[49.0, -3.0], [48.0, -2.5], [2.9, -16.0]]],
+                            LonLatWGS84)
+        s = self.serializer.serialize(multilinestring)
+        d = json.loads(s)
+        self.assertEqual(list(multilinestring.coordinates), list(d["coordinates"]))
+        return
+
+    def test_serialize_multipolygon(self):
+        multipolygon = geojson.MultiPolygon(
+                            [[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
+                              [[1.0, 1.0], [0.5, -0.5], [0.8, [-0.7]]],
+                             [[[49.0, -3.0], [48.0, -2.5], [2.9, -16.0]]]],
+                            LonLatWGS84)
+        s = self.serializer.serialize(multipolygon)
+        d = json.loads(s)
+        self.assertEqual(list(multipolygon.coordinates), list(d["coordinates"]))
+        return
+
 if __name__ == "__main__":
     unittest.main()

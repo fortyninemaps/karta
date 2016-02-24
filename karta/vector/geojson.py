@@ -40,7 +40,7 @@ class GeoJSONLinkedCRS(CRS):
 DEFAULTCRS = {"type": "name",
               "properties": {"name": "urn:ogc:def:crs:OGC:1.3:CRS84"}}
 
-class ExtendedJSONEncoder(json.JSONEncoder):
+class NumpyAwareJSONEncoder(json.JSONEncoder):
     """ Numpy-specific numbers prior to 1.9 don't inherit from Python numeric
     ABCs. This class is a hack to coerce numpy values into Python types for
     JSON serialization. """
@@ -201,7 +201,7 @@ class GeoJSONWriter(object):
 
     def print_json(self, indent):
         """ Print GeoJSON representation. """
-        return json.dumps(self.supobj, indent=indent, cls=ExtendedJSONEncoder)
+        return json.dumps(self.supobj, indent=indent, cls=NumpyAwareJSONEncoder)
 
     def write_json(self, fout, indent):
         """ Dump internal dict-object to JSON using the builtin `json` module.
@@ -212,7 +212,7 @@ class GeoJSONWriter(object):
             self.supobj["crs"]["properties"]["href"] = fout_crs
             with open(fout_crs, "w") as f:
                 f.write(self.crs.get_proj4())
-        json.dump(self.supobj, fout, indent=indent, cls=ExtendedJSONEncoder)
+        json.dump(self.supobj, fout, indent=indent, cls=NumpyAwareJSONEncoder)
         return
 
 class GeoJSONReader(object):
@@ -324,6 +324,105 @@ class GeoJSONReader(object):
         else:
             res = self.parseGeometry(d)
         return res
+
+class GeoJSONSerializer(object):
+    """ Class for converting GeoJSON named tuples to GeoJSON.
+
+    Usage:
+
+        serializer = GeoJSONSerializer()
+        json_string = serializer.serialize(named_tuple)
+    """
+
+    def __init__(self):
+        self.enc = NumpyAwareJSONEncoder()
+        return
+
+    def serialize(self, geom):
+        return self.enc.encode(self.geometry_asdict(geom))
+
+    def geometry_asdict(self, geom):
+
+        if hasattr(geom, "properties"):
+            return self.feature_asdict(geom)
+
+        elif hasattr(geom, "geometries"):
+            return self.geometry_collection_asdict(geom)
+
+        elif hasattr(geom, "features"):
+            return self.feature_collection_asdict(geom)
+
+        elif isinstance(geom, MultiPoint):
+            return self._geometry_asdict(geom, "MultiPoint")
+
+        elif isinstance(geom, Point):
+            return self._geometry_asdict(geom, "Point")
+
+        elif isinstance(geom, MultiLineString):
+            return self._geometry_asdict(geom, "MultiLineString")
+
+        elif isinstance(geom, LineString):
+            return self._geometry_asdict(geom, "LineString")
+
+        elif isinstance(geom, MultiPolygon):
+            return self._geometry_asdict(geom, "MultiPolygon")
+
+        elif isinstance(geom, Polygon):
+            return self._geometry_asdict(geom, "Polygon")
+        else:
+            raise TypeError("cannot serialize type '{0}'".format(type(geom)))
+
+    @staticmethod
+    def crsdict(crs=None, urn=None, href="", linktype="proj4"):
+        """ Return a dictionary that can be serialized as a GeoJSON coordinate
+        system mapping using a *urn* or a *crs* instance.
+
+        In the case of a linked CRS, the link address and type can be specified
+        using the `href` and `linktype` keyword arguments.
+
+        For more details, see the GeoJSON specification at:
+        http://geojson.org/geojson-spec.html#coordinate-reference-system-objects
+        """
+        if urn is not None:
+            return {'type': 'name',
+                    'properties': {'name': urn}}
+        elif crs is not None:
+            if hasattr(crs, "jsonhref") and hasattr(crs, "jsontype"):
+                d = {'type': 'link',
+                     'properties': {'href': crs.jsonname,
+                                    'type': crs.jsontype}}
+            elif hasattr(crs, "jsonname"):
+                d = {'type': 'name',
+                     'properties': {'name': crs.jsonname}}
+            else:
+                d = {'type': 'link',
+                     'properties': {'href': href,
+                                    'type': linktype}}
+            return d
+        else:
+            raise ValueError("either a urn must be specified or a CRS object "
+                             "provided")
+        return
+
+    def _geometry_asdict(self, geom, name):
+        return {"type": name,
+                "coordinates": geom.coordinates,
+                "crs": self.crsdict(crs=geom.crs)}
+
+    def feature_asdict(self, feature):
+        return {"type": "Feature",
+                "geometry": self.geometry_asdict(feature.geometry),
+                "properties": feature.properties}
+
+    def geometry_collection_asdict(self, geometry_collection):
+        return {"type": "GeometryCollection",
+                "geometries": [self.geometry_asdict(g)
+                               for g in geometry_collection.geometries]}
+
+    def feature_collection_asdict(self, feature_collection):
+        return {"type": "FeatureCollection",
+                "features": [self.feature_asdict(f)
+                             for f in feature_collection.features]}
 
 def list_rec(A):
     """ Recursively convert nested iterables to nested lists """
