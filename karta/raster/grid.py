@@ -932,54 +932,59 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
         affine transformation describing grid layout and origin
         T == [x0, y0, dx, dy, sx, sy]
     """
-
     mask = np.zeros((ny, nx), dtype=np.int8)
 
-    # find southernmost index (will end on this point)
-    v = max(ypoly)
-    i_end = -1
-    for i in range(len(ypoly)):
+    # find southernmost index (will start and end on this point)
+    v = ypoly[0]
+    i_bot = 0
+    for i in range(1, len(ypoly)):
         if ypoly[i] < v:
             v = ypoly[i]
-            i_end = i
+            i_bot = i
 
-    x0 = xpoly[i_end]
-    y0 = ypoly[i_end]
+    x0 = xpoly[i_bot]
+    y0 = ypoly[i_bot]
 
     ta, tb, tc, td, te, tf = transform
     i0 = int(math.ceil((y0 - min(y0, tb) - tf/tc*(x0 - min(x0, ta))) / (td - tf*te/tc)))
     j0 = int(math.ceil((x0 - min(x0, ta) - te/td*(y0 - min(y0, tb))) / (tc - te*tf/td)))
 
     for el in range(1, len(xpoly)+1):
-        idx = (el + i_end) % len(xpoly)
+        idx = (el + i_bot) % len(xpoly)
         x1 = xpoly[idx]
         y1 = ypoly[idx]
 
-        # Grid coordinates of the segment end points
-        i1 = int(math.ceil((y1 - min(y1, tb) - tf/tc*(x1 - min(x1, ta)))
-                    / (td - tf*te/tc)))
-        j1 = int(math.ceil((x1 - min(x1, ta) - te/td*(y1 - min(y1, tb)))
-                    / (tc - te*tf/td)))
+        # (Unbounded) grid indicies of the segment end points
+        i1 = int(round((y1-tb - tf/tc*(x1-ta)) / (td - tf*te/tc)))
+        j1 = int(round((x1-ta - te/td*(y1-tb)) / (tc - te*tf/td)))
 
-        # if segment is horizontal, ignore
-        if y1 != y0:
+        # If segment is horizontal or off-grid, ignore
+        if ((0 <= i0 < ny) or (0 <= i1 < ny)) and (y1 != y0):
 
             if y1 > y0:     # mark grid cells to the right
 
                 for i in range(i0, i1):
-                    j = int(round((i-i0) * (x1-x0)/(y1-y0) + j0))
-                    mask[max(0, min(i, ny-1)), max(0, min(j, nx-1)):] += 1
+                    if (0 <= i < ny):
+                        j = int(round((i-i0) * (x1-x0)/(y1-y0) + j0))
+                        if j < nx:
+                            mask[i, max(0, j):] += 1
 
-            if y0 > y1:     # unmark grid cells to the right
+            else:           # unmark grid cells to the right
 
                 for i in range(i1, i0):
-                    j = int(round((i-i1) * (x1-x0)/(y1-y0) + j1))
-                    mask[max(0, min(i, ny-1)), max(0, min(j, nx-1)):] -= 1
+                    if (0 <= i < ny):
+                        j = int(round((i-i1) * (x1-x0)/(y1-y0) + j1))
+                        if j < nx:
+                            mask[i, max(0, j):] -= 1
 
         x0 = x1
         y0 = y1
         i0 = i1
         j0 = j1
+
+    # unmark single row of cells to the right
+    if (0 <= i0 < ny) and (j0 < nx):
+        mask[i0, max(0, j0):] += 1
 
     return mask.astype(np.bool)
 
