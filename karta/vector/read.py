@@ -164,6 +164,9 @@ def get_filenames(stem, check=False):
     return {'shp':shp, 'shx':shx, 'dbf':dbf}
 
 def ogr_read_shapefile(stem):
+    if not HAS_OSGEO:
+        raise errors.MissingDependencyError("Reading shapefiles requires GDAL "
+                                            "bindings")
     fnms = get_filenames(stem)
     driver = ogr.GetDriverByName("ESRI Shapefile")
     ds = driver.Open(fnms["shp"], 0)
@@ -189,6 +192,8 @@ def ogr_read_shapefile(stem):
     return geoms
 
 def ogr_parse_srs(lyr):
+    """ Given an OGR type with a `GetSpatialRef` method, return a matching CRS
+    object. """
     srs = lyr.GetSpatialRef()
     if srs is None:
         crs = LonLatWGS84

@@ -13,77 +13,67 @@ try:
 except ImportError:
     HAS_OSGEO = False
 
-rankerror = IOError("feature must be in two or three dimensions to write "
-                    "as shapefile")
-
 if HAS_OSGEO:
-    GEOMTYPES = {}
+    OGRGEOMTYPES = {}
     for k in ogr.__dict__:
         if k.startswith("wkb"):
-            GEOMTYPES[ogr.__dict__[k]] = k[3:]
+            OGRGEOMTYPES[ogr.__dict__[k]] = k[3:]
 
-OGRTYPES = {"Point": 1,
-            "LineString": 2,
-            "Polygon": 3,
-            "MultiPoint": 4,
-            "MultiLineString": 5,
-            "MultiPolygon": 6}
+OGRTYPES = {"Point": ogr.wkbPoint,
+            "LineString": ogr.wkbLineString,
+            "Polygon": ogr.wkbPolygon,
+            "MultiPoint": ogr.wkbMultiPoint,
+            "MultiLineString": ogr.wkbMultiLineString,
+            "MultiPolygon": ogr.wkbMultiPolygon}
 
-FIELDTYPES = {0: int,
-              1: list,      # IntegerList
-              2: float,
-              3: list,      # RealList
-              4: str,
-              5: list,      # StringList
-              6: str,       # WideString
-              7: list,      # WideStringList
-              8: bin,
-              9: datetime.date,
-              10: datetime.time,
-              11: datetime.datetime}
-
-OGRFIELDTYPES = {int: 0,
-                 float: 2,
-                 str: 4,
-                 bin: 8,
-                 datetime.date: 9,
-                 datetime.time: 10,
-                 datetime.datetime: 11}
+# dictionary that matches each OGR type to a Python builtin
+FIELDTYPES = {ogr.OFTInteger: int,
+              ogr.OFTIntegerList: list,
+              ogr.OFTReal: float,
+              ogr.OFTRealList: list,
+              ogr.OFTString: str,
+              ogr.OFTStringList: list,
+              ogr.OFTWideString: str,
+              ogr.OFTWideStringList: list,
+              ogr.OFTBinary: bin,
+              ogr.OFTDate: datetime.date,
+              ogr.OFTTime: datetime.time,
+              ogr.OFTDateTime: datetime.datetime}
 
 def ogr_get_fieldtype(val):
-    """ Return an ogr type integer that describes the type of *a*. """
+    """ Returns a tuple of
+        - an OGR type integer that describes the type of *a*
+        - a default width that should work for most cases
+    """
     if isinstance(val, numbers.Number) or _isnumpytype(val):
         if isinstance(val, numbers.Integral) or _isnumpyint(val):
-            return 0
+            return ogr.OFTInteger, 32
         elif isinstance(val, numbers.Real) or _isnumpyfloat(val):
-            return 2
+            return ogr.OFTReal, 32
         else:
             raise TypeError("cannot choose the correct dBase type for "
-                            "{0}\n".format(type(value)))
+                            "{0}\n".format(type(val)))
     elif isinstance(val, str):
-        return 6
+        return ogr.OFTString, 180
     elif isinstance(val, bytes):
-        return 8
+        return ogr.OFTBinary, 32
     elif isinstance(val, datetime.datetime):
-        return 11
+        return ogr.OFTDateTime, 64
     elif isinstance(val, datetime.date):
-        return 9
+        return ogr.OFTDate, 32
     elif isinstance(val, datetime.time):
-        return 10
+        return ogr.OFTTime, 32
     elif isinstance(val, list):
-        try:
-            t = ogr_get_fieldtype(val[0])
-            if t == 0:
-                return 1
-            elif t == 2:
-                return 3
-            elif t == 6:
-                return 7
-            else:
-                raise TypeError
-        except TypeError as e:
+        t = ogr_get_fieldtype(val[0])[0]
+        if t == ogr.OFTInteger:
+            return ogr.OFTIntegerList, 1000
+        elif t == ogr.OFTReal:
+            return ogr.OFTRealList, 1000
+        elif t == ogr.OFTString:
+            return ogr.OFTStringList, 1000
+        else:
             raise TypeError("cannot choose the correct dBase type for a list "
-                            "with elements of type{0}".format(type(val[0])))
+                            "with elements of type '{0}'".format(type(val[0])))
     else:
         raise TypeError("cannot choose the correct dBase type for "
                         "{0}".format(type(val)))
@@ -98,13 +88,14 @@ def get_geometry_type(gi):
         return gi["type"]
 
 def ogr_get_polygon_points(poly):
+    """ Return a list of lists of ogr.Polygon coordinate rings. """
     geoms = [poly.GetGeometryRef(i) for i in range(poly.GetGeometryCount())]
     pts = [geom.GetPoints()[:-1] for geom in geoms]
     return pts
 
 def ogr_read_geometry(geom):
-    # convert this to ogr_read_singlepart and write and additional ogr_read_multipart
-    wkbtype = GEOMTYPES[geom.GetGeometryType()]
+    """ Convert an ogr.Geometry to a __geo_interface__ dictionary. """
+    wkbtype = OGRGEOMTYPES[geom.GetGeometryType()]
     if wkbtype in ('Point', 'Point25D', 'NDR', 'XDR'):
         jsontype = 'Point'
         pts = geom.GetPoint()
@@ -134,7 +125,8 @@ def ogr_read_geometry(geom):
             'coordinates': pts}
 
 def ogr_read_geometries(lyr):
-    """ Given an ogr.Layer instance, return a list of geointerface dictionaries
+    """ Given an ogr.Layer instance, return a list of __geo_interface__
+    dictionaries.
     """
     gi_dicts = []
     for feature in lyr:
@@ -171,6 +163,10 @@ def ogr_read_attributes(lyr):
 def ogr_write(fnm, *objs):
     """ Write features to shapefile using OGR backend. Features may be karta
     geometry objects or __geo_interface__ features. """
+    if not HAS_OSGEO:
+        raise errors.MissingDependencyError("Writing shapefiles requires GDAL "
+                                            "bindings")
+
     objs = [obj.__geo_interface__ if hasattr(obj, "_geotype") else obj
             for obj in objs]
 
@@ -213,8 +209,10 @@ def ogr_write(fnm, *objs):
     keys = set.intersection(*[set(obj["properties"].keys()) for obj in objs])
     keys = [k for k in keys if not k.startswith("_karta")]
     for k in keys:
-        t = ogr_get_fieldtype(obj["properties"][k][0])
-        lyr.CreateField(ogr.FieldDefn(k, t))
+        typ, default_width = ogr_get_fieldtype(objs[0]["properties"][k])
+        fd = ogr.FieldDefn(k, typ)
+        fd.SetWidth(default_width)
+        lyr.CreateField(fd)
 
     # add geometries
     for i, obj in enumerate(objs):
@@ -224,10 +222,11 @@ def ogr_write(fnm, *objs):
 def ogr_write_feature(lyr, gi, id=0):
     """ Write the geometry encoded in a __geointerface__ dictionary to a
     shapefile. """
-    feature = ogr.Feature(lyr.GetLayerDefn())
+    layer_def = lyr.GetLayerDefn()
+    feature = ogr.Feature(layer_def)
     feature.SetField("id", id)
-    for i in range(1, lyr.GetLayerDefn().GetFieldCount()):
-        attr_name = lyr.GetFieldDefn(i).GetNameRef()
+    for i in range(1, layer_def.GetFieldCount()):
+        attr_name = layer_def.GetFieldDefn(i).GetNameRef()
         feature.SetField(attr_name, gi["properties"][attr_name])
 
     if gi["geometry"]["type"] == "Polygon":

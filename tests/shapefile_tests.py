@@ -24,6 +24,7 @@ class TestShapefile(unittest.TestCase):
                                      crs=LonLatWGS84)
 
         self.line = Line([(1.0,5.0),(5.0,5.0),(5.0,1.0),(3.0,3.0),(1.0,1.0)],
+                         properties={"geom_id": 27, "name": "test line"},
                          crs=LonLatWGS84)
 
         self.polygon = Polygon([(1.0,5.0),(5.0,5.0),(5.0,1.0),(3.0,3.0),(1.0,1.0)],
@@ -185,23 +186,23 @@ class TestShapefile(unittest.TestCase):
 class ShapefileAttributeTests(unittest.TestCase):
 
     def test_infer_ogr_fieldtype(self):
-        self.assertEqual(shp.ogr_get_fieldtype(1), 0)
-        self.assertEqual(shp.ogr_get_fieldtype([1, 2]), 1)
+        self.assertEqual(shp.ogr_get_fieldtype(1), (0, 32))
+        self.assertEqual(shp.ogr_get_fieldtype([1, 2]), (1, 1000))
 
-        self.assertEqual(shp.ogr_get_fieldtype(1.0), 2)
-        self.assertEqual(shp.ogr_get_fieldtype([1.0, 1.5]), 3)
+        self.assertEqual(shp.ogr_get_fieldtype(1.0), (2, 32))
+        self.assertEqual(shp.ogr_get_fieldtype([1.0, 1.5]), (3, 1000))
 
         # everything should be interpretted as WideString
-        self.assertEqual(shp.ogr_get_fieldtype("hello"), 6)
-        self.assertEqual(shp.ogr_get_fieldtype(["list","of","strings"]), 7)
+        self.assertEqual(shp.ogr_get_fieldtype("hello"), (4, 180))
+        self.assertEqual(shp.ogr_get_fieldtype(["list","of","strings"]),(5, 1000))
 
         # doesn't work on Python 2
         #self.assertEqual(shp.ogr_get_fieldtype(b'0b110001'), 8)
 
         # dates
-        self.assertEqual(shp.ogr_get_fieldtype(datetime.date(2013, 11, 17)), 9)
-        self.assertEqual(shp.ogr_get_fieldtype(datetime.time(8, 30, 0)), 10)
-        self.assertEqual(shp.ogr_get_fieldtype(datetime.datetime(2013, 11, 17, 8, 30, 0)), 11)
+        self.assertEqual(shp.ogr_get_fieldtype(datetime.date(2013, 11, 17)), (9, 32))
+        self.assertEqual(shp.ogr_get_fieldtype(datetime.time(8, 30, 0)), (10, 32))
+        self.assertEqual(shp.ogr_get_fieldtype(datetime.datetime(2013, 11, 17, 8, 30, 0)), (11, 64))
         return
 
 
