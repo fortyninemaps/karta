@@ -41,6 +41,7 @@ class RegularGridTests(unittest.TestCase):
         grid2 = karta.RegularGrid([7, 22, 1, 1, 0, 0], values=2*np.ones([4, 6]))
         grid3 = karta.RegularGrid([12, 15, 1, 1, 0, 0], values=3*np.ones([5, 5]))
         grid_combined = karta.raster.merge([grid1, grid2, grid3])
+        self.assertEqual(grid_combined.transform, (7.0, 15.0, 1.0, 1.0, 0.0, 0.0))
         self.assertEqual(grid_combined.size, (13, 11))
         self.assertEqual(np.sum(np.isnan(grid_combined.values)), 42)
         return
