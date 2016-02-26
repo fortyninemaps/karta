@@ -847,12 +847,6 @@ class WarpedGrid(Grid):
         """ Resample internal grid to the points defined by *X*, *Y*. """
         raise NotImplementedError
 
-def _generate_nodata_func(nodata):
-    if np.isnan(nodata):
-        return np.isnan
-    else:
-        return lambda a: a==nodata
-
 def merge(grids, weights=None):
     """ Perform a basic grid merge. Currently limited to grids whose sampling
     is an integer translation from each other.
@@ -892,31 +886,29 @@ def merge(grids, weights=None):
 
     normalizedweights = weights * len(weights) / weights.sum()
 
-    nodata_funcs = [_generate_nodata_func(grid.nodata) for grid in grids]
-
     # Compute final grid extent
-    xmin, xmax, ymin, ymax = grids[0].get_extent()
+    xmin, xmax, ymin, ymax = grids[0].get_extent(reference='edge')
     for grid in grids[1:]:
-        _xmin, _xmax, _ymin, _ymax = grid.get_extent()
+        _xmin, _xmax, _ymin, _ymax = grid.get_extent(reference='edge')
         xmin = min(xmin, _xmin)
         xmax = max(xmax, _xmax)
         ymin = min(ymin, _ymin)
         ymax = max(ymax, _ymax)
 
-    nx = int(round((xmax-xmin) / T[2])) + 1
-    ny = int(round((ymax-ymin) / T[3])) + 1
+    nx = int(round((xmax-xmin) / T[2]))
+    ny = int(round((ymax-ymin) / T[3]))
 
     # Allocate data array and copy each grid's data
     typ = grids[0].values.dtype.type
     values = np.zeros([ny, nx], dtype=typ)
     counts = np.zeros([ny, nx], dtype=np.float32)
-    for grid, nf, w in zip(grids, nodata_funcs, normalizedweights):
-        _xmin, _xmax, _ymin, _ymax = grid.get_extent()
+    for grid, w in zip(grids, normalizedweights):
+        _xmin, _xmax, _ymin, _ymax = grid.get_extent(reference='edge')
         offx = int((_xmin-xmin) / T[2])
         offy = int((_ymin-ymin) / T[3])
         _ny, _nx = grid.size
 
-        mask = ~nf(grid.values)
+        mask = grid.data_mask
         counts[offy:offy+_ny,offx:offx+_nx][mask] += w
         values[offy:offy+_ny,offx:offx+_nx][mask] += typ(grid.values[mask]*w)
         del mask
