@@ -737,23 +737,6 @@ class TestGeometryOutput(unittest.TestCase):
                  50.0, 25.0, 11.0, 80.0, 59.0, 56.0, 32.0, 8.0, 88.0, 76.0]
         self.mp = Multipoint(vertices, data={'d0':data0, 'd1':data1})
 
-    # Due to the output of ElementTree.tostring not being deterministic, this
-    # test randomly fails due to the DataArray attributes being swapped. The
-    # output is correct, but it doesn't match the reference data. This is a bug
-    # in the test.
-    #def test_mp2vtp(self):
-    #    # Test VTK output for a Multipoint
-    #    s = StringIO()
-    #    self.mp.to_vtk(s)
-    #    s.seek(0)
-    #    #a1 = md5sum(s)
-    #    #a2 = md5sum_file(os.path.join(TESTDATA, 'testmp2vtp.vtp'))
-    #    #print(a1)
-    #    #print(a2)
-    #    #self.assertEqual(md5sum(s),
-    #    #                 md5sum_file(os.path.join(TESTDATA, 'testmp2vtp.vtp')))
-    #    return
-
 class TestAffineTransforms(unittest.TestCase):
 
     def setUp(self):

@@ -238,6 +238,9 @@ class TestGeoJSONOutput(unittest.TestCase):
                                Point((-134.2, 58.37), crs=LonLatWGS84),
                                Point((-100.3, 44.38), crs=LonLatWGS84)])
         s = capitols.as_geojson()
+        self.assertTrue("crs" in s)
+        self.assertTrue('"type": "link"' in s)
+        return
 
 class GeoJSONSerializerTests(unittest.TestCase):
 

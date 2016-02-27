@@ -2,7 +2,7 @@ import unittest
 import os
 from os.path import exists, join
 import numpy as np
-from test_helper import TESTDIR, TESTDATA
+from test_helper import TESTDIR, TESTDATA, TMPDATA
 import datetime
 from copy import copy
 
@@ -40,7 +40,7 @@ class TestShapefile(unittest.TestCase):
         self.polygon3 = Polygon([(1,5,2),(5,5,-1),(5,1,3),(3,3,1),(1,1,0)], crs=LonLatWGS84)
 
         testfiles = ["points.shp", "line.shp", "polygon.shp"]
-        if any(not exists(join(TESTDATA, "shapefiles/", fnm)) for fnm in testfiles):
+        if any(not exists(join(TMPDATA, "shapefiles/", fnm)) for fnm in testfiles):
             self.saveTestData()
         return
 
@@ -48,9 +48,9 @@ class TestShapefile(unittest.TestCase):
         testfiles = [(self.multipoint, "points"),
                      (self.line, "line"),
                      (self.polygon, "polygon")]
-        os.makedirs(os.path.join(TESTDATA, "shapefiles"))
+        os.makedirs(os.path.join(TMPDATA, "shapefiles"))
         for (geom, fnm) in testfiles:
-            geom.to_shapefile(os.path.join(TESTDATA, "shapefiles", fnm))
+            geom.to_shapefile(os.path.join(TMPDATA, "shapefiles", fnm))
         return
 
     def assertGeomEqual(self, this, that):

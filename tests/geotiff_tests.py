@@ -1,7 +1,7 @@
 import unittest
 import os.path
 import numpy as np
-from test_helper import TESTDATA
+from test_helper import TMPDATA
 
 import karta
 from karta.raster import _gtiff
@@ -28,7 +28,7 @@ class GdalTests(unittest.TestCase):
                                       "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
-        fpath = os.path.join(TESTDATA, "test.tif")
+        fpath = os.path.join(TMPDATA, "test.tif")
         g.to_gtiff(fpath, compress=None)
         gnew = karta.read_gtiff(fpath)
 
@@ -46,7 +46,7 @@ class GdalTests(unittest.TestCase):
                                       "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
-        fpath = os.path.join(TESTDATA, "test.tif")
+        fpath = os.path.join(TMPDATA, "test.tif")
         g.to_gtiff(fpath, compress=None)
         gnew = karta.read_gtiff(fpath, in_memory=False)
 
@@ -66,7 +66,7 @@ class GdalTests(unittest.TestCase):
                                       "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
-        fpath = os.path.join(TESTDATA, "test.tif")
+        fpath = os.path.join(TMPDATA, "test.tif")
         g.to_gtiff(fpath, compress="LZW")
         g.to_gtiff(fpath, compress="PACKBITS")
         return
@@ -79,7 +79,7 @@ class GdalVirtualArrayTests(unittest.TestCase):
                                       "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
-        fpath = os.path.join(TESTDATA, "test.tif")
+        fpath = os.path.join(TMPDATA, "test.tif")
         g.to_gtiff(fpath, compress=None)
         self.grid = karta.read_gtiff(fpath, in_memory=False)
 

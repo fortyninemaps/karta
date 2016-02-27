@@ -1,9 +1,11 @@
 #! /usr/bin/env python
 """ Run all tests """
 
-import unittest
 import os
-from test_helper import TESTDIR
+import shutil
+import unittest
+
+from test_helper import TMPDATA
 
 # Core geometry tests
 from crs_tests import *
@@ -24,9 +26,11 @@ from geotiff_tests import *
 
 if __name__ == "__main__":
 
-    TMPDATA = os.path.join(TESTDIR, "data")
     if not os.path.isdir(TMPDATA):
-        print("creating {0}".format(TMPDATA))
         os.mkdir(TMPDATA)
 
-    unittest.main()
+    try:
+        unittest.main()
+    finally:
+        if os.path.isdir(TMPDATA):
+            shutil.rmtree(TMPDATA)
