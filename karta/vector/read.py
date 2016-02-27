@@ -73,14 +73,20 @@ def read_geojson(f):
         crs = convert_crs(geom.crs)
         if isinstance(geom, geojson.Point):
             return geometry.Point(geom.coordinates, crs=crs, **kw)
-        elif isinstance(geom, geojson.MultiPoint):
-            return geometry.Multipoint(geom.coordinates, crs=crs, **kw)
         elif isinstance(geom, geojson.LineString):
             return geometry.Line(geom.coordinates, crs=crs, **kw)
         elif isinstance(geom, geojson.Polygon):
             return geometry.Polygon(geom.coordinates[0],
                                     subs=geom.coordinates[1:],
                                     crs=crs, **kw)
+        elif isinstance(geom, geojson.MultiPoint):
+            return geometry.Multipoint(geom.coordinates, crs=crs, **kw)
+        elif isinstance(geom, geojson.MultiLineString):
+            return [geometry.Line(coords, crs=crs, **kw)
+                    for coords in geom.coordinates]
+        elif isinstance(geom, geojson.MultiPolygon):
+            return [geometry.Polygon(coords[0], subs=coords[1:], crs=crs, **kw)
+                    for coords in geom.coordinates]
         else:
             raise TypeError("{0} is a not a JSON geometry".format(geom))
 
