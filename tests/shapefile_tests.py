@@ -206,5 +206,56 @@ class ShapefileAttributeTests(unittest.TestCase):
         return
 
 
+class ShapelibTestSuite(unittest.TestCase):
+    """ Open and verify the shapefiles provided with the shapelib testsuite. """
+
+    def setUp(self):
+        self.dirname = os.path.join(TESTDATA, "shapefile", "shapelib")
+
+    def test_(self):
+        res = read_shapefile(os.path.join(self.dirname, "test.shp"))
+
+    def test_0(self):
+        res = read_shapefile(os.path.join(self.dirname, "test0.shp"))
+
+    def test_1(self):
+        res = read_shapefile(os.path.join(self.dirname, "test1.shp"))
+
+    def test_2(self):
+        res = read_shapefile(os.path.join(self.dirname, "test2.shp"))
+
+    def test_3(self):
+        res = read_shapefile(os.path.join(self.dirname, "test3.shp"))
+
+    def test_4(self):
+        res = read_shapefile(os.path.join(self.dirname, "test4.shp"))
+
+    def test_5(self):
+        res = read_shapefile(os.path.join(self.dirname, "test5.shp"))
+
+    def test_6(self):
+        res = read_shapefile(os.path.join(self.dirname, "test6.shp"))
+
+    def test_7(self):
+        res = read_shapefile(os.path.join(self.dirname, "test7.shp"))
+
+    def test_8(self):
+        res = read_shapefile(os.path.join(self.dirname, "test8.shp"))
+
+    def test_9(self):
+        res = read_shapefile(os.path.join(self.dirname, "test9.shp"))
+
+    def test_10(self):
+        res = read_shapefile(os.path.join(self.dirname, "test10.shp"))
+
+    def test_11(self):
+        res = read_shapefile(os.path.join(self.dirname, "test11.shp"))
+
+    def test_12(self):
+        res = read_shapefile(os.path.join(self.dirname, "test12.shp"))
+
+    def test_13(self):
+        res = read_shapefile(os.path.join(self.dirname, "test13.shp"))
+
 if __name__ == "__main__":
     unittest.main()

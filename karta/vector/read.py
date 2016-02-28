@@ -8,7 +8,6 @@ from . import xyfile
 from . import shp
 from .metadata import Metadata
 from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84, HASOSR, crs_from_wkt
-# from .._crs_osgeo import SRS_from_WKT
 from .. import errors
 
 try:
@@ -26,7 +25,9 @@ def from_shape(obj, properties=None):
     return _from_shape(obj.__geo_interface__, None)
 
 def _from_shape(d, properties):
-    if d["type"] == "Feature":
+    if d is None:
+        return None
+    elif d["type"] == "Feature":
         p = d["properties"]
         return _from_shape(d["geometry"], p)
     else:

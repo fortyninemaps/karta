@@ -95,6 +95,8 @@ def ogr_get_polygon_points(poly):
 
 def ogr_read_geometry(geom):
     """ Convert an ogr.Geometry to a __geo_interface__ dictionary. """
+    if geom is None:
+        return None
     wkbtype = OGRGEOMTYPES[geom.GetGeometryType()]
     if wkbtype in ('Point', 'Point25D', 'NDR', 'XDR'):
         jsontype = 'Point'
