@@ -1019,20 +1019,20 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
     y0 = ypoly[i_bot]
 
     ta, tb, tc, td, te, tf = transform
-    i0 = int(math.ceil((y0 - min(y0, tb) - tf/tc*(x0 - min(x0, ta))) / (td - tf*te/tc)))
-    j0 = int(math.ceil((x0 - min(x0, ta) - te/td*(y0 - min(y0, tb))) / (tc - te*tf/td)))
+    i0 = int(round((y0 - min(y0, tb) - tf/tc*(x0 - min(x0, ta))) / (td - tf*te/tc)))
+    j0 = int(round((x0 - min(x0, ta) - te/td*(y0 - min(y0, tb))) / (tc - te*tf/td)))
 
     for el in range(1, len(xpoly)+1):
         idx = (el + i_bot) % len(xpoly)
         x1 = xpoly[idx]
         y1 = ypoly[idx]
 
-        # (Unbounded) grid indicies of the segment end points
+        # (Unbounded) grid indices of the segment end points
         i1 = int(round((y1-tb - tf/tc*(x1-ta)) / (td - tf*te/tc)))
         j1 = int(round((x1-ta - te/td*(y1-tb)) / (tc - te*tf/td)))
 
         # If segment is horizontal or off-grid, ignore
-        if ((0 <= i0 < ny) or (0 <= i1 < ny)) and (y1 != y0):
+        if ((0 <= i0 < ny) and (0 <= i1 < ny)) or (y1 != y0):
 
             if y1 > y0:     # mark grid cells to the right
 
@@ -1054,10 +1054,6 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
         y0 = y1
         i0 = i1
         j0 = j1
-
-    # unmark single row of cells to the right
-    if (0 <= i0 < ny) and (j0 < nx):
-        mask[i0, max(0, j0):] += 1
 
     return mask.astype(np.bool)
 
