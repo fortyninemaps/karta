@@ -195,7 +195,7 @@ class RegularGridTests(unittest.TestCase):
                                  values=np.arange(1e6).reshape(1000, 1000),
                                  crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
-        self.assertEqual(np.nansum(masked_grid.values), 97047750534)
+        self.assertEqual(int(np.nansum(masked_grid.values)), 97048730546)
         return
 
     def test_mask_poly_partial(self):
