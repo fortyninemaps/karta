@@ -113,14 +113,16 @@ class RegularGrid(Grid):
     def __add__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               values=self.values+other.values)
+                               values=self.values+other.values,
+                               crs=self.crs, nodata_value=self.nodata)
         else:
             raise errors.NonEquivalentGridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               values=self.values-other.values)
+                               values=self.values-other.values,
+                               crs=self.crs, nodata_value=self.nodata)
         else:
             raise errors.NonEquivalentGridError(self, other)
 
@@ -338,7 +340,7 @@ class RegularGrid(Grid):
                 v = self.values[i0:i0+size[1], j0:j0+size[0]].copy()
             else:
                 v = self.values[i0:i0+size[1], j0:j0+size[0]]
-            yield RegularGrid(T, values=v, crs=self.crs)
+            yield RegularGrid(T, values=v, crs=self.crs, nodata_value=self.nodata)
             j0 += size[0]-overlap[0]
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
@@ -401,7 +403,8 @@ class RegularGrid(Grid):
         i1 = min(ny, int(round((bboxnew[3]-bb[1])/dy)))
 
         valnew[i0new:i1new, j0new:j1new] = self.values[i0:i1,j0:j1]
-        gridnew = RegularGrid(Tnew, values=valnew, crs=self.crs)
+        gridnew = RegularGrid(Tnew, values=valnew, crs=self.crs,
+                              nodata_value=self.nodata)
         return gridnew
 
     def mask_by_poly(self, polys, inplace=False):
@@ -436,7 +439,7 @@ class RegularGrid(Grid):
         else:
             return RegularGrid(self.transform,
                                values=np.where(msk, self.values, self.nodata),
-                               crs=self.crs)
+                               crs=self.crs, nodata_value=self.nodata)
 
     def resample_griddata(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy' using *scipy.griddata*
@@ -471,7 +474,8 @@ class RegularGrid(Grid):
         values = idata.reshape(ny, nx)
         t = self._transform
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
-        return RegularGrid(tnew, values=values, crs=self.crs)
+        return RegularGrid(tnew, values=values, crs=self.crs,
+                           nodata_value=self.nodata)
 
     def resample(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy'. The grid origin remains
@@ -507,7 +511,8 @@ class RegularGrid(Grid):
 
         t = self._transform
         tnew = (t[0], t[1], dx, dy, t[4], t[5])
-        return RegularGrid(tnew, values=values, crs=self.crs)
+        return RegularGrid(tnew, values=values, crs=self.crs,
+                           nodata_value=self.nodata)
 
     def get_positions(self, x, y):
         """ Return the float column and row indices for the point nearest
