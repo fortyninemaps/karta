@@ -6,7 +6,7 @@ geospatial data.
 import pkgutil
 __path__ = pkgutil.extend_path(__path__, __name__)
 
-__version__ = 0.4
+__version__ = 0.6
 __all__ = ["vector", "raster", "crs", "errors"]
 
 from . import vector
