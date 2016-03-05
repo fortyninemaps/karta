@@ -378,29 +378,37 @@ class RegularGrid(Grid):
         return RegularGrid(tnew, values, crs=self.crs, nodata_value=self.nodata)
 
     def resize(self, bboxnew):
-        """ Return a new grid grid with extents given by *bboxnew* (xmin, ymin,
-        xmax, ymax). Values are selected based on a nearest neighbour scheme.
-        """
+        """ Return a new grid grid with outer edges given by *bboxnew* (xmin,
+        ymin, xmax, ymax).
+        
+        If the grid origin shifts by a non-integer factor of the grid
+        resolution, nearest neighbour values are selected. """
         bb = self.bbox
+        bbnew = list(bboxnew)
         dx, dy, sx, sy = self.transform[2:]
 
+        # Redefine output bbox so that (xmax-xmin)/dx and (ymax-ymin)/dx are
+        # integers
+        bbnew[2] = bbnew[0] + dx*math.ceil((bbnew[2]-bbnew[0])/dx)
+        bbnew[3] = bbnew[1] + dy*math.ceil((bbnew[3]-bbnew[1])/dy)
+
         ny, nx = self.size
-        nxnew = int(math.ceil(bboxnew[2]-bboxnew[0])/dx)
-        nynew = int(math.ceil(bboxnew[3]-bboxnew[1])/dy)
-        Tnew = [bboxnew[0], bboxnew[1], dx, dy, sx, sy]
+        nxnew = int((bbnew[2]-bbnew[0])/dx)
+        nynew = int((bbnew[3]-bbnew[1])/dy)
+        Tnew = [bbnew[0], bbnew[1], dx, dy, sx, sy]
         valnew = self.nodata * np.ones([nynew, nxnew], dtype=self.values.dtype)
 
         # determine the indices of existing data on the new grid
-        j0new = max(0, int(round((bb[0]-bboxnew[0])/dx)))
-        j1new = min(nxnew, int(round((bb[2]-bboxnew[0])/dx)))
-        i0new = max(0, int(round((bb[1]-bboxnew[1])/dy)))
-        i1new = min(nynew, int(round((bb[3]-bboxnew[1])/dy)))
+        j0new = max(0,     int(round((bb[0]-bbnew[0])/dx)))
+        j1new = min(nxnew, int(round((bb[2]-bbnew[0])/dx)))
+        i0new = max(0,     int(round((bb[1]-bbnew[1])/dy)))
+        i1new = min(nynew, int(round((bb[3]-bbnew[1])/dy)))
 
         # determine the indices of the data to copy on the old grid
-        j0 = max(0, int(round((bboxnew[0]-bb[0])/dx)))
-        j1 = min(nx, int(round((bboxnew[2]-bb[0])/dx)))
-        i0 = max(0, int(round((bboxnew[1]-bb[1])/dy)))
-        i1 = min(ny, int(round((bboxnew[3]-bb[1])/dy)))
+        j0 = max(0,  int(round((bbnew[0]-bb[0])/dx)))
+        j1 = min(nx, j0+nxnew)
+        i0 = max(0,  int(round((bbnew[1]-bb[1])/dy)))
+        i1 = min(ny, i0+nynew)
 
         valnew[i0new:i1new, j0new:j1new] = self.values[i0:i1,j0:j1]
         gridnew = RegularGrid(Tnew, values=valnew, crs=self.crs,
