@@ -23,6 +23,23 @@ from ..crs import Cartesian, GeographicalCRS
 from ..crs import SphericalEarth
 from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
 
+def cache_decorator(key):
+    """ Returns a method decorator that stores the result of a function
+    invocation under `self._cache[key]`
+
+    Does not update cache when *crs* is specified. """
+    def wrapping_func(f):
+        def replacement_func(self, *args, **kwargs):
+            if key in self._cache:
+                ret = self._cache[key]
+            else:
+                ret = f(self, *args, **kwargs)
+                if "crs" not in kwargs:
+                    self._cache[key] = (ret)
+            return ret
+        return replacement_func
+    return wrapping_func
+
 class Geometry(object):
     """ This is the abstract base class for all geometry types """
 
@@ -445,18 +462,14 @@ class MultipointBase(Geometry):
     def bbox(self):
         return self.get_bbox()
 
+    @cache_decorator("bbox")
     def get_bbox(self, crs=None):
         """ Return the extent of a bounding box as
             (xmin, ymin, xmax, ymax)
         """
-        if "bbox" in self._cache and (crs is None):
-            return self._cache["bbox"]
-        else:
-            x, y = self.get_coordinate_lists(crs)
-            bbox = (min(x), min(y), max(x), max(y))
-            if crs is None:
-                self._cache["bbox"] = bbox
-            return bbox
+        x, y = self.get_coordinate_lists(crs)
+        bbox = (min(x), min(y), max(x), max(y))
+        return bbox
 
     @property
     def coordinates(self):
@@ -797,54 +810,46 @@ class ConnectedMultipoint(MultipointBase):
     def bbox(self):
         return self.get_bbox()
 
+    @cache_decorator("bbox")
     def get_bbox(self, crs=None):
-        if "bbox" in self._cache and (crs is None):
-            return self._cache["bbox"]
-        else:
-            if isinstance(self.crs, GeographicalCRS):
-                X, Y = self.get_coordinate_lists(crs)
-                xmin = xmax = X[0]
-                ymin = ymax = Y[0]
-                rot = 0
-                for i in range(len(X)-1):
-                    x0, x1 = X[i], X[i+1]
-                    ymin = min(ymin, Y[i+1])
-                    ymax = max(ymax, Y[i+1])
-                    seg = Line([(X[i], Y[i]), (X[i+1], Y[i+1])], crs=crs)
-                    if self._seg_crosses_dateline(seg):
-                        if x0 > x1:     # east to west
-                            rot += 360
-                        else:           # west to east
-                            rot -= 360
+        if isinstance(self.crs, GeographicalCRS):
+            X, Y = self.get_coordinate_lists(crs)
+            xmin = xmax = X[0]
+            ymin = ymax = Y[0]
+            rot = 0
+            for i in range(len(X)-1):
+                x0, x1 = X[i], X[i+1]
+                ymin = min(ymin, Y[i+1])
+                ymax = max(ymax, Y[i+1])
+                seg = Line([(X[i], Y[i]), (X[i+1], Y[i+1])], crs=crs)
+                if self._seg_crosses_dateline(seg):
+                    if x0 > x1:     # east to west
+                        rot += 360
+                    else:           # west to east
+                        rot -= 360
 
-                        xmin = min(xmin, x1+rot)
-                        xmax = max(xmax, x1+rot)
+                    xmin = min(xmin, x1+rot)
+                    xmax = max(xmax, x1+rot)
+                else:
+                    if x0 > x1:
+                        xmin = min(xmin, x1)
                     else:
-                        if x0 > x1:
-                            xmin = min(xmin, x1)
-                        else:
-                            xmax = max(xmax, x1)
+                        xmax = max(xmax, x1)
 
-                xmin = (xmin+180) % 360 - 180
-                xmax = (xmax+180) % 360 - 180
-                bbox = (xmin, ymin, xmax, ymax)
-                if crs is None:
-                    self._cache["bbox"] = bbox
-            else:
-                bbox = super(ConnectedMultipoint, self).get_bbox()
-            return bbox
+            xmin = (xmin+180) % 360 - 180
+            xmax = (xmax+180) % 360 - 180
+            bbox = (xmin, ymin, xmax, ymax)
+        else:
+            bbox = super(ConnectedMultipoint, self).get_bbox()
+        return bbox
 
     @property
+    @cache_decorator("length")
     def length(self):
         """ Returns the length of the line/boundary. """
-        if "length" in self._cache:
-            length = self._cache["length"]
-        else:
-            points = [Point(v, crs=self.crs) for v in self.vertices]
-            distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
-            length = sum(distances)
-            self._cache["length"] = length
-        return length
+        points = [Point(v, crs=self.crs) for v in self.vertices]
+        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
+        return sum(distances)
 
     @property
     def segments(self):
@@ -904,7 +909,7 @@ class ConnectedMultipoint(MultipointBase):
         else:
             func = _cvectorgeo.pt_nearest_planar
             def func(seg):
-                return _cvectorgeo.pt_nearest_planar(ptvertex[0], ptvertex[1], 
+                return _cvectorgeo.pt_nearest_planar(ptvertex[0], ptvertex[1],
                                     seg[0][0], seg[0][1], seg[1][0], seg[1][1])
 
         point_dist = map(func, segments)
@@ -1320,7 +1325,7 @@ def sign(a):
 
 def get_tile_tuple(pt, zoom):
     """ Return the (z, x, y) locator for an OpenStreetMap tile containing *pt*.
-    
+
     Parameters
     ----------
     pt : geographic point to be contained within tile (Point)
