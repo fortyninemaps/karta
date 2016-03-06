@@ -153,23 +153,25 @@ class RegularGrid(Grid):
 
     def center_coords(self):
         t = self._transform
-        xcoords = np.empty(self.values.shape[:2])
-        ycoords = np.empty(self.values.shape[:2])
-        irow = np.arange(self.values.shape[0])
-        for i in range(self.values.shape[1]):
-            xcoords[:,i] = t[0] + (i+0.5)*t[2] + (irow+0.5)*t[4]
-            ycoords[:,i] = (t[1] + (irow+0.5)*t[3] + (i+0.5)*t[5])
+        xcoords = np.empty(self.size)
+        ycoords = np.empty(self.size)
+        icol = np.arange(self.size[1])
+        for i in range(self.size[0]):
+            xcoords[i,:] = t[0] + (icol+0.5)*t[2] + (i+0.5)*t[4]
+            ycoords[i,:] = (t[1] + (i+0.5)*t[3] + (icol+0.5)*t[5])
         return xcoords, ycoords
 
     def vertex_coords(self):
         """ Return the coordinates of cell vertices. """
-        xllcorner, yllcorner = self.corner_llref()
         t = self._transform
-        ny, nx = self.values.shape[:2]
-        xurcorner = xllcorner + nx * t[2] + ny * t[4]
-        yurcorner = yllcorner + ny * t[3] + nx * t[5]
-        return np.meshgrid(np.linspace(xllcorner, xurcorner, nx + 1),
-                           np.linspace(yurcorner, yllcorner, ny + 1))
+        ny, nx = self.size
+        xcoords = np.empty((ny+1, nx+1))
+        ycoords = np.empty((ny+1, nx+1))
+        icol = np.arange(0, self.size[1]+1)
+        for i in range(self.size[0]):
+            xcoords[i,:] = t[0] + icol*t[2] + i*t[4]
+            ycoords[i,:] = (t[1] + i*t[3] + icol*t[5])
+        return xcoords, ycoords
 
     @property
     def bbox(self):
