@@ -18,7 +18,7 @@ To build from source,
 
 ::
 
-    git clone https://github.com/njwilson23/karta.git
+    git clone https://github.com/fortyninemaps/karta.git
     pip install -r karta/requirements.txt
     pip install karta/
 

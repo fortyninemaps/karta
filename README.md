@@ -1,6 +1,6 @@
 # Karta
 
-[![Build Status](https://travis-ci.org/njwilson23/karta.svg?branch=master)](https://travis-ci.org/njwilson23/karta)
+[![Build Status](https://travis-ci.org/fortyninemaps/karta.svg?branch=master)](https://travis-ci.org/fortyninemaps/karta)
 
 *Karta* is a simple and fast framework for spatial analysis in Python.
 
@@ -51,7 +51,7 @@ the [tutorial](http://www.ironicmtn.com/kartadocs/tutorial.html), or read the
 The manual can also be built offline using Sphinx by running `make` from the
 `doc/` subdirectory. The documentation is built from source code docstrings and
 the example IPython notebooks, which are also reproduced in the
-[Wiki](https://github.com/njwilson23/karta/wiki/Tutorial). Building the
+[Wiki](https://github.com/fortyninemaps/karta/wiki/Tutorial). Building the
 documentation requires [Sphinx](http://sphinx-doc.org/),
 [alabaster](https://github.com/bitprophet/alabaster) and
 [numpydoc](https://github.com/numpy/numpydoc).
@@ -110,7 +110,7 @@ Building from source requires Cython to be available.
 
 Then, clone the repository and install,
 
-    git clone https://github.com/njwilson23/karta.git karta
+    git clone https://github.com/fortyninemaps/karta.git karta
     pip install -r karta/requirements.txt
     pip install karta/
 

@@ -127,7 +127,7 @@ The manual can also be built offline using Sphinx by running ``make``
 from the ``doc/`` subdirectory. The documentation is built from source
 code docstrings and the example IPython notebooks, which are also
 reproduced in the
-`Wiki <https://github.com/njwilson23/karta/wiki/Tutorial>`__. Building
+`Wiki <https://github.com/fortyninemaps/karta/wiki/Tutorial>`__. Building
 the documentation requires `Sphinx <http://sphinx-doc.org/>`__,
 `alabaster <https://github.com/bitprophet/alabaster>`__ and
 `numpydoc <https://github.com/numpy/numpydoc>`__.
