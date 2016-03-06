@@ -95,6 +95,10 @@ class GdalBandArrayInterface(object):
 
         return ret
 
+    def __iter__(self):
+        for i in range(self.dataset.RasterYSize):
+            yield self[i,:]
+
     @property
     def shape(self):
         return (self.dataset.RasterYSize, self.dataset.RasterXSize)

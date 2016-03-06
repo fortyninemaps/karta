@@ -97,5 +97,12 @@ class GdalVirtualArrayTests(unittest.TestCase):
         self.assertEqual(type(b), np.float64)
         return
 
+    def test_iteration_virtual(self):
+        try:
+            for row in self.grid.values:
+                pass
+        except Exception as e:
+            self.fail("virtual array iteration failure: {0}".format(str(e)))
+
 if __name__ == "__main__":
     unittest.main()

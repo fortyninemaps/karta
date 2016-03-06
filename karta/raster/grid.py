@@ -136,7 +136,7 @@ class RegularGrid(Grid):
 
     @property
     def size(self):
-        return self.values.shape
+        return self.values.shape[:2]
 
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
