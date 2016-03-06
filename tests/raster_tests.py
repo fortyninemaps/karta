@@ -34,10 +34,24 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_center_coords(self):
+        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
+                                 values=np.zeros([49, 49]))
         ans = np.meshgrid(np.arange(15.0, 1471.0, 30.0),
                           np.arange(15.0, 1471.0, 30.0))
-        self.assertEqual(0.0, np.sum(self.rast.center_coords()[0] - ans[0]))
-        self.assertEqual(0.0, np.sum(self.rast.center_coords()[1] - ans[1]))
+        self.assertEqual(0.0, np.sum(grid.center_coords()[0] - ans[0]))
+        self.assertEqual(0.0, np.sum(grid.center_coords()[1] - ans[1]))
+        return
+
+    def test_center_coords_skewed(self):
+        grid = karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 20.0, 10.0),
+                                 values=np.zeros([5, 5]))
+        X, Y = grid.center_coords()
+        self.assertEqual(X[0,0], 40.0)
+        self.assertEqual(Y[0,0], 35.0)
+        self.assertEqual(X[-1,0], 120.0)
+        self.assertEqual(Y[-1,0], 155.0)
+        self.assertEqual(X[-1,-1], 240.0)
+        self.assertEqual(Y[-1,-1], 195.0)
         return
 
     def test_merge(self):
@@ -86,10 +100,25 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid.sample_nearest(1.6, 1.3), 0.5)
         return
 
+    def test_sample_nearest_skewed(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        self.assertEqual(grid.sample_nearest(1, 0.75), 0.0)
+        self.assertEqual(grid.sample_nearest(1.5, 1.05), 1.0)
+        self.assertEqual(grid.sample_nearest(1.2, 1.4), 1.0)
+        self.assertEqual(grid.sample_nearest(2.0, 1.7), 0.5)
+        return
+
     def test_sample_bilinear(self):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 0.625)
+        return
+
+    def test_sample_bilinear_skewed(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        self.assertEqual(grid.sample_bilinear(1.5, 1.2), 0.625)
         return
 
     def test_sample_bilinear2(self):
@@ -103,6 +132,17 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_vertex_coords(self):
+        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
+                                 values=np.zeros([49, 49]))
+        ans = np.meshgrid(np.arange(15.0, 1486.0, 30.0),
+                          np.arange(15.0, 1486.0, 30.0))
+        self.assertTrue(np.sum(grid.vertex_coords()[0] - ans[0]) < 1e-10)
+        self.assertTrue(np.sum(grid.vertex_coords()[1] - ans[1]) < 1e-10)
+        return
+
+    def test_vertex_coords_skewed(self):
+        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 20.0, 10.0),
+                                 values=np.zeros([5, 5]))
         ans = np.meshgrid(np.arange(15.0, 1486.0, 30.0),
                           np.arange(15.0, 1486.0, 30.0))
         self.assertTrue(np.sum(self.rast.vertex_coords()[0] - ans[0]) < 1e-10)
