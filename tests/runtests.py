@@ -23,6 +23,8 @@ from misc_io_tests import *
 
 # Raster IO
 from geotiff_tests import *
+from aai_tests import *
+from dem_tests import *
 
 if __name__ == "__main__":
 
