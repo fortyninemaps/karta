@@ -256,6 +256,13 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(tuple(ind), (48, 48))
         return
 
+    def test_get_indices_onevec(self):
+        ind = self.rast.get_indices([15.0], [15.0])
+        self.assertEqual(tuple(ind), (0, 0))
+        ind = self.rast.get_indices(1455.0, 1455.0)
+        self.assertEqual(tuple(ind), (48, 48))
+        return
+
     def test_get_indices_vec(self):
         ind = self.rast.get_indices(np.arange(15.0, 1470, 5),
                                     np.arange(15.0, 1470, 5))

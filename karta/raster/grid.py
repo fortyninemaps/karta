@@ -544,6 +544,9 @@ class RegularGrid(Grid):
         # T J = X - S
         try:
             npts = len(x)
+            if npts == 1:
+                x = x[0]
+                y = y[0]
         except TypeError:
             npts = 1
 
