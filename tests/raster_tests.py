@@ -6,7 +6,6 @@ import numpy as np
 from test_helper import TESTDATA
 
 import karta
-from karta.raster import _dem
 
 class RegularGridTests(unittest.TestCase):
 
@@ -35,10 +34,24 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_center_coords(self):
+        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
+                                 values=np.zeros([49, 49]))
         ans = np.meshgrid(np.arange(15.0, 1471.0, 30.0),
                           np.arange(15.0, 1471.0, 30.0))
-        self.assertEqual(0.0, np.sum(self.rast.center_coords()[0] - ans[0]))
-        self.assertEqual(0.0, np.sum(self.rast.center_coords()[1] - ans[1]))
+        self.assertEqual(0.0, np.sum(grid.center_coords()[0] - ans[0]))
+        self.assertEqual(0.0, np.sum(grid.center_coords()[1] - ans[1]))
+        return
+
+    def test_center_coords_skewed(self):
+        grid = karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 20.0, 10.0),
+                                 values=np.zeros([5, 5]))
+        X, Y = grid.center_coords()
+        self.assertEqual(X[0,0], 40.0)
+        self.assertEqual(Y[0,0], 35.0)
+        self.assertEqual(X[-1,0], 120.0)
+        self.assertEqual(Y[-1,0], 155.0)
+        self.assertEqual(X[-1,-1], 240.0)
+        self.assertEqual(Y[-1,-1], 195.0)
         return
 
     def test_merge(self):
@@ -87,10 +100,25 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid.sample_nearest(1.6, 1.3), 0.5)
         return
 
+    def test_sample_nearest_skewed(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        self.assertEqual(grid.sample_nearest(1, 0.75), 0.0)
+        self.assertEqual(grid.sample_nearest(1.5, 1.05), 1.0)
+        self.assertEqual(grid.sample_nearest(1.2, 1.4), 1.0)
+        self.assertEqual(grid.sample_nearest(2.0, 1.7), 0.5)
+        return
+
     def test_sample_bilinear(self):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 0.625)
+        return
+
+    def test_sample_bilinear_skewed(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        self.assertEqual(grid.sample_bilinear(1.5, 1.2), 0.625)
         return
 
     def test_sample_bilinear2(self):
@@ -104,6 +132,17 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_vertex_coords(self):
+        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
+                                 values=np.zeros([49, 49]))
+        ans = np.meshgrid(np.arange(15.0, 1486.0, 30.0),
+                          np.arange(15.0, 1486.0, 30.0))
+        self.assertTrue(np.sum(grid.vertex_coords()[0] - ans[0]) < 1e-10)
+        self.assertTrue(np.sum(grid.vertex_coords()[1] - ans[1]) < 1e-10)
+        return
+
+    def test_vertex_coords_skewed(self):
+        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 20.0, 10.0),
+                                 values=np.zeros([5, 5]))
         ans = np.meshgrid(np.arange(15.0, 1486.0, 30.0),
                           np.arange(15.0, 1486.0, 30.0))
         self.assertTrue(np.sum(self.rast.vertex_coords()[0] - ans[0]) < 1e-10)
@@ -358,70 +397,6 @@ class WarpedGridTests(unittest.TestCase):
                                  values=np.random.random(self.rast.values.shape))
         res = self.rast - rast2
         self.assertTrue(np.all(res.values == self.rast.values-rast2.values))
-        return
-
-class AAIGridTests(unittest.TestCase):
-
-    def setUp(self):
-        pe = karta.raster.peaks(n=49)
-        self.rast = karta.aaigrid.AAIGrid(pe, hdr={'ncols':49, 'nrows':49,
-                                                   'xllcorner':0.0,
-                                                   'yllcorner':0.0,
-                                                   'cellsize':30.0,
-                                                   'nodata_value':-9999})
-        return
-
-    def test_region_centered(self):
-        reg = self.rast.get_region()
-        self.assertEqual(reg, (15.0, 1485.0, 15.0, 1485.0))
-        return
-
-    def test_minmax(self):
-        minmax = self.rast.minmax()
-        self.assertEqual(minmax, (-6.5466445243204294, 8.075173545159231))
-        return
-
-    def test_get_indices(self):
-        ind = self.rast.get_indices(0.0, 0.0)
-        self.assertEqual(ind, (0, 48))
-        ind = self.rast.get_indices(1485.0, 1485.0)
-        self.assertEqual(ind, (48, 0))
-        return
-
-    def test_resize(self):
-        orig = self.rast.data.copy()
-        x0, x1, y0, y1 = self.rast.get_region()
-        self.rast.resize((x0, x1/2.0, y0, y1/2.0))
-        self.assertTrue(np.all(self.rast.data == orig[:25,:25]))
-        return
-
-class DEMDriverTests(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def test_nreps_re(self):
-        nr = _dem.nreps_re("2(I4,I2,F7.4)")
-        self.assertEqual(nr, 2)
-        nr = _dem.nreps_re("2(3I6)")
-        self.assertEqual(nr, 6)
-        nr = _dem.nreps_re("4(6F3.7)")
-        self.assertEqual(nr, 24)
-        return
-
-    def test_parse(self):
-        p = _dem.parse("2(I4,I2,F7.4)", ' -81 0 0.0000  82 0 0.0000')
-        self.assertEqual(p, [-81, 0, 0.0, 82, 0, 0.0])
-        return
-
-    def test_dtype(self):
-        t = _dem.dtype("2(I4,D24.15,F7.4)")
-        self.assertEqual(t, [int, _dem.coerce_float, _dem.coerce_float])
-        return
-
-    def test_reclen(self):
-        n = _dem.reclen("2(I4,I2,F7.4)")
-        self.assertEqual(n, [4, 2, 7])
         return
 
 #class TestInterpolation(unittest.TestCase):
