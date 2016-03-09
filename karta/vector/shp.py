@@ -236,11 +236,11 @@ def ogr_write_feature(lyr, gi, id=0):
     elif gi["geometry"]["type"] == "Point":
         ogr_write_point_geometry(feature, gi["geometry"])
     else:
-        ogr_write_geometry(feature, gi["geometry"])
+        ogr_write_string_geometry(feature, gi["geometry"])
     lyr.CreateFeature(feature)
     return
 
-def ogr_write_geometry(feature, gi):
+def ogr_write_string_geometry(feature, gi):
     geom = ogr.Geometry(OGRTYPES[gi["type"]])
     for pt in gi["coordinates"]:
         geom.AddPoint(pt[0], pt[1])

@@ -61,52 +61,66 @@ class TestShapefile(unittest.TestCase):
             print("warning: crs equality not established")
         return
 
+    def test_writepoint(self):
+        point = self.points[0]
+        point.to_shapefile(os.path.join(TESTDIR, "data/point"))
+        for fnm in ("point.shx", "point.shx", "point.dbf", "point.prj"):
+            self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
+        return
+
     def test_writepoints(self):
+        points = self.points
+        shp.write_shapefile(os.path.join(TESTDIR, "data/points.shp"), *points)
+        for fnm in ("points.shx", "points.shx", "points.dbf", "points.prj"):
+            self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
+        return
+
+    def test_writemultipoint(self):
         mp = Multipoint(self.points)
-        mp.to_shapefile(os.path.join(TESTDIR, "data/points_shp"))
-        for fnm in ("points_shp.shx", "points_shp.shx", "points_shp.dbf", "points_shp.prj"):
+        mp.to_shapefile(os.path.join(TESTDIR, "data/multipoint"))
+        for fnm in ("multipoint.shx", "multipoint.shx", "multipoint.dbf", "multipoint.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
     def test_writeline(self):
-        self.line.to_shapefile(os.path.join(TESTDIR, "data/line_shp"))
-        for fnm in ("line_shp.shx", "line_shp.shx", "line_shp.dbf", "line_shp.prj"):
+        self.line.to_shapefile(os.path.join(TESTDIR, "data/line"))
+        for fnm in ("line.shx", "line.shx", "line.dbf", "line.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
     def test_writepoly(self):
-        self.polygon.to_shapefile(os.path.join(TESTDIR, "data/polygon_shp"))
-        for fnm in ("polygon_shp.shx", "polygon_shp.shx", "polygon_shp.dbf", "polygon_shp.prj"):
+        self.polygon.to_shapefile(os.path.join(TESTDIR, "data/polygon"))
+        for fnm in ("polygon.shx", "polygon.shx", "polygon.dbf", "polygon.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
     def test_writepoints3(self):
         mp = Multipoint(self.points3)
-        mp.to_shapefile(os.path.join(TESTDIR, "data/pointsz_shp"))
-        for fnm in ("pointsz_shp.shx", "pointsz_shp.shx", "pointsz_shp.dbf", "pointsz_shp.prj"):
+        mp.to_shapefile(os.path.join(TESTDIR, "data/multipointz"))
+        for fnm in ("multipointz.shx", "multipointz.shx", "multipointz.dbf", "multipointz.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
     def test_writeline3(self):
-        self.line3.to_shapefile(os.path.join(TESTDIR, "data/linez_shp"))
-        for fnm in ("linez_shp.shx", "linez_shp.shx", "linez_shp.dbf", "linez_shp.prj"):
+        self.line3.to_shapefile(os.path.join(TESTDIR, "data/linez"))
+        for fnm in ("linez.shx", "linez.shx", "linez.dbf", "linez.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
     def test_writepoly3(self):
-        self.polygon3.to_shapefile(os.path.join(TESTDIR, "data/polygonz_shp"))
-        for fnm in ("polygonz_shp.shx", "polygonz_shp.shx", "polygonz_shp.dbf", "polygonz_shp.prj"):
+        self.polygon3.to_shapefile(os.path.join(TESTDIR, "data/polygonz"))
+        for fnm in ("polygonz.shx", "polygonz.shx", "polygonz.dbf", "polygonz.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
-    def test_write_collection_points(self):
+    def test_write_collection_multipoint(self):
         mp = Multipoint([p.vertex for p in self.points])
         mp0 = copy(mp)
         mp1 = copy(mp.shift((4, 2)))
         mp2 = copy(mp.shift((-2, 3)))
-        shp.write_shapefile(os.path.join(TESTDIR, "data/points_collection.shp"),
+        shp.write_shapefile(os.path.join(TESTDIR, "data/mp_collection.shp"),
                             mp0, mp1, mp2)
-        for fnm in ("points_collection.shx", "points_collection.shx", "points_collection.dbf", "points_collection.prj"):
+        for fnm in ("mp_collection.shx", "mp_collection.shx", "mp_collection.dbf", "mp_collection.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
