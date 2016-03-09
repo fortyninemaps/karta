@@ -3,6 +3,7 @@ import karta
 import numpy as np
 
 class AAIGridTests(unittest.TestCase):
+    # aaigrid module deprecated - these tests deactivated
 
     def setUp(self):
         pe = karta.raster.peaks(n=49)
