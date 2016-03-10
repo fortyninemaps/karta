@@ -19,7 +19,7 @@ from .metadata import Metadata, Indexer
 from . import quadtree
 from . import _cvectorgeo
 from .. import geodesy
-from ..crs import Cartesian, GeographicalCRS
+from ..crs import Cartesian, CartesianCRS, ProjectedCRS, GeographicalCRS
 from ..crs import SphericalEarth
 from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
 
@@ -617,8 +617,15 @@ class MultipointBase(Geometry):
         return False
 
     def convex_hull(self):
-        """ Return a Polygon representing the convex hull. Assumes that the CRS
-        may be treated as cartesian. """
+        """ Return a Polygon representing the convex hull.
+
+        Only implemented for Cartesian-derived coordinate systems.
+        """
+        if not isinstance(self.crs, CartesianCRS):
+            raise errors.CRSError("convex_hull only implemented for "
+                                  "cartesian and projected coordinate "
+                                  "systems")
+
         points = [pt for pt in self]
 
         # Find the lowermost (left?) point
@@ -864,29 +871,48 @@ class ConnectedMultipoint(MultipointBase):
 
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
-        interxbool = (np.nan in _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
-                                                     a[0][1], a[1][1], b[0][1], b[1][1])
-                    for a in self.segments for b in other.segments)
-        if self._bbox_overlap(other) and (False in interxbool):
-            return True
+        if isinstance(self.crs, CartesianCRS):
+            interxbool = (np.nan in _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+                                                         a[0][1], a[1][1], b[0][1], b[1][1])
+                        for a in self.segments for b in other.segments)
+            if self._bbox_overlap(other) and (False in interxbool):
+                return True
+            else:
+                return False
         else:
-            return False
+            raise NotImplementedError("'intersects' method not implemented for "
+                                      "Geographical coordinate systems")
 
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
-        interx = (_cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
-                                          a[0][1], a[1][1], b[0][1], b[1][1])
-                     for a in self.segments for b in other.segments)
-        if not keep_duplicates:
-            interx = set(interx)
-        interx_points = []
-        for vertex in interx:
-            if np.nan not in vertex:
-                interx_points.append(Point(vertex, properties=self.properties,
-                                           crs=self.crs))
-        return Multipoint(interx_points)
+        if isinstance(self.crs, CartesianCRS):
+            interx = (_cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+                                              a[0][1], a[1][1], b[0][1], b[1][1])
+                         for a in self.segments for b in other.segments)
+            if not keep_duplicates:
+                interx = set(interx)
+            interx_points = []
+            for vertex in interx:
+                if np.nan not in vertex:
+                    interx_points.append(Point(vertex, properties=self.properties,
+                                               crs=self.crs))
+            return Multipoint(interx_points)
+        else:
+            # FIXME: implement for ellipsoidal coordinate systems
+            interx = (geodesy.intersection_spherical(a[0][0], a[1][0], b[0][0], b[1][0],
+                                                     a[0][1], a[1][1], b[0][1], b[1][1])
+                         for a in self.segments for b in other.segments)
+            if not keep_duplicates:
+                interx = set(interx)
+            interx_points = []
+            for vertex in interx:
+                if np.nan not in vertex:
+                    interx_points.append(Point(vertex, properties=self.properties,
+                                               crs=self.crs))
+            return Multipoint(interx_points)
 
-    def _nearest_to_point(self, pt, geographical=False):
+
+    def _nearest_to_point(self, pt):
         """ Return a tuple of the shortest distance on the geometry boundary to
         *pt*, and the vertex at that location.
 
@@ -897,20 +923,17 @@ class ConnectedMultipoint(MultipointBase):
         if not (self.crs == pt.crs):
             pt = Point(_reproject(pt.vertex, pt.crs, self.crs), crs=self.crs)
 
-        if geographical or isinstance(self.crs, GeographicalCRS):
-            fwd = self.crs.forward
-            inv = self.crs.inverse
-            pt = self.crs.project(*ptvertex, inverse=True)
-            def func(seg):
-                s0 = self.crs.project(*seg[0], inverse=True)
-                s1 = self.crs.project(*seg[1], inverse=True)
-                return _cvectorgeo.pt_nearest_proj(fwd, inv, pt, s0, s1,
-                                                   tol=0.01)
-        else:
+        if isinstance(self.crs, CartesianCRS):
             func = _cvectorgeo.pt_nearest_planar
             def func(seg):
                 return _cvectorgeo.pt_nearest_planar(ptvertex[0], ptvertex[1],
                                     seg[0][0], seg[0][1], seg[1][0], seg[1][1])
+        else:
+            fwd = self.crs.forward
+            inv = self.crs.inverse
+            def func(seg):
+                return _cvectorgeo.pt_nearest_proj(fwd, inv, ptvertex,
+                                                   seg[0], seg[1], tol=0.01)
 
         point_dist = map(func, segments)
         minpt = None
@@ -922,9 +945,6 @@ class ConnectedMultipoint(MultipointBase):
                 minpt = pt_
                 mindist = d
 
-        if geographical:
-            # Return to projected coordinates
-            minpt = self.crs.project(*minpt)
         return mindist, minpt
 
     def shortest_distance_to(self, pt):

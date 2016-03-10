@@ -176,8 +176,10 @@ class CartesianCRS(CRS):
     """ Cartesian (flat-earth) reference systems with (x, y) coordinates """
     name = "Cartesian"
 
-    ref_proj4 = ""
-    ref_wkt = ""
+    def __init__(self):
+        self.ref_proj4 = ""
+        self.ref_wkt = ""
+        return
 
     @staticmethod
     def project(x, y, inverse=False):
@@ -252,7 +254,7 @@ class GeographicalCRS(CRS):
     def transform(self, other, x, y):
         return pyproj.transform(self._proj, other._proj, x, y)
 
-class ProjectedCRS(CRS):
+class ProjectedCRS(CartesianCRS):
     """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
     or a custom projection function.
 
