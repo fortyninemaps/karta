@@ -32,17 +32,20 @@ class CRSError(Exception):
     def __init__(self, message=''):
         self.message = message
 
+class NoIntersection(Exception):
+    """ Exception to raise when segments have no intersection. """
+    def __init__(self, message=''):
+        self.message = message
+
 class GridError(Exception):
     def __init__(self, message=''):
         self.message = message
     def __str__(self):
         return self.message
 
-
 class GridIOError(GridError):
     def __init__(self, message=''):
         self.message = message
-
 
 class NonEquivalentGridError(GridError):
     def __init__(self, A, B, message=''):

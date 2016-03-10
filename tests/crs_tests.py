@@ -8,6 +8,14 @@ import karta.errors
 
 class TestCRS(unittest.TestCase):
 
+    def assertTuplesAlmostEqual(self, a, b, tol=1e-8):
+        if len(a) != len(b):
+            unittest.fail()
+        for _a, _b in zip(a, b):
+            if abs(_a-_b) > tol:
+                unittest.fail()
+        return
+
     def test_get_proj4(self):
         c0 = crs.SphericalEarth
         self.assertEqual(c0.get_proj4(), "+proj=lonlat +ellps=sphere +datum=WGS84")
@@ -175,6 +183,22 @@ class TestCRS(unittest.TestCase):
         self.assertAlmostEqual(abs(S12)/1e6, 84516702.1955, places=4)
         return
 
+
+    def test_SphericalIntersection(self):
+        ix = geodesy.intersection_spherical([(45, 10), (60, 10)],
+                                            [(50, -10), (50, 20)])
+        self.assertTuplesAlmostEqual(ix, (50, 10.075124337))
+
+        ix = geodesy.intersection_spherical([(45, 0), (-140, 0)],
+                                            [(50, -10), (50, 10)])
+        self.assertTuplesAlmostEqual(ix, (50, 0))
+
+        self.assertRaises(karta.errors.NoIntersection,
+                lambda: geodesy.intersection_spherical([(45, 0), (230, 0)],
+                                                       [(50, -10), (50, 10)]))
+        return
+
+
     def test_EllipsoidalEquatorialAzimuth(self):
         az, baz, _ = crs.LonLatWGS84.inverse(-40.0, 0.0, 55.0, 0.0)
         self.assertEqual(az, 90)
@@ -337,6 +361,42 @@ class TestCRS(unittest.TestCase):
         lng, lat = crs.LonLatNAD27.transform(crs.LonLatNAD83, -107.5, 43.14)
         self.assertAlmostEqual(lng, -107.50062798611111)
         self.assertAlmostEqual(lat, 43.13996053333333)
+
+class TestGeodesyFuncs(unittest.TestCase):
+
+    def assertTuplesAlmostEqual(self, a, b, tol=1e-8):
+        if len(a) != len(b):
+            unittest.fail()
+        for _a, _b in zip(a, b):
+            if abs(_a-_b) > tol:
+                unittest.fail()
+        return
+
+    def test_isbetween_circular(self):
+        self.assertTrue(geodesy.isbetween_circular(90, 80, 100))
+        self.assertTrue(geodesy.isbetween_circular(60, 90, -80))
+        self.assertTrue(geodesy.isbetween_circular(50, 45, 224))
+        self.assertFalse(geodesy.isbetween_circular(70, 90, 100))
+        self.assertFalse(geodesy.isbetween_circular(60, 90, -110))
+        self.assertFalse(geodesy.isbetween_circular(50, 45, 226))
+        self.assertFalse(geodesy.isbetween_circular(50, 45, 225))
+        return
+
+    def test_cross_3d(self):
+        self.assertEqual(geodesy.cross((0, 0, 1), (0, 0, 1)), (0, 0, 0))
+        self.assertEqual(geodesy.cross((0, 0, 1), (1, 0, 0)), (0, 1, 0))
+        self.assertEqual(geodesy.cross((1, 0, 0), (0, 0, 1)), (0, -1, 0))
+        return
+
+    def test_cart2polar(self):
+        self.assertTuplesAlmostEqual(geodesy.cart2polar(1, 1, 1),
+                                    (45.0, 35.2643896827))
+        self.assertTuplesAlmostEqual(geodesy.cart2polar(1, 0, 1), (0.0, 45.0))
+        self.assertTuplesAlmostEqual(geodesy.cart2polar(-1, 1, 0), (-45.0, 0.0))
+        return
+
+
+
 
 if __name__ == "__main__":
     unittest.main()

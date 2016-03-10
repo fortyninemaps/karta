@@ -9,7 +9,37 @@
 from __future__ import division
 import numpy as np
 from math import sqrt, sin, cos, tan, asin, acos, atan, atan2, atanh, pi
+from .errors import NoIntersection
 import warnings
+
+# ---------------------------------
+# Miscellaneous functions
+# ---------------------------------
+
+def cross(u, v):
+    w = (u[1]*v[2] - u[2]*v[1],
+         u[2]*v[0] - u[0]*v[2],
+         u[0]*v[1] - u[1]*v[0])
+    return w
+
+def polar2cart(lon, lat):
+    theta = 90-lat
+    x = sin(pi*theta/180.0)*cos(pi*lon/180.0)
+    y = sin(pi*theta/180.0)*sin(pi*lon/180.0)
+    z = cos(pi*theta/180.0)
+    return x, y, z
+
+def cart2polar(x, y, z):
+    if abs(z) > 1e-4:
+        theta = atan(sqrt(x**2+y**2)/z)
+    else:
+        theta = acos(z / sqrt(x**2+y**2+z**2))
+    if abs(x) > 1e-4:
+        lon = atan(y/x)
+    else:
+        lon = asin(y/sqrt(x**2+y**2))
+    lat = 0.5*pi - theta
+    return lon*180/pi, lat*180/pi
 
 # ---------------------------------
 # Functions for planar geometry
@@ -121,6 +151,54 @@ def spherical_area(r, x1, y1, x2, y2):
     lambda12 = (x2-x1)*pi/180.0
     alpha1, alpha2, _ = solve_vicenty(r, 0, lambda12, phi1, phi2)
     return r**2 * (alpha2-alpha1)
+
+def isbetween_circular(x, x0, x1):
+    """ Tests whether *x* is between *x0* and *x1* on a circle [-180, 180) """
+    if (x1-x0+360)%360 > 180:
+        x0, x1 = x1, x0
+    x = (x-x0+180)%360-180
+    x1 = (x1-x0+180)%360-180
+    return 0 <= x <= x1
+
+def greatcircle_vec(pt1, pt2):
+    v1 = polar2cart(*pt1)
+    v2 = polar2cart(*pt2)
+    return cross(v1, v2)
+
+def check_in_segment_range(pt, segment):
+    """ Test whether *pt* is within the lon/lat range of *segment* """
+    lon_1 = (segment[0][0] + 360) % 360
+    lon_2 = (segment[1][0] + 360) % 360
+
+    # check longitude difference. if it's very small and latitude difference is
+    # larger, go to startegy 2
+    dlon = (abs(lon_2-lon_1)+360) % 180
+    if (dlon < 1e-8) and (abs(segment[0][1]-segment[1][1]) > dlon):
+        # strategy 2
+        return (abs((pt[0]+360)%360 - lon_1) < 180) and \
+               (segment[0][1] <= pt[1] <= segment[1][1])
+    else:
+        # strategy 1
+        return isbetween_circular(pt[0], lon_1, lon_2)
+
+def intersection_spherical(segment1, segment2):
+    """ compute the intersection between two great circle segments on a sphere """
+    gc1 = greatcircle_vec(*segment1)
+    gc2 = greatcircle_vec(*segment2)
+    n = cross(gc1, gc2)
+    lon, lat = cart2polar(*n)
+    lon_antipodal = (lon+360)%360-180
+
+    pt = (lon, lat)
+    pt_antipodal = (lon_antipodal, -lat)
+    if (check_in_segment_range(pt, segment1) and
+        check_in_segment_range(pt, segment2)):
+        return pt
+    elif (check_in_segment_range(pt_antipodal, segment1) and
+          check_in_segment_range(pt_antipodal, segment2)):
+        return pt_antipodal
+    else:
+        raise NoIntersection()
 
 # ---------------------------------
 # Functions for ellipsoidal geodesy
