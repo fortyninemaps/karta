@@ -6,6 +6,7 @@ import numbers
 import warnings
 import numpy as np
 from . import _gtiff
+from . import crfuncs
 from .. import errors
 from ..crs import Cartesian
 
@@ -980,13 +981,22 @@ def gridpoints(x, y, z, transform, crs):
     counts = np.zeros([ny, nx], dtype=np.int16)
 
     (I, J) = grid.get_indices(x, y)
-    for (i,j,z_) in zip(I, J, z):
-        grid.values[i,j] += z_
-        counts[i,j] += 1
 
-    m = counts!=0
-    grid.values[m] /= counts[m]
-    grid.values[~m] = grid.nodata
+    try:
+        err = crfuncs.fillarray_double(grid.values, I.astype(np.int32), J.astype(np.int32), z, grid.nodata)
+        if err != 0:
+            raise RuntimeError("failure in fillarray_double")
+    except ValueError:
+        # Fast version works when *z* is of type double (np.float64).
+        # Python fallback for other types
+        for (i,j,z_) in zip(I, J, z):
+            grid.values[i,j] += z_
+            counts[i,j] += 1
+
+        m = counts!=0
+        grid.values[m] /= counts[m]
+        grid.values[~m] = grid.nodata
+
     return grid
 
 def mask_poly(xpoly, ypoly, nx, ny, transform):
