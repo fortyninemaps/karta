@@ -1,7 +1,7 @@
 from math import ceil, sqrt
 import numpy as np
 cimport numpy as np
-from cpython cimport bool
+cimport cython
 
 DTYPE_float64 = np.float64
 ctypedef np.float64_t DTYPE_float64_t
@@ -9,6 +9,7 @@ ctypedef np.float64_t DTYPE_float64_t
 DTYPE_int32 = np.int32
 ctypedef np.int32_t DTYPE_int32_t
 
+@cython.wraparound(False)
 def fillarray_double(double[:,:] array not None,
                      int[:] I not None,
                      int[:] J not None,
@@ -43,7 +44,6 @@ def fillarray_double(double[:,:] array not None,
                 array[i,j] = array[i,j] / counts[i,j]
             else:
                 array[i,j] = nodata_value
-
     return 0
 
 cdef float interpolate1(float x, float y, float a, float b, float c, float d):

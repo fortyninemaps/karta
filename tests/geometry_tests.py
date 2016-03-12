@@ -64,10 +64,10 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(point.azimuth(other), 0.25*180)
 
         other = Point((0.0, 3.0))
-        self.assertEqual(point.azimuth(other), 1.75*180)
+        self.assertEqual(point.azimuth(other), -0.25*180)
 
         other = Point((0.0, 1.0))
-        self.assertEqual(point.azimuth(other), 1.25*180)
+        self.assertEqual(point.azimuth(other), -0.75*180)
 
         other = Point((2.0, 1.0))
         self.assertEqual(point.azimuth(other), 0.75*180)

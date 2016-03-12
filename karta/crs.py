@@ -16,6 +16,7 @@ multiple CRS objects to implement the same system, and tests for equality may
 fail.
 """
 
+from math import pi
 import numpy as np
 import pyproj
 from . import geodesy
@@ -190,14 +191,14 @@ class CartesianCRS(CRS):
     def forward(x, y, az, dist, radians=False):
         """ Forward geodetic problem from a point """
         if not radians:
-            az = np.array(az) / 180 * np.pi
+            az = np.array(az) / 180 * pi
 
         x2 = x + dist * np.sin(az)
         y2 = y + dist * np.cos(az)
-        baz = geodesy.unroll_angle(az + np.pi)
+        baz = geodesy.unroll_rad(az + pi)
 
         if not radians:
-            baz = np.array(baz) * 180 / np.pi
+            baz = np.array(baz) * 180 / pi
         return x2, y2, baz
 
     @staticmethod
@@ -205,11 +206,11 @@ class CartesianCRS(CRS):
         """ Inverse geodetic problem to find the geodesic between points """
         dist = geodesy.plane_distance(x1, y1, x2, y2)
         az = geodesy.plane_azimuth(x1, y1, x2, y2)
-        baz = geodesy.unroll_angle(az + np.pi)
+        baz = geodesy.unroll_rad(az + pi)
 
         if not radians:
-            az = az * 180 / np.pi
-            baz = baz * 180 / np.pi
+            az = az * 180 / pi
+            baz = baz * 180 / pi
         return az, baz, dist
 
     @staticmethod
@@ -236,7 +237,7 @@ class GeographicalCRS(CRS):
         if not radians:
             return x, y
         else:
-            return np.array(x)/180 * np.pi, np.array(y)/180 * np.pi
+            return np.array(x)/180 * pi, np.array(y)/180 * pi
 
     def forward(self, *args, **kwargs):
         """ Forward geodetic problem from a point """
@@ -326,9 +327,9 @@ class SphericalCRS(GeographicalCRS):
     def forward(self, lons, lats, az, dist, radians=False):
         """ Forward geodetic problem from a point """
         if not radians:
-            lons = np.array(lons) * np.pi / 180.0
-            lats = np.array(lats) * np.pi / 180.0
-            az = np.array(az) * np.pi / 180.0
+            lons = np.array(lons) * pi / 180.0
+            lats = np.array(lats) * pi / 180.0
+            az = np.array(az) * pi / 180.0
 
         d_ = dist / self.radius
         lats2 = np.arcsin(np.sin(lats) * np.cos(d_) +
@@ -337,37 +338,37 @@ class SphericalCRS(GeographicalCRS):
                           (np.cos(lats) * np.cos(lats2)))
         baz = np.arccos((np.sin(lats) - np.cos(d_) * np.sin(lats2)) /
                         (np.sin(d_) * np.cos(lats2)))
-        if 0 <= az < np.pi:
+        if 0 <= az < pi:
             lons2 = lons + dlons
             baz = -baz
-        elif np.pi <= az < 2*np.pi:
+        elif pi <= az < 2*pi:
             lons2 = lons - dlons
         else:
             raise ValueError("azimuth should be [0, 2pi)")
 
-        baz = geodesy.unroll_angle(baz)
+        baz = geodesy.unroll_rad(baz)
 
         if not radians:
-            lons2 = np.array(lons2) * 180 / np.pi
-            lats2 = np.array(lats2) * 180 / np.pi
-            baz = np.array(baz) * 180 / np.pi
+            lons2 = np.array(lons2) * 180 / pi
+            lats2 = np.array(lats2) * 180 / pi
+            baz = np.array(baz) * 180 / pi
         return lons2, lats2, baz
 
     def inverse(self, lons1, lats1, lons2, lats2, radians=False):
         """ Inverse geodetic problem to find the geodesic between points """
         if not radians:
-            lons1 = lons1 * np.pi / 180.0
-            lons2 = lons2 * np.pi / 180.0
-            lats1 = lats1 * np.pi / 180.0
-            lats2 = lats2 * np.pi / 180.0
+            lons1 = lons1 * pi / 180.0
+            lons2 = lons2 * pi / 180.0
+            lats1 = lats1 * pi / 180.0
+            lats2 = lats2 * pi / 180.0
 
         az = geodesy.sphere_azimuth(lons1, lats1, lons2, lats2)
         baz = geodesy.sphere_azimuth(lons2, lats2, lons1, lats1)
         dist = geodesy.sphere_distance(lons1, lats1, lons2, lats2, self.radius)
 
         if not radians:
-            az = az * 180 / np.pi
-            baz = baz * 180 / np.pi
+            az = az * 180 / pi
+            baz = baz * 180 / pi
         return az, baz, dist
 
 class EllipsoidalCRS(GeographicalCRS):

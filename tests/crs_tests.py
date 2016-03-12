@@ -75,13 +75,13 @@ class TestCRS(unittest.TestCase):
         lat1 = 23.0
         a1 = lon1-lon0
         a2 = lat1-lat0
-        d_ = math.sqrt(a1**2 + a2**2)
-        az_ = 1.5*math.pi - math.atan(a2/a1)
-        baz_ = az_ - math.pi
+        d_ans = math.sqrt(a1**2 + a2**2)
+        az_ans = geodesy.reduce_rad(1.5*math.pi - math.atan(a2/a1))
+        baz_ans = geodesy.reduce_rad(az_ans - math.pi)
         az, baz, d = crs.Cartesian.inverse(lon0, lat0, lon1, lat1, radians=True)
-        self.assertAlmostEqual(d_, d, places=12)
-        self.assertAlmostEqual(az_, az, places=12)
-        self.assertAlmostEqual(baz_, baz, places=12)
+        self.assertAlmostEqual(d_ans, d, places=12)
+        self.assertAlmostEqual(az_ans, az, places=12)
+        self.assertAlmostEqual(baz_ans, baz, places=12)
         return
 
     def test_CartesianInverse2(self):
@@ -388,15 +388,12 @@ class TestGeodesyFuncs(unittest.TestCase):
         self.assertEqual(geodesy.cross((1, 0, 0), (0, 0, 1)), (0, -1, 0))
         return
 
-    def test_cart2polar(self):
-        self.assertTuplesAlmostEqual(geodesy.cart2polar(1, 1, 1),
+    def test_cart2sph(self):
+        self.assertTuplesAlmostEqual(geodesy.cart2sph(1, 1, 1),
                                     (45.0, 35.2643896827))
-        self.assertTuplesAlmostEqual(geodesy.cart2polar(1, 0, 1), (0.0, 45.0))
-        self.assertTuplesAlmostEqual(geodesy.cart2polar(-1, 1, 0), (-45.0, 0.0))
+        self.assertTuplesAlmostEqual(geodesy.cart2sph(1, 0, 1), (0.0, 45.0))
+        self.assertTuplesAlmostEqual(geodesy.cart2sph(-1, 1, 0), (-45.0, 0.0))
         return
-
-
-
 
 if __name__ == "__main__":
     unittest.main()

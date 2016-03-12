@@ -16,20 +16,28 @@ import warnings
 # Miscellaneous functions
 # ---------------------------------
 
+def recurse_iterables(f, *args, **kwargs):
+    def func(*args, **kwargs):
+        if hasattr(args[0], "__iter__"):
+            return np.array([f(*argsset, **kwargs) for argset in zip(*args)])
+        else:
+            return f(*args, **kwargs)
+    return func
+
 def cross(u, v):
     w = (u[1]*v[2] - u[2]*v[1],
          u[2]*v[0] - u[0]*v[2],
          u[0]*v[1] - u[1]*v[0])
     return w
 
-def polar2cart(lon, lat):
+def sph2cart(lon, lat):
     theta = 90-lat
     x = sin(pi*theta/180.0)*cos(pi*lon/180.0)
     y = sin(pi*theta/180.0)*sin(pi*lon/180.0)
     z = cos(pi*theta/180.0)
     return x, y, z
 
-def cart2polar(x, y, z):
+def cart2sph(x, y, z):
     if abs(z) > 1e-4:
         theta = atan(sqrt(x**2+y**2)/z)
     else:
@@ -41,58 +49,51 @@ def cart2polar(x, y, z):
     lat = 0.5*pi - theta
     return lon*180/pi, lat*180/pi
 
+@recurse_iterables
+def unroll_rad(rad):
+    """ Return *rad* in the range [0, 2pi) """
+    return rad % (2*pi)
+
+@recurse_iterables
+def reduce_rad(rad):
+    """ Return *rad* in the range [-pi, pi) """
+    return (rad+pi) % (2*pi) - pi
+
+def unroll_deg(deg):
+    """ Return *deg* in the range [0, 2pi) """
+    return deg % 360
+
+def reduce_deg(deg):
+    """ Return *deg* in the range [-180, 180) """
+    return (deg+180) % 360 - 180
+
+def _degrees(r):
+    return r*180.0/pi
+
+def _radians(d):
+    return d/180.0*pi
+
 # ---------------------------------
 # Functions for planar geometry
 # ---------------------------------
 
-def _plane_distance(x1, y1, x2, y2):
+@recurse_iterables
+def plane_distance(x1, y1, x2, y2):
     return sqrt((x2 - x1)**2 + (y2 - y1)**2)
 
-def plane_distance(xs1, ys1, xs2, ys2):
-    if hasattr(xs1, "__len__"):
-        return np.array([_plane_distance(x1, y1, x2, y2)
-                        for x1, y1, x2, y2 in zip(xs1, ys1, xs2, ys2)])
-    else:
-        return _plane_distance(xs1, ys1, xs2, ys2)
-
-def _plane_azimuth(x1, y1, x2, y2):
-    """ Return cartesian azimuth between points (scalar func) """
+@recurse_iterables
+def plane_azimuth(x1, y1, x2, y2):
+    """ Cartesian azimuth between points """
     dx = x2 - x1
     dy = y2 - y1
-    if dx > 0:
-        if dy > 0:
-            return np.arctan(dx/dy)
-        elif dy < 0:
-            return np.pi - np.arctan(-dx/dy)
-        else:
-            return 0.5*np.pi
-    elif dx < 0:
-        if dy > 0:
-            return 2*np.pi - np.arctan(-dx/dy)
-        elif dy < 0:
-            return np.pi + np.arctan(dx/dy)
-        else:
-            return 1.5*np.pi
-    else:
-        if dy > 0:
-            return 0.0
-        else:
-            return np.pi
-
-def plane_azimuth(xs1, ys1, xs2, ys2):
-    """ Return cartesian azimuth between points """
-    if hasattr(xs1, "__len__"):
-        return np.array([_plane_azimuth(x1, y1, x2, y2)
-                        for x1, y1, x2, y2 in zip(xs1, ys1, xs2, ys2)])
-    else:
-        return _plane_azimuth(xs1, ys1, xs2, ys2)
-
+    return atan2(dx, dy)
 
 # ---------------------------------
 # Functions for spherical geodesy
 # ---------------------------------
 
-def _sphere_distance(lon1, lat1, lon2, lat2, radius):
+@recurse_iterables
+def sphere_distance(lons1, lats1, lons2, lats2, radius=1.0):
     dx = abs(lon1-lon2)
     dy = abs(lat1-lat2)
 
@@ -106,23 +107,15 @@ def _sphere_distance(lon1, lat1, lon2, lat2, radius):
                         cos(lat1) * cos(lat2) * sin(dx / 2.)**2)))
     return radius * d_
 
-def sphere_distance(lons1, lats1, lons2, lats2, radius):
-    if hasattr(lons1, "__len__"):
-        return np.array([_sphere_distance(ln1, lt1, ln2, lt2, radius)
-                        for ln1, lt1, ln2, lt2
-                        in zip(lons1, lats1, lons2, lats2)])
-    else:
-        return _sphere_distance(lons1, lats1, lons2, lats2, radius)
-
-
-def _sphere_azimuth(lon1, lat1, lon2, lat2):
+@recurse_iterables
+def sphere_azimuth(lon1, lat1, lon2, lat2):
     dlon = lon2 - lon1
     if (cos(lat1) * tan(lat2) - sin(lat1) * cos(dlon)) == 0:
         az = 0.5*pi
     else:
         az = atan(sin(dlon) / (cos(lat1) * tan(lat2) - sin(lat1) * cos(dlon)))
     
-    if unroll_angle(dlon) <= pi:
+    if unroll_rad(dlon) <= pi:
         if lat2 < lat1:
             az = az + pi
     else:
@@ -130,49 +123,38 @@ def _sphere_azimuth(lon1, lat1, lon2, lat2):
             az = az + 2*pi
         else:
             az = az + pi
-    return unroll_angle(az)
-
-def sphere_azimuth(lons1, lats1, lons2, lats2):
-    if hasattr(lons1, "__len__"):
-        return np.array([_sphere_azimuth(lon1, lat1, lon2, lat2)
-                        for lon1, lat1, lon2, lat2
-                        in zip(lons1, lats1, lons2, lats2)])
-    else:
-        return _sphere_azimuth(lons1, lats1, lons2, lats2)
-
-def _spherical_area(r, alpha1, alpha2):
-    return r**2*dalpha
-
+    return unroll_rad(az)
 
 def spherical_area(r, x1, y1, x2, y2):
+    """ Area between a geodesic and the equator on a sphere """
     _, x1, y1, x2, y2 = _canonical_configuration(x1, y1, x2, y2)
-    phi1 = y1*pi/180.0
-    phi2 = y2*pi/180.0
+    phi1 = _radians(y1)
+    phi2 = _radians(y2)
     lambda12 = (x2-x1)*pi/180.0
     alpha1, alpha2, _ = solve_vicenty(r, 0, lambda12, phi1, phi2)
     return r**2 * (alpha2-alpha1)
 
 def isbetween_circular(x, x0, x1):
     """ Tests whether *x* is between *x0* and *x1* on a circle [-180, 180) """
-    if (x1-x0+360)%360 > 180:
+    if unroll_deg(x1-x0) > 180:
         x0, x1 = x1, x0
-    x = (x-x0+180)%360-180
-    x1 = (x1-x0+180)%360-180
+    x = reduce_deg(x-x0)
+    x1 = reduce_deg(x1-x0)
     return 0 <= x <= x1
 
 def greatcircle_vec(pt1, pt2):
-    v1 = polar2cart(*pt1)
-    v2 = polar2cart(*pt2)
+    v1 = sph2cart(*pt1)
+    v2 = sph2cart(*pt2)
     return cross(v1, v2)
 
 def check_in_segment_range(pt, segment):
     """ Test whether *pt* is within the lon/lat range of *segment* """
-    lon_1 = (segment[0][0] + 360) % 360
-    lon_2 = (segment[1][0] + 360) % 360
+    lon_1 = unroll_deg(segment[0][0])
+    lon_2 = unroll_deg(segment[1][0])
 
     # check longitude difference. if it's very small and latitude difference is
     # larger, go to startegy 2
-    dlon = (abs(lon_2-lon_1)+360) % 180
+    dlon = abs(reduce_deg(lon_2-lon_1))
     if (dlon < 1e-8) and (abs(segment[0][1]-segment[1][1]) > dlon):
         # strategy 2
         return (abs((pt[0]+360)%360 - lon_1) < 180) and \
@@ -186,7 +168,7 @@ def intersection_spherical(segment1, segment2):
     gc1 = greatcircle_vec(*segment1)
     gc2 = greatcircle_vec(*segment2)
     n = cross(gc1, gc2)
-    lon, lat = cart2polar(*n)
+    lon, lat = cart2sph(*n)
     lon_antipodal = (lon+360)%360-180
 
     pt = (lon, lat)
@@ -227,7 +209,9 @@ def solve_astroid(a, f, lambda12, phi1, phi2):
     delta = f*a*pi*cos(beta1)**2
     x = (lambda12-pi) * (a*cos(beta1)) / delta
     y = (beta2 + beta1) * a / delta
-    mu = fzero_brent(1e-3, pi*a, lambda mu: mu**4 + 2*mu**3 + (1-x**2-y**2)*mu**2 - 2*y**2*mu - y**2, 1e-12)
+    mu = fzero_brent(1e-3, pi*a, lambda mu: (mu**4 + 2*mu**3 +
+                                             (1-x**2-y**2)*mu**2 - 2*y**2*mu -
+                                             y**2), 1e-12)
     alpha1 = atan2(-x / (1+mu), y/mu)
     return alpha1
 
@@ -278,16 +262,13 @@ def _solve_NEA(alpha0, alpha1, beta1):
 def _solve_NEB(alpha0, alpha1, beta1, beta2):
     """ See Karney (2013) """
     try:
-        alpha2 = acos(sqrt(cos(alpha1)**2*cos(beta1)**2 + (cos(beta2)**2 - cos(beta1)**2)) / cos(beta2))
+        alpha2 = acos(sqrt(cos(alpha1)**2*cos(beta1)**2 + (cos(beta2)**2 - \
+                    cos(beta1)**2)) / cos(beta2))
     except ValueError:
         alpha2 = asin(sin(alpha0) / cos(beta2))     # Less accurate?
     sigma2 = atan2(sin(beta2), cos(alpha2)*cos(beta2))
     omega2 = atan2(sin(alpha0)*sin(sigma2), cos(sigma2))
     return alpha2, sigma2, omega2
-
-def _normalize_longitude(x):
-    """ Return longitude in the range [-180, 180). """
-    return (x+180) % 360 - 180
 
 def _canonical_configuration(x1, y1, x2, y2):
     """ Put coordinates into a configuration where (Karney, eqn 44)
@@ -305,7 +286,7 @@ def _canonical_configuration(x1, y1, x2, y2):
         y1, y2 = -y1, -y2
         transformation["ysignswap"] = True
 
-    x2 = _normalize_longitude(x2-x1)
+    x2 = reduce_deg(x2-x1)
     x1 = 0.0
 
     if (x2 < 0) or (x2 > 180):
@@ -698,21 +679,11 @@ def ellipsoidal_area(a, b, x1, y1, x2, y2):
     return _ellipsoidal_area(a, b, lambda12, phi1, phi2, alpha1, alpha2)
 
 
-###### Utility functions ######
-def unroll_angle(alpha):
-    if hasattr(alpha, "__len__"):
-        alpha = np.array([unroll_angle(a) for a in alpha])
-    else:
-        while alpha < 0:
-            alpha += 2*pi
-        while alpha >= 2*pi:
-            alpha -= 2*pi
-    return alpha
-
-def _degrees(r):
-    return r*180/pi
+###### Root-finding ######
 
 def fzero_brent(a, b, f, tol):
+    """ Evaluate *f(x)* to find a root between *x=a* and *x=b* within tolerance
+    *tol* """
     fa = f(a)
     fb = f(b)
     if fa == 0:
