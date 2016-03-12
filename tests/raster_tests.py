@@ -10,7 +10,7 @@ import karta
 class RegularGridTests(unittest.TestCase):
 
     def setUp(self):
-        pe = karta.raster.peaks(n=49)
+        pe = peaks(n=49)
         self.rast = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
         return
 
@@ -157,7 +157,7 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_get_extent_crs(self):
-        pe = karta.raster.peaks(n=49)
+        pe = peaks(n=49)
         crs = karta.crs.ProjectedCRS("+proj=utm +zone=12 +ellps=WGS84 +north=True", "UTM 12N (WGS 84)")
         rast_utm12N = karta.RegularGrid((0.0, 0.0, 10000.0, 10000.0, 0.0, 0.0),
                                         values=pe,
@@ -208,16 +208,14 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_resize_smaller(self):
-        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0),
-                                  values=karta.raster.misc.peaks(50))
+        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([620, 650, 1370, 1310])
         self.assertEqual(newgrid.transform, (620.0, 650.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid.values == proto.values[5:27,4:29]))
         return
 
     def test_resize_larger(self):
-        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0),
-                                  values=karta.raster.misc.peaks(50))
+        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([380, 320, 380+30*60, 320+30*62])
         self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid.values[6:56,4:54] == proto.values))
@@ -434,6 +432,13 @@ class WarpedGridTests(unittest.TestCase):
 #                            6.58706897,  6.37686191,  6.24425398,  6.15677403,
 #                            6.09829941]))
 #        return
+
+def peaks(n=49):
+    """ 2d peaks function of MATLAB logo fame. """
+    X, Y = np.meshgrid(np.linspace(-3, 3, n), np.linspace(-3, 3, n))
+    return 3.0 * (1-X)**2 * np.exp(-X**2 - (Y+1)**2) \
+            - 10.0 * (X/5.0 - X**3 - Y**5) * np.exp(-X**2 - Y**2) \
+            - 1.0/3.0 * np.exp(-(X+1)**2 - Y**2)
 
 if __name__ == "__main__":
     unittest.main()

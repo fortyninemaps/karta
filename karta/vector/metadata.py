@@ -3,6 +3,7 @@
 from collections import Sequence
 
 class Metadata(Sequence):
+    """ Represents a metadata table. """
 
     def __init__(self, data, fields=None, checktypes=False):
         """ Create a collection of metadata from *data*.
@@ -143,6 +144,7 @@ class Metadata(Sequence):
                                           for j in range(len(self._fields))]))
 
 class Indexer(object):
+    """ Provides a pleasanter syntax for querying Metadata """
 
     def __init__(self, metadata):
         if metadata is None:

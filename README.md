@@ -2,9 +2,10 @@
 
 [![Build Status](https://travis-ci.org/fortyninemaps/karta.svg?branch=master)](https://travis-ci.org/fortyninemaps/karta)
 
-*Karta* is a simple and fast framework for spatial analysis in Python.
+*Karta* is a simple to use package for spatial analysis in Python. It
+streamlines processing vector and raster data.
 
-Create vector geometries:
+For example, read or create vector geometries:
 
 ```python
 point = Point((-130.0, 52.0), crs=LonLatWGS84)
@@ -29,7 +30,7 @@ line.intersects(polygon)        # True or False
 ch = polygon.convex_hull()      # Returns a new polygon
 ch.to_shapefile("poly.shp")
 ```
-Work with raster data:
+Load and manipulate raster data:
 ```python
 grid = read_gtiff("landsat_scene.tif")  # Leverages GDAL
 
@@ -38,22 +39,21 @@ grid.profile(line)              # Collect data along a line
 grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
 ```
 
-The latest release is on PyPI (see [Installation](#installation)).
-*Karta* works with Python 2.7 and Python 3.3+. Suggestions, bug reports, test
-cases, and pull requests are welcome.
+The latest release is on PyPI (see [Installation](#installation)). *Karta* is
+tested with Python 2.7 and Python 3.4+. Suggestions, bug reports, test cases,
+and pull requests are welcome.
 
 ## DOCUMENTATION
 
-See the [online manual](http://www.ironicmtn.com/kartadocs/karta-manual.html),
-the [tutorial](http://www.ironicmtn.com/kartadocs/tutorial.html), or read the
-[API documentation](http://www.ironicmtn.com/kartadocs/reference.html).
+See the [online manual](http://www.fortyninemaps.com/kartadocs/karta-manual.html),
+the [tutorial](http://www.fortyninemaps.com/kartadocs/tutorial.html), or read the
+[API documentation](http://www.fortyninemaps.com/kartadocs/reference.html).
 
 The manual can also be built offline using Sphinx by running `make` from the
 `doc/` subdirectory. The documentation is built from source code docstrings and
 the example IPython notebooks, which are also reproduced in the
 [Wiki](https://github.com/fortyninemaps/karta/wiki/Tutorial). Building the
-documentation requires [Sphinx](http://sphinx-doc.org/),
-[alabaster](https://github.com/bitprophet/alabaster) and
+documentation requires [Sphinx](http://sphinx-doc.org/) and
 [numpydoc](https://github.com/numpy/numpydoc).
 
 ## PACKAGE OVERVIEW
@@ -116,23 +116,11 @@ Then, clone the repository and install,
 
 ## DEPENDENCIES
 
-### Required
-
-- Python 2.7 or Python 3.3+
+- Python 2.7 or Python 3.4+
 - numpy
 - pyproj
+- gdal
 - C-compiler
-
-### Recommended
-
-- osgeo.gdal (for raster I/O)
-- osgeo.ogr (for vector I/O)
-- osgeo.osr (for coordinate system interchange)
-- scipy
-
-When installing from PyPI, Cython-compiled C source code is provided and will be
-automatically compiled to improve performance if a suitable C compiler is
-available.
 
 ## LICENSE
 

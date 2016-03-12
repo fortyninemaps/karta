@@ -23,7 +23,7 @@ class GdalTests(unittest.TestCase):
 
     def test_io(self):
         # try writing a file, then read it back in and verify that it matches
-        v = karta.raster.peaks(500)[:100,:]
+        v = peaks(500)[:100,:]
         utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
                                       "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
@@ -41,7 +41,7 @@ class GdalTests(unittest.TestCase):
 
     def test_io_virtual(self):
         # try writing a file, then open it without loading into memory and verify
-        v = karta.raster.peaks(500)[:100,:]
+        v = peaks(500)[:100,:]
         utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
                                       "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
@@ -61,7 +61,7 @@ class GdalTests(unittest.TestCase):
         return
 
     def test_write_compress(self):
-        v = karta.raster.peaks(500)[:100,:]
+        v = peaks(500)[:100,:]
         utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
                                       "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
@@ -74,7 +74,7 @@ class GdalTests(unittest.TestCase):
 class GdalVirtualArrayTests(unittest.TestCase):
 
     def setUp(self):
-        v = karta.raster.peaks(500)[:100,:]
+        v = peaks(500)[:100,:]
         utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
                                       "UTM 7N (WGS 84)")
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
@@ -103,6 +103,14 @@ class GdalVirtualArrayTests(unittest.TestCase):
                 pass
         except Exception as e:
             self.fail("virtual array iteration failure: {0}".format(str(e)))
+
+
+def peaks(n=49):
+    """ 2d peaks function of MATLAB logo fame. """
+    X, Y = np.meshgrid(np.linspace(-3, 3, n), np.linspace(-3, 3, n))
+    return 3.0 * (1-X)**2 * np.exp(-X**2 - (Y+1)**2) \
+            - 10.0 * (X/5.0 - X**3 - Y**5) * np.exp(-X**2 - Y**2) \
+            - 1.0/3.0 * np.exp(-(X+1)**2 - Y**2)
 
 if __name__ == "__main__":
     unittest.main()
