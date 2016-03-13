@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
-VERSION = "0.5.3"
+VERSION = "0.5.4"
 
 class build_ext(_build_ext):
 
@@ -68,7 +68,7 @@ setup(
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
-    url = "http://www.ironicmtn.com/karta.html",
+    url = "http://www.fortyninemaps.com/karta.html",
     description = "Geospatial analysis in Python",
     long_description = """
 *Karta* is a simple and fast framework for spatial analysis in Python.
@@ -118,10 +118,10 @@ DOCUMENTATION
 -------------
 
 See the `online
-manual <http://www.ironicmtn.com/kartadocs/karta-manual.html>`__, the
-`tutorial <http://www.ironicmtn.com/kartadocs/tutorial.html>`__, or read
+manual <http://www.fortyninemaps.com/kartadocs/karta-manual.html>`__, the
+`tutorial <http://www.fortyninemaps.com/kartadocs/tutorial.html>`__, or read
 the `API
-documentation <http://www.ironicmtn.com/kartadocs/reference.html>`__.
+documentation <http://www.fortyninemaps.com/kartadocs/reference.html>`__.
 
 The manual can also be built offline using Sphinx by running ``make``
 from the ``doc/`` subdirectory. The documentation is built from source

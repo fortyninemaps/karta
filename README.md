@@ -44,9 +44,9 @@ cases, and pull requests are welcome.
 
 ## DOCUMENTATION
 
-See the [online manual](http://www.ironicmtn.com/kartadocs/karta-manual.html),
-the [tutorial](http://www.ironicmtn.com/kartadocs/tutorial.html), or read the
-[API documentation](http://www.ironicmtn.com/kartadocs/reference.html).
+See the [online manual](http://www.fortyninemaps.com/kartadocs/karta-manual.html),
+the [tutorial](http://www.fortyninemaps.com/kartadocs/tutorial.html), or read the
+[API documentation](http://www.fortyninemaps.com/kartadocs/reference.html).
 
 The manual can also be built offline using Sphinx by running `make` from the
 `doc/` subdirectory. The documentation is built from source code docstrings and
