@@ -134,6 +134,21 @@ R-Tree
 .. automodule:: karta.vector.rtree
     :members:
 
+Trees
+-----
+
+Quadtree
+++++++++
+
+.. automodule:: karta.vector.quadtree
+    :members:
+
+R-Tree
+++++++
+
+.. automodule:: karta.vector.rtree
+    :members:
+
 Vector IO modules
 -----------------
 
