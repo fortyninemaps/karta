@@ -14,7 +14,7 @@ try:
 except ImportError:
     HASGDAL = False
 
-class GdalBandArrayInterface(object):
+class GdalFileBand(object):
     """ Imitates an ndarray well-enough to back a Grid instance, but reads data
     from an disk-bound datasource """
 
@@ -232,7 +232,7 @@ def read(fnm, band, in_memory):
             dtype = numpy_dtype(rasterband.DataType)
             arr[:,:] = rasterband.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype))
         else:
-            arr = GdalBandArrayInterface(rasterband, dataset)
+            arr = GdalFileBand(rasterband, dataset)
 
     finally:
         if in_memory:

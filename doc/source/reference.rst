@@ -15,8 +15,8 @@ and profile extraction.
 
 A more specialized grid class, *WarpedGrid*, is experimental.
 
-Grid
-----
+Gridded data
+------------
 
 .. automodule:: karta.raster.grid
 
@@ -33,6 +33,18 @@ WarpedGrid
 ++++++++++
 
 .. autoclass:: karta.raster.WarpedGrid
+    :members:
+
+SimpleBand
+++++++++++
+
+.. autoclass:: karta.raster.band.SimpleBand
+    :members:
+
+CompressedBand
+++++++++++++++
+
+.. autoclass:: karta.raster.band.CompressedBand
     :members:
 
 Miscellaneous raster functions
@@ -117,6 +129,21 @@ Metadata
     :members:
 
 .. autoclass:: karta.vector.metadata.Indexer
+    :members:
+
+Trees
+-----
+
+Quadtree
+++++++++
+
+.. automodule:: karta.vector.quadtree
+    :members:
+
+R-Tree
+++++++
+
+.. automodule:: karta.vector.rtree
     :members:
 
 Trees
