@@ -64,7 +64,7 @@ setup(
     name = "karta",
     version = VERSION,
     setup_requires = ["numpy>=1.6"],
-    install_requires = ["numpy>=1.6", "pyproj>=1.9", "gdal>=1.10"],
+    install_requires = ["numpy>=1.6", "pyproj>=1.9", "gdal>=1.10", "blosc>=1.2.8"],
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
