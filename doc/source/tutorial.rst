@@ -1,8 +1,8 @@
 
 `Back to manual <../karta-manual.html>`__
 
-Karta tutorial
-==============
+Tutorial
+========
 
 Introduction
 ------------
