@@ -60,7 +60,7 @@ def reduce_rad(rad):
     return (rad+pi) % (2*pi) - pi
 
 def unroll_deg(deg):
-    """ Return *deg* in the range [0, 2pi) """
+    """ Return *deg* in the range [0, 360) """
     return deg % 360
 
 def reduce_deg(deg):
@@ -114,7 +114,7 @@ def sphere_azimuth(lon1, lat1, lon2, lat2):
         az = 0.5*pi
     else:
         az = atan(sin(dlon) / (cos(lat1) * tan(lat2) - sin(lat1) * cos(dlon)))
-    
+
     if unroll_rad(dlon) <= pi:
         if lat2 < lat1:
             az = az + pi
@@ -192,15 +192,21 @@ def solve_astroid(a, f, lambda12, phi1, phi2):
 
     Parameters
     ----------
-    a:          equatorial radius
-    f:          flattening
-    lambda12:   difference in longitudes (radians)
-    phi1:       first latitude (radians)
-    phi2:       second latitude (radians)
+    a: float
+        equatorial radius
+    f: float
+        flattening
+    lambda12: float (radians)
+        difference in longitudes
+    phi1: float (radians)
+        first latitude
+    phi2: float (radians)
+        second latitude
 
     Returns
     -------
-    alpha1:     estimated forward azimuth at first point
+    alpha1: float (radians)
+        estimated forward azimuth at first point
 
     see Karney (2013) J. Geod. for details
     """
@@ -221,17 +227,25 @@ def solve_vicenty(a, f, lambda12, phi1, phi2):
 
     Parameters
     ----------
-    a:          equatorial radius
-    f:          flattening
-    lambda12:   difference in longitudes (radians)
-    phi1:       first latitude (radians)
-    phi2:       second latitude (radians)
+    a: float
+        equatorial radius
+    f: float
+        flattening
+    lambda12: flat(radians)
+        difference in longitudes
+    phi1: float (radians)
+        first latitude
+    phi2: float (radians)
+        second latitude
 
     Returns
     -------
-    alpha1:     forward azimuth at first point
-    alpha2:     forward azimuth at second point
-    s12:        distance between points
+    alpha1: float (radians)
+        forward azimuth at first point
+    alpha2: float (radians)
+        forward azimuth at second point
+    s12: float
+        distance between points
 
     see Karney (2013) J. Geod. for details
     """
@@ -301,18 +315,27 @@ def ellipsoidal_forward(a, b, x, y, azimuth, distance):
 
     Parameters
     ----------
-    a:          equatorial radius
-    b:          polar radius
-    x:          longitude at start
-    y:          latitude at start
-    azimuth:    direction travelled from point
-    distnce:    distance travelled
+    a: float
+        equatorial radius
+    b: float
+        polar radius
+    x: float (degrees)
+        longitude at start
+    y: float (degrees)
+        latitude at start
+    azimuth: float (radians)
+        direction travelled from point
+    distnce: float
+        distance travelled
 
     Returns
     -------
-    x2:         longitude at destination
-    y2:         latitude at destination
-    back_az:    back azimuth from destination
+    x2: float (degrees)
+        longitude at destination
+    y2: float (degrees)
+        latitude at destination
+    back_az: float (degrees)
+        back azimuth from destination
 
     Algorithm due to Karney, C.F.F. "Algorithms for geodesics", J. Geod (2013)
     """
@@ -413,18 +436,27 @@ def ellipsoidal_inverse(a, b, x1, y1, x2, y2, tol=None):
 
     Parameters
     ----------
-    a:          equatorial radius
-    b:          polar radius
-    x1:         first longitude
-    y1:         first latitude
-    x2:         second longitude
-    y2:         second latitude
+    a: float
+        equatorial radius
+    b: float
+        polar radius
+    x1: float (degrees)
+        first longitude
+    y1: float (degrees)
+        first latitude
+    x2: float (degrees)
+        second longitude
+    y2: float (degrees)
+        second latitude
 
     Returns
     -------
-    az:         forward azimuth from first point
-    back_az:    back azimuth from second point
-    distance:   distance between points
+    az: float (degrees)
+        forward azimuth from first point
+    back_az: float (degrees)
+        back azimuth from second point
+    distance: float
+        distance between points
 
     Algorithm due to Karney, C.F.F. "Algorithms for geodesics", J. Geod (2013)
     """
@@ -566,7 +598,7 @@ def ellipsoidal_inverse(a, b, x1, y1, x2, y2, tol=None):
 
     if niter == maxiter:
         warnings.warn(
-            "Convergence failure (%f, %f) -> (%f, %f)" % (x1, y1, x2, y2), 
+            "Convergence failure (%f, %f) -> (%f, %f)" % (x1, y1, x2, y2),
             RuntimeWarning)
 
     k2 = second_eccn2 * cos(alpha0)**2
@@ -667,6 +699,22 @@ def _ellipsoidal_area(a, b, lambda12, phi1, phi2, alpha1, alpha2):
 def ellipsoidal_area(a, b, x1, y1, x2, y2):
     """ Area of a single quatrilateral defined by two meridians, the equator,
     and another geodesic.
+
+    Parameters
+    ----------
+    a : float (degrees)
+        longitude of first meridian
+    b : float (degrees)
+        longitude of second meridian
+    x1 : float (degrees)
+        longitude of geodesic segment start
+    y1 : float (degrees)
+        latitude of geodesic segment start
+    x2 : float (degrees)
+        longitude of geodesic segment end
+    y2 : float (degrees)
+        latitude of geodesic segment end
+
     """
     _, x1, y1, x2, y2 = _canonical_configuration(x1, y1, x2, y2)
     phi1 = y1*pi/180.0
@@ -682,8 +730,26 @@ def ellipsoidal_area(a, b, x1, y1, x2, y2):
 ###### Root-finding ######
 
 def fzero_brent(a, b, f, tol):
-    """ Evaluate *f(x)* to find a root between *x=a* and *x=b* within tolerance
-    *tol* """
+    """ Evaluate a function to find a bracketed root
+
+    Parameters
+    ----------
+    a : float
+        left bracket
+    b : float
+        right bracket
+    f : callable
+        function to find zero of
+    tol : float
+        error tolerance
+
+    Raises
+    ------
+    ValueError
+        if root is not bracketed
+    RuntimeError
+        if maximum iterations exceeded
+    """
     fa = f(a)
     fb = f(b)
     if fa == 0:
@@ -747,4 +813,4 @@ def fzero_brent(a, b, f, tol):
             return b
         niter += 1
 
-    raise ValueError("maximum iterations exceeded (%f, %f)" % (b, s))
+    raise RuntimeError("maximum iterations exceeded (%f, %f)" % (b, s))

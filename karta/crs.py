@@ -220,7 +220,13 @@ class CartesianCRS(CRS):
 class GeographicalCRS(CRS):
     """ Reference systems with longitude-latitude (θ, φ) coordinates.
 
-    `spheroid` refers to a proj.4 spheroid identifier, e.g. "+ellps=WGS84"
+    Parameters
+    ----------
+    spheroid : string
+        proj.4 spheroid identifier, e.g. "+ellps=WGS84"
+    name : string
+    datum : string, optional
+        proj.4 datum identifier, default "+datum=WGS84"
     """
     def __init__(self, spheroid, name, datum="+datum=WGS84"):
         ellipsoid = parse_ellipsoid(spheroid)
@@ -259,7 +265,11 @@ class ProjectedCRS(CartesianCRS):
     """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
     or a custom projection function.
 
-    `proj` is a proj.4 string
+    Parameters
+    ----------
+    proj : string
+        proj.4 string
+    name : string or None
     """
     def __init__(self, proj, name=None):
         ellipsoid = parse_ellipsoid(proj)
@@ -305,8 +315,12 @@ class ProjectedCRS(CartesianCRS):
 
 class SphericalCRS(GeographicalCRS):
     """ Spherical geographic coordinate system defined by a radius.
-    
-    DEPRECATED 
+
+    **DEPRECATED**
+
+    Parameters
+    ----------
+    radius : float
     """
     name = "Spherical"
 
@@ -375,7 +389,14 @@ class EllipsoidalCRS(GeographicalCRS):
     """ Ellipsoidal geographic coordinate system defined by equatorial and
     polar radii.
 
-    DEPRECATED
+    **DEPRECATED**
+
+    Parameters:
+    -----------
+    a : float
+        ellipsoid major axis dimension
+    b : float
+        ellipsoid minor axis dimension
     """
     name = "Ellipsoidal"
 

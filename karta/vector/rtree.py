@@ -10,6 +10,7 @@ from ._cvectorgeo import bbox_intersection_area
 MIN_CHILDREN  = 2
 
 class Node(object):
+    """ Represents an R-tree node """
     def __init__(self, bbox, parent, max_children=50):
         self.bbox = list(bbox)
         self.parent = parent
@@ -26,6 +27,15 @@ class Node(object):
         raise NotImplementedError()
 
 class LeafNode(Node):
+    """ Leaf node
+
+    Parameters
+    ----------
+    bbox : 4-tuple
+        (x-min, y-min, x-max, y-max)
+    parent : Node
+    max_children : int, optional
+    """
     def __init__(self, bbox, parent, **kw):
         super(LeafNode, self).__init__(bbox, parent, **kw)
 
@@ -76,6 +86,15 @@ class LeafNode(Node):
         return [node0, node1]
 
 class NonLeafNode(Node):
+    """ Non-leaf node
+
+    Parameters
+    ----------
+    bbox : 4-tuple
+        (x-min, y-min, x-max, y-max)
+    parent : Node
+    max_children : int, optional
+    """
     def __init__(self, bbox, parent, **kw):
         super(NonLeafNode, self).__init__(bbox, parent, **kw)
 
@@ -126,7 +145,7 @@ class NonLeafNode(Node):
             _bb = children[i].bbox
             _node = newnodes[j]
             _node.children.append(children.pop(i))
-            _node.bbox = [min(_node.bbox[0], _bb[0]), min(_node.bbox[1], _bb[1]), 
+            _node.bbox = [min(_node.bbox[0], _bb[0]), min(_node.bbox[1], _bb[1]),
                           max(_node.bbox[2], _bb[2]), max(_node.bbox[3], _bb[3])]
 
             # Ensure that each node gets a minimum number of children
@@ -134,18 +153,25 @@ class NonLeafNode(Node):
                 for i in range(len(children)-1, -1, -1):
                     _bb = children[i].bbox
                     node0.children.append(children.pop(i))
-                    node0.bbox = [min(_node.bbox[0], _bb[0]), min(_node.bbox[1], _bb[1]), 
+                    node0.bbox = [min(_node.bbox[0], _bb[0]), min(_node.bbox[1], _bb[1]),
                                   max(node0.bbox[2], _bb[2]), max(_node.bbox[3], _bb[3])]
             elif len(node1) + len(children) == MIN_CHILDREN:
                 for i in range(len(children)-1, -1, -1):
                     _bb = children[i].bbox
                     node1.children.append(children.pop(i))
-                    node1.bbox = [min(_node.bbox[0], _bb[0]), min(_node.bbox[1], _bb[1]), 
+                    node1.bbox = [min(_node.bbox[0], _bb[0]), min(_node.bbox[1], _bb[1]),
                                   max(node1.bbox[2], _bb[2]), max(_node.bbox[3], _bb[3])]
 
         return [node0, node1]
 
 def build_tree(geoms, max_children=50):
+    """ Construct an R-tree
+
+    Parameters
+    ----------
+    geoms : list of objects implementing a `bbox` attribute
+    max_children : int, optional
+    """
     bboxes = [g.bbox for g in geoms]
     xmin = min(b[0] for b in bboxes)
     xmax = max(b[2] for b in bboxes)

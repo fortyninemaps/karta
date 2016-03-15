@@ -12,12 +12,14 @@ class QuadTree(object):
     """ Implements a convenience class that wraps a quadtree data structure and
     the methods needed to grow or query it.
 
-    Initialize with bbox (xmin, xmax, ymin, ymax).
-
-    Optional parameters
-    -------------------
-    maxchildren         <int> maximum number of points before a node is split
-    maxdepth            <int> maximum tree depth
+    Parameters
+    ----------
+    bbox : 4-tuple
+        (xmin, xmax, ymin, ymax).
+    maxchildren : int, optional
+        maximum number of points before a node is split
+    maxdepth : int, optional
+        maximum tree depth
     """
 
     def __init__(self, bbox, maxchildren=20, maxdepth=999):
@@ -50,10 +52,25 @@ class QuadTree(object):
 
 
 def addpt(node, pt, depth, maxchildren, maxdepth):
-    """ Add *pt* to *node*. *depth* is the current level in the quadtree.
-    Returns the updated node (which may or may not be the same as the starting
-    node, depending on whether a split occurred, as well as the depth at which
-    the point was inserted. """
+    """ Add point to a node.
+
+    Parameters
+    ----------
+    node : Node
+    pt : tuple
+    depth : int
+        current quadtree level
+    maxchildren : int
+    maxdepth : int
+
+    Returns
+    -------
+    Node
+        updated node (which may or may not be the same as the starting node,
+        depending on whether a split occurred)
+    int
+        depth at which point was inserted
+    """
     if not iswithin(node.bbox, pt):
         raise BBoxError("({x},{y}) is not within bounds {bbox}".format(x=pt[0],
                                                                        y=pt[1],

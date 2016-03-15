@@ -126,11 +126,15 @@ class Geometry(object):
 class Point(Geometry):
     """ Point object instantiated with:
 
-    *coords*        2-tuple or 3-tuple
-    *data*          List, dictionary, or Metadata object for point-specific
-                    data [default None]
-    *properties*    Dictionary of geometry specific data [default None]
-    *crs*           Coordinate reference system instance [default CARTESIAN]
+    Parameters
+    ----------
+    coords : 2-tuple or 3-tuple
+    data : list, dict, Metadata object, or None
+        point-specific data [default None]
+    properties : dict or None
+        geometry specific data [default None]
+    crs : karta.crs.CRS subclass
+        [default CARTESIAN]
     """
     __slots__ = ["vertex", "data", "rank"]
 
@@ -240,8 +244,12 @@ class Point(Geometry):
         """ Returns the point reached when moving in a given direction for
         a given distance from a specified starting location.
 
-            distance (float): distance to walk
-            direction (float): walk azimuth (clockwise with "north" at 0)
+        Parameters
+        ----------
+        distance : float
+            distance to walk
+        direction : float
+            walk azimuth (clockwise with "north" at 0)
         """
         xg1, yg1 = self.crs.project(self.x, self.y, inverse=True)
         xg2, yg2, _ = self.crs.forward(xg1, yg1, direction, distance,
@@ -280,10 +288,10 @@ class Point(Geometry):
         Parameters
         ----------
         f : file-like object to recieve the GeoJSON string
-
-        *kwargs* include:
-        crs : coordinate reference system
-        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        crs : karta.crs.CRS subclass
+            coordinate reference system, optional
+        bbox : 4-tuple
+            a bounding box in the form (w,e,s,n), optional
         """
         writer = geojson.GeoJSONWriter(self, **kwargs)
         return writer.print_json(indent)
@@ -671,10 +679,12 @@ class MultipointBase(Geometry):
     def to_xyfile(self, fnm, fields=None, delimiter=' ', header=None):
         """ Write data to a delimited ASCII table.
 
-        fnm         :   filename to write to
-
-        kwargs:
-        fields      :   specify the fields to be written (default all)
+        Parameters
+        ----------
+        fnm : string
+            filename to write to
+        fields : list
+            specify the fields to be written (optional, default all)
 
         Additional kwargs are passed to `xyfile.write_xy`.
         """
@@ -686,8 +696,11 @@ class MultipointBase(Geometry):
 
         Parameters
         ----------
-        crs : coordinate reference system
-        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        indent : int
+            spaces to intent JSON levels
+        bbox : 4-tuple
+            a bounding box in the form (w,e,s,n), optional
+        crs : karta.crs.CRS subclass
         """
         writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
         return writer.print_json(indent)
@@ -706,11 +719,15 @@ class Multipoint(MultipointBase):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes.
 
-    *coords*        List of 2-tuples or 3-tuples
-    *data*          List, dictionary, or Metadata object for point-specific
-                    data [default None]
-    *properties*    Dictionary of geometry specific data [default None]
-    *crs*           Coordinate reference system instance [default CARTESIAN]
+    Parameters
+    ----------
+    coords : list of 2-tuples or 3-tuples
+    data : list, dict, Metadata object, or None
+        point-specific data [default None]
+    properties : dict or None
+        geometry specific data [default None]
+    crs : karta.crs.CRS subclass
+        [default CARTESIAN]
     """
 
     __slots__ = []
@@ -792,10 +809,13 @@ class Multipoint(MultipointBase):
     def build_quadtree(self, buff=1e-8):
         """ Construct an internal quadtree with the current geometry data.
 
-        Optional *buff* keyword specifies a spatial buffer to create around
-        the current point bounding box, permitting the geometry to grow after
-        the quadtree has been initialized. *buff* may be a scalar or a
-        sequence of (left, right, bottom, top).
+        Parameters
+        ----------
+        buff : float or 4-tuple of floats
+            specifies a spatial buffer to create around the current point
+            bounding box, permitting the geometry to grow after the quadtree
+            has been initialized. *buff* may be a scalar or a sequence of
+            (left, right, bottom, top). (optional)
         """
         try:
             bf = (buff[0], buff[1], buff[2], buff[3])
@@ -983,11 +1003,15 @@ class ConnectedMultipoint(MultipointBase):
 class Line(ConnectedMultipoint):
     """ Line composed of connected vertices.
 
-    *coords*        List of 2-tuples or 3-tuples
-    *data*          List, dictionary, or Metadata object for point-specific
-                    data [default None]
-    *properties*    Dictionary of geometry specific data [default None]
-    *crs*           Coordinate reference system instance [default CARTESIAN]
+    Parameters
+    ----------
+    coords : list of 2-tuples or 3-tuples
+    data : list, dict, Metadata object, or None
+        point-specific data [default None]
+    properties : dict or None
+        geometry specific data [default None]
+    crs : karta.crs.CRS subclass
+        [default CARTESIAN]
     """
     __slots__ = []
 
@@ -1101,12 +1125,17 @@ class Line(ConnectedMultipoint):
 class Polygon(ConnectedMultipoint):
     """ Polygon, composed of a closed sequence of vertices.
 
-    *coords*        List of 2-tuples or 3-tuples
-    *data*          List, dictionary, or Metadata object for point-specific
-                    data [default None]
-    *properties*    Dictionary of geometry specific data [default None]
-    *subs*          List of sub-polygons [default None]
-    *crs*           Coordinate reference system instance [default CARTESIAN]
+    Parameters
+    ----------
+    coords : list of 2-tuples or 3-tuples
+    data : list, dict, Metadata object, or None
+        point-specific data [default None]
+    properties : dict or None
+        geometry specific data [default None]
+    subs : list of Polygon instances or None
+        sub-polygons [default None]
+    crs : karta.crs.CRS subclass
+        [default CARTESIAN]
     """
     __slots__ = ["subs"]
 
@@ -1167,9 +1196,6 @@ class Polygon(ConnectedMultipoint):
     def ispolar(self, pole=None):
         """ Return True if polygon contains one pole. If the polygon contains
         neither or both poles, returns False.
-
-        Currently expects geographical coordinates with longitude ranging from
-        (-180, 180].
         """
 
         if not isinstance(self.crs, GeographicalCRS):
@@ -1178,12 +1204,12 @@ class Polygon(ConnectedMultipoint):
         if pole is None:
             pole = Point((0, 90), crs=SphericalEarth)
 
-        lon0 = self[-1].vertex[0]
+        lon0 = geodesy.reduce_deg(self[-1].vertex[0])
         sum_angle = 0.0
 
         for vertex in self.vertices:
 
-            lon1 = vertex[0]
+            lon1 = geodesy.reduce_deg(vertex[0])
 
             if (sign(lon0) == -sign(lon1)) and \
                 ((min(abs(lon0-180), abs(lon0+180)) + min(abs(lon1-180), abs(lon1+180))) < (abs(lon0) + abs(lon1))):
