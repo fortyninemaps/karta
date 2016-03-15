@@ -3,6 +3,7 @@
 import struct
 import sys
 import numpy as np
+from .band import SimpleBand, CompressedBand
 from .. import errors
 
 try:
@@ -228,17 +229,17 @@ def read(fnm, band, in_memory):
             max_dtype = rasterband.DataType
 
         if in_memory:
-            arr = np.empty((hdr["ny"], hdr["nx"]), dtype=numpy_dtype(max_dtype))
             dtype = numpy_dtype(rasterband.DataType)
-            arr[:,:] = rasterband.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype))
+            band = SimpleBand((ny, nx), dtype)
+            band[:,:] = rasterband.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype)).squeeze()[::-1]
         else:
-            arr = GdalFileBand(rasterband, dataset)
+            band = GdalFileBand(rasterband, dataset)
 
     finally:
         if in_memory:
             rasterband = None
             dataset = None
-    return arr, hdr
+    return band, hdr
 
 def srs_from_crs(crs):
     srs = osgeo.osr.SpatialReference()

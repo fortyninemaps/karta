@@ -15,8 +15,8 @@ def read_aai(fnm):
          'yllcorner': aschdr['yllcorner'],
          'dx'       : aschdr['cellsize'],
          'dy'       : aschdr['cellsize'],
-         'xrot'     : 0.0,
-         'yrot'     : 0.0}
+         'sx'       : 0.0,
+         'sy'       : 0.0}
     values[values==aschdr['nodata_value']] = np.nan
     return RegularGrid(t, values=values[::-1])
 
@@ -37,16 +37,14 @@ def read_gtiff(fnm, band=1, in_memory=True):
 
     in_memory : if True (default), read entire dataset into memory
     """
-    arr, hdr = _gtiff.read(fnm, band, in_memory)
-    if isinstance(arr, np.ndarray):
-        arr = arr.squeeze()[::-1]
+    band, hdr = _gtiff.read(fnm, band, in_memory)
 
-    t = {'xllcorner'  : hdr['xulcorner'] - hdr['ny'] * hdr['sx'],
-         'yllcorner'  : hdr['yulcorner'] + hdr['ny'] * hdr['dy'],
-         'dx'         : hdr['dx'],
-         'dy'         : -hdr['dy'],
-         'xrot'       : hdr['sx'],
-         'yrot'       : -hdr['sy']}
+    t = {'xllcorner': hdr['xulcorner'] - hdr['ny'] * hdr['sx'],
+         'yllcorner': hdr['yulcorner'] + hdr['ny'] * hdr['dy'],
+         'dx'       : hdr['dx'],
+         'dy'       : -hdr['dy'],
+         'sx'       : hdr['sx'],
+         'sy'       : -hdr['sy']}
 
     if proj4_isgeodetic(hdr["srs"]["proj4"]):
         geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
@@ -54,7 +52,7 @@ def read_gtiff(fnm, band=1, in_memory=True):
         crs = GeographicalCRS(geodstr, name=hdr["srs"]["name"])
     else:
         crs = ProjectedCRS(hdr["srs"]["proj4"], name=hdr["srs"]["name"])
-    return RegularGrid(t, values=arr, crs=crs, nodata_value=hdr["nodata"])
+    return RegularGrid(t, bands=[band], crs=crs, nodata_value=hdr["nodata"])
 
 # Aliases for backwards compat.
 gtiffread = read_gtiff

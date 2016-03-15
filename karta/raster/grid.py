@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 from . import _gtiff
 from . import crfuncs
+from .band import SimpleBand, CompressedBand
 from .. import errors
 from ..crs import Cartesian
 
@@ -15,6 +16,9 @@ try:
     HASSCIPY = True
 except ImportError:
     HASSCIPY = False
+
+BAND_CLASS_DEFAULT = CompressedBand
+CRS_DEFAULT = Cartesian
 
 IntegerType = (numbers.Integral, np.int32, np.int64)
 
@@ -55,8 +59,8 @@ class Grid(object):
 
 class RegularGrid(Grid):
     """ Regular (structured) grid class. A RegularGrid contains a fixed number
-    of rows and columns with a constant spacing and a scalar or vector field
-    defined as `values`.
+    of rows and columns with a constant spacing and a list of bands
+    representing scalar fields.
 
     Positions on a RegularGrid are referenced to their array indices *(i,j)*
     using an affine transform *T* such that
@@ -72,19 +76,43 @@ class RegularGrid(Grid):
 
     e = f = 0
     """
-    def __init__(self, transform, values=None, crs=None, nodata_value=None):
-        """ Create a RegularGrid instance with cells referenced according to
-        *transform*, which is an iterable or dictionary consisting of
-        (xllcenter, yllcenter, dx, dy, xrot, yrot).
+    def __init__(self, transform, values=None, bands=None, crs=None,
+            nodata_value=None, bandclass=None):
+        """ Create a RegularGrid instance.
+        
+        Parameters:
+        -----------
+
+        transform : a six element list, tuple, or dictionary defining the
+        geotransform of the grid:
+
+            [xllcorner, yllcorner, dx, dy, sx, sy]
 
         Optional parameters:
         --------------------
-        values : grid data (nrows x ncols) [default NaN]
-        crs : Grid coordinate reference system [default None]
+
+        values : grid data (nrows x ncols), from which raster bands will be
+        formed. A two-dimensional array will be transformed into a single band,
+        while a three-dimension MxNxP array will become P MxN bands. The class
+        used to represent bands can be controlled by the *bandclass* keyword
+        argument.
+
+        bands : list of allocated Band-like objects. If provided, they are
+        assumed to be of a single type, which overrides *bandclass*.
+
+        crs : Grid coordinate reference system, default CRS_DEFAULT
+
+        nodata_value : specifies a value to represent NoData or null pixels.
+        The default is chosen depending on the input type of *values* or
+        *bands*. If neither is provided, the default is NaN.
+
+        bandclass : indicates the band class used to represent grid data.
+        default BAND_CLASS_DEFAULT
         """
+
         if hasattr(transform, "keys"):
             self._transform = tuple([float(transform[f]) for f in
-                    ("xllcorner", "yllcorner", "dx", "dy", "xrot", "yrot")])
+                    ("xllcorner", "yllcorner", "dx", "dy", "sx", "sy")])
         elif len(transform) == 6:
             self._transform = tuple(float(a) for a in transform)
         elif len(transform) == 4:
@@ -94,18 +122,41 @@ class RegularGrid(Grid):
             raise errors.GridError("RegularGrid must be initialized with a "
                                    " transform iterable or dictionary")
 
-        if values is not None:
-            self.values = values
+        if bands is not None:
+            self._bndcls = type(bands[0])
+        elif bandclass is None:
+            self._bndcls = BAND_CLASS_DEFAULT
         else:
-            self.values = np.atleast_2d([np.nan])
+            self._bndcls = bandclass
+
+        if bands is not None:
+            self.bands = bands
+        else:
+            self.bands = []
+
+        if bands is None and (values is not None):
+            if values.ndim == 2:
+                band = self._bndcls(values.shape, values.dtype)
+                band[:,:] = values
+                self.bands.append(band)
+            elif values.ndim == 3:
+                for ibnd in values.shape[2]:
+                    band = self._bndcls(values.shape[:2], values.dtype)
+                    band[:,:] = values[:,:,ibnd]
+                    self.bands.append(band)
+            else:
+                raise ValueError("`values` must have two or three dimensions")
 
         if crs is None:
-            self.crs = Cartesian
+            self.crs = CRS_DEFAULT
         else:
             self.crs = crs
 
         if nodata_value is None:
-            self._nodata = get_nodata(self.values.dtype.type)
+            if len(self.bands) == 0:
+                self._nodata = np.nan
+            else:
+                self._nodata = get_nodata(self.bands[0].dtype.type)
         else:
             self._nodata = nodata_value
         return
@@ -133,6 +184,18 @@ class RegularGrid(Grid):
     @property
     def transform(self):
         return self._transform
+
+    @property
+    def values(self):
+        # TODO: this is a temporary implementation that can be made much more
+        # efficient in the future
+        nbands = len(self.bands)
+        if nbands == 0:
+            raise ValueError("grid is empty")
+        elif nbands == 1:
+            return self.bands[0][:,:]
+        else:
+            return np.dstack([b[:,:] for b in self.bands])
 
     @property
     def size(self):
@@ -252,8 +315,8 @@ class RegularGrid(Grid):
 
         dx, dy = self.transform[2:4]
         sx, sy = self.transform[4:6]
-        x0 = x1 = self.transform[0] + 0.5*dx + 0.5*sx
-        y0 = y1 = self.transform[1] + 0.5*dy + 0.5*sy
+        x0 = self.transform[0] + 0.5*dx + 0.5*sx
+        y0 = self.transform[1] + 0.5*dy + 0.5*sy
         ny, nx = self.size
 
         # Reading a row is fast, so process from bottom to top
@@ -743,7 +806,7 @@ class RegularGrid(Grid):
         """
         return _gtiff.write(fnm, self, compress=compress, **kw)
 
-    def to_aai(f, reference='corner', nodata_value=-9999):
+    def to_aai(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
         only isometric grids (i.e. `hdr['dx'] == hdr['dy']` can be saved,
         otherwise `GridIOError` is thrown.
@@ -917,7 +980,7 @@ def merge(grids, weights=None):
     ny = int(round((ymax-ymin) / T[3]))
 
     # Allocate data array and copy each grid's data
-    typ = grids[0].values.dtype.type
+    typ = grids[0].bands[0].dtype.type
     values = np.zeros([ny, nx], dtype=typ)
     counts = np.zeros([ny, nx], dtype=np.float32)
     for grid, w in zip(grids, normalizedweights):
@@ -977,7 +1040,8 @@ def gridpoints(x, y, z, transform, crs):
     grid = RegularGrid(transform,
                        values=np.zeros([ny, nx]),
                        crs=crs,
-                       nodata_value=np.nan)
+                       nodata_value=np.nan,
+                       bandclass=SimpleBand)
     counts = np.zeros([ny, nx], dtype=np.int16)
 
     (I, J) = grid.get_indices(x, y)
