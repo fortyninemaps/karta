@@ -6,6 +6,11 @@ from karta.raster import SimpleBand, CompressedBand
 class GenericBandTests(object):
     """ Tests that all Band classes must pass """
 
+    def test_get_dtype(self):
+        band = self.type((64, 64), np.float64, **self.initkwargs)
+        self.assertEqual(band.dtype, np.float64)
+        return
+
     def test_setblock_getblock_full(self):
 
         x, y = np.meshgrid(np.arange(1024), np.arange(1024))

@@ -151,7 +151,7 @@ class RegularGrid(Grid):
             if len(self.bands) == 0:
                 self._nodata = np.nan
             else:
-                self._nodata = get_nodata(self.bands[0].dtype)
+                self._nodata = get_nodata(self.bands[0].dtype.type)
         else:
             self._nodata = nodata_value
         return
@@ -1016,7 +1016,7 @@ def merge(grids, weights=None):
     ny = int(round((ymax-ymin) / T[3]))
 
     # Allocate data array and copy each grid's data
-    typ = grids[0].bands[0].dtype
+    typ = grids[0].bands[0].dtype.type
     values = np.zeros([ny, nx], dtype=typ)
     counts = np.zeros([ny, nx], dtype=np.float32)
     for grid, w in zip(grids, normalizedweights):
