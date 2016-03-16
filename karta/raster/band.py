@@ -5,9 +5,12 @@ from math import ceil
 class SimpleBand(object):
     """ SimpleBand wraps a numpy.ndarray for storage. """
 
-    def __init__(self, size, dtype):
+    def __init__(self, size, dtype, initval=None):
         self.size = size
-        self.array = np.empty(size, dtype=dtype)
+        if initval is None:
+            self.array = np.empty(size, dtype=dtype)
+        else:
+            self.array = initval * np.ones(size, dtype=dtype)
         self.dtype = dtype
 
     def __getitem__(self, key):
@@ -22,7 +25,7 @@ class CompressedBand(object):
     CHUNKSET = 1
     CHUNKUNSET = 0
 
-    def __init__(self, size, dtype, chunksize=(256, 256)):
+    def __init__(self, size, dtype, chunksize=(256, 256), initval=None):
         assert len(size) == 2
         self.size = size
         self.dtype = dtype
@@ -38,6 +41,10 @@ class CompressedBand(object):
         # 0 => unset
         # 1 => set
         self.chunkstatus = np.zeros(nchunks, dtype=np.int8)
+
+        if initval is not None:
+            self[:,:] = initval*np.ones(size, dtype=dtype)
+        return
 
     def __getitem__(self, key):
 

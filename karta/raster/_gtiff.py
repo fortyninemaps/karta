@@ -29,7 +29,7 @@ class GdalFileBand(object):
         self.band = None
 
     def __getitem__(self, idx):
-        ny, nx = self.shape
+        ny, nx = self.size
 
         if isinstance(idx, tuple):
             iidx, jidx = idx
@@ -101,7 +101,7 @@ class GdalFileBand(object):
             yield self[i,:]
 
     @property
-    def shape(self):
+    def size(self):
         return (self.dataset.RasterYSize, self.dataset.RasterXSize)
 
     @property
