@@ -5,8 +5,13 @@ from math import ceil
 class SimpleBand(object):
     """ SimpleBand wraps a numpy.ndarray for storage. """
 
-    def __init__(self, size, dtype):
-        self.array = np.empty(size, dtype=dtype)
+    def __init__(self, size, dtype, initval=None):
+        self.size = size
+        if initval is None:
+            self.array = np.empty(size, dtype=dtype)
+        else:
+            self.array = initval * np.ones(size, dtype=dtype)
+        self.dtype = dtype
 
     def __getitem__(self, key):
         return self.array[key]
@@ -20,11 +25,11 @@ class CompressedBand(object):
     CHUNKSET = 1
     CHUNKUNSET = 0
 
-    def __init__(self, size, dtype, chunksize=(256, 256)):
+    def __init__(self, size, dtype, chunksize=(256, 256), initval=None):
         assert len(size) == 2
         self.size = size
         self.dtype = dtype
-        self.chunksize = chunksize
+        self._chunksize = chunksize
 
         self.nchunkrows = int(ceil(float(size[0])/float(chunksize[0])))
         self.nchunkcols = int(ceil(float(size[1])/float(chunksize[1])))
@@ -36,6 +41,10 @@ class CompressedBand(object):
         # 0 => unset
         # 1 => set
         self.chunkstatus = np.zeros(nchunks, dtype=np.int8)
+
+        if initval is not None:
+            self[:,:] = initval*np.ones(size, dtype=dtype)
+        return
 
     def __getitem__(self, key):
 
@@ -85,7 +94,7 @@ class CompressedBand(object):
                 else:
                     xoff = k1.start
                 if k1.stop is None:
-                    nx = self.size[0]-xoff
+                    nx = self.size[1]-xoff
                 else:
                     nx = k1.stop-xoff
                 if k1.step is None:
@@ -188,14 +197,14 @@ class CompressedBand(object):
 
     def _retrieve(self, index):
         bytestr = blosc.decompress(self._data[index])
-        return np.fromstring(bytestr, dtype=self.dtype).reshape(self.chunksize)
+        return np.fromstring(bytestr, dtype=self.dtype).reshape(self._chunksize)
 
     def _getchunks(self, yoff, xoff, ny, nx):
         """ Return a generator returning tuples identifying chunks covered by a
         range. The tuples contain (chunk_number, ystart, yend, xstart, xend)
         for each chunk touched by a region defined by corner indices and region
         size. """
-        chunksize = self.chunksize
+        chunksize = self._chunksize
         ystart = yoff // chunksize[0]
         yend = ceil(float(yoff+ny) / chunksize[0])
         xstart = xoff // chunksize[1]
@@ -222,7 +231,7 @@ class CompressedBand(object):
 
     def _setblock(self, yoff, xoff, array):
         size = array.shape
-        chunksize = self.chunksize
+        chunksize = self._chunksize
         chunkrowstart = yoff // chunksize[0]
         chunkcolstart = xoff // chunksize[1]
 
@@ -232,7 +241,7 @@ class CompressedBand(object):
             if self.chunkstatus[i] != self.CHUNKUNSET:
                 chunkdata = self._retrieve(i)
             else:
-                chunkdata = np.zeros(self.chunksize, dtype=self.dtype)
+                chunkdata = np.zeros(self._chunksize, dtype=self.dtype)
 
             # Compute region within chunk to place data in
             cy0 = max(0, yoff-yst)

@@ -7,6 +7,7 @@ import warnings
 import numpy as np
 from . import _gtiff
 from . import crfuncs
+from .band import SimpleBand, CompressedBand
 from .. import errors
 from ..crs import Cartesian
 
@@ -15,6 +16,9 @@ try:
     HASSCIPY = True
 except ImportError:
     HASSCIPY = False
+
+BAND_CLASS_DEFAULT = CompressedBand
+CRS_DEFAULT = Cartesian
 
 IntegerType = (numbers.Integral, np.int32, np.int64)
 
@@ -55,8 +59,8 @@ class Grid(object):
 
 class RegularGrid(Grid):
     """ Regular (structured) grid class. A RegularGrid contains a fixed number
-    of rows and columns with a constant spacing and a scalar or vector field
-    defined as `values`.
+    of rows and columns with a constant spacing and a list of bands
+    representing scalar fields.
 
     Positions on a RegularGrid are referenced to their array indices *(i,j)*
     using an affine transform *T* such that
@@ -72,19 +76,38 @@ class RegularGrid(Grid):
 
     e = f = 0
     """
-    def __init__(self, transform, values=None, crs=None, nodata_value=None):
-        """ Create a RegularGrid instance with cells referenced according to
-        *transform*, which is an iterable or dictionary consisting of
-        (xllcenter, yllcenter, dx, dy, xrot, yrot).
+    def __init__(self, transform, values=None, bands=None, crs=None,
+            nodata_value=None, bandclass=None):
+        """ Create a RegularGrid instance.
 
-        Optional parameters:
-        --------------------
-        values : grid data (nrows x ncols) [default NaN]
-        crs : Grid coordinate reference system [default None]
+        Parameters
+        ----------
+        transform : 6-tuple of floats
+            a six element list, tuple, or dictionary defining the geotransform
+            of the grid: ``[xllcorner, yllcorner, dx, dy, sx, sy]``
+        values : ndarray (nrows x ncols), optional
+            grid data from which raster bands will be formed. A two-dimensional
+            array will be transformed into a single band, while a
+            three-dimension MxNxP array will become P MxN bands. The class used
+            to represent bands can be controlled by the *bandclass* keyword
+            argument.
+        bands : list of band types, optional
+            list of allocated Band-like objects. If provided, they are assumed
+            to be of a single type, which overrides *bandclass*.
+        crs : karta.crs.CRS subclass, optional
+            Grid coordinate reference system, default CRS_DEFAULT
+        nodata_value : number, optional
+            specifies a value to represent NoData or null pixels. The default
+            is chosen depending on the input type of *values* or *bands*. If
+            neither is provided, the default is NaN.
+        bandclass : class, optional
+            indicates the band class used to represent grid data. default
+            BAND_CLASS_DEFAULT
         """
+
         if hasattr(transform, "keys"):
             self._transform = tuple([float(transform[f]) for f in
-                    ("xllcorner", "yllcorner", "dx", "dy", "xrot", "yrot")])
+                    ("xllcorner", "yllcorner", "dx", "dy", "sx", "sy")])
         elif len(transform) == 6:
             self._transform = tuple(float(a) for a in transform)
         elif len(transform) == 4:
@@ -94,18 +117,41 @@ class RegularGrid(Grid):
             raise errors.GridError("RegularGrid must be initialized with a "
                                    " transform iterable or dictionary")
 
-        if values is not None:
-            self.values = values
+        if bands is not None:
+            self._bndcls = type(bands[0])
+        elif bandclass is None:
+            self._bndcls = BAND_CLASS_DEFAULT
         else:
-            self.values = np.atleast_2d([np.nan])
+            self._bndcls = bandclass
+
+        if bands is not None:
+            self.bands = bands
+        else:
+            self.bands = []
+
+        if bands is None and (values is not None):
+            if values.ndim == 2:
+                band = self._bndcls(values.shape, values.dtype)
+                band[:,:] = values
+                self.bands.append(band)
+            elif values.ndim == 3:
+                for ibnd in values.shape[2]:
+                    band = self._bndcls(values.shape[:2], values.dtype)
+                    band[:,:] = values[:,:,ibnd]
+                    self.bands.append(band)
+            else:
+                raise ValueError("`values` must have two or three dimensions")
 
         if crs is None:
-            self.crs = Cartesian
+            self.crs = CRS_DEFAULT
         else:
             self.crs = crs
 
         if nodata_value is None:
-            self._nodata = get_nodata(self.values.dtype.type)
+            if len(self.bands) == 0:
+                self._nodata = np.nan
+            else:
+                self._nodata = get_nodata(self.bands[0].dtype.type)
         else:
             self._nodata = nodata_value
         return
@@ -135,8 +181,20 @@ class RegularGrid(Grid):
         return self._transform
 
     @property
+    def values(self):
+        # TODO: this is a temporary implementation that can be made much more
+        # efficient in the future
+        nbands = len(self.bands)
+        if nbands == 0:
+            raise ValueError("grid is empty")
+        elif nbands == 1:
+            return self.bands[0][:,:]
+        else:
+            return np.dstack([b[:,:] for b in self.bands])
+
+    @property
     def size(self):
-        return self.values.shape[:2]
+        return self.bands[0].size
 
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
@@ -201,7 +259,14 @@ class RegularGrid(Grid):
 
     def get_extent(self, reference='center', crs=None):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
-        ymax). *reference* is a string and may be 'center' or 'edge'. """
+        ymax).
+
+        Parameters
+        ----------
+        reference : string
+            either 'center' or 'edge'.
+        crs : karta.crs.CRS subclass
+        """
         if reference == 'center':
             x0, y0 = self.center_llref()
             n = -1
@@ -240,7 +305,14 @@ class RegularGrid(Grid):
 
     def get_data_extent(self, reference='center', nodata=None, crs=None):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
-        ymax). *reference* is a string and may be 'center' or 'edge'. """
+        ymax).
+
+        Parameters
+        ----------
+        reference : string
+            either 'center' or 'edge'.
+        crs : karta.crs.CRS subclass
+        """
         if nodata is None:
             nodata = self.nodata
 
@@ -252,8 +324,8 @@ class RegularGrid(Grid):
 
         dx, dy = self.transform[2:4]
         sx, sy = self.transform[4:6]
-        x0 = x1 = self.transform[0] + 0.5*dx + 0.5*sx
-        y0 = y1 = self.transform[1] + 0.5*dy + 0.5*sy
+        x0 = self.transform[0] + 0.5*dx + 0.5*sx
+        y0 = self.transform[1] + 0.5*dy + 0.5*sy
         ny, nx = self.size
 
         # Reading a row is fast, so process from bottom to top
@@ -347,10 +419,15 @@ class RegularGrid(Grid):
 
     def clip(self, xmin, xmax, ymin, ymax, crs=None):
         """ Return a clipped version of grid with cell centers constrained to a
-        bounding box defined by *xmin*, *xmax*, *ymin*, *ymax*.
-
-        Optional *crs* argument defines the coordinate reference system of the
         bounding box.
+
+        Parameters
+        ----------
+        xmin : float
+        xmax : float
+        ymin : float
+        ymax : float
+        crs : karta.crs.CRS subclass, optional
         """
         if crs is not None:
             x, y = crs.transform(self.crs, [xmin, xmin, xmax, xmax],
@@ -380,11 +457,16 @@ class RegularGrid(Grid):
         return RegularGrid(tnew, values, crs=self.crs, nodata_value=self.nodata)
 
     def resize(self, bboxnew):
-        """ Return a new grid grid with outer edges given by *bboxnew* (xmin,
-        ymin, xmax, ymax).
-        
+        """ Return a new grid grid with outer edges given by a bounding box.
+
         If the grid origin shifts by a non-integer factor of the grid
-        resolution, nearest neighbour values are selected. """
+        resolution, nearest neighbour values are selected.
+
+        Parameters
+        ----------
+        bboxnew : 4-tuple of floats
+            (xmin, ymin, xmax, ymax).
+        """
         bb = self.bbox
         bbnew = list(bboxnew)
         dx, dy, sx, sy = self.transform[2:]
@@ -412,8 +494,13 @@ class RegularGrid(Grid):
         i0 = max(0,  int(round((bbnew[1]-bb[1])/dy)))
         i1 = min(ny, i0+nynew)
 
-        valnew[i0new:i1new, j0new:j1new] = self.values[i0:i1,j0:j1]
-        gridnew = RegularGrid(Tnew, values=valnew, crs=self.crs,
+        newbands = []
+        for band in self.bands:
+            newband = self._bndcls((nynew, nxnew), dtype=band.dtype, initval=0.0)
+            newband[i0new:i1new, j0new:j1new] = band[i0:i1, j0:j1]
+            newbands.append(newband)
+
+        gridnew = RegularGrid(Tnew, bands=newbands, crs=self.crs,
                               nodata_value=self.nodata)
         return gridnew
 
@@ -444,7 +531,10 @@ class RegularGrid(Grid):
                 msk = (msk | _msk)
 
         if inplace:
-            self.values[~msk] = self.nodata
+            for band in bands:
+                data = band[:,:]
+                data[msk] = self.nodata
+                band[:,:] = data
             return self
         else:
             return RegularGrid(self.transform,
@@ -459,16 +549,16 @@ class RegularGrid(Grid):
 
         Parameters
         ----------
-
-        dx : cell dimension, float
-
-        dy : cell dimension, float
-
-        method : interpolation method, string ('nearest', 'linear')
+        dx : float
+            cell dimension 1
+        dy : float
+            cell dimension 2
+        method : str, optional
+            interpolation method, one of 'nearest', 'linear'
         """
         if not HASSCIPY:
             raise errors.MissingDependencyError("resample_griddata requires scipy")
-        ny0, nx0 = self.values.shape[:2]
+        ny0, nx0 = self.band[0].size
         dx0, dy0 = self._transform[2:4]
         xllcenter, yllcenter = self.center_llref()
         xurcenter = xllcenter + dx0*nx0
@@ -493,25 +583,24 @@ class RegularGrid(Grid):
 
         Parameters
         ----------
-
-        dx : cell dimension, float
-
-        dy : cell dimension, float
-
-        method : interpolation method, string ('nearest',)
+        dx : float
+            cell dimension 1
+        dy : float
+            cell dimension 2
+        method : str, optional
+            interpolation method, currenlt only 'nearest' supported
         """
-        ny0, nx0 = self.values.shape[:2]
+        ny, nx = self.bands[0].size
         dx0, dy0 = self._transform[2:4]
         xllcenter, yllcenter = self.center_llref()
 
         if method == 'nearest':
             rx, ry = dx / dx0, dy / dy0
-            ny, nx = self.values.shape
             I = np.around(np.arange(ry/2, ny, ry)-0.5).astype(int)
             J = np.around(np.arange(rx/2, nx, rx)-0.5).astype(int)
-            if I[-1] == self.values.shape[0]:
+            if I[-1] == ny:
                 I = I[:-1]
-            if J[-1] == self.values.shape[1]:
+            if J[-1] == nx:
                 J = J[:-1]
             JJ, II = np.meshgrid(J, I)
             values = self.values[II, JJ]
@@ -599,7 +688,7 @@ class RegularGrid(Grid):
         """ Return the value nearest to (`x`, `y`). Nearest grid center
         sampling scheme. """
         i, j = self.get_indices(x, y)
-        ny, nx = self.values.shape[:2]
+        ny, nx = self.bands[0].size
         return self.values[i, j]
 
     def sample_bilinear(self, x, y):
@@ -628,8 +717,9 @@ class RegularGrid(Grid):
                     .format(self.get_extent()))
 
         dx, dy = self._transform[2:4]
-        z = (self.values[i0,j0]*(i1-i)*(j1-j) + self.values[i1,j0]*(i-i0)*(j1-j) + \
-             self.values[i0,j1]*(i1-i)*(j-j0) + self.values[i1,j1]*(i-i0)*(j-j0))
+        values = self.values
+        z = (values[i0,j0]*(i1-i)*(j1-j) + values[i1,j0]*(i-i0)*(j1-j) + \
+             values[i0,j1]*(i1-i)*(j-j0) + values[i1,j1]*(i-i0)*(j-j0))
         return z
 
     def sample(self, *args, **kwargs):
@@ -639,11 +729,15 @@ class RegularGrid(Grid):
         - a karta.Multipoint instance, or
         - a pair of x, y coordinate lists
 
-        Keyword *crs* used when coordinate lists are provided, otherwise the
-        coordinate system is assumed to be the same as the grid's coordinate
-        system and no transformation is performed.
-
-        Keyword *method* may be one of 'nearest', 'bilinear' (default).
+        Parameters
+        ----------
+        positions : karta.Point, karta.Multipoint, or two lists of floats
+            see above
+        crs : karta.crs.CRS, optional
+            used when coordinate lists are provided, otherwise the coordinate
+            system is taken from the crs attribute of the geometry
+        method : string, optional
+            may be one of 'nearest', 'bilinear' (default).
         """
         crs = kwargs.get("crs", None)
         method = kwargs.get("method", "bilinear")
@@ -652,10 +746,9 @@ class RegularGrid(Grid):
         if hasattr(args[0], "_geotype"):
             crs = args[0].crs
             if args[0]._geotype == "Point":
-                x = args[0].x
-                y = args[0].y
+                x, y = args[0].get_vertex(crs=grid.crs)[:2]
             elif args[0]._geotype == "Multipoint":
-                x, y = args[0].coordinates
+                x, y = args[0].get_coordsinates(crs=grid.crs)
             else:
                 raise argerror
         else:
@@ -664,13 +757,12 @@ class RegularGrid(Grid):
                 y = args[1]
                 if crs is None:
                     crs = self.crs
+                else:
+                    x, y = crs.transform(self.crs, x, y)
             except IndexError:
                 raise argerror
             if len(x) != len(y):
                 raise argerror
-
-        if crs is not self.crs:
-            x, y = crs.transform(self.crs, x, y)
 
         if method == "nearest":
             return self.sample_nearest(x, y)
@@ -682,20 +774,22 @@ class RegularGrid(Grid):
     def profile(self, line, resolution=None, **kw):
         """ Sample along a *line* at *resolution*.
 
-        Parameters:
-        -----------
-        line : `geometry.Line`-like object describing the sampling path
-
-        resolution : sample spacing, taken to be the minimum grid resolution by
-        default
+        Parameters
+        ----------
+        line : karta.Line
+            defines the sampling path
+        resolution : float, optional
+            sample spacing, taken to be the minimum grid resolution by default
 
         Additional keyword arguments passed to `RegularGrid.sample` (e.g. to
         specify sampling method)
 
         Returns:
         --------
-        vertices : list of (x, y) tuples
-        profile : ndarray
+        list of (x, y) tuples
+            sample points
+        ndarray
+            grid value at sample points
         """
         if resolution is None:
             resolution = min(self.transform[2:4])
@@ -734,27 +828,29 @@ class RegularGrid(Grid):
 
     def to_gtiff(self, fnm, compress="PACKBITS", tiled=False, **kw):
         """ Write data to a GeoTiff file using GDAL.
-        
+
         Parameters
         ----------
-        fnm: output file name
-
-        compress: "PACKBITS" (default), "DEFLATE", "LZW", "LZMA", or None
+        fnm : str
+            output file name
+        compress: str or None, optional
+            "PACKBITS" (default), "DEFLATE", "LZW", "LZMA", or None
         """
         return _gtiff.write(fnm, self, compress=compress, **kw)
 
-    def to_aai(f, reference='corner', nodata_value=-9999):
+    def to_aai(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
         only isometric grids (i.e. `hdr['dx'] == hdr['dy']` can be saved,
         otherwise `GridIOError` is thrown.
 
-        Parameters:
-        -----------
-        f : a file-like object or a filename
-
-        reference : specify a header reference ('center' | 'corner')
-
-        nodata_value : specify how NaNs should be represented (int or float)
+        Parameters
+        ----------
+        f : str
+            a file-like object or a filename
+        reference : str
+            specify a header reference ('center' | 'corner')
+        nodata_value : number
+            specify how NaNs should be represented
         """
         if reference not in ('center', 'corner'):
             raise errors.GridIOError("reference in AAIGrid.tofile() must be 'center' or "
@@ -763,7 +859,7 @@ class RegularGrid(Grid):
         if np.any(self._transform[4:] != 0.0):
             raise errors.GridIOError("ESRI ASCII grids do not support skewed grids")
 
-        ny, nx = self.values.shape[:2]
+        ny, nx = self.bands[0].size
         x0, y0, dx, dy = self._transform[:4]
         if dx != dy:
             raise errors.GridIOError("ASCII grids require isometric grid cells")
@@ -803,20 +899,22 @@ class RegularGrid(Grid):
         return self.to_aai(*args, **kwargs)
 
 class WarpedGrid(Grid):
-    """ Warped Grid class. A WarpedGrid contains a fixed number of rows
-    and columns and a scalar or vector field defined on the z-axis. Grid
-    spacing is not necessarily constant.
-    """
 
     def __init__(self, X, Y, values, crs=None, nodata_value=None):
-        """
-        Parameters:
-        -----------
-        X : first-dimension coordinates of grid centers
+        """ Warped Grid class. A WarpedGrid contains a fixed number of rows and
+        columns and a scalar or vector field defined on the z-axis. Grid
+        spacing is not necessarily constant.
 
-        Y : second-dimension coordinates of grid centers
-
-        values : dependent m-dimensional quantity (nrows x ncols)
+        Parameters
+        ----------
+        X : ndarray
+            first-dimension coordinates of grid centers
+        Y : ndarray
+            second-dimension coordinates of grid centers
+        values : ndarray
+            dependent m-dimensional quantity (nrows x ncols)
+        crs : karta.crs.CRS, optional
+        nodata_value : number
         """
 
         if any(a is None for a in (X, Y, values)):
@@ -827,7 +925,7 @@ class WarpedGrid(Grid):
                             'size over the first two dimensions')
 
         if crs is None:
-            self.crs = Cartesian
+            self.crs = CRS_DEFAULT
         else:
             self.crs = crs
 
@@ -868,13 +966,14 @@ class WarpedGrid(Grid):
 def merge(grids, weights=None):
     """ Perform a basic grid merge. Currently limited to grids whose sampling
     is an integer translation from each other.
-   
-    Parameters:
-    -----------
 
-    grids : iterable of Grid objects to combine
+    Parameters
+    ----------
 
-    weights : (optional) iterable of weighting factors for computing grid averages
+    grids : iterable of Grid objects
+        grids to combine
+    weights : iterable of floats, optional
+        weighting factors for computing grid averages
     """
 
     # Check grid class
@@ -917,7 +1016,7 @@ def merge(grids, weights=None):
     ny = int(round((ymax-ymin) / T[3]))
 
     # Allocate data array and copy each grid's data
-    typ = grids[0].values.dtype.type
+    typ = grids[0].bands[0].dtype.type
     values = np.zeros([ny, nx], dtype=typ)
     counts = np.zeros([ny, nx], dtype=np.float32)
     for grid, w in zip(grids, normalizedweights):
@@ -958,26 +1057,26 @@ def get_nodata(T):
 def gridpoints(x, y, z, transform, crs):
     """ Return a grid computed by averaging point data over cells.
 
-    Parameters:
-    -----------
-
-    x : (iterable) point data x coordinates
-
-    y : (iterable) point data y coordinates
-
-    z : (iterable) point data values
-
-    transform : (iterable) geotransform of the form
-        [xllcorner, yllcorner, xres, yres, xskew, yskew]
-
-    crs : (karta.crs.CRS) coordinate reference system object
+    Parameters
+    ----------
+    x : iterable
+        point data x coordinates
+    y : iterable
+        point data y coordinates
+    z : iterable
+        point data values
+    transform : 6-tuple of floats
+        geotransform: ``[xllcorner, yllcorner, xres, yres, xskew, yskew]``
+    crs : karta.crs.CRS subclass
+        coordinate reference system object
     """
     ny = int((np.max(y) - transform[1]) // transform[3]) + 1
     nx = int((np.max(x) - transform[0]) // transform[2]) + 1
     grid = RegularGrid(transform,
                        values=np.zeros([ny, nx]),
                        crs=crs,
-                       nodata_value=np.nan)
+                       nodata_value=np.nan,
+                       bandclass=SimpleBand)
     counts = np.zeros([ny, nx], dtype=np.int16)
 
     (I, J) = grid.get_indices(x, y)
@@ -1002,17 +1101,16 @@ def gridpoints(x, y, z, transform, crs):
 def mask_poly(xpoly, ypoly, nx, ny, transform):
     """ Create a grid mask based on a clockwise-oriented polygon.
 
-    Arguments
-    ---------
-    xpoly: list[float]
-    ypoly: list[float]
+    Parameters
+    ----------
+    xpoly, ypoly : list of floats
         sequences of points representing polygon
-    nx: int
-    ny: int
+    nx : int
+    ny : int
         size of grid
-    transform: list[float]
+    transform : list[float]
         affine transformation describing grid layout and origin
-        T == [x0, y0, dx, dy, sx, sy]
+        ``T == [x0, y0, dx, dy, sx, sy]``
     """
     mask = np.zeros((ny, nx), dtype=np.int8)
 
