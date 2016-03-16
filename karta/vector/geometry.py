@@ -11,7 +11,6 @@ import sys
 import itertools
 import warnings
 import numpy as np
-from . import vtk
 from . import geojson
 from . import xyfile
 from . import shp
@@ -72,25 +71,6 @@ class Geometry(object):
     @property
     def d(self):
         return Indexer(self.data)
-
-    def add_property(self, name, value):
-        """ Insert a property (name -> value) into the properties dict, raising
-        a NameError if the property already exists. Compared to directly
-        manipulating the properties dict, this avoids accidents. """
-        if name not in self.properties:
-            self.properties[name] = value
-        else:
-            raise NameError("property '{0}' already exists in {1}".format(name, type(self)))
-        return
-
-    def delete_property(self, name):
-        """ Equivalent to
-
-            del self.properties[name]
-        """
-        if name in self.properties:
-            del self.properties[name]
-        return
 
     def to_shapefile(self, fnm):
         """ Save line to a shapefile """
@@ -704,15 +684,6 @@ class MultipointBase(Geometry):
         """
         writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
         return writer.print_json(indent)
-
-    def to_vtk(self, f, **kwargs):
-        """ Write data to an ASCII VTK .vtp file. """
-        if not hasattr(f, "write"):
-            with open(f, "w") as fobj:
-                vtk.mp2vtp(self, fobj, **kwargs)
-        else:
-            vtk.mp2vtp(self, f, **kwargs)
-        return
 
 
 class Multipoint(MultipointBase):
