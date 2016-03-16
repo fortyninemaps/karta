@@ -1,12 +1,12 @@
 import unittest
 import numpy as np
-from karta.vector.metadata import Metadata
+from karta.vector.table import Table
 
-class TestMetadata(unittest.TestCase):
+class TestTable(unittest.TestCase):
 
     def setUp(self):
-        self.onefield = Metadata(data=np.arange(200))
-        self.multifield = Metadata(data={"a":np.arange(200),
+        self.onefield = Table(data=np.arange(200))
+        self.multifield = Table(data={"a":np.arange(200),
                                          "b":np.arange(200,400), 
                                          "c":np.arange(200)**2})
         return
@@ -39,7 +39,7 @@ class TestMetadata(unittest.TestCase):
     def test_reference_vs_value_list(self):
         # metadata objects should carry values rather than references
         L = [1,2,3,4,5]
-        md = Metadata(L)
+        md = Table(L)
         L[3] = -99
         self.assertEqual(md.getfield("value"), [1,2,3,4,5])
         return
@@ -48,7 +48,7 @@ class TestMetadata(unittest.TestCase):
         # metadata objects should carry values rather than references
         D = {"A":[1,2,3,4,5],
              "B":[6,7,8,9,10]}
-        md = Metadata(D)
+        md = Table(D)
         D["A"][3] = -99
         self.assertEqual(md.getfield("A"), [1,2,3,4,5])
         return
@@ -56,7 +56,7 @@ class TestMetadata(unittest.TestCase):
     def test_nan_values(self):
         D = {"A":[1,np.nan,3,4,5],
              "B":[6,7,8,np.nan,10]}
-        md = Metadata(D)
+        md = Table(D)
         self.assertTrue(np.isnan(md.getfield("A")[1]))
         self.assertEqual(md.getfield("A"), md.getfield("A"))
         return
@@ -64,27 +64,27 @@ class TestMetadata(unittest.TestCase):
     def test_none_values(self):
         D = {"A":[1,None,3,4,5],
              "B":[6,7,8,None,10]}
-        md = Metadata(D)
+        md = Table(D)
         self.assertTrue(md.getfield("A")[1] is None)
         self.assertEqual(md.getfield("A"), md.getfield("A"))
         return
 
     def test_init_specified_fields(self):
-        md = Metadata([(1,2,3),(4,5,6),(7,8,9)], fields=("a","b","c"))
+        md = Table([(1,2,3),(4,5,6),(7,8,9)], fields=("a","b","c"))
         self.assertEqual(md.data, [(1,2,3),(4,5,6),(7,8,9)])
         self.assertEqual(md.fields, ("a","b","c"))
         return
 
     def test_init_specified_fields2(self):
-        md = Metadata([("by air",),("by land,"),("by sea",)], fields=("mode",))
+        md = Table([("by air",),("by land,"),("by sea",)], fields=("mode",))
         self.assertEqual(md.data, [("by air",),("by land,"),("by sea",)])
         self.assertEqual(md.fields, ("mode",))
         return
 
     def test_extend(self):
-        md1 = Metadata({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
+        md1 = Table({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
                         "number": [3784, 78, 83]})
-        md2 = Metadata({"street": ["Winding Ln.", "Oyster Pond Rd."],
+        md2 = Table({"street": ["Winding Ln.", "Oyster Pond Rd."],
                         "color": ["Grey", "White"]})
         md1.extend(md2)
         self.assertEqual(len(md1), 5)
@@ -93,20 +93,20 @@ class TestMetadata(unittest.TestCase):
 
     def test_addfield(self):
         # data, field syntax used in order to specify field order
-        md = Metadata([("F R. Lillie", 3784), ("School St.", 78), ("Quissett Ave.", 83)],
+        md = Table([("F R. Lillie", 3784), ("School St.", 78), ("Quissett Ave.", 83)],
                       fields=("street", "number"))
         md.setfield("driveway", [True, True, False])
-        ans = Metadata([("F R. Lillie", 3784, True), ("School St.", 78, True),
+        ans = Table([("F R. Lillie", 3784, True), ("School St.", 78, True),
                         ("Quissett Ave.", 83, False)],
                        fields=("street", "number", "driveway"))
         self.assertEqual(md, ans)
         return
 
     def test_updatefield(self):
-        md = Metadata({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
+        md = Table({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
                        "number": [3784, 78, 83]})
         md.setfield("number", [3782, 78, 83])
-        ans = Metadata({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
+        ans = Table({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
                         "number": [3782, 78, 83]})
         self.assertEqual(md, ans)
         return

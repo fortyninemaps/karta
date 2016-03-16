@@ -6,12 +6,10 @@ from . import geometry
 from . import geojson
 from . import xyfile
 from . import shp
-from .metadata import Metadata
-from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84, HASOSR, crs_from_wkt
+from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84
 from .. import errors
 
 try:
-    import osgeo
     from osgeo import ogr
     HAS_OSGEO = True
 except ImportError:

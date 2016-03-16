@@ -14,7 +14,7 @@ import numpy as np
 from . import geojson
 from . import xyfile
 from . import shp
-from .metadata import Metadata, Indexer
+from .table import Table, Indexer
 from . import quadtree
 from . import _cvectorgeo
 from .. import geodesy
@@ -109,7 +109,7 @@ class Point(Geometry):
     Parameters
     ----------
     coords : 2-tuple or 3-tuple
-    data : list, dict, Metadata object, or None
+    data : list, dict, Table object, or None
         point-specific data [default None]
     properties : dict or None
         geometry specific data [default None]
@@ -130,7 +130,7 @@ class Point(Geometry):
         if data is None:
             self.data = data
         else:
-            self.data = Metadata(data)
+            self.data = Table(data)
 
         if hasattr(properties, "keys"):
             self.properties = properties
@@ -320,7 +320,7 @@ class MultipointBase(Geometry):
                     d = {}
                     for k in keys:
                         d[k] = [pt.properties[k] for pt in pts]
-                    self.data = Metadata(d)
+                    self.data = Table(d)
                 else:
                     self.data = None
 
@@ -338,7 +338,7 @@ class MultipointBase(Geometry):
                 if data is None:
                     self.data = None
                 else:
-                    self.data = Metadata(data)
+                    self.data = Table(data)
 
         else:
             self.rank = None
@@ -369,12 +369,12 @@ class MultipointBase(Geometry):
         d = None
         if isinstance(key, (int, np.int64)):
             if self.data is not None:
-                d = Metadata([self.data[key]], fields=self.data._fields)
+                d = Table([self.data[key]], fields=self.data._fields)
             return Point(self.vertices[key], data=d, properties=self.properties,
                          crs=self.crs)
         elif isinstance(key, slice):
             if self.data is not None:
-                d = Metadata(self.data[key], fields=self.data._fields)
+                d = Table(self.data[key], fields=self.data._fields)
             return type(self)(self.vertices[key], data=d,
                               properties=self.properties, crs=self.crs)
         else:
@@ -547,7 +547,7 @@ class MultipointBase(Geometry):
             raise ValueError("attempted to extract a zero-length subset")
         vertices = [self.vertices[i] for i in idxs]
         if self.data is not None:
-            data = Metadata([self.data[i] for i in idxs], fields=self.data.fields)
+            data = Table([self.data[i] for i in idxs], fields=self.data.fields)
         else:
             data = None
         subset = type(self)(vertices, data=data, properties=self.properties,
@@ -693,7 +693,7 @@ class Multipoint(MultipointBase):
     Parameters
     ----------
     coords : list of 2-tuples or 3-tuples
-    data : list, dict, Metadata object, or None
+    data : list, dict, Table object, or None
         point-specific data [default None]
     properties : dict or None
         geometry specific data [default None]
@@ -977,7 +977,7 @@ class Line(ConnectedMultipoint):
     Parameters
     ----------
     coords : list of 2-tuples or 3-tuples
-    data : list, dict, Metadata object, or None
+    data : list, dict, Table object, or None
         point-specific data [default None]
     properties : dict or None
         geometry specific data [default None]
@@ -1099,7 +1099,7 @@ class Polygon(ConnectedMultipoint):
     Parameters
     ----------
     coords : list of 2-tuples or 3-tuples
-    data : list, dict, Metadata object, or None
+    data : list, dict, Table object, or None
         point-specific data [default None]
     properties : dict or None
         geometry specific data [default None]
@@ -1153,7 +1153,7 @@ class Polygon(ConnectedMultipoint):
         if self.data is None:
             data = None
         else:
-            data = Metadata([self.data[i] for i in idxs], fields=self.data.fields)
+            data = Table([self.data[i] for i in idxs], fields=self.data.fields)
         subset = Line(vertices, data=data, properties=self.properties,
                       crs=self.crs)
         return subset

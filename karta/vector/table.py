@@ -2,7 +2,7 @@
 
 from collections import Sequence
 
-class Metadata(Sequence):
+class Table(Sequence):
     """ Represents a metadata table. """
 
     def __init__(self, data, fields=None, checktypes=False):
@@ -13,17 +13,17 @@ class Metadata(Sequence):
             - a list with uniform type
             - a dictionary with equally-sized fields of uniform type.
             - a scalar
-            - another Metadata instance
+            - another Table instance
 
-        The *kwarg* fields is used for fast Metadata object creation, and
-        requires *data* to be provided as a list of equal-sized tuples.
+        The *kwarg* fields is used for fast Table object creation, and requires
+        *data* to be provided as a list of equal-sized tuples.
 
         If *checktypes* is True (default False), the values in *data* will be
         tested to ensure they are of constant type. In the usual case, this
         type-checking is foregone for speed.
         """
         if fields is None:
-            if hasattr(data, "_fields"):        # Data is Metadata-like
+            if hasattr(data, "_fields"):        # Data is Table-like
                 self._fields = data._fields
                 self._data = data._data
             elif hasattr(data, "keys"):         # Data is dict-like
@@ -128,8 +128,8 @@ class Metadata(Sequence):
         return
 
     def extend(self, other):
-        """ Extend Metadata from another Metadata instance. If *other* has
-        field f in *self*, it is copied. Otherwise, the None is appended. """
+        """ Extend Table from another Table instance. If *other* has field f in
+        *self*, it is copied. Otherwise, the None is appended. """
         # TODO: appended None value should be approariate to the type of field f.
         idxs_other = []
         for f in self._fields:
@@ -144,7 +144,7 @@ class Metadata(Sequence):
                                           for j in range(len(self._fields))]))
 
 class Indexer(object):
-    """ Provides a pleasanter syntax for querying Metadata """
+    """ Provides a pleasanter syntax for querying Table """
 
     def __init__(self, metadata):
         if metadata is None:

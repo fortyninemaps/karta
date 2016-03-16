@@ -117,15 +117,15 @@ Polygon
     :members:
     :inherited-members:
 
-Metadata
---------
+Metadata tables
+---------------
 
-.. automodule:: karta.vector.metadata
+.. automodule:: karta.vector.table
 
-.. autoclass:: karta.vector.metadata.Metadata
+.. autoclass:: karta.vector.table.Table
     :members:
 
-.. autoclass:: karta.vector.metadata.Indexer
+.. autoclass:: karta.vector.table.Indexer
     :members:
 
 Trees

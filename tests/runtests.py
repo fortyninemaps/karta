@@ -13,7 +13,7 @@ from geometry_init_tests import *
 from geometry_tests import *
 from quadtree_tests import *
 from rtree_tests import *
-from metadata_tests import *
+from table_tests import *
 from raster_tests import *
 from band_tests import *
 
