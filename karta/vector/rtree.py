@@ -325,5 +325,5 @@ def iterleaves(tree):
         if isinstance(child, NonLeafNode):
             for _child in iterleaves(child):
                 yield _child
-    if isinstance(tree, LeafNode):
-        yield tree
+        else:
+            yield child
