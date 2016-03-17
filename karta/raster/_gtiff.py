@@ -183,15 +183,22 @@ def gdal_type(dtype):
     else:
         raise TypeError("GDAL equivalent to type {0} unknown".format(dtype))
 
-def read(fnm, band, in_memory):
+def read(fnm, band, in_memory, bandclass=CompressedBand):
     """ Read a GeoTiff file and return a numpy array and a dictionary of header
     information.
     
-    fnm: input datasource
-    band: band number (1...)
-    in_memory: boolean indicating whether array should be read fully into memory
+    Parameters
+    ----------
+    fnm : str
+        input datasource
+    band : int
+        band number (1...)
+    in_memory : boolean
+        indicates whether array should be read fully into memory
+    bandclass : karta.raster.band class
+        if *in_memory* is `False`, use this class for band storage
 
-    Returns and array-like object and a dictionary of metadata
+    Returns an band object and a dictionary of metadata
     """
     if not HASGDAL:
         raise errors.MissingDependencyError("requires osgeo.gdal")
@@ -230,7 +237,7 @@ def read(fnm, band, in_memory):
 
         if in_memory:
             dtype = numpy_dtype(rasterband.DataType)
-            band = SimpleBand((ny, nx), dtype)
+            band = bandclass((ny, nx), dtype)
             band[:,:] = rasterband.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype)).squeeze()[::-1]
         else:
             band = GdalFileBand(rasterband, dataset)
