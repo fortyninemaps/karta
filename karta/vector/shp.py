@@ -40,6 +40,12 @@ FIELDTYPES = {ogr.OFTInteger: int,
               ogr.OFTTime: datetime.time,
               ogr.OFTDateTime: datetime.datetime}
 
+try:
+    FIELDTYPES[ogr.OFTInteger64] = int
+    FIELDTYPES[ogr.OFTInteger64List] = list
+except AttributeError:
+    pass
+
 def ogr_get_fieldtype(val):
     """ Returns a tuple of
         - an OGR type integer that describes the type of *a*
