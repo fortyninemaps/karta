@@ -24,7 +24,7 @@ def proj4_isgeodetic(s):
     return ("lonlat" in s) or ("longlat" in s) or \
             ("latlon" in s) or ("latlong" in s)
 
-def read_gtiff(fnm, band=1, in_memory=True):
+def read_gtiff(fnm, band=1, in_memory=True, **kw):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
     instance.
 
@@ -37,7 +37,7 @@ def read_gtiff(fnm, band=1, in_memory=True):
 
     in_memory : if True (default), read entire dataset into memory
     """
-    band, hdr = _gtiff.read(fnm, band, in_memory)
+    band, hdr = _gtiff.read(fnm, band, in_memory, **kw)
 
     t = {'xllcorner': hdr['xulcorner'] - hdr['ny'] * hdr['sx'],
          'yllcorner': hdr['yulcorner'] + hdr['ny'] * hdr['dy'],
