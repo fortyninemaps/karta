@@ -21,16 +21,16 @@ class RegularGridTests(unittest.TestCase):
 
     def test_add_rgrid(self):
         rast2 = karta.RegularGrid(self.rast.transform,
-                                  values=np.random.random(self.rast.values.shape)) 
+                                  values=np.random.random(self.rast.size)) 
         res = self.rast + rast2
-        self.assertTrue(np.all(res.values[:,:] == self.rast.values[:,:]+rast2.values[:,:]))
+        self.assertTrue(np.all(res[:,:] == self.rast[:,:]+rast2[:,:]))
         return
 
     def test_sub_rgrid(self):
         rast2 = karta.RegularGrid(self.rast.transform,
-                                  values=np.random.random(self.rast.values.shape)) 
+                                  values=np.random.random(self.rast.size)) 
         res = self.rast - rast2
-        self.assertTrue(np.all(res.values[:,:] == self.rast.values[:,:]-rast2.values[:,:]))
+        self.assertTrue(np.all(res[:,:] == self.rast[:,:]-rast2[:,:]))
         return
 
     def test_center_coords(self):
@@ -61,7 +61,7 @@ class RegularGridTests(unittest.TestCase):
         grid_combined = karta.raster.merge([grid1, grid2, grid3])
         self.assertEqual(grid_combined.transform, (7.0, 15.0, 1.0, 1.0, 0.0, 0.0))
         self.assertEqual(grid_combined.size, (13, 11))
-        self.assertEqual(np.sum(np.isnan(grid_combined.values[:,:])), 42)
+        self.assertEqual(np.sum(np.isnan(grid_combined[:,:])), 42)
         return
 
     def test_merge_weighted(self):
@@ -69,9 +69,9 @@ class RegularGridTests(unittest.TestCase):
         grid2 = karta.RegularGrid([7, 22, 1, 1, 0, 0], values=2*np.ones([4, 6]))
         grid3 = karta.RegularGrid([12, 19, 1, 1, 0, 0], values=3*np.ones([5, 5]))
         grid_combined = karta.raster.merge([grid1, grid2, grid3], weights=[1, 2, 3])
-        self.assertAlmostEqual(grid_combined.values[4,4], 1.66666666666)
-        self.assertAlmostEqual(grid_combined.values[2,8], 2.5)
-        self.assertAlmostEqual(grid_combined.values[4,5], 2.33333333333)
+        self.assertAlmostEqual(grid_combined[4,4], 1.66666666666)
+        self.assertAlmostEqual(grid_combined[2,8], 2.5)
+        self.assertAlmostEqual(grid_combined[4,5], 2.33333333333)
         return
 
     def test_resample(self):
@@ -87,7 +87,7 @@ class RegularGridTests(unittest.TestCase):
         g = makegrid(1.0/300, 1.0-1.0/300, 150, 1.0)
         sol = makegrid(3.0/300, 1.0-3.0/300, 50, 3.0)
         gnew = g.resample(3.0, 3.0)
-        residue = gnew.values[:,:] - sol.values[:,:]
+        residue = gnew[:,:] - sol[:,:]
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return
 
@@ -211,14 +211,14 @@ class RegularGridTests(unittest.TestCase):
         proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([620, 650, 1370, 1310])
         self.assertEqual(newgrid.transform, (620.0, 650.0, 30.0, 30.0, 0.0, 0.0))
-        self.assertTrue(np.all(newgrid.values[:,:] == proto.values[5:27,4:29]))
+        self.assertTrue(np.all(newgrid[:,:] == proto[5:27,4:29]))
         return
 
     def test_resize_larger(self):
         proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([380, 320, 380+30*60, 320+30*62])
         self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
-        self.assertTrue(np.all(newgrid.values[6:56,4:54] == proto.values[:,:]))
+        self.assertTrue(np.all(newgrid[6:56,4:54] == proto[:,:]))
         return
 
     def test_data_mask_nan(self):
@@ -246,7 +246,7 @@ class RegularGridTests(unittest.TestCase):
                                  values=np.arange(1e6).reshape(1000, 1000),
                                  crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
-        self.assertEqual(int(np.nansum(masked_grid.values[:,:])), 97048730546)
+        self.assertEqual(int(np.nansum(masked_grid[:,:])), 97048730546)
         return
 
     def test_mask_poly_partial(self):
@@ -274,7 +274,7 @@ class RegularGridTests(unittest.TestCase):
                                  values=np.arange(1e6).reshape(1000, 1000),
                                  crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly([poly, poly2])
-        self.assertEqual(int(np.nansum(masked_grid.values[:,:])), 47081206720)
+        self.assertEqual(int(np.nansum(masked_grid[:,:])), 47081206720)
         return
 
     def test_get_positions(self):
@@ -350,7 +350,7 @@ class RegularGridTests(unittest.TestCase):
     def test_profile(self):
         path = karta.Line([(15.0, 15.0), (1484.0, 1484.0)], crs=karta.crs.Cartesian)
         _, z = self.rast.profile(path, resolution=42.426406871192853, method="nearest")
-        expected = self.rast.values[:,:].diagonal()
+        expected = self.rast[:,:].diagonal()
         self.assertTrue(np.allclose(z, expected))
         return
 
@@ -364,12 +364,12 @@ class RegularGridTests(unittest.TestCase):
         grid = karta.raster.gridpoints(x, y, z, T, karta.crs.Cartesian)
 
         Xg, Yg = grid.center_coords()
-        self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid.values[:,:]))/Xg.size < 0.45)
+        self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid[:,:]))/Xg.size < 0.45)
         return
 
     def test_read_aai(self):
         grid = karta.read_aai(os.path.join(TESTDATA,'peaks49.asc'))
-        self.assertTrue(np.all(grid.values[::-1] == self.rast.values[:,:]))
+        self.assertTrue(np.all(grid[::-1] == self.rast[:,:]))
         return
 
 
@@ -385,7 +385,7 @@ class WarpedGridTests(unittest.TestCase):
 
     def test_add_sgrid(self):
         rast2 = karta.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
-                                      values=np.random.random(self.rast.values.shape))
+                                 values=np.random.random(self.rast.values.shape))
         res = self.rast + rast2
         self.assertTrue(np.all(res.values == self.rast.values+rast2.values))
         return

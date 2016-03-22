@@ -174,6 +174,13 @@ class RegularGrid(Grid):
         else:
             raise errors.NonEquivalentGridError(self, other)
 
+    def __getitem__(self, key):
+        return self._bandindexer[key]
+
+    def __setitem__(self, key, value):
+        self._bandindexer[key] = value
+        return
+
     def _equivalent_structure(self, other):
         return (self._transform == other._transform) and \
                (self.values.shape == other.values.shape)
