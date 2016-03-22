@@ -2,6 +2,58 @@ import blosc
 import numpy as np
 from math import ceil
 
+class BandIndexer(object):
+
+    def __init__(self, bands):
+        self.bands = bands
+    
+    def __getitem__(self, key):
+        if len(self.bands) == 1:
+            if isinstance(key, np.ndarray):
+                return self.bands[0][:,:][key]
+            else:
+                return self.bands[0][key]
+        else:
+            if isinstance(key, np.ndarray):
+                return np.dstack([b[:,:][key] for b in self.bands])
+            else:
+                return np.dstack([b[key] for b in self.bands])
+
+    def __setitem__(self, key, value):
+        if len(self.bands) == 1:
+            if isinstance(key, np.ndarray):
+                self.bands[0][:,:][key] = value
+            else:
+                self.bands[0][key] = value
+        else:
+            if isinstance(key, np.ndarray):
+                for b, v in zip(bands, value):
+                    b[:,:][key] = v
+            else:
+                for b, v in zip(bands, value):
+                    b[key] = v
+        return
+
+    def __iter__(self):
+        for i in range(self.bands[0].size[0]):
+            if len(self.bands) == 1:
+                yield self.bands[0][i,:]
+            else:
+                yield np.vstack([b[i,:] for b in bands])
+
+    @property
+    def shape(self):
+        if len(self.bands) == 0:
+            raise ValueError("no bands")
+        elif len(self.bands) == 1:
+            return self.bands[0].size
+        else:
+            return (len(self.bands), self.bands[0].size[0], self.bands.size[1])
+
+    @property
+    def dtype(self):
+        return self.bands[0].dtype
+
 class SimpleBand(object):
     """ SimpleBand wraps a numpy.ndarray for storage. """
 
@@ -66,18 +118,11 @@ class CompressedBand(object):
                 sy = 1
 
             elif isinstance(k0, slice):
-                if k0.start is None:
-                    yoff = 0
-                else:
-                    yoff = k0.start
-                if k0.stop is None:
-                    ny = self.size[0]-yoff
-                else:
-                    ny = k0.stop-yoff
-                if k0.step is None:
-                    sy = 1
-                else:
-                    sy = k0.step
+                ystart, ystop, ystride = k0.indices(self.size[0])
+                yoff = min(ystart, ystop)
+                ny = abs(ystop-ystart)
+                if ystride < 0:
+                    yoff += 1
 
             else:
                 raise IndexError("slicing with instances of '{0}' not "
@@ -89,24 +134,28 @@ class CompressedBand(object):
                 sx = 1
 
             elif isinstance(k1, slice):
-                if k1.start is None:
-                    xoff = 0
-                else:
-                    xoff = k1.start
-                if k1.stop is None:
-                    nx = self.size[1]-xoff
-                else:
-                    nx = k1.stop-xoff
-                if k1.step is None:
-                    sx = 1
-                else:
-                    sx = k1.step
+                xstart, xstop, xstride = k1.indices(self.size[1])
+                xoff = min(xstart, xstop)
+                nx = abs(xstop-xstart)
+                if xstride < 0:
+                    xoff += 1
 
             else:
                 raise IndexError("slicing with instances of '{0}' not "
                                  "supported".format(type(k1)))
 
-            return self._getblock(yoff, xoff, (ny, nx))[::sy,::sx]
+            if nx == ny == 1:
+                return self._getblock(yoff, xoff, (ny, nx))[0,0]
+            else:
+                return self._getblock(yoff, xoff, (ny, nx))[::ystride,::xstride]
+
+        elif isinstance(key, slice):
+            start, stop, stride = key.indices(self.size[0])
+            yoff = min(start, stop)
+            if stride < 0:
+                yoff += 1
+            ny = abs(stop-start)
+            return self._getblock(yoff, 0, (ny, self.size[1]))[::stride]
 
         else:
             raise IndexError("indexing with instances of '{0}' not "

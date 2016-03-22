@@ -36,7 +36,7 @@ class GdalTests(unittest.TestCase):
         self.assertTrue("+zone=7" in gnew.crs.get_proj4())
         self.assertEqual(g.transform, gnew.transform)
         self.assertEqual(g.values.dtype, gnew.values.dtype)
-        self.assertTrue(np.all(g.values == gnew.values))
+        self.assertTrue(np.all(g.values[:,:] == gnew.values[:,:]))
         return
 
     def test_io_virtual(self):
@@ -98,11 +98,8 @@ class GdalVirtualArrayTests(unittest.TestCase):
         return
 
     def test_iteration_virtual(self):
-        try:
-            for row in self.grid.values:
-                pass
-        except Exception as e:
-            self.fail("virtual array iteration failure: {0}".format(str(e)))
+        for row in self.grid.values:
+            pass
 
 
 def peaks(n=49):

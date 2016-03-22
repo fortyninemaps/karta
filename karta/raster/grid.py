@@ -7,7 +7,7 @@ import warnings
 import numpy as np
 from . import _gtiff
 from . import crfuncs
-from .band import SimpleBand, CompressedBand
+from .band import SimpleBand, CompressedBand, BandIndexer
 from .. import errors
 from ..crs import Cartesian
 
@@ -49,7 +49,7 @@ class Grid(object):
     def apply(self, func):
         """ Apply a function *func* to grid values """
         g = self.copy()
-        g.values = func(g.values)
+        g.values[:,:] = func(g.values[:,:])
         return g
 
     def copy(self):
@@ -135,12 +135,14 @@ class RegularGrid(Grid):
                 band[:,:] = values
                 self.bands.append(band)
             elif values.ndim == 3:
-                for ibnd in values.shape[2]:
+                for ibnd in range(values.shape[2]):
                     band = self._bndcls(values.shape[:2], values.dtype.type)
                     band[:,:] = values[:,:,ibnd]
                     self.bands.append(band)
             else:
                 raise ValueError("`values` must have two or three dimensions")
+
+        self._bandindexer = BandIndexer(self.bands)
 
         if crs is None:
             self.crs = CRS_DEFAULT
@@ -159,7 +161,7 @@ class RegularGrid(Grid):
     def __add__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               values=self.values+other.values,
+                               values=self.values[:,:]+other.values[:,:],
                                crs=self.crs, nodata_value=self.nodata)
         else:
             raise errors.NonEquivalentGridError(self, other)
@@ -167,7 +169,7 @@ class RegularGrid(Grid):
     def __sub__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               values=self.values-other.values,
+                               values=self.values[:,:]-other.values[:,:],
                                crs=self.crs, nodata_value=self.nodata)
         else:
             raise errors.NonEquivalentGridError(self, other)
@@ -182,15 +184,7 @@ class RegularGrid(Grid):
 
     @property
     def values(self):
-        # TODO: this is a temporary implementation that can be made much more
-        # efficient in the future
-        nbands = len(self.bands)
-        if nbands == 0:
-            raise ValueError("grid is empty")
-        elif nbands == 1:
-            return self.bands[0][:,:]
-        else:
-            return np.dstack([b[:,:] for b in self.bands])
+        return self._bandindexer
 
     @property
     def size(self):
@@ -340,7 +334,7 @@ class RegularGrid(Grid):
 
         jvec = np.arange(nx)
 
-        for i, row in enumerate(self.values):
+        for i, row in enumerate(self.values[:,:]):
             x = (x0 + jvec*dx + i*sx)[isdata(row)]
             y = (y0 + i*dy + jvec*sy)[isdata(row)]
 
@@ -386,7 +380,7 @@ class RegularGrid(Grid):
         else:
             def isdata(a):
                 return a != self.nodata
-        return isdata(self.values)
+        return isdata(self.values[:,:])
 
     def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
         """ Generator for grid chunks of *size* and *overlap*.
@@ -537,8 +531,9 @@ class RegularGrid(Grid):
                 band[:,:] = data
             return self
         else:
+            val = self.values[:,:]
             return RegularGrid(self.transform,
-                               values=np.where(msk, self.values, self.nodata),
+                               values=np.where(msk, val, self.nodata),
                                crs=self.crs, nodata_value=self.nodata)
 
     def resample_griddata(self, dx, dy, method='nearest'):
@@ -569,7 +564,7 @@ class RegularGrid(Grid):
         xx0, yy0 = self.coordmesh()
         xx, yy = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
                              np.linspace(yllcenter, yurcenter, ny))
-        idata = interpolate.griddata((xx0.flatten(), yy0.flatten()), self.values.flatten(),
+        idata = interpolate.griddata((xx0.flatten(), yy0.flatten()), self.values[:,:].flatten(),
                                      (xx.flatten(), yy.flatten()), method=method)
         values = idata.reshape(ny, nx)
         t = self._transform
@@ -603,7 +598,7 @@ class RegularGrid(Grid):
             if J[-1] == nx:
                 J = J[:-1]
             JJ, II = np.meshgrid(J, I)
-            values = self.values[II, JJ]
+            values = self.values[:,:][II, JJ]
         else:
             raise NotImplementedError('method "{0}" not '
                                       'implemented'.format(method))
@@ -689,7 +684,7 @@ class RegularGrid(Grid):
         sampling scheme. """
         i, j = self.get_indices(x, y)
         ny, nx = self.bands[0].size
-        return self.values[i, j]
+        return self.values[:,:][i, j]
 
     def sample_bilinear(self, x, y):
         """ Return the value nearest to (`x`, `y`). Bilinear sampling scheme.
@@ -717,7 +712,7 @@ class RegularGrid(Grid):
                     .format(self.get_extent()))
 
         dx, dy = self._transform[2:4]
-        values = self.values
+        values = self.values[:,:]
         z = (values[i0,j0]*(i1-i)*(j1-j) + values[i1,j0]*(i-i0)*(j1-j) + \
              values[i0,j1]*(i1-i)*(j-j0) + values[i1,j1]*(i-i0)*(j-j0))
         return z
@@ -824,7 +819,7 @@ class RegularGrid(Grid):
         flexible data layouts.
         """
         Xc, Yc = self.center_coords()
-        return WarpedGrid(Xc, Yc, self.values.copy(), crs=self.crs)
+        return WarpedGrid(Xc, Yc, self.values[:,:].copy(), crs=self.crs)
 
     def to_gtiff(self, fnm, compress="PACKBITS", tiled=False, **kw):
         """ Write data to a GeoTiff file using GDAL.
@@ -868,7 +863,7 @@ class RegularGrid(Grid):
             f = open(f, "w")
 
         try:
-            data_a = self.values.copy()
+            data_a = self.values[:,:].copy()
             data_a[np.isnan(data_a)] = nodata_value
 
             f.write("NCOLS {0}\n".format(nx))
@@ -1082,7 +1077,9 @@ def gridpoints(x, y, z, transform, crs):
     (I, J) = grid.get_indices(x, y)
 
     try:
-        err = crfuncs.fillarray_double(grid.values, I.astype(np.int32), J.astype(np.int32), z, grid.nodata)
+        err = crfuncs.fillarray_double(grid.values[:,:],
+                                       I.astype(np.int32),
+                                       J.astype(np.int32), z, grid.nodata)
         if err != 0:
             raise RuntimeError("failure in fillarray_double")
     except ValueError:
