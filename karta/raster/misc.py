@@ -79,7 +79,7 @@ def slope(grid):
     """
     if grid.transform[4:] != (0, 0):
         raise NotImplementedError("slope calculations no implemented on skewed grids")
-    D = np.where(grid.data_mask, grid.values.astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     return RegularGrid(grid.transform, _slope(D, grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
 
@@ -99,7 +99,7 @@ def _aspect(D, res=(1.0, 1.0)):
 def aspect(grid):
     if grid.transform[4:] != (0, 0):
         raise NotImplementedError("aspect calculations no implemented on skewed grids")
-    D = np.where(grid.data_mask, grid.values.astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     return RegularGrid(grid.transform, _aspect(D, grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
 
@@ -118,7 +118,7 @@ def _grad(D, res=(1.0, 1.0)):
 def gradient(grid):
     if grid.transform[4:] != (0, 0):
         raise NotImplementedError("gradient calculations no implemented on skewed grids")
-    D = np.where(grid.data_mask, grid.values.astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     dDdx, dDdy = _grad(D, grid.resolution)
     return (RegularGrid(grid.transform, dDdx, crs=grid.crs, nodata_value=np.nan),
             RegularGrid(grid.transform, dDdy, crs=grid.crs, nodata_value=np.nan))
@@ -134,7 +134,7 @@ def _div(U, V, res=(1.0, 1.0)):
 def divergence(grid):
     if grid.transform[4:] != (0, 0):
         raise NotImplementedError("divergence calculations no implemented on skewed grids")
-    D = np.where(grid.data_mask, grid.values.astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     return RegularGrid(grid.transform, _div(D, grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
 
@@ -155,7 +155,7 @@ def _normed_potential_vectors(D, res=(1.0, 1.0)):
 def normed_potential_vectors(grid):
     if grid.transform[4:] != (0, 0):
         raise NotImplementedError("vector field calculations no implemented on skewed grids")
-    D = np.where(grid.data_mask, grid.values.astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     u, v = _normed_potential_vectors(D, res=grid.resolution)
     return (RegularGrid(grid.transform, u, crs=grid.crs, nodata_value=np.nan),
             RegularGrid(grid.transform, v, crs=grid.crs, nodata_value=np.nan))
@@ -172,8 +172,8 @@ def hillshade(grid, bearing=330.0, azimuth=60.0):
     Note: Currently assumes orthogonal coordinates.
     """
     dxgrid, dygrid = gradient(grid)
-    dx = dxgrid.values
-    dy = dygrid.values
+    dx = dxgrid[:,:]
+    dy = dygrid[:,:]
     res = grid.resolution
     u = np.array((res[0] * np.ones_like(dx), np.zeros_like(dx), dx))
     v = np.array((np.zeros_like(dy), res[1] * np.ones_like(dy), dy))

@@ -27,10 +27,10 @@ class BandIndexer(object):
                 self.bands[0][key] = value
         else:
             if isinstance(key, np.ndarray):
-                for b, v in zip(bands, value):
+                for b, v in zip(self.bands, value):
                     b[:,:][key] = v
             else:
-                for b, v in zip(bands, value):
+                for b, v in zip(self.bands, value):
                     b[key] = v
         return
 
@@ -39,7 +39,7 @@ class BandIndexer(object):
             if len(self.bands) == 1:
                 yield self.bands[0][i,:]
             else:
-                yield np.vstack([b[i,:] for b in bands])
+                yield np.vstack([b[i,:] for b in self.bands])
 
     @property
     def shape(self):
@@ -115,7 +115,7 @@ class CompressedBand(object):
             if isinstance(k0, int):
                 yoff = k0
                 ny = 1
-                sy = 1
+                ystride = 1
 
             elif isinstance(k0, slice):
                 ystart, ystop, ystride = k0.indices(self.size[0])
@@ -131,7 +131,7 @@ class CompressedBand(object):
             if isinstance(k1, int):
                 xoff = k1
                 nx = 1
-                sx = 1
+                xstride = 1
 
             elif isinstance(k1, slice):
                 xstart, xstop, xstride = k1.indices(self.size[1])
@@ -281,8 +281,6 @@ class CompressedBand(object):
     def _setblock(self, yoff, xoff, array):
         size = array.shape
         chunksize = self._chunksize
-        chunkrowstart = yoff // chunksize[0]
-        chunkcolstart = xoff // chunksize[1]
 
         for i, yst, yen, xst, xen in self._getchunks(yoff, xoff, *size):
 

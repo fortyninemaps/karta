@@ -33,23 +33,23 @@ class Grid(object):
 
     def max(self):
         """ Return the maximum non-nan in self.data. """
-        tmp = self.values[self.data_mask]
+        tmp = self[self.data_mask]
         return tmp.max()
 
     def min(self):
         """ Return the minimum non-nan in self.data. """
-        tmp = self.values[self.data_mask]
+        tmp = self[self.data_mask]
         return tmp.min()
 
     def minmax(self):
         """ Return the minimum and maximum value of data array. """
-        tmp = self.values[self.data_mask]
+        tmp = self[self.data_mask]
         return (tmp.min(), tmp.max())
 
     def apply(self, func):
         """ Apply a function *func* to grid values """
         g = self.copy()
-        g.values[:,:] = func(g.values[:,:])
+        g[:,:] = func(g[:,:])
         return g
 
     def copy(self):
@@ -161,7 +161,7 @@ class RegularGrid(Grid):
     def __add__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               values=self.values[:,:]+other.values[:,:],
+                               values=self[:,:]+other[:,:],
                                crs=self.crs, nodata_value=self.nodata)
         else:
             raise errors.NonEquivalentGridError(self, other)
@@ -169,7 +169,7 @@ class RegularGrid(Grid):
     def __sub__(self, other):
         if self._equivalent_structure(other):
             return RegularGrid(copy.copy(self.transform),
-                               values=self.values[:,:]-other.values[:,:],
+                               values=self[:,:]-other[:,:],
                                crs=self.crs, nodata_value=self.nodata)
         else:
             raise errors.NonEquivalentGridError(self, other)
@@ -183,7 +183,7 @@ class RegularGrid(Grid):
 
     def _equivalent_structure(self, other):
         return (self._transform == other._transform) and \
-               (self.values.shape == other.values.shape)
+               (self.size == other.size)
 
     @property
     def transform(self):
@@ -276,7 +276,7 @@ class RegularGrid(Grid):
             n = 0
         else:
             raise errors.GridError("`reference` must be 'center' or 'edge'")
-        ny, nx = self.values.shape[:2]
+        ny, nx = self.size
         dx, dy = self._transform[2:4]
         sx, sy = self._transform[4:]
 
@@ -341,7 +341,7 @@ class RegularGrid(Grid):
 
         jvec = np.arange(nx)
 
-        for i, row in enumerate(self.values[:,:]):
+        for i, row in enumerate(self[:,:]):
             x = (x0 + jvec*dx + i*sx)[isdata(row)]
             y = (y0 + i*dy + jvec*sy)[isdata(row)]
 
@@ -387,7 +387,7 @@ class RegularGrid(Grid):
         else:
             def isdata(a):
                 return a != self.nodata
-        return isdata(self.values[:,:])
+        return isdata(self[:,:])
 
     def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
         """ Generator for grid chunks of *size* and *overlap*.
@@ -412,9 +412,9 @@ class RegularGrid(Grid):
                  self.transform[1] + i0*T0[3] + j0*T0[5],
                  T0[2], T0[3], T0[4], T0[5]]
             if copy:
-                v = self.values[i0:i0+size[1], j0:j0+size[0]].copy()
+                v = self[i0:i0+size[1], j0:j0+size[0]].copy()
             else:
-                v = self.values[i0:i0+size[1], j0:j0+size[0]]
+                v = self[i0:i0+size[1], j0:j0+size[0]]
             yield RegularGrid(T, values=v, crs=self.crs, nodata_value=self.nodata)
             j0 += size[0]-overlap[0]
 
@@ -451,7 +451,7 @@ class RegularGrid(Grid):
         j0 = int(np.ceil(min(ll[1], lr[1], ul[1], ur[1])))
         j1 = int(np.floor(max(ll[1], lr[1], ul[1], ur[1]))) + 1
 
-        values = self.values[i0:i1,j0:j1].copy()
+        values = self[i0:i1,j0:j1].copy()
         x0 = t[0] + j0*t[2] + i0*t[4]
         y0 = t[1] + i0*t[3] + j0*t[5]
         tnew = (x0, y0, t[2], t[3], t[4], t[5])
@@ -481,7 +481,6 @@ class RegularGrid(Grid):
         nxnew = int((bbnew[2]-bbnew[0])/dx)
         nynew = int((bbnew[3]-bbnew[1])/dy)
         Tnew = [bbnew[0], bbnew[1], dx, dy, sx, sy]
-        valnew = self.nodata * np.ones([nynew, nxnew], dtype=self.values.dtype)
 
         # determine the indices of existing data on the new grid
         j0new = max(0,     int(round((bb[0]-bbnew[0])/dx)))
@@ -532,13 +531,13 @@ class RegularGrid(Grid):
                 msk = (msk | _msk)
 
         if inplace:
-            for band in bands:
+            for band in self.bands:
                 data = band[:,:]
                 data[msk] = self.nodata
                 band[:,:] = data
             return self
         else:
-            val = self.values[:,:]
+            val = self[:,:]
             return RegularGrid(self.transform,
                                values=np.where(msk, val, self.nodata),
                                crs=self.crs, nodata_value=self.nodata)
@@ -571,7 +570,7 @@ class RegularGrid(Grid):
         xx0, yy0 = self.coordmesh()
         xx, yy = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
                              np.linspace(yllcenter, yurcenter, ny))
-        idata = interpolate.griddata((xx0.flatten(), yy0.flatten()), self.values[:,:].flatten(),
+        idata = interpolate.griddata((xx0.flatten(), yy0.flatten()), self[:,:].flatten(),
                                      (xx.flatten(), yy.flatten()), method=method)
         values = idata.reshape(ny, nx)
         t = self._transform
@@ -605,7 +604,7 @@ class RegularGrid(Grid):
             if J[-1] == nx:
                 J = J[:-1]
             JJ, II = np.meshgrid(J, I)
-            values = self.values[:,:][II, JJ]
+            values = self[:,:][II, JJ]
         else:
             raise NotImplementedError('method "{0}" not '
                                       'implemented'.format(method))
@@ -691,7 +690,7 @@ class RegularGrid(Grid):
         sampling scheme. """
         i, j = self.get_indices(x, y)
         ny, nx = self.bands[0].size
-        return self.values[:,:][i, j]
+        return self[:,:][i, j]
 
     def sample_bilinear(self, x, y):
         """ Return the value nearest to (`x`, `y`). Bilinear sampling scheme.
@@ -719,7 +718,7 @@ class RegularGrid(Grid):
                     .format(self.get_extent()))
 
         dx, dy = self._transform[2:4]
-        values = self.values[:,:]
+        values = self[:,:]
         z = (values[i0,j0]*(i1-i)*(j1-j) + values[i1,j0]*(i-i0)*(j1-j) + \
              values[i0,j1]*(i1-i)*(j-j0) + values[i1,j1]*(i-i0)*(j-j0))
         return z
@@ -748,9 +747,9 @@ class RegularGrid(Grid):
         if hasattr(args[0], "_geotype"):
             crs = args[0].crs
             if args[0]._geotype == "Point":
-                x, y = args[0].get_vertex(crs=grid.crs)[:2]
+                x, y = args[0].get_vertex(crs=self.crs)[:2]
             elif args[0]._geotype == "Multipoint":
-                x, y = args[0].get_coordsinates(crs=grid.crs)
+                x, y = args[0].get_coordsinates(crs=self.crs)
             else:
                 raise argerror
         else:
@@ -826,7 +825,7 @@ class RegularGrid(Grid):
         flexible data layouts.
         """
         Xc, Yc = self.center_coords()
-        return WarpedGrid(Xc, Yc, self.values[:,:].copy(), crs=self.crs)
+        return WarpedGrid(Xc, Yc, self[:,:].copy(), crs=self.crs)
 
     def to_gtiff(self, fnm, compress="PACKBITS", tiled=False, **kw):
         """ Write data to a GeoTiff file using GDAL.
@@ -870,7 +869,7 @@ class RegularGrid(Grid):
             f = open(f, "w")
 
         try:
-            data_a = self.values[:,:].copy()
+            data_a = self[:,:].copy()
             data_a[np.isnan(data_a)] = nodata_value
 
             f.write("NCOLS {0}\n".format(nx))
@@ -1029,7 +1028,7 @@ def merge(grids, weights=None):
 
         mask = grid.data_mask
         counts[offy:offy+_ny,offx:offx+_nx][mask] += w
-        values[offy:offy+_ny,offx:offx+_nx][mask] += typ(grid.values[mask]*w)
+        values[offy:offy+_ny,offx:offx+_nx][mask] += typ(grid[mask]*w)
         del mask
 
     validcountmask = (counts!=0.0)
@@ -1084,7 +1083,7 @@ def gridpoints(x, y, z, transform, crs):
     (I, J) = grid.get_indices(x, y)
 
     try:
-        err = crfuncs.fillarray_double(grid.values[:,:],
+        err = crfuncs.fillarray_double(grid[:,:],
                                        I.astype(np.int32),
                                        J.astype(np.int32), z, grid.nodata)
         if err != 0:
@@ -1093,12 +1092,12 @@ def gridpoints(x, y, z, transform, crs):
         # Fast version works when *z* is of type double (np.float64).
         # Python fallback for other types
         for (i,j,z_) in zip(I, J, z):
-            grid.values[i,j] += z_
+            grid[i,j] += z_
             counts[i,j] += 1
 
         m = counts!=0
-        grid.values[m] /= counts[m]
-        grid.values[~m] = grid.nodata
+        grid[m] /= counts[m]
+        grid[~m] = grid.nodata
 
     return grid
 
