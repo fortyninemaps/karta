@@ -533,7 +533,7 @@ class RegularGrid(Grid):
         if inplace:
             for band in self.bands:
                 data = band[:,:]
-                data[msk] = self.nodata
+                data[~msk] = self.nodata
                 band[:,:] = data
             return self
         else:
