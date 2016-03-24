@@ -287,7 +287,7 @@ def write(fnm, grid, compress=None, tiled=False, **kw):
 
     driver = osgeo.gdal.GetDriverByName("GTiff")
     ny, nx = grid.size
-    dataset = driver.Create(fnm, nx, ny, 1, gdal_type(grid.values.dtype), co)
+    dataset = driver.Create(fnm, nx, ny, len(grid.bands), gdal_type(grid.values.dtype), co)
     t = grid.transform
     dataset.SetGeoTransform([t[0] + ny*t[4], t[2], -t[4],
                              t[1] + ny*t[3], t[5], -t[3]])
@@ -297,9 +297,10 @@ def write(fnm, grid, compress=None, tiled=False, **kw):
         sys.stderr.write("Writing GeoTiff failed:\n\t{0}\n".format(e))
         return
     dataset.SetProjection(srs.ExportToWkt())
-    band = dataset.GetRasterBand(1)
-    band.SetNoDataValue(grid.nodata)
-    band.WriteArray(grid.values[::-1])
+    for i, kband in enumerate(grid.bands):
+        band = dataset.GetRasterBand(i+1)
+        band.SetNoDataValue(grid.nodata)
+        band.WriteArray(grid.bands[i][::-1])
     band = None
     dataset = None
     return
