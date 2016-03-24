@@ -15,6 +15,8 @@ try:
 except ImportError:
     HASGDAL = False
 
+ALL = -1
+
 class GdalFileBand(object):
     """ Imitates an ndarray well-enough to back a Grid instance, but reads data
     from an disk-bound datasource """
@@ -183,7 +185,7 @@ def gdal_type(dtype):
     else:
         raise TypeError("GDAL equivalent to type {0} unknown".format(dtype))
 
-def read(fnm, band, in_memory, bandclass=CompressedBand):
+def read(fnm, in_memory, ibands=ALL, bandclass=CompressedBand):
     """ Read a GeoTiff file and return a numpy array and a dictionary of header
     information.
     
@@ -191,10 +193,10 @@ def read(fnm, band, in_memory, bandclass=CompressedBand):
     ----------
     fnm : str
         input datasource
-    band : int
-        band number (1...)
     in_memory : boolean
         indicates whether array should be read fully into memory
+    ibands : int or list of ints
+        band number (1...)
     bandclass : karta.raster.band class
         if *in_memory* is `False`, use this class for band storage
 
@@ -205,6 +207,11 @@ def read(fnm, band, in_memory, bandclass=CompressedBand):
 
     hdr = dict()
     dataset = osgeo.gdal.Open(fnm, gc.GA_ReadOnly)
+
+    if ibands == ALL:
+        ibands = list(range(1, dataset.RasterCount+1))
+    elif not hasattr(ibands, "__iter__"):
+        ibands = [ibands]
 
     try:
         hdr["nx"] = dataset.RasterXSize
@@ -228,25 +235,27 @@ def read(fnm, band, in_memory, bandclass=CompressedBand):
                       "name": sr.GetAttrValue('PROJCS')}
 
         max_dtype = 0
-        rasterband = dataset.GetRasterBand(band)
-        hdr["nodata"] = rasterband.GetNoDataValue()
-        nx = rasterband.XSize
-        ny = rasterband.YSize
-        if rasterband.DataType > max_dtype:
-            max_dtype = rasterband.DataType
+        rasterbands = [dataset.GetRasterBand(i) for i in ibands]
+        hdr["nodata"] = rasterbands[0].GetNoDataValue()
+        nx = rasterbands[0].XSize
+        ny = rasterbands[0].YSize
+        if rasterbands[0].DataType > max_dtype:
+            max_dtype = rasterbands[0].DataType
 
         if in_memory:
-            dtype = numpy_dtype(rasterband.DataType)
-            band = bandclass((ny, nx), dtype)
-            band[:,:] = rasterband.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype)).squeeze()[::-1]
+            dtype = numpy_dtype(rasterbands[0].DataType)
+            bands = [bandclass((ny, nx), dtype) for _ in ibands]
+            for i, rb in enumerate(rasterbands):
+                _arr = rb.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype))
+                bands[i][:,:] = _arr.squeeze()[::-1]
         else:
-            band = GdalFileBand(rasterband, dataset)
+            bands = [GdalFileBand(rb, dataset) for rb in rasterbands]
 
     finally:
         if in_memory:
             rasterband = None
             dataset = None
-    return band, hdr
+    return bands, hdr
 
 def srs_from_crs(crs):
     srs = osgeo.osr.SpatialReference()

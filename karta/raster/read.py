@@ -24,20 +24,20 @@ def proj4_isgeodetic(s):
     return ("lonlat" in s) or ("longlat" in s) or \
             ("latlon" in s) or ("latlong" in s)
 
-def read_gtiff(fnm, band=1, in_memory=True, **kw):
+def read_gtiff(fnm, in_memory=True, ibands=_gtiff.ALL, **kw):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
     instance.
 
     Parameters
     ----------
-
-    fnm : GeoTiff file path
-
-    band : band to open (default 1)
-
-    in_memory : if True (default), read entire dataset into memory
+    fnm : str
+        GeoTiff file path
+    in_memory : bool
+        if True (default), read entire dataset into memory
+    ibands : int | list of ints, optional
+        band(s) to open (default all)
     """
-    band, hdr = _gtiff.read(fnm, band, in_memory, **kw)
+    bands, hdr = _gtiff.read(fnm, in_memory, ibands, **kw)
 
     t = {'xllcorner': hdr['xulcorner'] - hdr['ny'] * hdr['sx'],
          'yllcorner': hdr['yulcorner'] + hdr['ny'] * hdr['dy'],
@@ -52,7 +52,7 @@ def read_gtiff(fnm, band=1, in_memory=True, **kw):
         crs = GeographicalCRS(geodstr, name=hdr["srs"]["name"])
     else:
         crs = ProjectedCRS(hdr["srs"]["proj4"], name=hdr["srs"]["name"])
-    return RegularGrid(t, bands=[band], crs=crs, nodata_value=hdr["nodata"])
+    return RegularGrid(t, bands=bands, crs=crs, nodata_value=hdr["nodata"])
 
 # Aliases for backwards compat.
 gtiffread = read_gtiff
