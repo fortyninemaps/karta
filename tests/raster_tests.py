@@ -221,6 +221,20 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.all(newgrid[6:56,4:54] == proto[:,:]))
         return
 
+    def test_resize_lower_left(self):
+        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
+        newgrid = proto.resize([380, 320, 380+30*30, 320+30*32])
+        self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
+        self.assertTrue(np.all(newgrid[6:,4:] == proto[:26,:26]))
+        return
+
+    def test_resize_upper_right(self):
+        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
+        newgrid = proto.resize([1940, 1910, 1940+30*10, 1910+30*7])
+        self.assertEqual(newgrid.transform, (1940.0, 1910.0, 30.0, 30.0, 0.0, 0.0))
+        self.assertTrue(np.all(newgrid[:3,:2] == proto[-3:,-2:]))
+        return
+
     def test_data_mask_nan(self):
         T = [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]
         v = np.arange(64, dtype=np.float64).reshape([8, 8])

@@ -472,10 +472,11 @@ class RegularGrid(Grid):
         bbnew = list(bboxnew)
         dx, dy, sx, sy = self.transform[2:]
 
-        # Redefine output bbox so that (xmax-xmin)/dx and (ymax-ymin)/dx are
-        # integers
-        bbnew[2] = bbnew[0] + dx*math.ceil((bbnew[2]-bbnew[0])/dx)
-        bbnew[3] = bbnew[1] + dy*math.ceil((bbnew[3]-bbnew[1])/dy)
+        # Shift corners of output bbox so that it is registered to the grid
+        bbnew[0] += (bb[0]-bbnew[0])%dx
+        bbnew[1] += (bb[1]-bbnew[1])%dy
+        bbnew[2] += (bb[2]-bbnew[2])%dx
+        bbnew[3] += (bb[3]-bbnew[3])%dy
 
         ny, nx = self.size
         nxnew = int((bbnew[2]-bbnew[0])/dx)
@@ -490,13 +491,13 @@ class RegularGrid(Grid):
 
         # determine the indices of the data to copy on the old grid
         j0 = max(0,  int(round((bbnew[0]-bb[0])/dx)))
-        j1 = min(nx, j0+nxnew)
+        j1 = min(nx, int(round((bbnew[2]-bb[0])/dx)))
         i0 = max(0,  int(round((bbnew[1]-bb[1])/dy)))
-        i1 = min(ny, i0+nynew)
+        i1 = min(ny, int(round((bbnew[3]-bb[1])/dy)))
 
         newbands = []
         for band in self.bands:
-            newband = self._bndcls((nynew, nxnew), dtype=band.dtype, initval=0.0)
+            newband = self._bndcls((nynew, nxnew), dtype=band.dtype, initval=self.nodata)
             newband[i0new:i1new, j0new:j1new] = band[i0:i1, j0:j1]
             newbands.append(newband)
 

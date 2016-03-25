@@ -160,14 +160,16 @@ def normed_potential_vectors(grid):
     return (RegularGrid(grid.transform, u, crs=grid.crs, nodata_value=np.nan),
             RegularGrid(grid.transform, v, crs=grid.crs, nodata_value=np.nan))
 
-def hillshade(grid, bearing=330.0, azimuth=60.0):
+def hillshade(grid, azimuth=330.0, elevation=60.0):
     """ Return a hill-shaded version of *grid*.
 
     Arguments
     ---------
     grid: RegularGrid instance
-    bearing: float, bearing of light source (default 330.0)
-    azimuth: float, azimuth of light source (default 60.0)
+    azimuth: float, optional
+        direction of light source (default 330.0)
+    elevation : float, optional
+        height of light source (default 60.0)
 
     Note: Currently assumes orthogonal coordinates.
     """
@@ -180,9 +182,9 @@ def hillshade(grid, bearing=330.0, azimuth=60.0):
     w = np.cross(u, v, axisa=0, axisb=0)
     wunit = w / np.atleast_3d(np.sqrt(np.sum(w**2, axis=-1)))
 
-    s = np.array((np.cos(bearing*np.pi/180.0),
-                  np.sin(bearing*np.pi/180.0),
-                  np.sin(azimuth*np.pi/180.0)))
+    s = np.array((np.cos(azimuth*np.pi/180.0),
+                  np.sin(azimuth*np.pi/180.0),
+                  np.sin(elevation*np.pi/180.0)))
     smat = s*np.ones([wunit.shape[0], wunit.shape[1], 3])
     dprod = (wunit*smat).sum(axis=-1)
 
