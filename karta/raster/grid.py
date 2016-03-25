@@ -472,11 +472,9 @@ class RegularGrid(Grid):
         bbnew = list(bboxnew)
         dx, dy, sx, sy = self.transform[2:]
 
-        # Shift corners of output bbox so that it is registered to the grid
-        bbnew[0] += (bb[0]-bbnew[0])%dx
-        bbnew[1] += (bb[1]-bbnew[1])%dy
-        bbnew[2] += (bb[2]-bbnew[2])%dx
-        bbnew[3] += (bb[3]-bbnew[3])%dy
+        # Redefine output box dimensions to be an integer factor of dx, dy
+        bbnew[2] = bbnew[0] + dx*math.ceil((bbnew[2]-bbnew[0])/dx)
+        bbnew[3] = bbnew[1] + dy*math.ceil((bbnew[3]-bbnew[1])/dy)
 
         ny, nx = self.size
         nxnew = int((bbnew[2]-bbnew[0])/dx)
