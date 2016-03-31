@@ -22,8 +22,9 @@ an individual or set of objects, and provides a translation layer permitting
 intercomparison of objects using diferent systems.
 
 *Karta* is tested with Python 2.7 and Python 3.4+. Suggestions, bug reports, and
-pull requests are welcome, and accepted via the `Github page
-<https://www.github.com/fortyninemaps/karta`_.
+pull requests are welcome, and accepted via the `Github page`_.
+
+.. _`Github page`: https://www.github.com/fortyninemaps/karta
 
 Data Formats
 ------------
