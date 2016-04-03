@@ -58,8 +58,13 @@ def _from_shape(d, properties):
 ### GeoJSON functions ###
 
 def read_geojson(f, crs=None):
-    """ Read a GeoJSON file object and return a list of geometries """
+    """ Parse GeoJSON and return a list of geometries.
 
+    f : file-like object or str
+        file object to read from or a GeoJSON string
+    crs : karta.crs.CRS
+        CRS object to bind to new geometries
+    """
     def convert_crs(crsdict):
         if crsdict.get("type", None) not in ("name", "link"):
             crs = LonLatWGS84
