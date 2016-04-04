@@ -197,6 +197,17 @@ class RegularGrid(Grid):
     def size(self):
         return self.bands[0].size
 
+    def set_nodata_value(self, val):
+        """ Redefine value used to indicate nodata.
+
+        Parameters
+        ----------
+        val : number
+        """
+        self[:,:] = np.where(self.data_mask, self[:,:], val)
+        self._nodata = val
+        return
+
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
         """

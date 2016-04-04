@@ -21,14 +21,14 @@ class RegularGridTests(unittest.TestCase):
 
     def test_add_rgrid(self):
         rast2 = karta.RegularGrid(self.rast.transform,
-                                  values=np.random.random(self.rast.size)) 
+                                  values=np.random.random(self.rast.size))
         res = self.rast + rast2
         self.assertTrue(np.all(res[:,:] == self.rast[:,:]+rast2[:,:]))
         return
 
     def test_sub_rgrid(self):
         rast2 = karta.RegularGrid(self.rast.transform,
-                                  values=np.random.random(self.rast.size)) 
+                                  values=np.random.random(self.rast.size))
         res = self.rast - rast2
         self.assertTrue(np.all(res[:,:] == self.rast[:,:]-rast2[:,:]))
         return
@@ -172,7 +172,7 @@ class RegularGridTests(unittest.TestCase):
 
     def test_minmax_nodata(self):
         values = np.array([[4, 5, 3], [4, 2, -9], [3, 6, 1]])
-        
+
         self.rast = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
                                       values=values, nodata_value=-9)
         minmax = self.rast.minmax()
@@ -348,8 +348,8 @@ class RegularGridTests(unittest.TestCase):
             42, 42, 43, 43, 43, 43, 43, 44, 44, 44, 44, 44, 44, 44, 45, 45, 45,
             45, 45, 46, 46, 46, 46, 46, 46, 46, 47, 47, 47, 47, 47, 48, 48, 48,
             48, 48, 48])
-        
-        
+
+
         yi = np.array([ 0,  0,  0,  0,  1,  1,  1,  1,  1,  2,  2,  2,  2,  2,
             2, 2,  3, 3,  3,  3,  3,  4,  4,  4,  4,  4,  4,  4,  5,  5,  5,
             5, 5,  6, 6,  6,  6,  6,  6,  6,  7,  7,  7,  7,  7,  8,  8,  8,
@@ -398,6 +398,16 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.all(grid[::-1] == self.rast[:,:]))
         return
 
+    def test_set_nodata(self):
+        v = np.arange(64, dtype=np.float64).reshape([8,8])
+        v[2:4, 5:7] = -1
+        grid = karta.RegularGrid([0, 0, 1, 1, 0, 0], values=v, nodata_value=-1)
+        self.assertEqual(grid.nodata, -1.0)
+        grid.set_nodata_value(np.nan)
+        self.assertTrue(np.isnan(grid.nodata))
+        self.assertEqual(np.sum(np.isnan(grid[:,:])), 4)
+        self.assertEqual(np.sum(grid[:,:] == -1.0), 0)
+        return
 
 class WarpedGridTests(unittest.TestCase):
 
