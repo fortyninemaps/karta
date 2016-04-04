@@ -488,8 +488,8 @@ class RegularGrid(Grid):
         bbnew[3] = bbnew[1] + dy*math.ceil((bbnew[3]-bbnew[1])/dy)
 
         ny, nx = self.size
-        nxnew = int((bbnew[2]-bbnew[0])/dx)
-        nynew = int((bbnew[3]-bbnew[1])/dy)
+        nxnew = int(round((bbnew[2]-bbnew[0])/dx))
+        nynew = int(round((bbnew[3]-bbnew[1])/dy))
         Tnew = [bbnew[0], bbnew[1], dx, dy, sx, sy]
 
         # determine the indices of existing data on the new grid
