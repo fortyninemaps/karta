@@ -23,28 +23,33 @@ supported on both Python 2.7+ and Python 3.4+.
 Definitions
 -----------
 
--  **Vector data** in data can is treated as a set of connected or
-   disconnected vertices. Examples might be road networks, a set of
-   borders, geophysical survey lines, or the path taken by a bottle
-   floating in an ocean current. In *Karta*, these data are classified
-   as belonging to *Point*, *Multipoint*, *Line* or *Polygon* classes.
-   Some questions that might be asked of vector data include
+**Vector data** are data that can be treated as a set of connected or
+disconnected vertices. Examples might be road networks, a set of
+borders, geophysical survey lines, or the path taken by a bottle
+floating in an ocean current. In *Karta*, these data are classified as
+belonging to *Point*, *Multipoint*, *Line* or *Polygon* classes. Some
+questions that might be asked of vector data include
+
 -  which of these points are contained in this polygon?
 -  how many times and where do these lines intersect each other?
 -  what is the average distance travelled by a particle?
+-  what municipalities does this river flow through?
 
--  **Raster data**, in contrast, is data that are typically thought of
-   in terms of pixels or a grid of values covering a surface. Examples
-   might be an elevation map, satellite image, or an upstream area map.
-   Operations on raster data might include slope, aspect, and curvature
-   calculations, up and downsampling, and interpolation.
+**Raster data**, in contrast, is data that are typically thought of in
+terms of pixels or a grid of values covering a surface. Examples might
+be an elevation map, satellite image, or an upstream area map. Depending
+on what the data represents, one might
 
--  The term **coordinate reference system** refers to a system of
-   relating measurements on a coordinate system to actual positions in
-   space, e.g. on the curved surface of the Earth. *Karta* includes very
-   basic support of projected and geographical coordinates, but
-   extending this system through *pyproj* is something I would like to
-   accomplish in the future.
+-  ask what are the slope and aspect of this DEM?
+-  downsample or interpolate a grid
+-  apply a pansharpening algorithm to multispectral satellite imagery
+-  extract an elevation profile along a path
+
+The term **coordinate reference system** refers to a system of relating
+measurements on a coordinate system to actual positions on Earth.
+*Karta* includes methods for geodetic calculations and basic support of
+projected and geographical coordinates, as well as coordinate system
+classes backed by *pyproj*.
 
 Vector data
 ===========
@@ -460,8 +465,11 @@ geometry.
 Visualizing and importing/exporting data
 ========================================
 
-The ``get_coordinate_lists`` method provides lists of coordinates, which
-make is easy to visualize a geometry.
+The ``get_coordinate_lists`` method and ``coordinates`` attribute
+provide lists of coordinates, which make it easy to visualize a
+geometry. Higher-level plotting operations are provided by the separate
+`karta.mapping <https://github.com/fortyninemaps/karta-map>`__
+submodule, not described here.
 
 .. code:: python
 
@@ -517,22 +525,17 @@ Bands
 To provide flexibility, different band instances are provided by
 ``karta.raster.bands`` using different strategies for data storage.
 
-The simplest case, ``SimpleBand``, used a numpy array to store all data
-in memory. This makes it reasonably fast, but can use a lot of memory
-when opening multiple large rasters.
+-  The simplest case, ``SimpleBand``, uses a numpy array to store all
+   data. This makes it reasonably fast, but can use a lot of memory when
+   opening multiple large rasters.
+-  The default case, ``CompressedBand``, uses chunking and blosc
+   compression to reduce the memory footprint of the raster data, at a
+   small speed cost.
+-  Finally, ``GdalFileBand`` reads data directly from a valid GDAL
+   datasource, using the least memory but performing the slowest.
 
-The default case, ``CompressedBand``, uses blosc in-memory compression
-to reduce the memory footprint of the raster data, at a small speed
-cost.
-
-Finally, ``GdalFileBand`` reads data directly from a valid GDAL
-datasource, using the least memory but performing the slowest.
-
-    Note: ``GdalFileBand`` doesn't support all raster operations
-    supported by the other band types.
-
-When opening or creating a ``RegularGrid``, a non-default band type can
-be specified as a keyword argument.
+    Note: ``GdalFileBand`` doesn't currently handle all raster
+    operations supported by the other band types.
 
 .. code:: python
 
@@ -569,6 +572,9 @@ be specified as a keyword argument.
 
     (354000.0, 628500.0, 8648400.0, 8922600.0)
 
+
+When opening or creating a ``RegularGrid``, a non-default band type can
+be specified as a keyword argument.
 
 .. code:: python
 
@@ -614,3 +620,6 @@ apply, i.e. one can do things like:
 
 The ``RegularGrid`` instance provides methods for sampling rasters,
 computing statistics, clipping and resizing, and resampling.
+
+**TODO: describe geotransform tuple and demstrate grid creation**
+
