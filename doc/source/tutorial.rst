@@ -1,8 +1,8 @@
 
 `Back to manual <../karta-manual.html>`__
 
-Tutorial
-========
+Karta tutorial
+==============
 
 Introduction
 ------------
@@ -18,7 +18,7 @@ provide a pull request on
 `Github <https://github.com/fortyninemaps/karta>`__!
 
 The following examples are shown using Python 3, however *Karta* is
-supported on both Python 2.7+ and Python 3.2+.
+supported on both Python 2.7+ and Python 3.4+.
 
 Definitions
 -----------
@@ -26,9 +26,9 @@ Definitions
 -  **Vector data** in data can is treated as a set of connected or
    disconnected vertices. Examples might be road networks, a set of
    borders, geophysical survey lines, or the path taken by a bottle
-   floating in an ocean current. In karta, these data are classified as
-   belonging to *Point*, *Multipoint*, *Line* or *Polygon* classes. Some
-   questions that might be asked of vector data include
+   floating in an ocean current. In *Karta*, these data are classified
+   as belonging to *Point*, *Multipoint*, *Line* or *Polygon* classes.
+   Some questions that might be asked of vector data include
 -  which of these points are contained in this polygon?
 -  how many times and where do these lines intersect each other?
 -  what is the average distance travelled by a particle?
@@ -41,13 +41,13 @@ Definitions
 
 -  The term **coordinate reference system** refers to a system of
    relating measurements on a coordinate system to actual positions in
-   space, e.g. on the curved surface of the Earth. karta includes very
+   space, e.g. on the curved surface of the Earth. *Karta* includes very
    basic support of projected and geographical coordinates, but
    extending this system through *pyproj* is something I would like to
    accomplish in the future.
 
 Vector data
------------
+===========
 
 Let's experiment with some vector data.
 
@@ -62,12 +62,30 @@ and metadata.
 .. code:: python
 
     pt = Point((-123.1, 49.25))
-    
+    print(pt)
+
+
+.. parsed-literal::
+
+    Point((-123.1, 49.25))
+
+
+.. code:: python
+
     mpt = Multipoint([(-122.93, 48.62),
                       (-123.10, 48.54),
                       (-122.90, 48.49),
                       (-122.81, 48.56)])
-    
+    print(mpt)
+
+
+.. parsed-literal::
+
+    <class 'karta.vector.geometry.Multipoint'([(-122.93, 48.62), (-123.1, 48.54), (-122.9, 48.49), (-122.81, 48.56)])>
+
+
+.. code:: python
+
     line = Line([(-124.35713, 49.31437),
                  (-124.37857, 49.31720),
                  (-124.39442, 49.31833),
@@ -75,22 +93,25 @@ and metadata.
                  (-124.41052, 49.32203),
                  (-124.41681, 49.32477),
                  (-124.42278, 49.32588)])
-    
+    print(line)
+
+
+.. parsed-literal::
+
+    <class 'karta.vector.geometry.Line'([(-124.35713, 49.31437), (-124.37857, 49.3172)...(-124.41681, 49.32477), (-124.42278, 49.32588)])>
+
+
+.. code:: python
+
     poly = Polygon([(-25.41, 67.03),
                     (-24.83, 62.92),
                     (-12.76, 63.15),
                     (-11.44, 66.82)])
-    
-    print(pt)
-    print(mpt)
-    print(line)
     print(poly)
+
 
 .. parsed-literal::
 
-    Point((-123.1, 49.25))
-    <class 'karta.vector.geometry.Multipoint'([(-122.93, 48.62), (-123.1, 48.54), (-122.9, 48.49), (-122.81, 48.56)])>
-    <class 'karta.vector.geometry.Line'([(-124.35713, 49.31437), (-124.37857, 49.3172)...(-124.41681, 49.32477), (-124.42278, 49.32588)])>
     <class 'karta.vector.geometry.Polygon'([(-25.41, 67.03), (-24.83, 62.92), (-12.76, 63.15), (-11.44, 66.82)])>
 
 
@@ -103,13 +124,21 @@ polygon
 .. code:: python
 
     print(poly.contains(pt))       # False
-    
-    pt2 = Point((-25, 65))
-    print(poly.contains(pt2))      # True
+
 
 .. parsed-literal::
 
     False
+
+
+.. code:: python
+
+    pt2 = Point((-25, 65))
+    print(poly.contains(pt2))      # True
+
+
+.. parsed-literal::
+
     True
 
 
@@ -118,6 +147,7 @@ or whether our line crosses the polygon
 .. code:: python
 
     print(line.intersects(poly))   # False
+
 
 .. parsed-literal::
 
@@ -132,6 +162,7 @@ or the nearest point on an edge to an external point:
     pt = Point((0.0, 60.0))
     print(poly.nearest_point_to(pt))
     print(poly.nearest_on_boundary(pt))
+
 
 .. parsed-literal::
 
@@ -148,6 +179,7 @@ sliced:
     for pt in section:
         print(pt.vertex)
 
+
 .. parsed-literal::
 
     (-124.39442, 49.31833)
@@ -160,6 +192,7 @@ A slice that takes part of a polygon returns a line.
 .. code:: python
 
     print(poly[:2])
+
 
 .. parsed-literal::
 
@@ -175,6 +208,7 @@ point. However, if we do
     pt2 = Point((-70.66, 41.52))
     print(pt.distance(pt2))
 
+
 .. parsed-literal::
 
     53.00666467530286
@@ -187,17 +221,18 @@ each geometry at creation, as in
 
 .. code:: python
 
-    from karta import crs
+    from karta.crs import LonLatWGS84
     
-    pt = Point((-123.1, 49.25), crs=crs.LonLatWGS84)
-    pt2 = Point((-70.66, 41.52), crs=crs.LonLatWGS84)
+    pt = Point((-123.1, 49.25), crs=LonLatWGS84)
+    pt2 = Point((-70.66, 41.52), crs=LonLatWGS84)
     pt.distance(pt2)
+
 
 
 
 .. parsed-literal::
 
-    4109559.587727985
+    4109559.5877279844
 
 
 
@@ -211,13 +246,14 @@ American state capitols are within 2000 km of Mexico City?
 .. code:: python
 
     from karta.examples import us_capitols
-    mexico_city = Point((-99.13, 19.43), crs=crs.LonLatWGS84)
+    mexico_city = Point((-99.13, 19.43), crs=LonLatWGS84)
 
 .. code:: python
 
     # List all US state capitols
     for capitol in us_capitols:
         print(capitol.properties["n"], capitol.vertex)
+
 
 .. parsed-literal::
 
@@ -281,6 +317,7 @@ American state capitols are within 2000 km of Mexico City?
     for capitol in nearby:
         print(capitol.properties["n"])
 
+
 .. parsed-literal::
 
     Oklahoma City, Oklahoma, United States
@@ -300,6 +337,7 @@ American state capitols are within 2000 km of Mexico City?
     distances_capitols = sorted(zip(distances, us_capitols))
     for d, pt in distances_capitols:
         print("{km:.0f} km, {name}".format(km=d/1e3, name=pt.properties["n"]))
+
 
 .. parsed-literal::
 
@@ -357,13 +395,13 @@ American state capitols are within 2000 km of Mexico City?
 
 
 All of the above calculations are performed on a geoid. The
-``crs.LonLatWGS84`` coordinate system means to use geographical
-(longitude and latitude) coordinates on the WGS 84 ellipsoid.
+``LonLatWGS84`` coordinate system means to use geographical (longitude
+and latitude) coordinates on the WGS 84 ellipsoid.
 
 **TODO: describe other geometries**
 
 Associated data
-~~~~~~~~~~~~~~~
+===============
 
 By using the ``data`` keyword argument, additional data can be
 associated with a vector geometry.
@@ -380,13 +418,21 @@ through subsequent operations.
 .. code:: python
 
     pt = mp[2]
-    
     print(pt)
-    print(pt.d["species"])
+
 
 .. parsed-literal::
 
     Point((4, 3))
+
+
+.. code:: python
+
+    print(pt.d["species"])
+
+
+.. parsed-literal::
+
     ['M. alba']
 
 
@@ -403,8 +449,8 @@ geometry.
                     (-11.44, 66.82)],
                    properties={"geology": "volcanic",
                                "alcohol": "brennivin"})
-    
     print(poly[0:3])
+
 
 .. parsed-literal::
 
@@ -412,7 +458,7 @@ geometry.
 
 
 Visualizing and importing/exporting data
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+========================================
 
 The ``get_coordinate_lists`` method provides lists of coordinates, which
 make is easy to visualize a geometry.
@@ -420,8 +466,22 @@ make is easy to visualize a geometry.
 .. code:: python
 
     import matplotlib.pyplot as plt
-    %matplotlib qt
+    %matplotlib
     plt.plot(*line.coordinates)
+
+
+.. parsed-literal::
+
+    Using matplotlib backend: Qt4Agg
+
+
+
+
+.. parsed-literal::
+
+    [<matplotlib.lines.Line2D at 0x7f25d4d25630>]
+
+
 
 Data can be read from several common formats, including ESRI shapefiles
 (through bindings to the *pyshp* module), GeoJSON, GPX, and comma
@@ -432,26 +492,125 @@ Each geometry has appropriate methods to save data:
 
 .. code:: python
 
-    mp.to_vtk("my_vtk.vtk")
     line.to_shapefile("my_shapefile")
     poly.to_geojson("my_json.json")
 
-.. parsed-literal::
-
-    Warning: CRS URN lookup not implemented
-    <class 'karta.crs.Cartesian'>
-    returning CRS name instead
-
 
 
 
 .. parsed-literal::
 
-    <karta.vector.geojson.GeoJSONWriter at 0x7f5939d389b0>
+    <karta.vector.geojson.GeoJSONWriter at 0x7f25d4cd0da0>
 
 
 
 Raster data
------------
+===========
 
-**WIP**
+Raster data are primarily represented by the ``karta.RegularGrid``
+class. ``RegularGrid`` instances have a CRS, a Null-data value, a
+geotransform, and one or more *bands*, which containing the actual data.
+
+Bands
+-----
+
+To provide flexibility, different band instances are provided by
+``karta.raster.bands`` using different strategies for data storage.
+
+The simplest case, ``SimpleBand``, used a numpy array to store all data
+in memory. This makes it reasonably fast, but can use a lot of memory
+when opening multiple large rasters.
+
+The default case, ``CompressedBand``, uses blosc in-memory compression
+to reduce the memory footprint of the raster data, at a small speed
+cost.
+
+Finally, ``GdalFileBand`` reads data directly from a valid GDAL
+datasource, using the least memory but performing the slowest.
+
+    Note: ``GdalFileBand`` doesn't support all raster operations
+    supported by the other band types.
+
+When opening or creating a ``RegularGrid``, a non-default band type can
+be specified as a keyword argument.
+
+.. code:: python
+
+    import numpy as np
+    from karta.raster import RegularGrid, SimpleBand, CompressedBand, read_gtiff
+    
+    ls8 = read_gtiff("LC80080032016087LGN00_B2.TIF")
+    print(ls8.bands)     # list of one CompressedBand instance
+
+
+.. parsed-literal::
+
+    [<karta.raster.band.CompressedBand object at 0x7f25d4ccdac8>]
+
+
+.. code:: python
+
+    # Print grid dimensions
+    print(ls8.size)
+
+
+.. parsed-literal::
+
+    (9141, 9151)
+
+
+.. code:: python
+
+    # Print grid extent
+    print(ls8.extent)
+
+
+.. parsed-literal::
+
+    (354000.0, 628500.0, 8648400.0, 8922600.0)
+
+
+.. code:: python
+
+    # Specify the band backend and verify that the data are the same
+    ls8_numpy = read_gtiff("LC80080032016087LGN00_B2.TIF", bandclass=SimpleBand)
+    np.all(ls8[:,:] == ls8_numpy[:,:])    # True
+
+
+
+
+.. parsed-literal::
+
+    True
+
+
+
+In the above, the slice syntax ``[:,:]`` is used to get an array of all
+grid data. Because the grid ``ls8`` has only a single band in this case,
+the data array has two dimensions. The normal simple slicing rules
+apply, i.e. one can do things like:
+
+.. code:: python
+
+    subgrid = ls8[2000:3000, 4000:4500]
+    print(subgrid.shape)
+
+
+.. parsed-literal::
+
+    (1000, 500)
+
+
+.. code:: python
+
+    every_other = ls8[::2, ::2]
+    print(every_other.shape)
+
+
+.. parsed-literal::
+
+    (4571, 4576)
+
+
+The ``RegularGrid`` instance provides methods for sampling rasters,
+computing statistics, clipping and resizing, and resampling.
