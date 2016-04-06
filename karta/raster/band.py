@@ -6,7 +6,7 @@ class BandIndexer(object):
 
     def __init__(self, bands):
         self.bands = bands
-    
+
     def __getitem__(self, key):
         if len(self.bands) == 1:
             if isinstance(key, np.ndarray):
@@ -221,7 +221,11 @@ class CompressedBand(object):
                 raise IndexError("slicing with instances of '{0}' not "
                                  "supported".format(type(k1)))
 
-            # TODO add size checks
+            vny, vnx = value.shape[:2]
+            if (ny != vny) or (nx != vnx):
+                raise IndexError("Cannot insert array with size ({vny}, {vnx}))"
+                        " into slice with size ({ny}, {nx})".format(
+                            vny=vny, vnx=vnx, ny=ny, nx=nx))
 
             if sy == sx == 1:
                 self._setblock(yoff, xoff, value)
@@ -279,6 +283,8 @@ class CompressedBand(object):
             i+= 1
 
     def _setblock(self, yoff, xoff, array):
+        """ Store block of values in *array* starting at offset *yoff*, *xoff*.
+        """
         size = array.shape
         chunksize = self._chunksize
 
@@ -309,6 +315,9 @@ class CompressedBand(object):
         return
 
     def _getblock(self, yoff, xoff, size):
+        """ Retrieve values with dimensions *size*, starting at offset *yoff*,
+        *xoff*.
+        """
         result = np.empty(size, self.dtype)
         for i, yst, yen, xst, xen in self._getchunks(yoff, xoff, *size):
 

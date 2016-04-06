@@ -479,6 +479,15 @@ class RegularGrid(Grid):
         bboxnew : 4-tuple of floats
             (xmin, ymin, xmax, ymax).
         """
+
+        # Define own rounding function so that half-values are treated consistently
+        def _round(a):
+            r = a%1
+            if r <= 0.5:
+                return a//1
+            else:
+                return a//1+1
+
         bb = self.bbox
         bbnew = list(bboxnew)
         dx, dy, sx, sy = self.transform[2:]
@@ -488,25 +497,26 @@ class RegularGrid(Grid):
         bbnew[3] = bbnew[1] + dy*math.ceil((bbnew[3]-bbnew[1])/dy)
 
         ny, nx = self.size
-        nxnew = int(round((bbnew[2]-bbnew[0])/dx))
-        nynew = int(round((bbnew[3]-bbnew[1])/dy))
+        nxnew = int(_round((bbnew[2]-bbnew[0])/dx))
+        nynew = int(_round((bbnew[3]-bbnew[1])/dy))
         Tnew = [bbnew[0], bbnew[1], dx, dy, sx, sy]
 
         # determine the indices of existing data on the new grid
-        j0new = max(0,     int(round((bb[0]-bbnew[0])/dx)))
-        j1new = min(nxnew, int(round((bb[2]-bbnew[0])/dx)))
-        i0new = max(0,     int(round((bb[1]-bbnew[1])/dy)))
-        i1new = min(nynew, int(round((bb[3]-bbnew[1])/dy)))
+        j0new = max(0,     int(_round((bb[0]-bbnew[0])/dx)))
+        j1new = min(nxnew, int(_round((bb[2]-bbnew[0])/dx)))
+        i0new = max(0,     int(_round((bb[1]-bbnew[1])/dy)))
+        i1new = min(nynew, int(_round((bb[3]-bbnew[1])/dy)))
 
         # determine the indices of the data to copy on the old grid
-        j0 = max(0,  int(round((bbnew[0]-bb[0])/dx)))
-        j1 = min(nx, int(round((bbnew[2]-bb[0])/dx)))
-        i0 = max(0,  int(round((bbnew[1]-bb[1])/dy)))
-        i1 = min(ny, int(round((bbnew[3]-bb[1])/dy)))
+        j0 = max(0,  int(_round((bbnew[0]-bb[0])/dx)))
+        j1 = min(nx, int(_round((bbnew[2]-bb[0])/dx)))
+        i0 = max(0,  int(_round((bbnew[1]-bb[1])/dy)))
+        i1 = min(ny, int(_round((bbnew[3]-bb[1])/dy)))
 
         newbands = []
         for band in self.bands:
-            newband = self._bndcls((nynew, nxnew), dtype=band.dtype, initval=self.nodata)
+            newband = self._bndcls((nynew, nxnew), dtype=band.dtype,
+                                   initval=self.nodata)
             newband[i0new:i1new, j0new:j1new] = band[i0:i1, j0:j1]
             newbands.append(newband)
 
