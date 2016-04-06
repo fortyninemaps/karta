@@ -222,7 +222,7 @@ class CompressedBand(object):
                                  "supported".format(type(k1)))
 
             vny, vnx = value.shape[:2]
-            if (ny != vny) or (nx != vnx):
+            if (ceil(float(ny)/sy) != vny) or (ceil(float(nx)/sx) != vnx):
                 raise IndexError("Cannot insert array with size ({vny}, {vnx}))"
                         " into slice with size ({ny}, {nx})".format(
                             vny=vny, vnx=vnx, ny=ny, nx=nx))
