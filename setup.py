@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
-VERSION = "0.6"
+VERSION = "0.6.1dev"
 
 class build_ext(_build_ext):
 
@@ -43,7 +43,7 @@ class build_ext(_build_ext):
 
         except ImportError:
             print("Cython not imported")
-            print("If C sources exist in the source tree, they will be used")
+            print("If C sources exist in the build directory, they will be used")
 
             for ext in self.extensions:
                 ext.sources = list(map(lambda f: f+".c", ext.sources))
@@ -68,10 +68,10 @@ setup(
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
-    url = "http://www.ironicmtn.com/karta.html",
+    url = "http://www.fortyninemaps.com/karta.html",
     description = "Geospatial analysis in Python",
     long_description = """
-*Karta* is a simple and fast framework for spatial analysis in Python.
+*Karta* streamlines processing raster and vector geographical data in Python.
 
 Create vector geometries:
 
@@ -111,26 +111,22 @@ Work with raster data:
 
     grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
 
-*Karta* works with Python 2.7 and Python 3.3+. Suggestions, bug reports,
-test cases, and pull requests are welcome.
+*Karta* works with Python 2 and 3. Suggestions, bug reports, test cases, and
+pull requests are welcome.
 
 DOCUMENTATION
 -------------
 
-See the `online
-manual <http://www.ironicmtn.com/kartadocs/karta-manual.html>`__, the
-`tutorial <http://www.ironicmtn.com/kartadocs/tutorial.html>`__, or read
-the `API
-documentation <http://www.ironicmtn.com/kartadocs/reference.html>`__.
+See the `webpage <http://www.fortyninemaps.com/karta.html>`__ and the `manual
+<http://www.fortyninemaps.com/kartadocs/karta-manual.html>`__.
 
-The manual can also be built offline using Sphinx by running ``make``
-from the ``doc/`` subdirectory. The documentation is built from source
-code docstrings and the example IPython notebooks, which are also
-reproduced in the
-`Wiki <https://github.com/fortyninemaps/karta/wiki/Tutorial>`__. Building
-the documentation requires `Sphinx <http://sphinx-doc.org/>`__,
-`alabaster <https://github.com/bitprophet/alabaster>`__ and
-`numpydoc <https://github.com/numpy/numpydoc>`__.
+The manual can also be built offline using Sphinx by running ``make`` from the
+``doc/`` subdirectory. The documentation is built from source code docstrings
+and the example IPython notebooks, which are also reproduced in the `Wiki
+<https://github.com/fortyninemaps/karta/wiki/Tutorial>`__. Building the
+documentation requires `Sphinx <http://sphinx-doc.org/>`__, `alabaster
+<https://github.com/bitprophet/alabaster>`__ and `numpydoc
+<https://github.com/numpy/numpydoc>`__.
 
 DEPENDENCIES
 ------------
@@ -138,27 +134,17 @@ DEPENDENCIES
 Required
 ~~~~~~~~
 
--  Python 2.7 or Python 3.3+
--  numpy
--  pyshp
--  pyproj
--  C-compiler
+- numpy
+- blosc
+- GDAL
+- pyproj
 
-Recommended
-~~~~~~~~~~~
-
--  osgeo.gdal (for geotiff I/O)
--  osgeo.osr (for coordinate system interchange)
--  scipy
-
-When installing from PyPI, Cython-compiled C source code is provided and
-will be automatically compiled to improve performance if a suitable C
-compiler is available.
+When installing from PyPI, C source code is provided. When building from
+sources, Cython is required.
 """,
     classifiers = ["Programming Language :: Python :: 2",
                    "Programming Language :: Python :: 2.7",
                    "Programming Language :: Python :: 3",
-                   "Programming Language :: Python :: 3.2",
                    "Programming Language :: Python :: 3.3",
                    "Programming Language :: Python :: 3.4",
                    "Programming Language :: Python :: 3.5",

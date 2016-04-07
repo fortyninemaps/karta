@@ -187,7 +187,7 @@ class GPX(object):
         self.waypts.append(waypt)
         return
 
-    def add_track(self, *tracks, attributes=None):
+    def add_track(self, *tracks, **kw):
         """ Add Line-like objects as a track. Dictionaries of properties and
         extension types for the track are accepted as keyword arguments.
 
@@ -208,6 +208,7 @@ class GPX(object):
         properties = {}
         extensions = {}
 
+        attributes = kw.get("attributes", None)
         if attributes is not None:
             for key in attributes:
                 if key in VALID_PROPERTIES:

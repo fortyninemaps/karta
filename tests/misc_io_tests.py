@@ -133,12 +133,12 @@ class TestGPX(unittest.TestCase):
         return
 
     def test_add_track(self):
-        track = [Line([(np.random.random(), np.random.random())
-                       for i in range(10)], properties={"name":"segment0"})]
+        track = Line([(np.random.random(), np.random.random())
+                      for i in range(10)], properties={"name":"segment0"})
         g = vector.gpx.GPX()
         g.add_track(track)
         expected = self.Track([self.Trkseg(
-                        [self.Point(xy, {}, {}) for xy in track[0].vertices],
+                        [self.Point(xy, {}, {}) for xy in track.vertices],
                         {"name":"segment0"}, {})], {}, {})
         self.assertEqual(g.tracks[0], expected)
         return
