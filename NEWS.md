@@ -2,6 +2,9 @@
 
 ## changes with 0.6
 
+- implement raster bands
+- redesign raster interface and introduce [:,:] array syntax rather than values
+  attribute
 - replace pyshp with OGR
 - deprecate some CRS classes in favour of Proj4-backed CRS
 - nodata improvements for raster grids
