@@ -1,7 +1,9 @@
 import unittest
+import os
+from test_helper import TESTDATA
+
 import numpy as np
 import karta
-
 import karta.vector as vector
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
 
@@ -59,6 +61,14 @@ class GPXTests(unittest.TestCase):
                               {"name":"route0"}, {})
         self.assertEqual(g.routes[0], expected)
         return
+
+class ReadGPXTests(unittest.TestCase):
+
+    def test_mtn_bike_trail(self):
+        tracks = vector.read_gpx_tracks(os.path.join(TESTDATA, "gpx_input", "fishermans-trail.gpx"))
+        track1 = tracks[0]
+        seg1 = track1[0]
+        self.assertEqual(seg1.bbox, (-123.00702, 49.32947, -122.991408, 49.392751))
 
 if __name__ == "__main__":
     unittest.main()

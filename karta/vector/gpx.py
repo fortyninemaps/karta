@@ -77,8 +77,8 @@ class GPX(object):
     def _readwpt(self, wpt):
         properties = self._readproperties(wpt, exclude=("extensions",))
         extensions = self._readextensions(wpt)
-        lon = wpt.attrib["lon"]
-        lat = wpt.attrib["lat"]
+        lon = round(float(wpt.attrib["lon"]), 6)
+        lat = round(float(wpt.attrib["lat"]), 6)
         return Point((lon, lat), properties, extensions)
 
     @staticmethod
@@ -143,7 +143,6 @@ class GPX(object):
 
         for node in self.gpx.findall(ns + "rte"):
             self.parse_rte(node)
-
         return
 
     def parse_wpt(self, wpt):

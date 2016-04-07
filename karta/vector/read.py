@@ -4,8 +4,9 @@ import os
 from numbers import Number
 from . import geometry
 from . import geojson
-from . import xyfile
 from . import shp
+from . import gpx
+from . import xyfile
 from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84
 from .. import errors
 
@@ -218,4 +219,28 @@ def ogr_parse_srs(lyr):
 
 # convenience binding
 read_shapefile = ogr_read_shapefile
+
+
+### GPX functions ###
+
+def read_gpx_waypts(fnm):
+    gpx_doc = gpx.GPX(fnm)
+    return [_waypt2pt(pt) for pt in gpx_doc.waypts]
+
+def read_gpx_tracks(fnm):
+    gpx_doc = gpx.GPX(fnm)
+    return [_track2lines(trk) for trk in gpx_doc.tracks]
+
+def _waypt2pt(waypt):
+    return geometry.Point(waypt.lonlat,
+                          properties=waypt.properties,
+                          crs=LonLatWGS84)
+
+def _seg2line(seg):
+    return geometry.Line([pt.lonlat for pt in seg.trkpts],
+                         properties=seg.properties,
+                         crs=LonLatWGS84)
+
+def _track2lines(track):
+    return [_seg2line(seg) for seg in track.trksegs]
 
