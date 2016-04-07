@@ -20,7 +20,8 @@ from band_tests import *
 # Vector IO
 from shapefile_tests import *
 from geojson_tests import *
-from misc_io_tests import *
+from gpx_tests import *
+from geointerface_tests import *
 
 # Raster IO
 from crfuncs_tests import *
