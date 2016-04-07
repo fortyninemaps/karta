@@ -911,8 +911,6 @@ class ConnectedMultipoint(MultipointBase):
         """
         ptvertex = pt.get_vertex(crs=self.crs)
         segments = zip(self.vertices[:-1], self.vertices[1:])
-        if not (self.crs == pt.crs):
-            pt = Point(_reproject(pt.vertex, pt.crs, self.crs), crs=self.crs)
 
         if isinstance(self.crs, CartesianCRS):
             func = _cvectorgeo.pt_nearest_planar
@@ -929,11 +927,9 @@ class ConnectedMultipoint(MultipointBase):
         point_dist = map(func, segments)
         minpt = None
         mindist = -1.0
-        # Needs to be pt_ because in Python 3 assigning to pt alters subsequent
-        # values in the map
-        for i, (pt_, d) in enumerate(point_dist):
+        for i, (pt, d) in enumerate(point_dist):
             if d < mindist or (i == 0):
-                minpt = pt_
+                minpt = pt
                 mindist = d
 
         return mindist, minpt
