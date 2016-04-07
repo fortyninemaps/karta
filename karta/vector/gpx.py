@@ -16,8 +16,8 @@ Trkseg = collections.namedtuple("Trkseg", ["trkpts", "properties", "extensions"]
 Track = collections.namedtuple("Track", ["trksegs", "properties", "extensions"])
 Route = collections.namedtuple("Route", ["rtepts", "properties", "extensions"])
 
+ET.register_namespace("", "http://www.topografix.com/GPX/1/1")
 ns = "{http://www.topografix.com/GPX/1/1}"
-
 
 VALID_PROPERTIES = ("ele", "time", "magvar", "geoidheight", "name", "cmt",
                     "desc", "src", "link", "sym", "type", "fix", "sat", "hdop",
@@ -187,10 +187,9 @@ class GPX(object):
         self.waypts.append(waypt)
         return
 
-    def add_track(self, track, attributes=None):
-        """ Add a list of Line-like objects as a track. Dictionaries of
-        properties and extension types for the track are accepted as keyword
-        arguments.
+    def add_track(self, *tracks, attributes=None):
+        """ Add Line-like objects as a track. Dictionaries of properties and
+        extension types for the track are accepted as keyword arguments.
 
         Properties and extension types for the track segments are taken from
         the `properties` attribute of each Line-like object.
@@ -216,7 +215,7 @@ class GPX(object):
                 else:
                     properties[key] = str(attributes[key])
 
-        for line in track:
+        for line in tracks:
             points = []
             sg_properties = {}
             sg_extensions = {}
@@ -228,8 +227,8 @@ class GPX(object):
                     sg_extensions[key] = str(line.properties[key])
 
             if line.data is not None:
-                pt_properties = [k for k in line.data.keys() if k in VALID_PROPERTIES]
-                pt_extensions = [k for k in line.data.keys() if k not in VALID_PROPERTIES]
+                pt_properties = [k for k in line.data.fields if k in VALID_PROPERTIES]
+                pt_extensions = [k for k in line.data.fields if k not in VALID_PROPERTIES]
             else:
                 pt_properties = []
                 pt_extensions = []
@@ -239,11 +238,11 @@ class GPX(object):
                 ptprop = {}
                 ptexte = {}
                 for key in pt_properties:
-                    ptprop[key] = line.data[key][i]
+                    ptprop[key] = line.d[key][i]
                     if len(xy) == 3:
                         ptprop["ele"] = xy[2]
                 for key in pt_extensions:
-                    ptexte[key] = line.data[key][i]
+                    ptexte[key] = line.d[key][i]
 
                 points.append(Point((xy[0], xy[1]), ptprop, ptexte))
 
@@ -277,8 +276,8 @@ class GPX(object):
         self.routes.append(Route(points, route.properties, {}))
         return
 
-    def writefile(self, fnm, waypts=True, tracks=True, routes=True):
-        """ Write GPX object to a GPX file. Writes all waypoints, tracks, and
+    def as_string(self, waypts=True, tracks=True, routes=True):
+        """ Write GPX object to a string. Writes all waypoints, tracks, and
         routes by default, which can be changed by changing the kwargs to
         False. """
         gpx = Element(ns + "gpx", version="1.1", creator="karta")
@@ -293,9 +292,11 @@ class GPX(object):
             for route in self.routes:
                 gpx.append(self._build_gpx_rte(route))
 
-        xmlstring = ET.tostring(gpx)
-        output = minidom.parseString(xmlstring).toprettyxml(indent="  ")
+        xmlstring = ET.tostring(gpx).decode("ascii")
+        return xmlstring
+
+    def writefile(self, fnm, **kw):
         with open(fnm, "w") as f:
-            f.write(output)
+            f.write(self.as_string(**kw))
         return
 
