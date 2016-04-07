@@ -55,7 +55,8 @@ class GPX(object):
                     self.add_route(route)
         return
 
-    def _readextensions(self, node):
+    @staticmethod
+    def _readextensions(node):
         extensions = {}
         try:
             for ext in node.find(ns + "extensions"):
@@ -64,7 +65,8 @@ class GPX(object):
             pass
         return extensions
 
-    def _readproperties(self, node, exclude=()):
+    @staticmethod
+    def _readproperties(node, exclude=()):
         properties = {}
         for subnode in node:
             tag = strip_namespace(subnode.tag)
@@ -79,7 +81,8 @@ class GPX(object):
         lat = wpt.attrib["lat"]
         return Point((lon, lat), properties, extensions)
 
-    def _dict2gpx(self, parent, properties):
+    @staticmethod
+    def _dict2gpx(parent, properties):
         for p in properties:
             sub = Element(ns + p)
             sub.text = str(properties[p])
