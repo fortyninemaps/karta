@@ -11,7 +11,8 @@ from . import quadtree
 from . import rtree
 
 from .geometry import Geometry, Point, Multipoint, Line, Polygon
-from .read import read_geojson, read_shapefile, from_shape
+from .read import (read_geojson, read_shapefile,
+                   read_gpx_waypts, read_gpx_tracks, from_shape)
 from .shp import write_shapefile
 from .gpx import GPX
 from .xyfile import load_xy, xyz2array_reg, array2xyz

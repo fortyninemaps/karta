@@ -61,7 +61,7 @@ class NumpyAwareJSONEncoder(json.JSONEncoder):
 
 class GeoJSONWriter(object):
     """ Class for converting geometry objects to GeoJSON strings. Multipoint-based
-    opbjects are written as 'Features'.
+    opjects are written as 'Features'.
 
     Notes:
     ------
@@ -164,14 +164,14 @@ class GeoJSONWriter(object):
             target = self.supobj
 
         if self.gpobj._geotype == 'Polygon':
-            target['coordinates'] = [list_rec(self.gpobj.get_vertices())]
+            target['coordinates'] = [asfixedlist(self.gpobj.get_vertices())]
             if hasattr(self.gpobj, "subs"):
                 for poly in self.gpobj.subs:
-                    target['coordinates'].append(list_rec(poly.get_vertices()))
+                    target['coordinates'].append(asfixedlist(poly.get_vertices()))
         elif hasattr(self.gpobj, 'get_vertices'):
-            target['coordinates'] = list_rec(self.gpobj.get_vertices())
+            target['coordinates'] = asfixedlist(self.gpobj.get_vertices())
         elif hasattr(self.gpobj, 'get_vertex'):
-            target['coordinates'] = list_rec(self.gpobj.get_vertex())
+            target['coordinates'] = asfixedlist(self.gpobj.get_vertex())
         else:
             raise AttributeError('Geometry object has no vertex method')
         return
@@ -424,12 +424,13 @@ class GeoJSONSerializer(object):
                 "features": [self.feature_asdict(f)
                              for f in feature_collection.features]}
 
-def list_rec(A):
-    """ Recursively convert nested iterables to nested lists """
+def asfixedlist(A):
+    """ Recursively convert nested iterables or coordinates to nested lists at
+    fixed precision. """
     if hasattr(A, '__iter__'):
-        return [list_rec(el) for el in A]
+        return [asfixedlist(el) for el in A]
     else:
-        return A
+        return round(A, 6)
 
 def printGeometryCollection(gpobj_list, **kwargs):
     """ Given an iterable that returns geometry objects, construct a GeoJSON

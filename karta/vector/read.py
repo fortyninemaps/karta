@@ -4,8 +4,9 @@ import os
 from numbers import Number
 from . import geometry
 from . import geojson
-from . import xyfile
 from . import shp
+from . import gpx
+from . import xyfile
 from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84
 from .. import errors
 
@@ -57,7 +58,7 @@ def _from_shape(d, properties):
 
 ### GeoJSON functions ###
 
-def read_geojson(f, crs=None):
+def read_geojson(f, crs=LonLatWGS84):
     """ Parse GeoJSON and return a list of geometries.
 
     f : file-like object or str
@@ -65,7 +66,8 @@ def read_geojson(f, crs=None):
     crs : karta.crs.CRS
         CRS object to bind to new geometries
     """
-    def convert_crs(crsdict):
+    def _convert_crs(crsdict):
+        # Deprecated
         if crsdict.get("type", None) not in ("name", "link"):
             crs = LonLatWGS84
         elif crsdict["type"] == "name":
@@ -86,27 +88,25 @@ def read_geojson(f, crs=None):
             res = convert_geometry(geom, **kw)
         return res
 
-    def convert_geometry(geom, crs=None, **kw):
-        if crs is None:
-            crs = convert_crs(geom.crs)
+    def convert_geometry(geom, **kw):
         if isinstance(geom, geojson.Point):
-            return geometry.Point(geom.coordinates, crs=crs, **kw)
+            return geometry.Point(geom.coordinates, **kw)
         elif isinstance(geom, geojson.LineString):
-            return geometry.Line(geom.coordinates, crs=crs, **kw)
+            return geometry.Line(geom.coordinates, **kw)
         elif isinstance(geom, geojson.Polygon):
             return geometry.Polygon(geom.coordinates[0],
                                     subs=geom.coordinates[1:],
-                                    crs=crs, **kw)
+                                    **kw)
         elif isinstance(geom, geojson.MultiPoint):
-            return geometry.Multipoint(geom.coordinates, crs=crs, **kw)
+            return geometry.Multipoint(geom.coordinates, **kw)
         elif isinstance(geom, geojson.MultiLineString):
-            return [geometry.Line(coords, crs=crs, **kw)
+            return [geometry.Line(coords, **kw)
                     for coords in geom.coordinates]
         elif isinstance(geom, geojson.MultiPolygon):
-            return [geometry.Polygon(coords[0], subs=coords[1:], crs=crs, **kw)
+            return [geometry.Polygon(coords[0], subs=coords[1:], **kw)
                     for coords in geom.coordinates]
         else:
-            raise TypeError("{0} is a not a JSON geometry".format(geom))
+            raise TypeError("{0} is a not a GeoJSON entity".format(type(geom)))
 
     def convert_feature(feat, **kw):
         data = feat.properties["vector"]
@@ -219,4 +219,28 @@ def ogr_parse_srs(lyr):
 
 # convenience binding
 read_shapefile = ogr_read_shapefile
+
+
+### GPX functions ###
+
+def read_gpx_waypts(fnm):
+    gpx_doc = gpx.GPX(fnm)
+    return [_waypt2pt(pt) for pt in gpx_doc.waypts]
+
+def read_gpx_tracks(fnm):
+    gpx_doc = gpx.GPX(fnm)
+    return [_track2lines(trk) for trk in gpx_doc.tracks]
+
+def _waypt2pt(waypt):
+    return geometry.Point(waypt.lonlat,
+                          properties=waypt.properties,
+                          crs=LonLatWGS84)
+
+def _seg2line(seg):
+    return geometry.Line([pt.lonlat for pt in seg.trkpts],
+                         properties=seg.properties,
+                         crs=LonLatWGS84)
+
+def _track2lines(track):
+    return [_seg2line(seg) for seg in track.trksegs]
 
