@@ -48,9 +48,9 @@ class Grid(object):
 
     def apply(self, func):
         """ Apply a function *func* to grid values """
-        g = self.copy()
-        g[:,:] = func(g[:,:])
-        return g
+        msk = self.data_mask
+        self[:,:] = np.where(msk, func(self[:,:]), self._nodata)
+        return self
 
     def copy(self):
         """ Return a copy. """

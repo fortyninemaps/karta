@@ -54,6 +54,20 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(Y[-1,-1], 195.0)
         return
 
+    def test_apply(self):
+        msk = np.zeros([8, 8], dtype=np.bool)
+        msk[3, 2] = True
+        msk[:2,3:] = True
+        val = np.arange(64, dtype=np.float64).reshape([8,8])
+        val_ = val.copy()
+        val[msk] = -1
+        grid = karta.RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
+        grid.apply(lambda x: x**2)
+
+        self.assertTrue(np.all(grid[:,:][msk] == -1))
+        self.assertTrue(np.all(grid[:,:][~msk] == val_[~msk]**2))
+        return
+
     def test_merge(self):
         grid1 = karta.RegularGrid([10, 20, 1, 1, 0, 0], values=np.ones([8, 8]))
         grid2 = karta.RegularGrid([7, 22, 1, 1, 0, 0], values=2*np.ones([4, 6]))
