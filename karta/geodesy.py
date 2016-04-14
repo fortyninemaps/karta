@@ -164,7 +164,13 @@ def check_in_segment_range(pt, segment):
         return isbetween_circular(pt[0], lon_1, lon_2)
 
 def intersection_spherical(segment1, segment2):
-    """ compute the intersection between two great circle segments on a sphere """
+    """ compute the intersection between two great circle segments on a sphere
+
+    Parameters
+    ----------
+    segment1, segment2 : tuple of tuples
+        Tuples of the form ((x1, y1), (x2, y2)) describing line segements
+    """
     gc1 = greatcircle_vec(*segment1)
     gc2 = greatcircle_vec(*segment2)
     n = cross(gc1, gc2)

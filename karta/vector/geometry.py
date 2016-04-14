@@ -864,15 +864,21 @@ class ConnectedMultipoint(MultipointBase):
         """ Return whether an intersection exists with another geometry. """
         if isinstance(self.crs, CartesianCRS):
             interxbool = (np.nan in _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
-                                                         a[0][1], a[1][1], b[0][1], b[1][1])
+                                                             a[0][1], a[1][1], b[0][1], b[1][1])
                         for a in self.segments for b in other.segments)
             if self._bbox_overlap(other) and (False in interxbool):
                 return True
             else:
                 return False
         else:
-            raise NotImplementedError("'intersects' method not implemented for "
-                                      "Geographical coordinate systems")
+            for a in self.segments:
+                for b in other.segments:
+                    try:
+                        geodesy.intersection_spherical(a, b)
+                    except geodesy.NoIntersection:
+                        continue
+                    return True
+            return False
 
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
@@ -890,8 +896,7 @@ class ConnectedMultipoint(MultipointBase):
             return Multipoint(interx_points)
         else:
             # FIXME: implement for ellipsoidal coordinate systems
-            interx = (geodesy.intersection_spherical(a[0][0], a[1][0], b[0][0], b[1][0],
-                                                     a[0][1], a[1][1], b[0][1], b[1][1])
+            interx = (geodesy.intersection_spherical(a, b)
                          for a in self.segments for b in other.segments)
             if not keep_duplicates:
                 interx = set(interx)

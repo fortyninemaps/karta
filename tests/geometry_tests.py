@@ -342,6 +342,18 @@ class TestGeometry(unittest.TestCase):
         self.assertTrue(poly0.intersects(poly1))
         return
 
+    def test_line_intersects_geographical1(self):
+        line1 = Line([(-40.0, 36.0), (-38.0, 36.5)], crs=SphericalEarth)
+        line2 = Line([(-39.0, 34.0), (-39.0, 37.5)], crs=SphericalEarth)
+        self.assertTrue(line1.intersects(line2))
+        return
+
+    def test_line_intersects_geographical2(self):
+        line1 = Line([(-40.0, 36.0), (-38.0, 36.5)], crs=SphericalEarth)
+        line2 = Line([(-42.0, 34.0), (-41.0, 37.5)], crs=SphericalEarth)
+        self.assertFalse(line1.intersects(line2))
+        return
+
     def test_poly_clockwise(self):
         p = Polygon([(0,0), (0,1), (1,1), (1,0)])
         self.assertTrue(p.isclockwise())
