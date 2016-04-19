@@ -403,8 +403,6 @@ All of the above calculations are performed on a geoid. The
 ``LonLatWGS84`` coordinate system means to use geographical (longitude
 and latitude) coordinates on the WGS 84 ellipsoid.
 
-**TODO: describe other geometries**
-
 Associated data
 ===============
 
@@ -454,12 +452,12 @@ geometry.
                     (-11.44, 66.82)],
                    properties={"geology": "volcanic",
                                "alcohol": "brennivin"})
-    print(poly[0:3])
+    print(poly[0:3].properties)
 
 
 .. parsed-literal::
 
-    <class 'karta.vector.geometry.Line'([(-25.41, 67.03), (-24.83, 62.92), (-12.76, 63.15)])>
+    {'alcohol': 'brennivin', 'geology': 'volcanic'}
 
 
 Visualizing and importing/exporting data
@@ -468,7 +466,7 @@ Visualizing and importing/exporting data
 The ``get_coordinate_lists`` method and ``coordinates`` attribute
 provide lists of coordinates, which make it easy to visualize a
 geometry. Higher-level plotting operations are provided by the separate
-`karta.mapping <https://github.com/fortyninemaps/karta-map>`__
+```karta.mapping`` <https://github.com/fortyninemaps/karta-map>`__
 submodule, not described here.
 
 .. code:: python
@@ -487,7 +485,7 @@ submodule, not described here.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7f25d4d25630>]
+    [<matplotlib.lines.Line2D at 0x7fc1a3e2d390>]
 
 
 
@@ -508,7 +506,7 @@ Each geometry has appropriate methods to save data:
 
 .. parsed-literal::
 
-    <karta.vector.geojson.GeoJSONWriter at 0x7f25d4cd0da0>
+    <karta.vector.geojson.GeoJSONWriter at 0x7fc1a3ddfe80>
 
 
 
@@ -548,7 +546,7 @@ To provide flexibility, different band instances are provided by
 
 .. parsed-literal::
 
-    [<karta.raster.band.CompressedBand object at 0x7f25d4ccdac8>]
+    [<karta.raster.band.CompressedBand object at 0x7fc1a3ddaac8>]
 
 
 .. code:: python
@@ -621,5 +619,89 @@ apply, i.e. one can do things like:
 The ``RegularGrid`` instance provides methods for sampling rasters,
 computing statistics, clipping and resizing, and resampling.
 
-**TODO: describe geotransform tuple and demstrate grid creation**
+**Note**
+
+When getting raster data, the array provided by slicing is not
+necessarily a view of the underlying data, and may be a copy instead.
+Modifying the array is not guaranteed to modify the raster. When the
+raster data must be replaced by an element-wise computation, use the
+``Grid.apply(func)`` method, which operates in-place. The ``apply``
+method may be chained.
+
+::
+
+    # Example
+    grid.apply(lambda x: x**2) \
+        .apply(np.sin) \
+        .apply(lambda x: np.where(x < 0.5, grid.nodata, x))
+
+This handles nodata pixels automatically. If the raster data must be
+replaced by arbitrary data, set it explicitly with ``Grid[:,:] = ...``.
+
+::
+
+    # Example
+    grid[:,:] = np.convolve(np.ones([3,3])/9.0, grid[:,:], mode='same')
+
+New ``RegularGrid`` instances are created by specifying a geotransform.
+The geotransform is represented by a tuple of the form
+
+::
+
+    transform = (xll, yll, dx, dy, sx, sy)
+
+where ``xll`` and ``yll`` are the coordinates of the lower left grid
+corner, ``dx`` and ``dy`` specify resolution, and ``sx`` and ``sy``
+specify grid skew and rotation.
+
+Additional arguments define the grid size and coordinate reference
+system, and initialize grid data. The following creates a "north-up"
+orthogonal grid with uniform spacing of 10 meters and an origin at (0,
+0).
+
+.. code:: python
+
+    from karta.crs import WebMercator
+    grid = RegularGrid([0, 0, 10.0, 10.0, 0.0, 0.0],
+                       values=np.zeros([1000, 1000]),
+                       nodata_value=np.nan,
+                       crs=WebMercator)
+
+.. code:: python
+
+    grid.resolution
+
+
+
+
+.. parsed-literal::
+
+    (10.0, 10.0)
+
+
+
+.. code:: python
+
+    grid.extent
+
+
+
+
+.. parsed-literal::
+
+    (5.0, 9995.0, 5.0, 9995.0)
+
+
+
+.. code:: python
+
+    grid.bbox
+
+
+
+
+.. parsed-literal::
+
+    (0.0, 0.0, 10000.0, 10000.0)
+
 
