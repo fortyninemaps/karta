@@ -34,17 +34,26 @@ class Grid(object):
     def max(self):
         """ Return the maximum non-nan in self.data. """
         tmp = self[self.data_mask]
-        return tmp.max()
+        if len(tmp) != 0:
+            return tmp.max()
+        else:
+            return np.nan
 
     def min(self):
         """ Return the minimum non-nan in self.data. """
         tmp = self[self.data_mask]
-        return tmp.min()
+        if len(tmp) != 0:
+            return tmp.min()
+        else:
+            return np.nan
 
     def minmax(self):
         """ Return the minimum and maximum value of data array. """
         tmp = self[self.data_mask]
-        return (tmp.min(), tmp.max())
+        if len(tmp) != 0:
+            return (tmp.min(), tmp.max())
+        else:
+            return (np.nan, np.nan)
 
     def apply(self, func):
         """ Apply a function *func* to grid values """
