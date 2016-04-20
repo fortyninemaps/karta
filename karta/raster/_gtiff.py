@@ -188,7 +188,7 @@ def gdal_type(dtype):
 def read(fnm, in_memory, ibands=ALL, bandclass=CompressedBand):
     """ Read a GeoTiff file and return a numpy array and a dictionary of header
     information.
-    
+
     Parameters
     ----------
     fnm : str

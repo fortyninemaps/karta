@@ -36,6 +36,10 @@ def read_gtiff(fnm, in_memory=True, ibands=_gtiff.ALL, **kw):
         if True (default), read entire dataset into memory
     ibands : int | list of ints, optional
         band(s) to open (default all)
+    bandclass : Band class, optional
+        class of band used by returned grid (default karta.band.CompressedBand)
+        if in_memory is True, this parameter is ignored and the returned grid
+        will have bands of type karta.raster._gtiff.GdalFileBand
     """
     bands, hdr = _gtiff.read(fnm, in_memory, ibands, **kw)
 
