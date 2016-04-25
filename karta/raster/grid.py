@@ -410,7 +410,24 @@ class RegularGrid(Grid):
         return isdata(self[:,:])
 
     def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
-        """ Generator for grid chunks of *size* and *overlap*.
+        """ Generator for grid chunks, useful for parallel or memory-controlled
+        grid processing.
+
+        Parameters
+        ----------
+        size : tuple of two integers, optional
+            size of the chunks ot return (default approximately one-quarter of
+            each dimension)
+        overlap : tuple of two integers, optional
+            number of pixels of overlap (default (0, 0))
+        copy : bool
+            whether to force returned grids to be copies
+            warning: output may be a copy regardless, depending on the band class
+
+        Yields
+        ------
+        RegularGrid
+            smaller grids
         """
         ny, nx = self.size
         if size == (-1, -1):
