@@ -282,3 +282,16 @@ def _isnumpytype(o):
     return hasattr(o, "dtype")
 
 write_shapefile = ogr_write
+
+class ShapefileOutMixin(object):
+    """ Mixin class to be added to geometry objects, adding shapefile
+    functionality.
+    """
+
+    def to_shapefile(self, fnm):
+        """ Save line to a shapefile """
+        if not fnm.endswith(".shp"):
+            fnm = fnm + ".shp"
+        shp.ogr_write(fnm, self.__geo_interface__)
+        return
+

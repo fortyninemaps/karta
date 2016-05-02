@@ -2,6 +2,7 @@
 
 import unittest
 from karta import Point, Multipoint, Line, Polygon
+from karta.vector.geometry import multipart_from_singleparts
 from karta.crs import LonLatWGS84
 
 class TestVectorGeometry(unittest.TestCase):
@@ -13,30 +14,30 @@ class TestVectorGeometry(unittest.TestCase):
         self.data = [x_*y_ for (x_, y_) in self.vertices]
         return
 
-    def test_multipoint_from_points(self):
-        pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LonLatWGS84)
+    def test_multipart_from_points(self):
+        pts = [Point((x, y), properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
 
-        mp = Multipoint(pts)
+        mp = multipart_from_singleparts(pts)
         ans = Multipoint(self.vertices, data={"p":range(len(pts))}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)
         return
 
     def test_line_from_points(self):
-        pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LonLatWGS84)
+        pts = [Point((x, y), properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
 
-        mp = Line(pts)
-        ans = Line(self.vertices, data={"p":range(len(pts))}, crs=LonLatWGS84)
-        self.assertEqual(mp, ans)
+        line = Line([pt.vertex for pt in pts], crs=LonLatWGS84)
+        ans = Line(self.vertices, crs=LonLatWGS84)
+        self.assertEqual(line, ans)
         return
 
     def test_polygon_from_points(self):
-        pts = [Point((x, y), data={"d": d}, properties={"p":i}, crs=LonLatWGS84)
+        pts = [Point((x, y), properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(self.vertices, self.data))]
-        mp = Polygon(pts)
-        ans = Polygon(self.vertices, data={"p":range(len(pts))}, crs=LonLatWGS84)
-        self.assertEqual(mp, ans)
+        poly = Polygon([pt.vertex for pt in pts], crs=LonLatWGS84)
+        ans = Polygon(self.vertices, crs=LonLatWGS84)
+        self.assertEqual(poly, ans)
         return
 
     def test_multipoint_datadict(self):

@@ -1,7 +1,7 @@
 """
-Geographical measurement and simple analysis module for Python. Provides
-Point, Multipoint, Line, and Polygon classes, with methods for simple
-measurements such as distance, area, and bearing.
+Geographical measurement and simple analysis module for Python. Provides Point,
+Line, and Polygon classes, and their multipoint equivalents, with methods for
+simple measurements such as distance, area, and direction.
 """
 from __future__ import division
 
@@ -9,11 +9,13 @@ import math
 import os
 import sys
 import itertools
+import numbers
 import warnings
 import numpy as np
-from . import geojson
+from .decorators import cache_decorator
+from .geojson import GeoJSONOutMixin
+from .shp import ShapefileOutMixin
 from . import xyfile
-from . import shp
 from .table import Table, Indexer
 from . import quadtree
 from . import _cvectorgeo
@@ -22,132 +24,69 @@ from ..crs import Cartesian, CartesianCRS, ProjectedCRS, GeographicalCRS
 from ..crs import SphericalEarth
 from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
 
-def cache_decorator(key):
-    """ Returns a method decorator that stores the result of a function
-    invocation under `self._cache[key]`
-
-    Does not update cache when *crs* is specified. """
-    def wrapping_func(f):
-        def replacement_func(self, *args, **kwargs):
-            if key in self._cache:
-                ret = self._cache[key]
-            else:
-                ret = f(self, *args, **kwargs)
-                if "crs" not in kwargs:
-                    self._cache[key] = (ret)
-            return ret
-        return replacement_func
-    return wrapping_func
-
 class Geometry(object):
     """ This is the abstract base class for all geometry types """
 
-    __slots__ = ["_geotype", "properties", "crs", "_cache"]
+    #__slots__ = ["_geotype", "properties", "crs", "_cache"]
 
-    def __init__(self, crs=Cartesian):
-        self._geotype = None
-        self.properties = {}
+    def __init__(self, properties=None, crs=Cartesian):
         self.crs = crs
+        if isinstance(properties, dict):
+            self.properties = properties
+        elif properties is not None:
+            raise TypeError("properties must be a dictionary")
+        else:
+            self.properties = {}
         self._cache = {}
+        self._geotype = None
         return
 
     @staticmethod
     def _distance(pos0, pos1):
         """ Generic method for calculating distance between positions that
         respects CRS """
-        if pos0.crs == pos1.crs:
-            (x0,y0) = pos0.x, pos0.y
-            (x1,y1) = pos1.x, pos1.y
-            if isinstance(pos0.crs, GeographicalCRS):
-                ((x0,x1), (y0,y1)) = pos0.crs.project([x0, x1], [y0, y1],
-                                                      inverse=True)
-                _, _, dist = pos0.crs.inverse(x0, y0, x1, y1, radians=False)
-            else:
-                dist = math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
+        (x0, y0) = pos0.vertex[:2]
+        (x1, y1) = pos1.get_vertex(pos0.crs)[:2]
+        if isinstance(pos0.crs, GeographicalCRS):
+            ((x0,x1), (y0,y1)) = pos0.crs.project([x0, x1], [y0, y1],
+                                                  inverse=True)
+            _, _, dist = pos0.crs.inverse(x0, y0, x1, y1, radians=False)
         else:
-            raise CRSError("Positions must use the same CRS")
+            dist = math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
         return dist
 
-    @property
-    def d(self):
-        return Indexer(self.data)
-
-    def to_shapefile(self, fnm):
-        """ Save line to a shapefile """
-        if not fnm.endswith(".shp"):
-            fnm = fnm + ".shp"
-        shp.ogr_write(fnm, self.__geo_interface__)
-        return
-
-    def to_geojson(self, f, indent=None, **kwargs):
-        """ Write data as a GeoJSON string to a file-like object `f`.
-
-        Parameters
-        ----------
-        f : file-like object to recieve the GeoJSON string
-
-        *kwargs* include:
-        crs : coordinate reference system
-        bbox : an optional bounding box tuple in the form (w,e,s,n)
-        """
-        try:
-            if not hasattr(f, "write"):
-                fobj = open(f, "w")
-            else:
-                fobj = f
-            writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
-            writer.write_json(fobj, indent)
-        finally:
-            if not hasattr(f, "write"):
-                fobj.close()
-        return writer
-
-
-class Point(Geometry):
+class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
     """ Point object instantiated with:
 
     Parameters
     ----------
     coords : 2-tuple or 3-tuple
-    data : list, dict, Table object, or None
-        point-specific data [default None]
     properties : dict or None
         geometry specific data [default None]
     crs : karta.crs.CRS subclass
-        [default CARTESIAN]
+        [default Cartesian]
     """
-    __slots__ = ["vertex", "data", "rank"]
+    #__slots__ = ["vertex", "rank"]
 
-    def __init__(self, coords, data=None, properties=None, **kwargs):
+    def __init__(self, coords, properties=None, **kwargs):
         try:
             self.rank = 2 if len(coords) == 2 else 3
         except TypeError:
             raise TypeError("Point coordinates must be a sequence")
-        super(Point, self).__init__(**kwargs)
+        super(Point, self).__init__(properties=properties, **kwargs)
+        self.vertex = tuple(coords)
         self._geotype = "Point"
-        self.vertex = coords
-
-        if data is None:
-            self.data = data
-        else:
-            self.data = Table(data)
-
-        if hasattr(properties, "keys"):
-            self.properties = properties
-        else:
-            properties = {}
         return
 
     def __getitem__(self, idx):
         return self.vertex[idx]
 
     def __repr__(self):
-        return 'Point(' + str(self.vertex) + ')'
+        return 'Point({0}, {1})'.format(self.x, self.y)
 
     def __eq__(self, other):
         try:
             return (tuple(self.vertex) == tuple(other.vertex)) and \
-                   (self.data == other.data) and \
                    (self.properties == other.properties) and \
                    (self.crs == other.crs)
         except AttributeError:
@@ -235,8 +174,7 @@ class Point(Geometry):
         xg2, yg2, _ = self.crs.forward(xg1, yg1, direction, distance,
                                         radians=radians)
         x, y = self.crs.project(xg2, yg2)
-        return Point((x, y), properties=self.properties, data=self.data,
-                     crs=self.crs)
+        return Point((x, y), properties=self.properties, crs=self.crs)
 
     def distance(self, other):
         """ Returns a distance to another Point. If the coordinate system is
@@ -259,170 +197,29 @@ class Point(Geometry):
             self.vertex = [a+b for a,b in zip(self.vertex, shift_vector)]
             return self
         else:
-            vertex = [a+b for a,b in zip(self.vertex, shift_vector)]
-            return Point(tuple(vertex), data=self.data, properties=self.properties, crs=self.crs)
+            vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
+            return Point(vertex, properties=self.properties, crs=self.crs)
 
-    def as_geojson(self, indent=2, **kwargs):
-        """ Write data as a GeoJSON string to a file-like object `f`.
+class MultiVertexBase(Geometry):
 
-        Parameters
-        ----------
-        f : file-like object to recieve the GeoJSON string
-        crs : karta.crs.CRS subclass
-            coordinate reference system, optional
-        bbox : 4-tuple
-            a bounding box in the form (w,e,s,n), optional
-        """
-        writer = geojson.GeoJSONWriter(self, **kwargs)
-        return writer.print_json(indent)
+    #__slots__ = ["vertices", "data", "rank", "quadtree"]
 
+    def __init__(self, vertices, **kwargs):
+        super(MultiVertexBase, self).__init__(**kwargs)
+        self.vertices = list(map(tuple, vertices))
 
-class MultipointBase(Geometry):
-    """ Point cloud with associated attributes. This is a base class for the
-    polyline and polygon classes. """
-
-    __slots__ = ["vertices", "data", "rank", "quadtree"]
-
-    def __init__(self, vertices, data=None, properties=None, **kwargs):
-        """ Partial init function that establishes geometry rank and creates a
-        metadata attribute.
-        """
-        super(MultipointBase, self).__init__(**kwargs)
-        self._geotype = "MultipointBase"
-        vertices = list(vertices)
-        if len(vertices) > 0:
-
-            def ispoint(a):
-                return getattr(a, "_geotype", None) == "Point"
-
-            if all(ispoint(a) for a in vertices):
-                pts = vertices
-
-                # Consolidate a list of points
-                rank = pts[0].rank
-                crs = pts[0].crs
-                if len(pts) != 1 and any(crs != pt.crs for pt in pts[1:]):
-                    raise CRSError("All points must share the same CRS")
-                if len(pts) != 1 and any(rank != pt.rank for pt in pts[1:]):
-                    raise GInitError("Input must have consistent rank")
-
-                self.vertices = [pt.vertex for pt in pts]
-                self.rank = rank
-                self.crs = crs
-
-                # Data
-                if data is not None:
-                    raise ValueError("data kweyword disallowed when "
-                                     "constructing from points")
-                keys = set.intersection(
-                            *map(lambda pt: set(pt.properties.keys()), pts))
-                if len(keys) != 0:
-                    d = {}
-                    for k in keys:
-                        d[k] = [pt.properties[k] for pt in pts]
-                    self.data = Table(d)
-                else:
-                    self.data = None
-
-            else:
-                # Construct from a list of positions (tuples)
-                self.rank = len(vertices[0])
-
-                if not 2 <= self.rank <= 3:
-                    raise GInitError("Input must be doubles or triples")
-                if any(self.rank != len(v) for v in vertices):
-                    raise GInitError("Input must have consistent rank")
-
-                self.vertices = [tuple(v) for v in vertices]
-
-                if data is None:
-                    self.data = None
-                else:
-                    self.data = Table(data)
-
-        else:
-            self.rank = None
-            self.vertices = []
-
-        if hasattr(properties, "keys"):
-            self.properties = properties
-        elif properties is None:
-            self.properties = {}
-        else:
-            raise GInitError("value provided as 'properties' must be a hash")
-
-        self.quadtree = None
-        return
-
-    def __repr__(self):
-        if len(self) < 5:
-            ppverts = str(self.vertices)
-        else:
-            ppverts = str(self.vertices[:2])[:-1] + "..." + str(self.vertices[-2:])[1:]
-        return '{typ}({verts})>'.format(
-                typ=str(type(self))[:-1], verts=ppverts)
-
-    def __len__(self):
-        return len(self.vertices)
-
-    def __getitem__(self, key):
-        d = None
-        if isinstance(key, (int, np.int64)):
-            if self.data is not None:
-                d = Table([self.data[key]], fields=self.data._fields)
-            return Point(self.vertices[key], data=d, properties=self.properties,
-                         crs=self.crs)
-        elif isinstance(key, slice):
-            if self.data is not None:
-                d = Table(self.data[key], fields=self.data._fields)
-            return type(self)(self.vertices[key], data=d,
-                              properties=self.properties, crs=self.crs)
-        else:
-            raise GGeoError('Index must be an integer or a slice object')
-
-    def __setitem__(self, key, value):
-        if not isinstance(key, int):
-            raise GGeoError('Indices must be integers')
         try:
-            self.vertices[key] = value.vertex
-            if None not in (self.data, value.data):
-                self.data[key] = tuple(value.data[value.data._fields.index(f)] for f in self._fields)
-            elif self.data is not None:
-                self.data[key] = (None for i in range(len(self.data._fields)))
-
-        except AttributeError:
-            self.vertices[key] = value
-            if self.data is not None:
-                self.data[key] = (None for i in range(len(self.data._fields)))
-
-        if getattr(value, "_geotype", None) == "Point":
-            self.vertices[key] = value.vertex
-            if self.data is not None:
-                self.data[key] = value.data._data[0]
-        elif len(value) == self.rank:
-            self.vertices[key] = value
-        else:
-            raise GGeoError('Cannot insert non-Pointlike value with '
-                            'length != {0}'.format(self.rank))
+            self.rank = 2 if len(self.vertices[0]) == 2 else 3
+        except IndexError:
+            self.rank = 3
+        except TypeError:
+            raise TypeError("Coordinates must be a sequence of sequences")
         return
-
-    def __delitem__(self, key):
-        if len(self) > key:
-            del self.vertices[key]
-            del self.data[key]
-        else:
-            raise GGeoError('Index ({0}) exceeds length'
-                            '({1})'.format(key, len(self)))
-        return
-
-    def __iter__(self):
-        return (self[i] for i in range(len(self)))
 
     def __eq__(self, other):
         try:
             return (self._geotype == other._geotype) and \
                    (self.vertices == other.vertices) and \
-                   (self.data == other.data) and \
                    (self.properties == other.properties) and \
                    (self.crs == other.crs)
         except (AttributeError, TypeError):
@@ -436,6 +233,44 @@ class MultipointBase(Geometry):
         hd = hash(tuple(self.vertices))
         hc = hash(str(self.crs))
         return ht + (hd << 1) + hd + hc
+
+    def __getitem__(self, key):
+        d = None
+        if isinstance(key, (int, np.int64)):
+            return Point(self.vertices[key], properties=self.properties, crs=self.crs)
+        elif isinstance(key, slice):
+            return type(self)(self.vertices[key], properties=self.properties, crs=self.crs)
+        else:
+            raise GGeoError('Index must be an integer or a slice object')
+
+    def __setitem__(self, key, value):
+        if not isinstance(key, int):
+            raise GGeoError('Indices must be integers')
+
+        if getattr(value, "_geotype", None) == "Point":
+            self.vertices[key] = value.vertex
+        elif len(value) == self.rank:
+            self.vertices[key] = value
+        else:
+            raise GGeoError('Cannot insert non-Pointlike value with '
+                            'length != {0}'.format(self.rank))
+        return
+
+    def __delitem__(self, key):
+        if len(self) > key:
+            del self.vertices[key]
+        else:
+            raise GGeoError('Index ({0}) exceeds length'
+                            '({1})'.format(key, len(self)))
+        return
+
+    def __iter__(self):
+        return (self[i] for i in range(len(self)))
+
+    def __len__(self):
+        return len(self.vertices)
+
+class MultiVertexMixin(object):
 
     def _bbox_overlap(self, other):
         """ Return whether bounding boxes between self and another geometry
@@ -462,11 +297,6 @@ class MultipointBase(Geometry):
     @property
     def coordinates(self):
         return self.get_coordinate_lists()
-
-    def print_vertices(self):
-        """ Prints an enumerated list of indices. """
-        for i, vertex in enumerate(self.vertices):
-            print("{0}\t{1}".format(i, vertex))
 
     def get_vertices(self, crs=None):
         """ Return vertices as an array. """
@@ -504,7 +334,10 @@ class MultipointBase(Geometry):
             return self
         else:
             vertices = list(map(f, self.vertices))
-            return type(self)(vertices, data=self.data, properties=self.properties, crs=self.crs)
+            kw = {"properties": self.properties, "crs": self.crs}
+            if hasattr(self, "data"):
+                kw["data"] = self.data
+            return type(self)(vertices, **kw)
 
     def _matmult(self, A, x):
         """ Return Ax=b """
@@ -538,20 +371,14 @@ class MultipointBase(Geometry):
         vertices = []
         for x,y in self.get_vertices():
             vertices.append(tuple(np.dot(M, [x, y, 1])[:2]))
-        return type(self)(vertices, data=self.data, properties=self.properties,
-                          crs=self.crs)
+        return type(self)(vertices, properties=self.properties, crs=self.crs)
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
         if len(idxs) == 0:
             raise ValueError("attempted to extract a zero-length subset")
         vertices = [self.vertices[i] for i in idxs]
-        if self.data is not None:
-            data = Table([self.data[i] for i in idxs], fields=self.data.fields)
-        else:
-            data = None
-        subset = type(self)(vertices, data=data, properties=self.properties,
-                            crs=self.crs)
+        subset = type(self)(vertices, properties=self.properties, crs=self.crs)
         return subset
 
     def flat_distances_to(self, pt):
@@ -671,145 +498,13 @@ class MultipointBase(Geometry):
         xyfile.write_xy(self.get_vertices(), fnm, delimiter=delimiter, header=header)
         return
 
-    def as_geojson(self, indent=2, **kwargs):
-        """ Print representation of internal data as a GeoJSON string.
 
-        Parameters
-        ----------
-        indent : int
-            spaces to intent JSON levels
-        bbox : 4-tuple
-            a bounding box in the form (w,e,s,n), optional
-        crs : karta.crs.CRS subclass
-        """
-        writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
-        return writer.print_json(indent)
-
-
-class Multipoint(MultipointBase):
-    """ Point cloud with associated attributes. This is a base class for the
-    polyline and polygon classes.
-
-    Parameters
-    ----------
-    coords : list of 2-tuples or 3-tuples
-    data : list, dict, Table object, or None
-        point-specific data [default None]
-    properties : dict or None
-        geometry specific data [default None]
-    crs : karta.crs.CRS subclass
-        [default CARTESIAN]
-    """
-
-    __slots__ = []
-
-    def __init__(self, vertices, data=None, properties=None, **kwargs):
-        """ Partial init function that establishes geometry rank and creates a
-        metadata attribute.
-        """
-        super(Multipoint, self).__init__(vertices, data=data,
-                                                   properties=properties,
-                                                   **kwargs)
-        self._geotype = "Multipoint"
-        return
-
-    def __contains__(self, other):
-        if other in (pt for pt in self):
-            return True
-        else:
-            return False
-
-    @property
-    def __geo_interface__(self):
-        p = self.properties.copy()
-        p["_karta_proj4"] = self.crs.get_proj4()
-        return {"type": "Feature",
-                "geometry": self.geomdict,
-                "properties": p}
-
-    @property
-    def geomdict(self):
-        return {"type" : "MultiPoint",
-                "bbox" : self.bbox,
-                "coordinates" : self.vertices}
-
-    def within_radius(self, pt, radius):
-        """ Return Multipoint of subset that is within *radius* of *pt*.
-        """
-        if self.quadtree is None:
-            distances = self.distances_to(pt)
-            indices = [i for i,d in enumerate(distances) if d <= radius]
-        else:
-            search_bbox = (pt.x-radius, pt.y-radius, pt.x+radius, pt.y+radius)
-            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
-            possible_pts = []
-            for t in possible_pt_tuples:
-                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
-                                                        crs=self.crs))
-            indices = [p.properties["idx"] for p in possible_pts
-                            if pt.distance(p) <= radius]
-
-        return self._subset(indices)
-
-    def within_bbox(self, bbox):
-        """ Return Multipoint subset that is within a square bounding box
-        given by (xmin, xymin, xmax, ymax).
-        """
-        filtbbox = lambda pt: (bbox[0] <= pt.vertex[0] <= bbox[2]) and \
-                              (bbox[1] <= pt.vertex[1] <= bbox[3])
-        indices = [i for (i, pt) in enumerate(self) if filtbbox(pt)]
-        return self._subset(indices)
-
-    def within_polygon(self, poly):
-        """ Return Multipoint subset that is within a polygon.
-        """
-        if self.quadtree is None:
-            indices = [i for (i, pt) in enumerate(self) if poly.contains(pt)]
-        else:
-            ext = poly.get_extent(crs=self.crs)
-            search_bbox = (ext[0], ext[2], ext[1], ext[3])
-            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
-            possible_pts = []
-            for t in possible_pt_tuples:
-                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
-                                                        crs=self.crs))
-            indices = [p.properties["idx"] for p in possible_pts
-                            if poly.contains(p)]
-        return self._subset(indices)
-
-    def build_quadtree(self, buff=1e-8):
-        """ Construct an internal quadtree with the current geometry data.
-
-        Parameters
-        ----------
-        buff : float or 4-tuple of floats
-            specifies a spatial buffer to create around the current point
-            bounding box, permitting the geometry to grow after the quadtree
-            has been initialized. *buff* may be a scalar or a sequence of
-            (left, right, bottom, top). (optional)
-        """
-        try:
-            bf = (buff[0], buff[1], buff[2], buff[3])
-        except TypeError:
-            bf = (buff, buff, buff, buff)
-
-        x0, y0, x1, y1 = self.bbox
-        self.quadtree = quadtree.QuadTree((x0-bf[0], y0-bf[1], x1+bf[2], y1+bf[3]))
-        for i, pt in enumerate(self):
-            self.quadtree.addpt((pt.x, pt.y, i))
-        return
-
-class ConnectedMultipoint(MultipointBase):
-    """ Class for Multipoints in which vertices are assumed to be connected. """
-
-    __slots__ = []
-
-    @property
-    def bbox(self):
-        return self.get_bbox()
+class ConnectedMultiVertexMixin(MultiVertexMixin):
 
     @cache_decorator("bbox")
     def get_bbox(self, crs=None):
+        """ Dateline-aware get_bbox for geometries consisting of connected
+        vertices """
         if isinstance(self.crs, GeographicalCRS):
             X, Y = self.get_coordinate_lists(crs)
             xmin = xmax = X[0]
@@ -838,7 +533,7 @@ class ConnectedMultipoint(MultipointBase):
             xmax = (xmax+180) % 360 - 180
             bbox = (xmin, ymin, xmax, ymax)
         else:
-            bbox = super(ConnectedMultipoint, self).get_bbox()
+            bbox = super(ConnectedMultiVertexMixin, self).get_bbox()
         return bbox
 
     @property
@@ -893,7 +588,7 @@ class ConnectedMultipoint(MultipointBase):
                 if np.nan not in vertex:
                     interx_points.append(Point(vertex, properties=self.properties,
                                                crs=self.crs))
-            return Multipoint(interx_points)
+            return multipart_from_singleparts(interx_points)
         else:
             # FIXME: implement for ellipsoidal coordinate systems
             interx = (geodesy.intersection_spherical(a, b)
@@ -905,7 +600,7 @@ class ConnectedMultipoint(MultipointBase):
                 if np.nan not in vertex:
                     interx_points.append(Point(vertex, properties=self.properties,
                                                crs=self.crs))
-            return Multipoint(interx_points)
+            return multipart_from_singleparts(interx_points)
 
 
     def _nearest_to_point(self, pt):
@@ -953,7 +648,7 @@ class ConnectedMultipoint(MultipointBase):
         return Point(minpt, crs=self.crs)
 
     def within_distance(self, pt, distance):
-        """ Test whether a point is within *distance* of a ConnectedMultipoint.
+        """ Test whether a point is within *distance* geometry.
         """
         return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments)
 
@@ -971,29 +666,24 @@ class ConnectedMultipoint(MultipointBase):
 
         return any(self._seg_crosses_dateline(seg) for seg in self.segments)
 
-
-class Line(ConnectedMultipoint):
+class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
     """ Line composed of connected vertices.
 
     Parameters
     ----------
     coords : list of 2-tuples or 3-tuples
-    data : list, dict, Table object, or None
-        point-specific data [default None]
     properties : dict or None
         geometry specific data [default None]
     crs : karta.crs.CRS subclass
-        [default CARTESIAN]
+        [default Cartesian]
     """
-    __slots__ = []
+    #__slots__ = []
 
-    def __init__(self, vertices, data=None, properties=None, **kwargs):
+    def __init__(self, vertices, **kwargs):
         """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
         """
-        super(ConnectedMultipoint, self).__init__(vertices, data=data,
-                                                  properties=properties,
-                                                  **kwargs)
+        super(Line, self).__init__(vertices, **kwargs)
         self._geotype = "Line"
         return
 
@@ -1019,19 +709,7 @@ class Line(ConnectedMultipoint):
         if self._geotype != other._geotype:
             raise GGeoError("Geometry mismatch ({0} != {1})".format(self._geotype, other._geotype))
 
-        if None not in (self.data, other.data):
-            self.data._data.extend(other.data._data)
-        elif self.data == other.data:
-            self.data = None
-        else:
-            raise GGeoError('Cannot add geometries with mismatched metadata')
-        i = len(self)
         self.vertices.extend(other.vertices)
-
-        if self.quadtree is not None:
-            for pt in other:
-                self.quadtree.addpt((pt.x, pt.y, i))
-                i += 1
         self._cache = {}
         return self
 
@@ -1090,45 +768,40 @@ class Line(ConnectedMultipoint):
 
     def to_polygon(self):
         """ Returns a polygon. """
-        return Polygon(self.vertices, data=self.data, properties=self.properties,
-                       crs=self.crs)
+        return Polygon(self.vertices, properties=self.properties, crs=self.crs)
 
-
-class Polygon(ConnectedMultipoint):
+class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, Geometry, GeoJSONOutMixin, ShapefileOutMixin):
     """ Polygon, composed of a closed sequence of vertices.
 
     Parameters
     ----------
     coords : list of 2-tuples or 3-tuples
-    data : list, dict, Table object, or None
-        point-specific data [default None]
     properties : dict or None
         geometry specific data [default None]
     subs : list of Polygon instances or None
         sub-polygons [default None]
     crs : karta.crs.CRS subclass
-        [default CARTESIAN]
+        [default Cartesian]
     """
-    __slots__ = ["subs"]
-
-    def __init__(self, vertices, data=None, properties=None, subs=None, **kwargs):
-        vertices = list(vertices)
-        ConnectedMultipoint.__init__(self, vertices, data=data,
-                                     properties=properties, **kwargs)
+    #__slots__ = ["subs"]
+    def __init__(self, vertices, subs=None, **kwargs):
+        """ Partial init function that establishes geometry rank and creates a
+        metadata attribute.
+        """
+        super(Polygon, self).__init__(vertices, **kwargs)
         self._geotype = "Polygon"
-        self.subs = subs if subs is not None else []
+        if subs is not None:
+            self.subs = list(subs)
+        else:
+            self.subs = []
         return
 
     def __getitem__(self, key):
         if isinstance(key, slice):
             ind = key.indices(len(self))
             if len(self) != ((ind[1] - ind[0]) // ind[2]):
-                if self.data is None:
-                    d = None
-                else:
-                    d = self.data[key]
-                return Line(self.vertices[key], data=d,
-                            properties=self.properties, crs=self.crs)
+                return Line(self.vertices[key], properties=self.properties,
+                            crs=self.crs)
         return super(Polygon, self).__getitem__(key)
 
     @property
@@ -1151,12 +824,7 @@ class Polygon(ConnectedMultipoint):
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
         vertices = [self.vertices[i] for i in idxs]
-        if self.data is None:
-            data = None
-        else:
-            data = Table([self.data[i] for i in idxs], fields=self.data.fields)
-        subset = Line(vertices, data=data, properties=self.properties,
-                      crs=self.crs)
+        subset = Line(vertices, properties=self.properties, crs=self.crs)
         return subset
 
     def isclockwise(self):
@@ -1294,34 +962,274 @@ class Polygon(ConnectedMultipoint):
     def to_line(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
         v = self.vertices + self.vertices[0]
-        return Line(v, properties=self.properties, data=self.data, crs=self.crs)
+        return Line(v, properties=self.properties, crs=self.crs)
+
+class Multipart(Geometry):
+    """ Base for objects consisting of multiple singular types. """
+
+    def __init__(self, vertices, data=None, **kwargs):
+        super(Multipart, self).__init__(**kwargs)
+        self.vertices = list(vertices)
+
+        if data is None:
+            self.data = Table(size=len(self.vertices))
+        else:
+            self.data = Table(data)
+        return
+
+    @property
+    def d(self):
+        return Indexer(self.data)
+
+    def __eq__(self, other):
+        try:
+            return (self._geotype == other._geotype) and \
+                   (self.vertices == other.vertices) and \
+                   (self.data == other.data) and \
+                   (self.properties == other.properties) and \
+                   (self.crs == other.crs)
+        except (AttributeError, TypeError):
+            return False
+
+    def __neq__(self, other):
+        return ~(self == other)
+
+    def __hash__(self):
+        ht = hash(self._geotype)
+        hd = hash(tuple(self.vertices))
+        hc = hash(str(self.crs))
+        return ht + (hd << 1) + hd + hc
+
+    def __contains__(self, other):
+        if other in (part for part in self):
+            return True
+        else:
+            return False
+
+    def __len__(self):
+        return len(self.vertices)
+
+class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
+    """ Point cloud with associated attributes. This is a base class for the
+    polyline and polygon classes.
+
+    Parameters
+    ----------
+    coords : list of 2-tuples or 3-tuples
+    data : list, dict, Table object, or None
+        point-specific data [default None]
+    properties : dict or None
+        geometry specific data [default None]
+    crs : karta.crs.CRS subclass
+        [default Cartesian]
+    """
+
+    #__slots__ = []
+
+    def __init__(self, vertices, **kwargs):
+        """ Partial init function that establishes geometry rank and creates a
+        metadata attribute.
+        """
+        super(Multipoint, self).__init__(list(map(tuple, vertices)), **kwargs)
+        try:
+            self.rank = 2 if len(self.vertices[0]) == 2 else 3
+        except IndexError:
+            self.rank = 3
+        except TypeError:
+            raise TypeError("Coordinates must be a sequence of sequences")
+        self.quadtree = None
+        self._geotype = "Multipoint"
+        return
+
+    def __getitem__(self, key):
+        if isinstance(key, numbers.Integral):
+            p = self.d[key]
+            p.update(self.properties)
+            return Point(self.vertices[key], properties=p, crs=self.crs)
+        elif isinstance(key, slice):
+            return Multipoint(self.vertices[key], properties=self.properties,
+                              data=self.d[key], crs=self.crs)
+
+    def __setitem__(self, key, value):
+        if isinstance(key, numbers.Integral):
+            if hasattr(value, "vertex"):
+                self.vertices[key] = value.get_vertex(self.crs)
+                row = []
+                for field in self.data.fields:
+                    row.append(value.properties.get(field, None))
+                self.data[key] = tuple(row)
+            else:
+                if len(value) == self.rank:
+                    self.vertices[key] = value
+                self.data[key] = (None for _ in self.data.fields)
+
+    def __iter__(self):
+        for i, vert in enumerate(self.vertices):
+            yield Point(vert, properties=self.d[i], crs=self.crs)
+
+    @property
+    def geomdict(self):
+        return {"type" : "MultiPoint",
+                "bbox" : self.bbox,
+                "coordinates" : self.vertices}
+
+    @property
+    def __geo_interface__(self):
+        p = self.properties.copy()
+        p["_karta_proj4"] = self.crs.get_proj4()
+        return {"type": "Feature",
+                "geometry": self.geomdict,
+                "properties": p}
+
+    def within_radius(self, pt, radius):
+        """ Return subset of Multipoint within a radius.
+
+        Parameters
+        ----------
+        pt : Point
+            point to to center filter at
+        radius : float
+            maximum distance from *pt*
+
+        Returns
+        -------
+        Multipoint
+        """
+        if self.quadtree is None:
+            distances = self.distances_to(pt)
+            indices = [i for i,d in enumerate(distances) if d <= radius]
+        else:
+            search_bbox = (pt.x-radius, pt.y-radius, pt.x+radius, pt.y+radius)
+            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
+            possible_pts = []
+            for t in possible_pt_tuples:
+                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
+                                                        crs=self.crs))
+            indices = [p.properties["idx"] for p in possible_pts
+                            if pt.distance(p) <= radius]
+
+        return self._subset(indices)
+
+    def within_bbox(self, bbox):
+        """ Return Multipoint subset that is within a square bounding box
+        given by (xmin, xymin, xmax, ymax).
+        """
+        filtbbox = lambda pt: (bbox[0] <= pt.vertex[0] <= bbox[2]) and \
+                              (bbox[1] <= pt.vertex[1] <= bbox[3])
+        indices = [i for (i, pt) in enumerate(self) if filtbbox(pt)]
+        return self._subset(indices)
+
+    def within_polygon(self, poly):
+        """ Return Multipoint subset that is within a polygon.
+        """
+        if self.quadtree is None:
+            indices = [i for (i, pt) in enumerate(self) if poly.contains(pt)]
+        else:
+            ext = poly.get_extent(crs=self.crs)
+            search_bbox = (ext[0], ext[2], ext[1], ext[3])
+            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
+            possible_pts = []
+            for t in possible_pt_tuples:
+                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
+                                                        crs=self.crs))
+            indices = [p.properties["idx"] for p in possible_pts
+                            if poly.contains(p)]
+        return self._subset(indices)
+
+    def build_quadtree(self, buff=1e-8):
+        """ Construct an internal quadtree with the current geometry data.
+
+        Parameters
+        ----------
+        buff : float or 4-tuple of floats
+            specifies a spatial buffer to create around the current point
+            bounding box, permitting the geometry to grow after the quadtree
+            has been initialized. *buff* may be a scalar or a sequence of
+            (left, right, bottom, top). (optional)
+        """
+        try:
+            bf = (buff[0], buff[1], buff[2], buff[3])
+        except TypeError:
+            bf = (buff, buff, buff, buff)
+
+        x0, y0, x1, y1 = self.bbox
+        self.quadtree = quadtree.QuadTree((x0-bf[0], y0-bf[1], x1+bf[2], y1+bf[3]))
+        for i, pt in enumerate(self):
+            self.quadtree.addpt((pt.x, pt.y, i))
+        return
+
+class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
+
+    def __init__(self, vertices, **kwargs):
+        """ Partial init function that establishes geometry rank and creates a
+        metadata attribute.
+        """
+        super(Multiline, self).__init__(vertices, **kwargs)
+        try:
+            self.rank = 2 if len(vertices[0][0]) == 2 else 3
+        except IndexError:
+            self.rank = 3
+        except TypeError:
+            raise TypeError("Coordinates must be a sequence of sequences")
+        self._geotype = "Multiline"
+        return
+
+class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
+
+    def __init__(self, vertices, properties=None, data=None, **kwargs):
+        """ Partial init function that establishes geometry rank and creates a
+        metadata attribute.
+        """
+        super(Multipolygon, self).__init__(vertices, **kwargs)
+        try:
+            self.rank = 2 if len(vertices[0][0]) == 2 else 3
+        except IndexError:
+            self.rank = 3
+        except TypeError:
+            raise TypeError("Coordinates must be a sequence of sequences")
+        self._geotype = "Multipolygon"
+        return
 
 def _reproject(xy, crs1, crs2):
     """ Reproject a coordinate (or 2-tuple of x and y vectors) from *crs1* to
     *crs2*. """
     return crs1.transform(crs2, *xy)
 
-def points_to_multipoint(points):
-    """ Merge *points* into a Multipoint instance. Point properties are stored
-    as Multipoint data. All points must use the same CRS.
-    """
-    crs = points[0].crs
-    if not all(pt.crs == crs for pt in points):
-        raise CRSError("All points must share the same CRS")
+def multipart_from_singleparts(parts, crs=None):
+    """ Merge *parts* into a Multipoint/Multiline/Multipolygon instance.
+    Properties are stored as Multipoint data. """
+    if crs is None:
+        crs = parts[0].crs
 
-    keys = list(points[0].properties.keys())
-    for pt in points[1:]:
+    keys = list(parts[0].properties.keys())
+    for part in parts[1:]:
         for key in keys:
-            if key not in pt.properties:
+            if key not in part.properties:
                 keys.pop(keys.index(key))
 
-    ptdata = {}
-    for key in keys:
-        ptdata[key] = [pt.properties[key] for pt in points]
+    if len(keys) == 0:
+        data = None
+    else:
+        data = {}
+        for key in keys:
+            data[key] = [part.properties[key] for part in parts]
 
-    vertices = [pt.vertex for pt in points]
+    if hasattr(parts[0], "vertex"):
+        vertices = [part.get_vertex(crs) for part in parts]
+    else:
+        vertices = [part.get_vertices(crs) for part in parts]
 
-    return Multipoint(vertices, data=ptdata, crs=crs)
+    gt = parts[0]._geotype
+    if gt == "Point":
+        cls = Multipoint
+    elif gt == "Line":
+        cls = Multiline
+    elif gt == "Polygon":
+        cls = Multipolygon
+    else:
+        raise GeometryError("cannot convert type '{0}' to multipart".format(gt))
+
+    return cls(vertices, data=data, crs=crs)
 
 def affine_matrix(mpa, mpb):
     """ Compute the affine transformation matrix that projects Multipoint mpa
@@ -1346,8 +1254,10 @@ def get_tile_tuple(pt, zoom):
 
     Parameters
     ----------
-    pt : geographic point to be contained within tile (Point)
-    zoom : non-negative zoom level (typically 0-18) (int)
+    pt : Point
+        geographic point to be contained within tile
+    zoom : int
+        non-negative zoom level (typically 0-18)
     """
     z = int(zoom)
     ntiles = 2**z

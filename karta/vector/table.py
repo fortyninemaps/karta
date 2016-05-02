@@ -1,15 +1,16 @@
 """ Metadata tables for vector data """
 
 from collections import Sequence
+from numbers import Integral
 
 class Table(Sequence):
     """ Represents a metadata table. """
 
-    def __init__(self, data, fields=None, checktypes=False):
+    def __init__(self, data=None, fields=None, size=None, checktypes=False):
         """ Create a collection of metadata from *data*.
 
         *data* may be:
-        
+
             - a list with uniform type
             - a dictionary with equally-sized fields of uniform type.
             - a scalar
@@ -22,19 +23,29 @@ class Table(Sequence):
         tested to ensure they are of constant type. In the usual case, this
         type-checking is foregone for speed.
         """
-        if fields is None:
-            if hasattr(data, "_fields"):        # Data is Table-like
+        if data is None:
+            if size is None:
+                raise ValueError("either `data` or `size` must be specified")
+            self._fields = []
+            self._data = [() for _ in range(size)]
+        elif fields is None:
+            if hasattr(data, "_fields"):
+                # Data is Table-like
                 self._fields = data._fields
                 self._data = data._data
-            elif hasattr(data, "keys"):         # Data is dict-like
+            elif hasattr(data, "keys"):
+                # Data is dict-like
                 self._fields = tuple(data.keys())
                 fst = data[self._fields[0]]
-                if hasattr(fst, "__iter__") and not isinstance(fst, str):   # Vector entries
+                if hasattr(fst, "__iter__") and not isinstance(fst, str):
+                    # Vector entries
                     zipvalues = zip(*[data[f] for f in self._fields])
                     self._data = [tuple(item) for item in zipvalues]
-                else:                           # Scalar entries
+                else:
+                    # Scalar entries
                     self._data = [(data[f],) for f in self._fields]
-            else:                               # Data is list or scalar
+            else:
+                # Data is list or scalar
                 self._fields = ("value",)
                 if hasattr(data, "__iter__") and not isinstance(data, str):
                     self._data = [(d,) for d in data]
@@ -155,7 +166,7 @@ class Indexer(object):
     def __getitem__(self, key):
         if isinstance(key, str):
             return self.metadata.getfield(key)
-        elif isinstance(key, int):
+        elif isinstance(key, (Integral, slice)):
             return self.metadata.get(key)
         else:
             raise KeyError("invalid key type: {0}".format(type(key)))

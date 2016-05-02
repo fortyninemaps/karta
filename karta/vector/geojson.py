@@ -498,3 +498,48 @@ def geojson2csv(fin, fout):
             f.close()
 
     return
+
+class GeoJSONOutMixin(object):
+    """ Mixin class to be added to geometry objects, adding geojson
+    functionality.
+    """
+
+    def as_geojson(self, indent=2, **kwargs):
+        """ Output representation of internal data as a GeoJSON string.
+
+        Parameters
+        ----------
+        indent : int, optional
+            indentation of generated GeoJSON (default 2)
+        crs : karta.crs.CRS subclass, optional
+            alternative coordinate reference system
+        bbox : 4-tuple, optional
+            a bounding box in the form (w,e,s,n)
+        """
+        writer = geojson.GeoJSONWriter(self, **kwargs)
+        return writer.print_json(indent)
+
+    def to_geojson(self, f, indent=None, **kwargs):
+        """ Write data as a GeoJSON string to a file-like object `f`.
+
+        Parameters
+        ----------
+        f : str or file-like object
+            file to receive GeoJSON string
+
+        *kwargs* include:
+        crs : coordinate reference system
+        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        """
+        try:
+            if not hasattr(f, "write"):
+                fobj = open(f, "w")
+            else:
+                fobj = f
+            writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
+            writer.write_json(fobj, indent)
+        finally:
+            if not hasattr(f, "write"):
+                fobj.close()
+        return writer
+

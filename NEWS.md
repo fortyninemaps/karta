@@ -1,5 +1,13 @@
 # Highlights
 
+## changes with 0.7
+
+- major refactor of geometry hierarchy
+    - adds Multiline and Multipolygon classes
+    - polygon vertices are double-nested in order to represent sub-polygons
+    - only multipart geometries now contain a data attribute
+    - implementation adopts mixin pattern
+
 ## changes with 0.6
 
 - implement raster bands

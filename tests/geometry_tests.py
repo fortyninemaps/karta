@@ -13,8 +13,8 @@ from karta.errors import CRSError
 class TestGeometry(unittest.TestCase):
 
     def setUp(self):
-        self.point = Point((1.0, 2.0, 3.0), data={"color":(43,67,10)},
-                           properties="apple")
+        self.point = Point((1.0, 2.0, 3.0),
+                           properties={"type": "apple", "color": (43,67,10)})
 
         self.vertices = [(2.0, 9.0, 9.0), (4.0, 1.0, 9.0), (4.0, 1.0, 5.0),
                          (2.0, 8.0, 0.0), (9.0, 8.0, 4.0), (1.0, 4.0, 6.0),
@@ -28,7 +28,7 @@ class TestGeometry(unittest.TestCase):
                      47.0, 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]
 
         self.mp = Multipoint(self.vertices, data=self.data)
-        self.line = Line(self.vertices, data=self.data)
+        self.line = Line(self.vertices)
         self.poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
         self.poly3 = Polygon([(0.0, 8.0, 0.5), (0.0, 5.0, 0.8), (6.0, 1.0, 0.6)])
         self.ring = Polygon([(2.0, 2.0), (4.0, 2.0), (3.0, 6.0)])
@@ -41,7 +41,7 @@ class TestGeometry(unittest.TestCase):
     def test_point_equality(self):
         pt1 = Point((3.0, 4.0))
         pt2 = Point((3.0, 4.0, 5.0))
-        pt3 = Point((3.0, 4.0, 5.0), data={"species":"T. officianale", "density":"high"})
+        pt3 = Point((3.0, 4.0, 5.0), properties={"species":"T. officianale", "density":"high"})
         self.assertFalse(pt1 == pt2)
         self.assertFalse(pt1 == pt3)
         self.assertFalse(pt2 == pt3)
@@ -96,15 +96,13 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_point_shift_inplace(self):
-        point = Point((-3.0, 5.0, 2.5), data={"color":(43,67,10)},
-                      properties="apple")
+        point = Point((-3.0, 5.0, 2.5), properties={"type": "apple", "color":(43,67,10)})
         point.shift((4.0, -3.0, 0.5), inplace=True)
         self.assertEqual(self.point, point)
         return
 
     def test_point_shift(self):
-        point = Point((-3.0, 5.0, 2.5), data={"color":(43,67,10)},
-                      properties="apple")
+        point = Point((-3.0, 5.0, 2.5), properties={"type": "apple", "color":(43,67,10)})
         point_shifted = point.shift((4.0, -3.0, 0.5))
         self.assertEqual(self.point, point_shifted)
         return
@@ -145,9 +143,8 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_multipoint_get(self):
-        self.assertEqual(self.mp[0], Point(self.vertices[0],
-                                           data=self.mp.data[0],
-                                           properties=self.mp.properties))
+        self.assertEqual(self.mp[0],
+                         Point(self.vertices[0], properties={"value": 99.0}))
         return
 
     def test_multipoint_set(self):
@@ -161,7 +158,7 @@ class TestGeometry(unittest.TestCase):
                                "severn", "churchill"])
         mp1[2] = (4.0, 5.0)
         self.assertNotEqual(mp1, mp2)
-        mp1[2] = Point((4.0, 5.0), data=["umiujaq"])
+        mp1[2] = Point((4.0, 5.0), properties={"value": "umiujaq"})
         self.assertEqual(mp1, mp2)
         return
 
@@ -180,14 +177,14 @@ class TestGeometry(unittest.TestCase):
                          data={"location": ["rankin", "corbet", "arviat",
                                             "severn", "churchill"]})
         pt = mp[3]
-        self.assertEqual(pt.data.fields, ("location",))
-        self.assertEqual(pt.data[0], ("severn",))
+        self.assertEqual(pt.properties, {"location":"severn"})
         return
 
-    def test_multipoint_slicing(self):
+    def test_multipoint_slicing1(self):
         submp = Multipoint(self.vertices[5:10], data=self.data[5:10])
         self.assertEqual(self.mp[5:10], submp)
 
+    def test_multipoint_slicing2(self):
         submp = Multipoint(self.vertices[5:], data=self.data[5:])
         self.assertEqual(self.mp[5:], submp)
         return
@@ -283,7 +280,6 @@ class TestGeometry(unittest.TestCase):
     def assertPointAlmostEqual(self, a, b):
         for (a_, b_) in zip(a.vertex, b.vertex):
             self.assertAlmostEqual(a_, b_, places=5)
-        self.assertEqual(a.data, b.data)
         self.assertEqual(a.properties, b.properties)
         self.assertEqual(a.crs, b.crs)
         return
@@ -644,15 +640,15 @@ class TestGeoInterface(unittest.TestCase):
 
     def test_point(self):
         pt = Point((1,2))
-        self.assertEqual(pt.__geo_interface__, {"type":"Point", "coordinates":(1,2)})
+        self.assertEqual(pt.geomdict, {"type":"Point", "coordinates":(1,2)})
         pt = pt.shift((2,2))
-        self.assertEqual(pt.__geo_interface__, {"type":"Point", "coordinates":(3,4)})
+        self.assertEqual(pt.geomdict, {"type":"Point", "coordinates":(3,4)})
 
     def test_poly(self):
         x = np.arange(5)
         y = x**2
         poly = Polygon(list(zip(x, y)))
-        self.assertEqual(poly.__geo_interface__,
+        self.assertEqual(poly.geomdict,
                          {"type":"Polygon",
                           "bbox":(0, 0, 4, 16),
                           "coordinates": [list(zip(x, y))]})
@@ -661,16 +657,15 @@ class TestGeoInterface(unittest.TestCase):
         x = np.arange(10)
         y = x**2
         line = Line(zip(x, y))
-        self.assertEqual(line.__geo_interface__,
+        self.assertEqual(line.geomdict,
                          {"type":"LineString",
                           "bbox":(0, 0, 9, 81),
                           "coordinates": list(zip(x,y))})
         line = line[:5]
-        self.assertEqual(line.__geo_interface__,
+        self.assertEqual(line.geomdict,
                          {"type":"LineString",
                           "bbox":(0, 0, 4, 16),
                           "coordinates": list(zip(x[:5],y[:5]))})
-
 
 class TestHashing(unittest.TestCase):
 
@@ -827,22 +822,21 @@ class VectorCRSTests(unittest.TestCase):
 class TableAttributeTests(unittest.TestCase):
 
     def test_table_attribute_str(self):
-        g = Line(zip(range(5), range(5, 0, -1)),
+        g = Multipoint(zip(range(5), range(5, 0, -1)),
                  data={"a": range(5), "b": [a**2 for a in range(-2, 3)]})
         self.assertEqual(g.d["a"], list(range(5)))
         self.assertEqual(g.d["b"], [a**2 for a in range(-2, 3)])
         return
 
     def test_table_attribute_int(self):
-        g = Line(zip(range(5), range(5, 0, -1)),
+        g = Multipoint(zip(range(5), range(5, 0, -1)),
                  data={"a": range(5), "b": [a**2 for a in range(-2, 3)]})
         self.assertEqual(g.d[3], {"a": 3, "b": 1})
         return
 
     def test_None_data(self):
-        g = Line(zip(range(5), range(5, 0, -1)))
-        f = lambda a: getattr(g, a)
-        self.assertRaises(KeyError, f, "d")
+        g = Multipoint(zip(range(5), range(5, 0, -1)))
+        self.assertEqual(g.d[0], {})
         return
 
 if __name__ == "__main__":
