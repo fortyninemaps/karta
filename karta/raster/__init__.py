@@ -16,11 +16,10 @@ from .band import SimpleBand, CompressedBand
 from .read import read_aai, read_gtiff, aairead, gtiffread
 from .misc import (witch_of_agnesi, pad, normed_potential_vectors,
                    slope, aspect, gradient, divergence, hillshade)
-from .crfuncs import streamline2d
 
 __all__ = ["grid", "misc",
            "RegularGrid", "WarpedGrid",
            "aairead", "gtiffread", "read_aai", "read_gtiff",
            "slope", "aspect", "gradient", "divergence", "hillshade",
-           "normed_potential_vectors", "streamline2d"]
+           "normed_potential_vectors"]
 
