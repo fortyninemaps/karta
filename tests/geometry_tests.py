@@ -307,7 +307,7 @@ class TestGeometryAnalysis(unittest.TestCase):
         return
 
     def test_nearest_to(self):
-        self.assertEqual(self.mp.nearest_point_to(self.point), self.mp[12])
+        self.assertEqual(self.mp.nearest_vertex_to(self.point), 12)
         return
 
     def test_multipoint_shift_inplace(self):

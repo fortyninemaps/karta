@@ -388,13 +388,22 @@ class MultiVertexMixin(object):
         d = [pt.distance(a) for a in self]
         return np.array(d)
 
-    def nearest_point_to(self, pt):
-        """ Returns the internal Point that is nearest to *pt*. If two points
-        are equidistant, only one will be returned.
+    def nearest_vertex_to(self, point):
+        """ Returns the index of the vertex that is nearest to a point. If two
+        points are equidistant, only one will be returned.
+
+        Parameters
+        ----------
+        point : Point
+            target point
+
+        Returns
+        -------
+        int
         """
-        distances = self.distances_to(pt)
+        distances = self.distances_to(point)
         idx = np.argmin(distances)
-        return self[idx]
+        return idx
 
     @property
     def extent(self):
