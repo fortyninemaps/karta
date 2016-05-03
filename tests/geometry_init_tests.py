@@ -101,7 +101,7 @@ class TestMultipartGeometry(unittest.TestCase):
             sub = []
             for j in range(5):
                 sub.append((2*j+i, -1.5*j+2*i))
-            vertices.append(sub)
+            vertices.append([sub])
             data.append(i*j)
 
         Multipolygon(vertices, data=data)

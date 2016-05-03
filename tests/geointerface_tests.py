@@ -65,7 +65,8 @@ class TestGeoInterface(unittest.TestCase):
         sp1 = shapely.geometry.Polygon([(4, 2), (3, 5), (3, 2), (7, 3)])
         sp2 = shapely.geometry.Polygon([(7, 3), (9, 7), (2, 7), (2, 0)])
         smp = shapely.geometry.MultiPolygon([sp1, sp2])
-        p1, p2 = vector.read.from_shape(smp)
+        mpoly = vector.read.from_shape(smp)
+        p1, p2 = mpoly
         self.assertEqual(p1.bbox, sp1.bounds)
         self.assertEqual(p2.bbox, sp2.bounds)
         return

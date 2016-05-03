@@ -35,23 +35,17 @@ def _from_shape(d, properties):
             return None
         elif d["type"] == "Point":
             return geometry.Point(c, properties=properties)
-        elif d["type"] == "MultiPoint":
-            return geometry.Multipoint(c, properties=properties)
         elif d["type"] == "LineString":
             return geometry.Line(c, properties=properties)
         elif d["type"] == "Polygon":
             subs = [geometry.Polygon(c[i]) for i in range(1, len(c))]
             return geometry.Polygon(c[0], properties=properties, subs=subs)
+        elif d["type"] == "MultiPoint":
+            return geometry.Multipoint(c, properties=properties)
         elif d["type"] == "MultiLineString":
-            return [geometry.Line(c[i], properties=properties)
-                    for i in range(len(c))]
+            return geometry.Multiline(c, properties=properties)
         elif d["type"] == "MultiPolygon":
-            polys = []
-            for c_ in c:
-                subs = [geometry.Polygon(c_[i]) for i in range(1, len(c_))]
-                polys.append(geometry.Polygon(c_[0], properties=properties,
-                                              subs=subs))
-            return polys
+            return geometry.Multipolygon(c, properties=properties)
         else:
             raise NotImplementedError("Geometry type {0} not "
                                       "implemented".format(d["type"]))

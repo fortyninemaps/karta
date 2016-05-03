@@ -291,8 +291,7 @@ class MultiVertexMixin(object):
             (xmin, ymin, xmax, ymax)
         """
         x, y = self.get_coordinate_lists(crs)
-        bbox = (min(x), min(y), max(x), max(y))
-        return bbox
+        return (min(x), min(y), max(x), max(y))
 
     @property
     def coordinates(self):
@@ -309,10 +308,7 @@ class MultiVertexMixin(object):
     def get_coordinate_lists(self, crs=None):
         """ Return horizontal coordinate lists, optionally projected to *crs*.
         """
-        if self.rank == 2:
-            x, y = tuple(zip(*self.vertices))
-        else:
-            x, y, _ = tuple(zip(*self.vertices))
+        x, y = tuple(zip(*self.vertices))[:2]
         if crs is not None and (crs != self.crs):
             x, y = _reproject((x,y), self.crs, crs)
         return x, y
@@ -1063,10 +1059,6 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
                     self.vertices[key] = value
                 self.data[key] = (None for _ in self.data.fields)
 
-    def __iter__(self):
-        for i, vert in enumerate(self.vertices):
-            yield Point(vert, properties=self.d[i], crs=self.crs)
-
     @property
     def geomdict(self):
         return {"type" : "MultiPoint",
@@ -1174,6 +1166,15 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
         self._geotype = "Multiline"
         return
 
+    def __getitem__(self, key):
+        if isinstance(key, numbers.Integral):
+            properties = self.d[key]
+            properties.update(self.properties)
+            return Line(self.vertices[key], properties=properties, crs=self.crs)
+        elif isinstance(key, slice):
+            return Multiline(self.vertices[key], properties=self.properties,
+                             data=self.d[key], crs=self.crs)
+
 class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
 
     def __init__(self, vertices, **kwargs):
@@ -1182,7 +1183,7 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
         """
         super(Multipolygon, self).__init__(vertices, **kwargs)
         try:
-            self.rank = 2 if len(vertices[0][0]) == 2 else 3
+            self.rank = 2 if len(vertices[0][0][0]) == 2 else 3
         except IndexError:
             self.rank = 3
         except TypeError:
@@ -1190,10 +1191,44 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
         self._geotype = "Multipolygon"
         return
 
+    def __getitem__(self, key):
+        if isinstance(key, numbers.Integral):
+            properties = self.d[key]
+            properties.update(self.properties)
+            subs = []
+            for vertices in self.vertices[key][1:]:
+                subs.append(Polygon(vertices, properties=properties, crs=self.crs))
+            vertices = self.vertices[key][0]
+            return Polygon(vertices, subs=subs, properties=properties, crs=self.crs)
+        elif isinstance(key, slice):
+            return Multipolygon(self.vertices[key], properties=self.properties,
+                                data=self.d[key], crs=self.crs)
+
+    @cache_decorator("bbox")
+    def get_bbox(self, crs=None):
+        """ Return the extent of a bounding box as
+            (xmin, ymin, xmax, ymax)
+        """
+        x, y = list(zip(*_flatten(self.vertices)))[:2]
+        if crs is not None:
+            x, y = _reproject((x, y), self.crs, crs)
+        return (min(x), min(y), max(x), max(y))
+
 def _reproject(xy, crs1, crs2):
     """ Reproject a coordinate (or 2-tuple of x and y vectors) from *crs1* to
     *crs2*. """
     return crs1.transform(crs2, *xy)
+
+def _flatten(vertices):
+    """ Convert a nested list of coordinates into a flat list of tuples. """
+    out = []
+    for item in vertices:
+        if hasattr(item[0], "__iter__"):
+            verts = _flatten(item)
+            out.extend(verts)
+        else:
+            out.append(item)
+    return out
 
 def multipart_from_singleparts(parts, crs=None):
     """ Merge *parts* into a Multipoint/Multiline/Multipolygon instance.
@@ -1214,18 +1249,21 @@ def multipart_from_singleparts(parts, crs=None):
         for key in keys:
             data[key] = [part.properties[key] for part in parts]
 
-    if hasattr(parts[0], "vertex"):
-        vertices = [part.get_vertex(crs) for part in parts]
-    else:
-        vertices = [part.get_vertices(crs) for part in parts]
-
     gt = parts[0]._geotype
     if gt == "Point":
         cls = Multipoint
+        vertices = [part.get_vertex(crs) for part in parts]
     elif gt == "Line":
         cls = Multiline
+        vertices = [part.get_vertices(crs) for part in parts]
     elif gt == "Polygon":
         cls = Multipolygon
+        vertices = []
+        for part in parts:
+            part_vertices = [part.get_vertices(crs)]
+            for sub in part.subs:
+                part_vertices.append(sub.get_vertices(crs))
+        vertices.append(part_vertices)
     else:
         raise GeometryError("cannot convert type '{0}' to multipart".format(gt))
 
