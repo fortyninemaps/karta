@@ -1176,7 +1176,7 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
 
 class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
 
-    def __init__(self, vertices, properties=None, data=None, **kwargs):
+    def __init__(self, vertices, **kwargs):
         """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
         """
