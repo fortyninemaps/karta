@@ -4,7 +4,7 @@ from os.path import exists
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
-VERSION = "0.6.1dev"
+VERSION = "0.7dev"
 
 class build_ext(_build_ext):
 

@@ -43,6 +43,9 @@ The latest release is on PyPI (see [Installation](#installation)). *Karta* is
 tested with Python 2.7 and Python 3.4+. Suggestions, bug reports, test cases,
 and pull requests are welcome.
 
+The latest stable release is 0.6. The repository master branch is considered an
+unstable development version.
+
 ## DOCUMENTATION
 
 See the [online manual](http://www.fortyninemaps.com/kartadocs/karta-manual.html),
