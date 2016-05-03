@@ -292,6 +292,6 @@ class ShapefileOutMixin(object):
         """ Save line to a shapefile """
         if not fnm.endswith(".shp"):
             fnm = fnm + ".shp"
-        shp.ogr_write(fnm, self.__geo_interface__)
+        ogr_write(fnm, self.__geo_interface__)
         return
 

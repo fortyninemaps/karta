@@ -190,14 +190,15 @@ class GPX(object):
         return
 
     def add_track(self, *tracks, **kw):
-        """ Add Line-like objects as a track. Dictionaries of properties and
-        extension types for the track are accepted as keyword arguments.
+        """ Add Multipoint-like objects as segments of a track. Dictionaries of
+        properties and extension types for the track are accepted as keyword
+        arguments.
 
         Properties and extension types for the track segments are taken from
-        the `properties` attribute of each Line-like object.
+        the `properties` attribute of each Multipoint-like object.
 
         Properties and extensions types for each track point are taken from the
-        `data` attribute of each Line-like object.
+        `data` attribute of each Multipoint-like object.
 
         INCOMPLETE:
 
@@ -255,9 +256,9 @@ class GPX(object):
         return
 
     def add_route(self, route):
-        """ Add a list of Line-like objects as a route. Properties and
-        extension types for the route are taken from the `properties` attribute
-        of the Line-like object.
+        """ Add a Multipoint-like object as a route. Properties and extension
+        types for the route are taken from the `properties` attribute of the
+        Multipoint-like object.
 
         Properties and extensions types for each route point are taken from the
         `data` attribute of each Line-like object.
@@ -273,7 +274,7 @@ class GPX(object):
         for i, vertex in enumerate(route.vertices):
             prop = {}
             if route.data is not None:
-                for k in rout.data.fields:
+                for k in route.data.fields:
                     prop[k] = route.data[k][i]
             points.append(Point((vertex[0], vertex[1]), prop, {}))
         self.routes.append(Route(points, route.properties, {}))

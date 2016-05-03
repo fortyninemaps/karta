@@ -42,7 +42,7 @@ class GPXTests(unittest.TestCase):
         return
 
     def test_add_track(self):
-        track = Line([(np.random.random(), np.random.random())
+        track = Multipoint([(np.random.random(), np.random.random())
                       for i in range(10)], properties={"name":"segment0"})
         g = vector.gpx.GPX()
         g.add_track(track)
@@ -53,7 +53,7 @@ class GPXTests(unittest.TestCase):
         return
 
     def test_add_route(self):
-        route = Line([(np.random.random(), np.random.random())
+        route = Multipoint([(np.random.random(), np.random.random())
                       for i in range(10)], properties={"name":"route0"})
         g = vector.gpx.GPX()
         g.add_route(route)

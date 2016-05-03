@@ -7,16 +7,21 @@ import datetime
 from copy import copy
 
 from karta.vector import shp, read_shapefile
-from karta.vector.geometry import Point, Multipoint, Line, Polygon
+from karta.vector.geometry import (Point, Multipoint, Line, Polygon,
+                                   multipart_from_singleparts)
 from karta.crs import LonLatWGS84
 
 class TestShapefile(unittest.TestCase):
 
     def setUp(self):
-        self.points = [Point((1, 1), data={"species": "T. officianale"}, crs=LonLatWGS84),
-                       Point((3, 1), data={"species": "C. tectorum"}, crs=LonLatWGS84),
-                       Point((4, 3), data={"species": "M. alba"}, crs=LonLatWGS84),
-                       Point((2, 2), data={"species": "V. cracca"}, crs=LonLatWGS84)]
+        self.points = [Point((1, 1), properties={"species": "T. officianale"},
+                                     crs=LonLatWGS84),
+                       Point((3, 1), properties={"species": "C. tectorum"},
+                                     crs=LonLatWGS84),
+                       Point((4, 3), properties={"species": "M. alba"},
+                                     crs=LonLatWGS84),
+                       Point((2, 2), properties={"species": "V. cracca"},
+                                     crs=LonLatWGS84)]
 
         self.multipoint = Multipoint([(1,1), (3,1), (4,3), (2,2)],
                                      data={"species": ["T. officianale", "C. tectorum",
@@ -141,7 +146,7 @@ class TestShapefile(unittest.TestCase):
         self.assertTrue("+proj=lonlat" in pt.crs.get_proj4())
         self.assertTrue("+a=6378137.0" in pt.crs.get_proj4())
         self.assertTrue("+f=0.00335281" in pt.crs.get_proj4())
-        mp = Multipoint(points)
+        mp = multipart_from_singleparts(points)
         self.assertEqual(mp.d["species"], ['T. officianale', 'C. tectorum', 'M. alba', 'V. cracca'])
         self.assertEqual(mp.d["ID"], ['0', '1', '2', '3'])
         self.assertEqual(mp.coordinates, ((1.0, 3.0, 4.0, 2.0), (1.0, 1.0, 3.0, 2.0)))

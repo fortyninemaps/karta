@@ -89,11 +89,25 @@ def read_geojson(f, crs=LonLatWGS84):
         return res
 
     def convert_geometry(geom, **kw):
+        # TODO: Requires clean-up; was written before properties vs data was
+        # clearly worked out. Hacks to bring it up to speed are ugly.
         if isinstance(geom, geojson.Point):
+            kw.setdefault("properties", {})
+            kw.setdefault("data", {})
+            kw["properties"].update(kw["data"])
+            del kw["data"]
             return geometry.Point(geom.coordinates, **kw)
         elif isinstance(geom, geojson.LineString):
+            kw.setdefault("properties", {})
+            kw.setdefault("data", {})
+            kw["properties"].update(kw["data"])
+            del kw["data"]
             return geometry.Line(geom.coordinates, **kw)
         elif isinstance(geom, geojson.Polygon):
+            kw.setdefault("properties", {})
+            kw.setdefault("data", {})
+            kw["properties"].update(kw["data"])
+            del kw["data"]
             return geometry.Polygon(geom.coordinates[0],
                                     subs=geom.coordinates[1:],
                                     **kw)
@@ -111,7 +125,7 @@ def read_geojson(f, crs=LonLatWGS84):
     def convert_feature(feat, **kw):
         data = feat.properties["vector"]
         if len(data) == 0:
-            data = None
+            data = {}
         else:
             for key, val in data.items():
                 if any(isinstance(a, Number) or hasattr(a, "dtype") for a in val):

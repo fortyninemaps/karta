@@ -20,6 +20,76 @@ GeometryCollection = namedtuple('GeometryCollection', ['geometries', 'crs'])
 Feature = namedtuple('Feature', ['geometry', 'properties', 'id', 'crs'])
 FeatureCollection = namedtuple('FeatureCollection', ['features', 'crs'])
 
+def as_named_tuple(*geoms, urn=None):
+    """ Convert one or more Geometry instances to GeoJSON-structured named tuples.
+
+    Parameters
+    ----------
+    *geoms : subtypes of karta.Geometry
+        karta vector geometries to convert
+    urn : str, optional
+        URN defining a specific CRS to use
+
+    Returns
+    -------
+    Either a Feature or a FeatureCollection
+
+    Raises
+    ------
+    TypeError
+        if one or more of geoms has an unrecognized `_geotype` attribute
+    """
+    if urn is not None:
+        crs = crs_from_urn(urn)
+    else:
+        crs = crs_from_karta(geoms[0].crs)
+
+    features = []
+    for geom in geoms:
+        if geom._geotype == "Point":
+            g = Point(geom.vertex, crs)
+        elif geom._geotype == "Line":
+            g = LineString(geom.vertices, crs)
+        elif geom._geotype == "Polygon":
+            verts = [geom.vertices]
+            for sub in geom.subs:
+                verts.append(sub.vertices)
+            g = Polygon(verts, crs)
+        elif geom._geotype == "Multipoint":
+            g = MultiPoint(geom.vertices, crs)
+        elif geom._geotype == "Multiline":
+            g = MultiLineString(geom.vertices, crs)
+        elif geom._geotype == "Multipolygon":
+            g = MultiPolygon(geom.vertices, crs)
+        else:
+            raise TypeError("unhandled type: {0}".format(type(geom)))
+
+        data = {}
+        if hasattr(geom, "data"):
+            for field in geom.data.fields:
+                data[field] = geom.d[field]
+
+        properties = geom.properties
+        properties.update(data)
+        features.append(Feature(g, properties, 0, crs))
+
+    if len(features) == 1:
+        return features[0]
+    else:
+        return FeatureCollection(features, crs)
+
+def crs_from_urn(urn):
+    return {'type': 'name', 'properties': {'name': urn}}
+
+def crs_from_karta(crs):
+    if hasattr(crs, "jsonhref") and hasattr(crs, "jsontype"):
+        return {'type': 'link', 'properties': {'href': crs.jsonname, 'type': crs.jsontype}}
+    elif hasattr(crs, "jsonname"):
+        return {'type': 'name', 'properties': {'name': crs.jsonname}}
+    else:
+        # NOTE: make sure CRS gets written to file by caller
+        return {'type': 'link', 'properties': {'href': "", 'type': 'proj4'}}
+
 class GeoJSONNamedCRS(CRS):
     def __init__(self, name):
         self.name = name
@@ -57,7 +127,6 @@ class NumpyAwareJSONEncoder(json.JSONEncoder):
                 raise TypeError("not a recognized type")
         except (AttributeError, TypeError):
             return json.JSONEncoder.default(self, o)
-
 
 class GeoJSONWriter(object):
     """ Class for converting geometry objects to GeoJSON strings. Multipoint-based
@@ -331,15 +400,18 @@ class GeoJSONSerializer(object):
     Usage:
 
         serializer = GeoJSONSerializer()
-        json_string = serializer.serialize(named_tuple)
+        json_string = serializer(named_tuple)
     """
 
     def __init__(self):
-        self.enc = NumpyAwareJSONEncoder()
+        # Previously used encoder directly, but for now calling json.dumps
+        #self.enc = NumpyAwareJSONEncoder()
         return
 
-    def serialize(self, geom):
-        return self.enc.encode(self.geometry_asdict(geom))
+    def __call__(self, geom, indent=None):
+        #return self.enc.encode(self.geometry_asdict(geom), indent=indent)
+        return json.dumps(self.geometry_asdict(geom), indent=indent,
+                          cls=NumpyAwareJSONEncoder)
 
     def geometry_asdict(self, geom):
 
@@ -405,9 +477,13 @@ class GeoJSONSerializer(object):
         return
 
     def _geometry_asdict(self, geom, name):
+        if not isinstance(geom.crs, dict):
+            crs = self.crsdict(geom.crs)
+        else:
+            crs = geom.crs
         return {"type": name,
                 "coordinates": geom.coordinates,
-                "crs": self.crsdict(crs=geom.crs)}
+                "crs": crs}
 
     def feature_asdict(self, feature):
         return {"type": "Feature",
@@ -504,42 +580,80 @@ class GeoJSONOutMixin(object):
     functionality.
     """
 
-    def as_geojson(self, indent=2, **kwargs):
+    _geojson_serializer = GeoJSONSerializer()
+
+    def as_geojson(self, indent=2, urn=None):
         """ Output representation of internal data as a GeoJSON string.
 
         Parameters
         ----------
         indent : int, optional
             indentation of generated GeoJSON (default 2)
-        crs : karta.crs.CRS subclass, optional
-            alternative coordinate reference system
-        bbox : 4-tuple, optional
-            a bounding box in the form (w,e,s,n)
+        urn : str, optional
+            overrides GeoJSON CRS with provided URN string
         """
-        writer = geojson.GeoJSONWriter(self, **kwargs)
-        return writer.print_json(indent)
+        return self._geojson_serializer(as_named_tuple(self, urn=urn), indent=indent)
 
-    def to_geojson(self, f, indent=None, **kwargs):
+    def to_geojson(self, f, indent=None, urn=None):
         """ Write data as a GeoJSON string to a file-like object `f`.
 
         Parameters
         ----------
         f : str or file-like object
             file to receive GeoJSON string
-
-        *kwargs* include:
-        crs : coordinate reference system
-        bbox : an optional bounding box tuple in the form (w,e,s,n)
+        indent : int, optional
+            indentation of generated GeoJSON (default None)
+        urn : str, optional
+            overrides GeoJSON CRS with provided URN string
         """
         try:
             if not hasattr(f, "write"):
                 fobj = open(f, "w")
             else:
                 fobj = f
-            writer = geojson.GeoJSONWriter(self, crs=self.crs, **kwargs)
-            writer.write_json(fobj, indent)
+            fobj.write(self.as_geojson(indent=indent, urn=urn))
         finally:
             if not hasattr(f, "write"):
                 fobj.close()
-        return writer
+        return
+
+
+    # def as_geojson(self, indent=2, **kwargs):
+    #     """ Output representation of internal data as a GeoJSON string.
+
+    #     Parameters
+    #     ----------
+    #     indent : int, optional
+    #         indentation of generated GeoJSON (default 2)
+    #     crs : karta.crs.CRS subclass, optional
+    #         alternative coordinate reference system
+    #     bbox : 4-tuple, optional
+    #         a bounding box in the form (w,e,s,n)
+    #     """
+    #     writer = GeoJSONWriter(self, **kwargs)
+    #     return writer.print_json(indent)
+
+    # def to_geojson(self, f, indent=None, **kwargs):
+    #     """ Write data as a GeoJSON string to a file-like object `f`.
+
+    #     Parameters
+    #     ----------
+    #     f : str or file-like object
+    #         file to receive GeoJSON string
+
+    #     *kwargs* include:
+    #     crs : coordinate reference system
+    #     bbox : an optional bounding box tuple in the form (w,e,s,n)
+    #     """
+    #     try:
+    #         if not hasattr(f, "write"):
+    #             fobj = open(f, "w")
+    #         else:
+    #             fobj = f
+    #         writer = GeoJSONWriter(self, crs=self.crs, **kwargs)
+    #         writer.write_json(fobj, indent)
+    #     finally:
+    #         if not hasattr(f, "write"):
+    #             fobj.close()
+    #     return writer
 
