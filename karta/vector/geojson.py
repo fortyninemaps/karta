@@ -2,11 +2,8 @@
 dealing with GeoJSON data. The `GeoJSON` class uses the builtin json module and
 enforces GeoJSON standards. """
 
-import copy
 import json
 from collections import namedtuple
-from numbers import Number
-from math import isnan
 from functools import reduce
 from ..crs import CRS
 

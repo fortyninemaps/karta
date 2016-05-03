@@ -1,16 +1,14 @@
 """
-Geographical measurement and simple analysis module for Python. Provides Point,
-Line, and Polygon classes, and their multipoint equivalents, with methods for
-simple measurements such as distance, area, and direction.
+Geographical measurement and analysis
+
+Provides Point, Line, and Polygon classes, and their Multipart equivalents,
+with methods for simple measurements such as distance, area, and direction.
 """
 from __future__ import division
 
 import math
-import os
-import sys
 import itertools
 import numbers
-import warnings
 import numpy as np
 from .decorators import cache_decorator
 from .geojson import GeoJSONOutMixin
@@ -20,9 +18,9 @@ from .table import Table, Indexer
 from . import quadtree
 from . import _cvectorgeo
 from .. import geodesy
-from ..crs import Cartesian, CartesianCRS, ProjectedCRS, GeographicalCRS
+from ..crs import Cartesian, CartesianCRS, GeographicalCRS
 from ..crs import SphericalEarth
-from ..errors import GeometryError, GGeoError, GUnitError, GInitError, CRSError
+from ..errors import GeometryError, GGeoError, CRSError
 
 class Geometry(object):
     """ This is the abstract base class for all geometry types """
@@ -235,11 +233,12 @@ class MultiVertexBase(Geometry):
         return ht + (hd << 1) + hd + hc
 
     def __getitem__(self, key):
-        d = None
         if isinstance(key, (int, np.int64)):
-            return Point(self.vertices[key], properties=self.properties, crs=self.crs)
+            verts = self.vertices[key]
+            return Point(verts, properties=self.properties, crs=self.crs)
         elif isinstance(key, slice):
-            return type(self)(self.vertices[key], properties=self.properties, crs=self.crs)
+            verts = self.vertices[key]
+            return type(self)(verts, properties=self.properties, crs=self.crs)
         else:
             raise GGeoError('Index must be an integer or a slice object')
 
@@ -432,10 +431,9 @@ class MultiVertexMixin(object):
 
         Only implemented for Cartesian-derived coordinate systems.
         """
-        if not isinstance(self.crs, CartesianCRS):
-            raise errors.CRSError("convex_hull only implemented for "
-                                  "cartesian and projected coordinate "
-                                  "systems")
+        if isinstance(self.crs, GeographicalCRS):
+            raise CRSError("not implemented for geographical coordinate "
+                           "systems. Project to a projected coordinate system.")
 
         points = [pt for pt in self]
 
@@ -554,8 +552,9 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
         if isinstance(self.crs, CartesianCRS):
-            interxbool = (np.nan in _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
-                                                             a[0][1], a[1][1], b[0][1], b[1][1])
+            interxbool = (np.nan in
+                    _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+                                             a[0][1], a[1][1], b[0][1], b[1][1])
                         for a in self.segments for b in other.segments)
             if self._bbox_overlap(other) and (False in interxbool):
                 return True
@@ -766,7 +765,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
         """ Returns a polygon. """
         return Polygon(self.vertices, properties=self.properties, crs=self.crs)
 
-class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, Geometry, GeoJSONOutMixin, ShapefileOutMixin):
+class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
     """ Polygon, composed of a closed sequence of vertices.
 
     Parameters
@@ -1298,14 +1297,13 @@ def get_tile_tuple(pt, zoom):
         non-negative zoom level (typically 0-18)
     """
     z = int(zoom)
-    ntiles = 2**z
     dlon = 256
     dlat = 256
 
     lon0, lat0 = pt.crs.project(*pt.vertex, inverse=True)
     c = 128/math.pi * 2**z
     x0 = c * (lon0*math.pi/180+math.pi)
-    y0 = c * (pi-math.log(math.tan(math.pi/4+lat0*math.pi/360)))
+    y0 = c * (math.pi-math.log(math.tan(math.pi/4+lat0*math.pi/360)))
 
     x = int(x0 // dlon)
     y = int(y0 // dlat)
