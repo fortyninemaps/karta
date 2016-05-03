@@ -359,8 +359,8 @@ class TestCRS(unittest.TestCase):
 
     def test_datum_transform(self):
         lng, lat = crs.LonLatNAD27.transform(crs.LonLatNAD83, -107.5, 43.14)
-        self.assertAlmostEqual(lng, -107.50062798611111)
-        self.assertAlmostEqual(lat, 43.13996053333333)
+        self.assertAlmostEqual(lng, -107.50062798611111, places=3)
+        self.assertAlmostEqual(lat, 43.13996053333333, places=3)
 
 class TestGeodesyFuncs(unittest.TestCase):
 
