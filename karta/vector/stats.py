@@ -52,8 +52,8 @@ class Nug(VariogramFunction):
 def fit_model(model, p, lags, variance):
     """ Fit a variogram model to an experimental variogram.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
 
     model : function for creating variogram estimators that takes *lags* as an
             argument, e.g.
@@ -74,18 +74,23 @@ def estimate_vario(mp, npoints=2000, max_dist=None, interval=None):
     variogram is quickly estimated. If npoints is None, then the full variogram
     is calculated.
 
-    Parameters:
-    -----------
-    points : a Multipoint instance
-    npoints : number of values use for variogram appromixation. If npoints is
-              None, the full variogram is calculated.
-    max_dist : the maximum lag
-    interval : the lag interval
+    Parameters
+    ----------
+    points : Multipoint instance
+    npoints : int, optional
+        number of values use for variogram appromixation. If npoints is None,
+        the full variogram is calculated.
+    max_dist : float, optional
+        the maximum lag
+    interval : float, optional
+        the lag interval
 
-    Returns:
-    --------
-    lags : ndarray
-    variogram : ndarray
+    Returns
+    -------
+    ndarray
+        lags
+    ndarray
+        variogram
     """
     if len(mp.data) != len(mp.vertices):
         raise Exception('estimate_variogram() requires a Multipoint with '

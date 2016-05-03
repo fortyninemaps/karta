@@ -391,8 +391,8 @@ class EllipsoidalCRS(GeographicalCRS):
 
     **DEPRECATED**
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     a : float
         ellipsoid major axis dimension
     b : float

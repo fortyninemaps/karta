@@ -53,7 +53,7 @@ Miscellaneous raster functions
 Raster IO modules
 -----------------
 
-.. automodule:: karta.vector.read
+.. automodule:: karta.raster.read
     :members:
 
 GeoTiff (GDAL interface)

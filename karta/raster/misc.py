@@ -7,10 +7,24 @@ from .grid import RegularGrid
 
 def witch_of_agnesi(nx=100, ny=100, a=4.0):
     """ Return a raster field defined by the equation
+
+    ::
                     8 a^3
             Z = --------------
                  d^2 + 4 a*2
+
     where d is the distance from the center.
+
+    Parameters
+    ----------
+    nx, ny : int
+        raster size
+    a : float
+        magnitude
+
+    Returns
+    -------
+    ndarray
     """
     xc = int(np.floor(nx / 2.0))
     yc = int(np.floor(ny / 2.0))
@@ -21,10 +35,21 @@ def witch_of_agnesi(nx=100, ny=100, a=4.0):
 
 def pad(A, width=1, edges="all", value=0.0):
     """ Apply padding to a 2D array.
-            *A*         :   array to pad
-            *width*     :   thickness of padding
-            *edges*     :   "all", "left", "right", "top", "bottom"
-            *value"     :   0.0, value to pad with
+
+    Parameters
+    ----------
+    A : ndarray
+        array to pad
+    width : int
+        thickness of padding
+    edges : str
+        one of "all", "left", "right", "top", "bottom"
+    value : number
+        fill value for padding
+
+    Returns
+    -------
+    ndarray
     """
     ny = A.shape[0]
     nx = A.shape[1]
@@ -59,8 +84,7 @@ def pad(A, width=1, edges="all", value=0.0):
     return B
 
 def _slope(D, res=(1.0, 1.0)):
-    """ Return the scalar slope at each pixel. Use the neighbourhood
-    method.
+    """ Return the scalar slope at each pixel using the neighbourhood method.
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works
     """
     dx = res[0]
@@ -73,8 +97,7 @@ def _slope(D, res=(1.0, 1.0)):
     return pad(np.sqrt(Ddx*Ddx + Ddy*Ddy), value=np.nan)
 
 def slope(grid):
-    """ Return the scalar slope at each pixel. Use the neighbourhood
-    method.
+    """ Return the scalar slope at each pixel using the neighbourhood method.
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works
     """
     if grid.transform[4:] != (0, 0):
@@ -163,8 +186,8 @@ def normed_potential_vectors(grid):
 def hillshade(grid, azimuth=330.0, elevation=60.0):
     """ Return a hill-shaded version of *grid*.
 
-    Arguments
-    ---------
+    Parameters
+    ----------
     grid: RegularGrid instance
     azimuth: float, optional
         direction of light source (default 330.0)

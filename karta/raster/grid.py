@@ -560,7 +560,6 @@ class RegularGrid(Grid):
         inplace : bool, optional
             whether or not to perform masking in place (default False)
         """
-
         if getattr(polys, "_geotype", "") == "Polygon":
             polys = [polys]
 
@@ -673,8 +672,7 @@ class RegularGrid(Grid):
 
         Parameters
         ----------
-        x : float or vector
-        y : float or vector
+        x, y : float or vector
             vertices of points to compute indices for
         """
         # Calculate this by forming block matrices
@@ -734,8 +732,7 @@ class RegularGrid(Grid):
 
         Parameters
         ----------
-        x : float or vector
-        y : float or vector
+        x, y : float or vector
             vertices of points to compute indices for
 
         Raises
@@ -763,8 +760,7 @@ class RegularGrid(Grid):
 
         Parameters
         ----------
-        x : float or vector
-        y : float or vector
+        x, y : float or vector
             vertices of points to compute indices for
 
         Raises
@@ -781,8 +777,7 @@ class RegularGrid(Grid):
 
         Parameters
         ----------
-        x : float or vector
-        y : float or vector
+        x, y : float or vector
             vertices of points to compute indices for
         """
         i, j = self.get_positions(x, y)
@@ -875,8 +870,8 @@ class RegularGrid(Grid):
         Additional keyword arguments passed to `RegularGrid.sample` (e.g. to
         specify sampling method)
 
-        Returns:
-        --------
+        Returns
+        -------
         list of (x, y) tuples
             sample points
         ndarray
