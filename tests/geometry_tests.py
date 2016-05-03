@@ -11,6 +11,9 @@ from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, NSIDCNorth, Projec
 from karta.errors import CRSError
 
 class TestGeometry(unittest.TestCase):
+    """ Tests for manipulating Geometry objects (indexing, iteration, equality,
+    etc.)
+    """
 
     def setUp(self):
         self.point = Point((1.0, 2.0, 3.0),
@@ -57,60 +60,6 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(self.point[1], 2.0)
         return
 
-    def test_point_azimuth(self):
-        point = Point((1.0, 2.0))
-
-        other = Point((2.0, 3.0))
-        self.assertEqual(point.azimuth(other), 0.25*180)
-
-        other = Point((0.0, 3.0))
-        self.assertEqual(point.azimuth(other), -0.25*180)
-
-        other = Point((0.0, 1.0))
-        self.assertEqual(point.azimuth(other), -0.75*180)
-
-        other = Point((2.0, 1.0))
-        self.assertEqual(point.azimuth(other), 0.75*180)
-
-        other = Point((1.0, 3.0))
-        self.assertEqual(point.azimuth(other), 0.0)
-
-        other = Point((1.0, 1.0))
-        self.assertEqual(point.azimuth(other), 180.0)
-        return
-
-    def test_point_azimuth2(self):
-        point = Point((5.0, 2.0))
-        other = Point((5.0, 2.0))
-        self.assertTrue(np.isnan(point.azimuth(other)))
-        return
-
-    def test_point_azimuth3(self):
-        """ Verify with:
-
-        printf "0 -1000000\n100000 -900000" | proj +proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs -I -s | tr '\n' ' ' | invgeod +ellps=WGS84 -f "%.6f"
-        """
-        point = Point((0.0, -10e5), crs=NSIDCNorth)
-        other = Point((1e5, -9e5), crs=NSIDCNorth)
-        self.assertAlmostEqual(point.azimuth(other), 45.036973, places=6)
-        return
-
-    def test_point_shift_inplace(self):
-        point = Point((-3.0, 5.0, 2.5), properties={"type": "apple", "color":(43,67,10)})
-        point.shift((4.0, -3.0, 0.5), inplace=True)
-        self.assertEqual(self.point, point)
-        return
-
-    def test_point_shift(self):
-        point = Point((-3.0, 5.0, 2.5), properties={"type": "apple", "color":(43,67,10)})
-        point_shifted = point.shift((4.0, -3.0, 0.5))
-        self.assertEqual(self.point, point_shifted)
-        return
-
-    def test_nearest_to(self):
-        self.assertEqual(self.mp.nearest_point_to(self.point), self.mp[12])
-        return
-
     def test_empty_multipoint(self):
         mp = Multipoint([], crs=LonLatWGS84)
         self.assertEqual(len(mp), 0)
@@ -120,19 +69,6 @@ class TestGeometry(unittest.TestCase):
         x = range(-10, 10)
         y = [_x**2 for _x in x]
         Line(zip(x, y))
-        return
-
-    def test_multipoint_shift_inplace(self):
-        vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
-        mp = Multipoint(vertices, data=self.data)
-        mp.shift((1, -2, 0.5), inplace=True)
-        self.assertEqual(mp, self.mp)
-
-    def test_multipoint_shift(self):
-        vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
-        mp = Multipoint(vertices, data=self.data)
-        mp_shifted = mp.shift((1, -2, 0.5))
-        self.assertEqual(mp_shifted, self.mp)
         return
 
     def test_multipoint_subset(self):
@@ -191,6 +127,200 @@ class TestGeometry(unittest.TestCase):
 
     def test_multipoint_negative_index(self):
         self.assertEqual(self.mp[len(self.mp)-1], self.mp[-1])
+        return
+
+    def test_line_extend(self):
+        ln0a = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0)])
+        ln0b = Line([(4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
+        ln1 = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
+                    (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
+        ln0a.extend(ln0b)
+        self.assertEqual(ln0a, ln1)
+
+    def test_poly_getitem(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        sub = poly[:3]
+        self.assertEqual(sub, Line([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)]))
+        return
+
+    def test_poly_getitem2(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        sub = poly[:4:2]
+        self.assertEqual(sub, Line([(0.0, 8.0), (6.0, 1.0)]))
+        return
+
+    def test_poly_getitem3(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        sub = poly[:]
+        self.assertEqual(sub, poly)
+        return
+
+    def test_segments(self):
+        v = self.vertices
+        self.assertEqual([tuple(a.vertices) for a in self.line.segments],
+                         [(v[i], v[i+1]) for i in range(len(self.vertices)-1)])
+        return
+
+class TestDateline(unittest.TestCase):
+
+    def test_azimuth(self):
+        for crs in (SphericalEarth, LonLatWGS84):
+            pt0 = Point((0.0, 0.0), crs=crs)
+            pt1 = Point((-1.0, 1.0), crs=crs)
+
+            pt2 = Point((-179.5, 0.0), crs=crs)
+            pt3 = Point((179.5, 1.0), crs=crs)
+            self.assertAlmostEqual(pt0.azimuth(pt1), pt2.azimuth(pt3), places=8)
+
+    def test_distance(self):
+        for crs in (SphericalEarth, LonLatWGS84):
+            pt0 = Point((0.0, 0.0), crs=crs)
+            pt1 = Point((-1.0, 1.0), crs=crs)
+
+            pt2 = Point((-179.5, 0.0), crs=crs)
+            pt3 = Point((179.5, 1.0), crs=crs)
+            self.assertAlmostEqual(pt0.distance(pt1), pt2.distance(pt3), places=8)
+
+    def test_area(self):
+        for crs in (SphericalEarth, LonLatWGS84):
+            poly0 = Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1)], crs=crs)
+            poly1 = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
+            self.assertAlmostEqual(poly0.area, poly1.area)
+
+    def test_bbox_geographical(self):
+        for crs in (SphericalEarth, LonLatWGS84):
+            poly = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
+            self.assertEqual(poly.bbox, (179, -1, -179, 1))
+
+class TestGeometryAnalysis(unittest.TestCase):
+    """ Tests for analysis methods of geometrical objects """
+
+    def setUp(self):
+        self.point = Point((1.0, 2.0, 3.0),
+                           properties={"type": "apple", "color": (43,67,10)})
+
+        self.vertices = [(2.0, 9.0, 9.0), (4.0, 1.0, 9.0), (4.0, 1.0, 5.0),
+                         (2.0, 8.0, 0.0), (9.0, 8.0, 4.0), (1.0, 4.0, 6.0),
+                         (7.0, 3.0, 4.0), (2.0, 5.0, 3.0), (1.0, 6.0, 6.0),
+                         (8.0, 1.0, 0.0), (5.0, 5.0, 1.0), (4.0, 5.0, 7.0),
+                         (3.0, 3.0, 5.0), (9.0, 0.0, 9.0), (6.0, 3.0, 8.0),
+                         (4.0, 5.0, 7.0), (9.0, 9.0, 4.0), (1.0, 4.0, 7.0),
+                         (1.0, 7.0, 8.0), (9.0, 1.0, 6.0)]
+
+        self.data = [99.0, 2.0, 60.0, 75.0, 71.0, 34.0, 1.0, 49.0, 4.0, 36.0,
+                     47.0, 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]
+
+        self.mp = Multipoint(self.vertices, data=self.data)
+        self.line = Line(self.vertices)
+        self.poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
+        self.poly3 = Polygon([(0.0, 8.0, 0.5), (0.0, 5.0, 0.8), (6.0, 1.0, 0.6)])
+        self.ring = Polygon([(2.0, 2.0), (4.0, 2.0), (3.0, 6.0)])
+        self.ringed_poly = Polygon([(0.0, 0.0), (10, 0.0),
+                                    (10.0, 10.0), (0.0, 10.0)],
+                                   subs=[self.ring])
+        self.unitsquare = Polygon([(0.0,0.0), (1.0,0.0), (1.0,1.0), (0.0,1.0)])
+        return
+
+
+    def test_within_distance(self):
+        line = Line([(0,0), (1,1), (3,1)])
+        pt = Point((1,1.5))
+        self.assertTrue(line.within_distance(pt, 0.6))
+        self.assertFalse(line.within_distance(pt, 0.4))
+        return
+
+    def test_walk_cartesian(self):
+        start = Point((-3, -4), crs=Cartesian)
+        dest = start.walk(5.0, math.atan(3.0/4.0), radians=True)
+        self.assertAlmostEqual(dest.x, 0.0)
+        self.assertAlmostEqual(dest.y, 0.0)
+        return
+
+    def test_walk(self):
+        start = Point((-123.1, 49.25), crs=LonLatWGS84)
+        dest = start.walk(1e5, 80.0)
+        self.assertAlmostEqual(dest.x, -121.743196, places=6)
+        self.assertAlmostEqual(dest.y, 49.398187, places=6)
+        return
+
+    def test_walk_albers(self):
+        AlaskaAlbers = ProjectedCRS("+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 "
+                                "+x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs",
+                                "+ellps=GRS80")
+        start = Point((-2658638, 2443580), crs=AlaskaAlbers)
+        dest = start.walk(4500, 195.0)
+        self.assertAlmostEqual(dest.x, -2662670.889, places=3)
+        self.assertAlmostEqual(dest.y, 2441551.155, places=3)
+        return
+
+    def test_point_azimuth(self):
+        point = Point((1.0, 2.0))
+
+        other = Point((2.0, 3.0))
+        self.assertEqual(point.azimuth(other), 0.25*180)
+
+        other = Point((0.0, 3.0))
+        self.assertEqual(point.azimuth(other), -0.25*180)
+
+        other = Point((0.0, 1.0))
+        self.assertEqual(point.azimuth(other), -0.75*180)
+
+        other = Point((2.0, 1.0))
+        self.assertEqual(point.azimuth(other), 0.75*180)
+
+        other = Point((1.0, 3.0))
+        self.assertEqual(point.azimuth(other), 0.0)
+
+        other = Point((1.0, 1.0))
+        self.assertEqual(point.azimuth(other), 180.0)
+        return
+
+    def test_point_azimuth2(self):
+        point = Point((5.0, 2.0))
+        other = Point((5.0, 2.0))
+        self.assertTrue(np.isnan(point.azimuth(other)))
+        return
+
+    def test_point_azimuth3(self):
+        """ Verify with:
+
+        printf "0 -1000000\n100000 -900000" | proj +proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs -I -s | tr '\n' ' ' | invgeod +ellps=WGS84 -f "%.6f"
+        """
+        point = Point((0.0, -10e5), crs=NSIDCNorth)
+        other = Point((1e5, -9e5), crs=NSIDCNorth)
+        self.assertAlmostEqual(point.azimuth(other), 45.036973, places=6)
+        return
+
+    def test_point_shift_inplace(self):
+        point = Point((-3.0, 5.0, 2.5), properties={"type": "apple", "color":(43,67,10)})
+        point.shift((4.0, -3.0, 0.5), inplace=True)
+        self.assertEqual(self.point, point)
+        return
+
+    def test_point_shift(self):
+        point = Point((-3.0, 5.0, 2.5), properties={"type": "apple", "color":(43,67,10)})
+        point_shifted = point.shift((4.0, -3.0, 0.5))
+        self.assertEqual(self.point, point_shifted)
+        return
+
+    def test_nearest_to(self):
+        self.assertEqual(self.mp.nearest_point_to(self.point), self.mp[12])
+        return
+
+    def test_multipoint_shift_inplace(self):
+        vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
+        mp = Multipoint(vertices, data=self.data)
+        mp.shift((1, -2, 0.5), inplace=True)
+        self.assertEqual(mp, self.mp)
+
+    def test_multipoint_shift(self):
+        vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
+        mp = Multipoint(vertices, data=self.data)
+        mp_shifted = mp.shift((1, -2, 0.5))
+        self.assertEqual(mp_shifted, self.mp)
         return
 
     def test_multipoint_bbox(self):
@@ -290,26 +420,18 @@ class TestGeometry(unittest.TestCase):
         self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=LonLatWGS84))
         return
 
-    # def test_connected_multipoint_nearest_on_boundary3(self):
-    #     # This is the test that tends to break naive root finding schemes
-    #     line = Line([(-40, 0.0), (35, 0.0)], crs=LonLatWGS84)
-    #     npt = line.nearest_on_boundary(Point((30.0, 1e-8), crs=LonLatWGS84))
-    #     self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=LonLatWGS84))
-    #     return
+    def test_connected_multipoint_nearest_on_boundary3(self):
+        # This is the test that tends to break naive root finding schemes
+        line = Line([(-40, 0.0), (35, 0.0)], crs=LonLatWGS84)
+        npt = line.nearest_on_boundary(Point((30.0, 1e-8), crs=LonLatWGS84))
+        self.assertPointAlmostEqual(npt, Point((30.0, 0.0), crs=LonLatWGS84))
+        return
 
     def test_connected_multipoint_nearest_on_boundary4(self):
         line = Line([(-20.0, 32.0), (-26.0, 43.0), (-38.0, 39.0)], crs=LonLatWGS84)
         npt = line.nearest_on_boundary(Point((-34.0, 52.0), crs=LonLatWGS84))
         self.assertPointAlmostEqual(npt, Point((-27.98347, 42.456316), crs=LonLatWGS84))
         return
-
-    def test_line_extend(self):
-        ln0a = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0)])
-        ln0b = Line([(4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
-        ln1 = Line([(3.0, 3.0, 2.0), (5.0, 1.0, 0.0), (3.0, 1.0, 5.0),
-                    (4.0, 4.0, 6.0), (0.0, 1.0, 3.0)])
-        ln0a.extend(ln0b)
-        self.assertEqual(ln0a, ln1)
 
     def test_line_intersection(self):
         line0 = Line([(0.0, 0.0), (3.0, 3.0)])
@@ -448,27 +570,6 @@ class TestGeometry(unittest.TestCase):
         self.assertTrue(polygon.contains(pt))
         return
 
-    def test_poly_getitem(self):
-        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
-                        (5.0, 4.0)])
-        sub = poly[:3]
-        self.assertEqual(sub, Line([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)]))
-        return
-
-    def test_poly_getitem2(self):
-        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
-                        (5.0, 4.0)])
-        sub = poly[:4:2]
-        self.assertEqual(sub, Line([(0.0, 8.0), (6.0, 1.0)]))
-        return
-
-    def test_poly_getitem3(self):
-        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
-                        (5.0, 4.0)])
-        sub = poly[:]
-        self.assertEqual(sub, poly)
-        return
-
     def test_poly_centroid(self):
         poly = Polygon([(0,0), (1,0), (1,1), (0,1)], properties={"name": "features1"})
         c = poly.centroid
@@ -499,43 +600,6 @@ class TestGeometry(unittest.TestCase):
         y = np.sin(r)
         kp = Polygon(zip(x,y))
         self.assertAlmostEqual(kp.area, np.pi, places=6)
-        return
-
-    def test_segments(self):
-        v = self.vertices
-        self.assertEqual([tuple(a.vertices) for a in self.line.segments],
-                         [(v[i], v[i+1]) for i in range(len(self.vertices)-1)])
-        return
-
-    def test_within_distance(self):
-        line = Line([(0,0), (1,1), (3,1)])
-        pt = Point((1,1.5))
-        self.assertTrue(line.within_distance(pt, 0.6))
-        self.assertFalse(line.within_distance(pt, 0.4))
-        return
-
-    def test_walk_cartesian(self):
-        start = Point((-3, -4), crs=Cartesian)
-        dest = start.walk(5.0, math.atan(3.0/4.0), radians=True)
-        self.assertAlmostEqual(dest.x, 0.0)
-        self.assertAlmostEqual(dest.y, 0.0)
-        return
-
-    def test_walk(self):
-        start = Point((-123.1, 49.25), crs=LonLatWGS84)
-        dest = start.walk(1e5, 80.0)
-        self.assertAlmostEqual(dest.x, -121.743196, places=6)
-        self.assertAlmostEqual(dest.y, 49.398187, places=6)
-        return
-
-    def test_walk_albers(self):
-        AlaskaAlbers = ProjectedCRS("+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 "
-                                "+x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs",
-                                "+ellps=GRS80")
-        start = Point((-2658638, 2443580), crs=AlaskaAlbers)
-        dest = start.walk(4500, 195.0)
-        self.assertAlmostEqual(dest.x, -2662670.889, places=3)
-        self.assertAlmostEqual(dest.y, 2441551.155, places=3)
         return
 
     def test_subsection_cartesian(self):
@@ -604,68 +668,6 @@ class TestGeometry(unittest.TestCase):
         for n in range(2, 30):
             self.assertEqual(len(line.subsection(n)), n)
         return
-
-class TestDateline(unittest.TestCase):
-
-    def test_azimuth(self):
-        for crs in (SphericalEarth, LonLatWGS84):
-            pt0 = Point((0.0, 0.0), crs=crs)
-            pt1 = Point((-1.0, 1.0), crs=crs)
-
-            pt2 = Point((-179.5, 0.0), crs=crs)
-            pt3 = Point((179.5, 1.0), crs=crs)
-            self.assertAlmostEqual(pt0.azimuth(pt1), pt2.azimuth(pt3), places=8)
-
-    def test_distance(self):
-        for crs in (SphericalEarth, LonLatWGS84):
-            pt0 = Point((0.0, 0.0), crs=crs)
-            pt1 = Point((-1.0, 1.0), crs=crs)
-
-            pt2 = Point((-179.5, 0.0), crs=crs)
-            pt3 = Point((179.5, 1.0), crs=crs)
-            self.assertAlmostEqual(pt0.distance(pt1), pt2.distance(pt3), places=8)
-
-    def test_area(self):
-        for crs in (SphericalEarth, LonLatWGS84):
-            poly0 = Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1)], crs=crs)
-            poly1 = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
-            self.assertAlmostEqual(poly0.area, poly1.area)
-
-    def test_bbox_geographical(self):
-        for crs in (SphericalEarth, LonLatWGS84):
-            poly = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
-            self.assertEqual(poly.bbox, (179, -1, -179, 1))
-
-class TestGeoInterface(unittest.TestCase):
-
-    def test_point(self):
-        pt = Point((1,2))
-        self.assertEqual(pt.geomdict, {"type":"Point", "coordinates":(1,2)})
-        pt = pt.shift((2,2))
-        self.assertEqual(pt.geomdict, {"type":"Point", "coordinates":(3,4)})
-
-    def test_poly(self):
-        x = np.arange(5)
-        y = x**2
-        poly = Polygon(list(zip(x, y)))
-        self.assertEqual(poly.geomdict,
-                         {"type":"Polygon",
-                          "bbox":(0, 0, 4, 16),
-                          "coordinates": [list(zip(x, y))]})
-
-    def test_line(self):
-        x = np.arange(10)
-        y = x**2
-        line = Line(zip(x, y))
-        self.assertEqual(line.geomdict,
-                         {"type":"LineString",
-                          "bbox":(0, 0, 9, 81),
-                          "coordinates": list(zip(x,y))})
-        line = line[:5]
-        self.assertEqual(line.geomdict,
-                         {"type":"LineString",
-                          "bbox":(0, 0, 4, 16),
-                          "coordinates": list(zip(x[:5],y[:5]))})
 
 class TestMiscellaneous(unittest.TestCase):
     """ Misc testing that doesn't fit well into other test cases """

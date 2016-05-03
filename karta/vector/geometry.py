@@ -1005,6 +1005,16 @@ class Multipart(Geometry):
     def __len__(self):
         return len(self.vertices)
 
+    @cache_decorator("bbox")
+    def get_bbox(self, crs=None):
+        """ Return the extent of a bounding box as
+            (xmin, ymin, xmax, ymax)
+        """
+        x, y = list(zip(*_flatten(self.vertices)))[:2]
+        if crs is not None:
+            x, y = _reproject((x, y), self.crs, crs)
+        return (min(x), min(y), max(x), max(y))
+
 class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes.
@@ -1203,16 +1213,6 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
         elif isinstance(key, slice):
             return Multipolygon(self.vertices[key], properties=self.properties,
                                 data=self.d[key], crs=self.crs)
-
-    @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
-        """ Return the extent of a bounding box as
-            (xmin, ymin, xmax, ymax)
-        """
-        x, y = list(zip(*_flatten(self.vertices)))[:2]
-        if crs is not None:
-            x, y = _reproject((x, y), self.crs, crs)
-        return (min(x), min(y), max(x), max(y))
 
 def _reproject(xy, crs1, crs2):
     """ Reproject a coordinate (or 2-tuple of x and y vectors) from *crs1* to

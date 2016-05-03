@@ -9,6 +9,36 @@ from karta.vector.geometry import Point, Multipoint, Line, Polygon
 
 class TestGeoInterface(unittest.TestCase):
 
+    def test_point(self):
+        pt = Point((1,2))
+        self.assertEqual(pt.geomdict, {"type":"Point", "coordinates":(1,2)})
+        pt = pt.shift((2,2))
+        self.assertEqual(pt.geomdict, {"type":"Point", "coordinates":(3,4)})
+
+    def test_poly(self):
+        x = np.arange(5)
+        y = x**2
+        poly = Polygon(list(zip(x, y)))
+        self.assertEqual(poly.geomdict,
+                         {"type":"Polygon",
+                          "bbox":(0, 0, 4, 16),
+                          "coordinates": [list(zip(x, y))]})
+
+    def test_line(self):
+        x = np.arange(10)
+        y = x**2
+        line = Line(zip(x, y))
+        self.assertEqual(line.geomdict,
+                         {"type":"LineString",
+                          "bbox":(0, 0, 9, 81),
+                          "coordinates": list(zip(x,y))})
+        line = line[:5]
+        self.assertEqual(line.geomdict,
+                         {"type":"LineString",
+                          "bbox":(0, 0, 4, 16),
+                          "coordinates": list(zip(x[:5],y[:5]))})
+
+
     def test_point_output(self):
         p = Point((4, 2))
         sp = shapely.geometry.shape(p.geomdict)
