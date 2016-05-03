@@ -1,5 +1,6 @@
-""" Classes for basic grid types """
-
+"""
+Raster grid representations
+"""
 import copy
 import math
 import numbers
@@ -21,9 +22,7 @@ BAND_CLASS_DEFAULT = CompressedBand
 CRS_DEFAULT = Cartesian
 
 class Grid(object):
-    """ Grid base class. Intended only for implementing subclasses. The primary
-    attributes defined by all Grid-derived classed are _hdr and data.
-    """
+    """ Grid base class. """
 
     @property
     def nodata(self):
@@ -285,6 +284,7 @@ class RegularGrid(Grid):
         reference : string
             either 'center' or 'edge'.
         crs : karta.crs.CRS subclass
+            coordinate system of output
         """
         if reference == 'center':
             x0, y0 = self.center_llref()
@@ -331,6 +331,7 @@ class RegularGrid(Grid):
         reference : string
             either 'center' or 'edge'.
         crs : karta.crs.CRS subclass
+            coordinate system of output
         """
         if nodata is None:
             nodata = self.nodata
@@ -550,9 +551,17 @@ class RegularGrid(Grid):
 
     def mask_by_poly(self, polys, inplace=False):
         """ Return a grid with all elements outside the bounds of a polygon
-        masked by nodata """
+        masked by nodata
 
-        if hasattr(polys, "_geotype"):
+        Parameters
+        ----------
+        polys : Polygon, Multipolygon or list of Polygon instances
+            region(s) defining clibing boundary
+        inplace : bool, optional
+            whether or not to perform masking in place (default False)
+        """
+
+        if getattr(polys, "_geotype", "") == "Polygon":
             polys = [polys]
 
         msk = None
@@ -633,7 +642,7 @@ class RegularGrid(Grid):
         dy : float
             cell dimension 2
         method : str, optional
-            interpolation method, currenlt only 'nearest' supported
+            interpolation method, currently only 'nearest' supported
         """
         ny, nx = self.bands[0].size
         dx0, dy0 = self._transform[2:4]
@@ -660,7 +669,14 @@ class RegularGrid(Grid):
 
     def get_positions(self, x, y):
         """ Return the float column and row indices for the point nearest
-        geographical coordinates (x, y). """
+        geographical coordinates.
+
+        Parameters
+        ----------
+        x : float or vector
+        y : float or vector
+            vertices of points to compute indices for
+        """
         # Calculate this by forming block matrices
         #       | dx sy          |
         #       | sx dy          |
@@ -713,8 +729,20 @@ class RegularGrid(Grid):
 
     def get_indices(self, x, y):
         """ Return the integer column and row indices for the point nearest
-        geographical coordinates (`x`, `y`). Raises GridError if points outside
-        grid bounding box. """
+        geographical coordinates. Compared to get_positions, this method raises
+        and exception when points are out of range.
+
+        Parameters
+        ----------
+        x : float or vector
+        y : float or vector
+            vertices of points to compute indices for
+
+        Raises
+        ------
+        GridError
+            points outside of Grid bbox
+        """
         ny, nx = self.size
         i, j = self.get_positions(x, y)
 
@@ -730,14 +758,32 @@ class RegularGrid(Grid):
         return i,j
 
     def sample_nearest(self, x, y):
-        """ Return the value nearest to (`x`, `y`). Nearest grid center
-        sampling scheme. """
+        """ Return the value nearest to coordinates. Nearest grid center
+        sampling scheme.
+
+        Parameters
+        ----------
+        x : float or vector
+        y : float or vector
+            vertices of points to compute indices for
+
+        Raises
+        ------
+        GridError
+            points outside of Grid bbox
+        """
         i, j = self.get_indices(x, y)
         ny, nx = self.bands[0].size
         return self[:,:][i, j]
 
     def sample_bilinear(self, x, y):
-        """ Return the value nearest to (`x`, `y`). Bilinear sampling scheme.
+        """ Return the value nearest to coordinates. Bilinear sampling scheme.
+
+        Parameters
+        ----------
+        x : float or vector
+        y : float or vector
+            vertices of points to compute indices for
         """
         i, j = self.get_positions(x, y)
         i0 = np.floor(i).astype(int)
@@ -1014,7 +1060,6 @@ def merge(grids, weights=None):
 
     Parameters
     ----------
-
     grids : iterable of Grid objects
         grids to combine
     weights : iterable of floats, optional

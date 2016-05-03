@@ -1,6 +1,11 @@
 """
 GPX IO and manipulation (UNDER DEVELOPMENT)
 
+Overview
+--------
+
+`GPX` represents a GPX document that can be written to or read from
+
 To do:
     - XML namespaces aren't really handled properly
     - metadata node not addressed

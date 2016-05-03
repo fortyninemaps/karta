@@ -1,5 +1,8 @@
-""" Convenience reader functions """
+"""
+Data input functions for Karta
 
+Used available drivers to read input data and return Karta geometry objects.
+"""
 import os
 from numbers import Number
 from . import geometry

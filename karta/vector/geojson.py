@@ -1,6 +1,18 @@
-""" This module includes the `GeoJSON` class and convenience functions for
-dealing with GeoJSON data. The `GeoJSON` class uses the builtin json module and
-enforces GeoJSON standards. """
+"""
+GeoJSON drivers for Karta
+
+Defines named tuples representing GeoJSON entities.
+
+Overview
+--------
+
+`GeoJSONReader` converts GeoJSON strings to named tuples.
+
+`GeoJSONSerializer` converts named tuples to GeoJSON strings.
+
+`as_named_tuple` function converts karta.geometry classes to equivalent named
+tuples.
+"""
 
 import json
 from collections import namedtuple

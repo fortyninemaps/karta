@@ -1,5 +1,7 @@
 """
-Classes for handling raster data.
+karta.raster
+
+Classes for grids of raster data
 """
 
 import numpy

@@ -23,7 +23,7 @@ from ..crs import SphericalEarth
 from ..errors import GeometryError, GGeoError, CRSError
 
 class Geometry(object):
-    """ This is the abstract base class for all geometry types """
+    """ Abstract base class for all geometry types """
 
     #__slots__ = ["_geotype", "properties", "crs", "_cache"]
 
@@ -41,8 +41,17 @@ class Geometry(object):
 
     @staticmethod
     def _distance(pos0, pos1):
-        """ Generic method for calculating distance between positions that
-        respects CRS """
+        """ Generic CRS-aware method for calculating distance between positions.
+
+        Parameters
+        ----------
+        pos0, pos1 : Point
+            end points of distance computation
+
+        Returns
+        -------
+        float
+        """
         (x0, y0) = pos0.vertex[:2]
         (x1, y1) = pos1.get_vertex(pos0.crs)[:2]
         if isinstance(pos0.crs, GeographicalCRS):
@@ -59,10 +68,10 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
     Parameters
     ----------
     coords : 2-tuple or 3-tuple
-    properties : dict or None
-        geometry specific data [default None]
-    crs : karta.crs.CRS subclass
-        [default Cartesian]
+    properties : dict, optional
+        geometry specific metadata (default None)
+    crs : karta.crs.CRS, optional
+        coordinate system for geometry (default Cartesian)
     """
     #__slots__ = ["vertex", "rank"]
 
@@ -140,9 +149,20 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         else:
             return (self.x, self.y)
 
-    def azimuth(self, other, crs=SphericalEarth):
+    def azimuth(self, other):
         """ Returns the compass azimuth from self to other in radians (i.e.
-        clockwise, with north at 0). Returns NaN if points are coincident. """
+        clockwise, with north at 0).
+
+        Parameters
+        ----------
+        other : Point
+            second point defining direction
+
+        Returns
+        -------
+        float
+            value is NaN if points are coincident
+        """
 
         if (self.x, self.y) == (other.x, other.y):
             az = np.nan
@@ -167,17 +187,29 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
             distance to walk
         direction : float
             walk azimuth (clockwise with "north" at 0)
+        radians : bool, optional
+            whether direction is given in radians (default False)
         """
         xg1, yg1 = self.crs.project(self.x, self.y, inverse=True)
         xg2, yg2, _ = self.crs.forward(xg1, yg1, direction, distance,
-                                        radians=radians)
+                                       radians=radians)
         x, y = self.crs.project(xg2, yg2)
         return Point((x, y), properties=self.properties, crs=self.crs)
 
     def distance(self, other):
         """ Returns a distance to another Point. If the coordinate system is
         geographical and a third (z) coordinate exists, it is assumed to have
-        the same units as the real-world horizontal distance (i.e. meters). """
+        the same units as the real-world horizontal distance (i.e. meters).
+
+        Parameters
+        ----------
+        other : Point
+            point to compute distance to
+
+        Returns
+        -------
+        float
+        """
         if self.crs != other.crs:
             raise CRSError("Points must share the same coordinate system.")
         flat_dist = self._distance(self, other)
@@ -187,7 +219,15 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
             return math.sqrt(flat_dist**2. + (self.z-other.z)**2.)
 
     def shift(self, shift_vector, inplace=False):
-        """ Shift point by the amount given by a vector. """
+        """ Shift point in space.
+
+        Parameters
+        ----------
+        shift_vector : iterable
+            vector with length equal to Geometry.rank defining the shift
+        inplace : bool
+            whether shift should be in place (default False)
+        """
         if len(shift_vector) != self.rank:
             raise GGeoError('Shift vector length must equal geometry rank.')
 
@@ -272,9 +312,7 @@ class MultiVertexBase(Geometry):
 class MultiVertexMixin(object):
 
     def _bbox_overlap(self, other):
-        """ Return whether bounding boxes between self and another geometry
-        overlap.
-        """
+        """ Whether bounding box overlaps with that of another Geometry. """
         reg0 = self.bbox
         reg1 = other.bbox
         return (reg0[0] <= reg1[2] and reg1[0] <= reg0[2] and
@@ -286,7 +324,16 @@ class MultiVertexMixin(object):
 
     @cache_decorator("bbox")
     def get_bbox(self, crs=None):
-        """ Return the extent of a bounding box as
+        """ Return the bounding box.
+
+        Parameters
+        ----------
+        crs : karta.CRS
+            coordinate system of output bounding box
+
+        Returns
+        -------
+        tuple
             (xmin, ymin, xmax, ymax)
         """
         x, y = self.get_coordinate_lists(crs)
@@ -297,7 +344,13 @@ class MultiVertexMixin(object):
         return self.get_coordinate_lists()
 
     def get_vertices(self, crs=None):
-        """ Return vertices as an array. """
+        """ Return vertices as an array.
+
+        Parameters
+        ----------
+        crs : karta.CRS, optional
+            coordinate system of output vertices
+        """
         if (crs is None) or (crs is self.crs):
             return np.array(self.vertices)
         else:
@@ -305,7 +358,12 @@ class MultiVertexMixin(object):
             return np.array(vertices)
 
     def get_coordinate_lists(self, crs=None):
-        """ Return horizontal coordinate lists, optionally projected to *crs*.
+        """ Return horizontal coordinate lists.
+
+        Parameters
+        ----------
+        crs : karta.CRS, optional
+            coordinate system of output vertices
         """
         x, y = tuple(zip(*self.vertices))[:2]
         if crs is not None and (crs != self.crs):
@@ -313,7 +371,15 @@ class MultiVertexMixin(object):
         return x, y
 
     def shift(self, shift_vector, inplace=False):
-        """ Shift feature by the amount given by a vector. """
+        """ Shift geometry in space.
+
+        Parameters
+        ----------
+        shift_vector : iterable
+            vector with length equal to Geometry.rank defining the shift
+        inplace : bool
+            whether shift should be in place (default False)
+        """
         if len(shift_vector) != self.rank:
             raise GGeoError('Shift vector length must equal geometry rank.')
 
@@ -334,16 +400,16 @@ class MultiVertexMixin(object):
                 kw["data"] = self.data
             return type(self)(vertices, **kw)
 
-    def _matmult(self, A, x):
-        """ Return Ax=b """
-        b = []
-        for a in A:
-            b.append(sum([ai * xi for ai, xi in zip(a, x)]))
-        return b
-
     def rotate2d(self, thetad, origin=(0, 0)):
-        """ Rotate rank 2 Multipoint around *origin* counter-clockwise by
-        *thetad* degrees. """
+        """ Rotate rank 2 geometry.
+
+        Parameters
+        ----------
+        thetad : float
+            degreesof rotation
+        origin : tuple of two floats, optional
+            pivot for rotation (default (0, 0))
+        """
         # First, shift by the origin
         self.shift([-a for a in origin])
 
@@ -351,7 +417,7 @@ class MultiVertexMixin(object):
         theta = thetad / 180.0 * math.pi
         R = ((math.cos(theta), -math.sin(theta)),
              (math.sin(theta), math.cos(theta)))
-        rvertices = [self._matmult(R, x) for x in self.vertices]
+        rvertices = [_matmult(R, x) for x in self.vertices]
         self.vertices = rvertices
 
         # Shift back
@@ -369,12 +435,11 @@ class MultiVertexMixin(object):
         return type(self)(vertices, properties=self.properties, crs=self.crs)
 
     def _subset(self, idxs):
-        """ Return a subset defined by index in *idxs*. """
+        """ Return a subset defined by indice. """
         if len(idxs) == 0:
             raise ValueError("attempted to extract a zero-length subset")
         vertices = [self.vertices[i] for i in idxs]
-        subset = type(self)(vertices, properties=self.properties, crs=self.crs)
-        return subset
+        return type(self)(vertices, properties=self.properties, crs=self.crs)
 
     def flat_distances_to(self, pt):
         """ Return the "flat Earth" distance from each vertex to a point. """
@@ -410,7 +475,18 @@ class MultiVertexMixin(object):
         return self.get_extent()
 
     def get_extent(self, crs=None):
-        """ Calculate a bounding box. """
+        """ Calculate geometry extent.
+
+        Parameters
+        ----------
+        crs : karta.CRS
+            coordinate system of output
+
+        Returns
+        -------
+        tuple
+            (xmin, xmax, ymin, ymax)
+        """
         def gen_minmax(G):
             """ Get the min/max from a single pass through a generator. """
             (xmin, ymin) = (xmax, ymax) = next(G)
@@ -438,7 +514,7 @@ class MultiVertexMixin(object):
     def convex_hull(self):
         """ Return a Polygon representing the convex hull.
 
-        Only implemented for Cartesian-derived coordinate systems.
+        Not implemented for geographical coordinate systems.
         """
         if isinstance(self.crs, GeographicalCRS):
             raise CRSError("not implemented for geographical coordinate "
@@ -507,7 +583,18 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     @cache_decorator("bbox")
     def get_bbox(self, crs=None):
         """ Dateline-aware get_bbox for geometries consisting of connected
-        vertices """
+        vertices.
+
+        Parameters
+        ----------
+        crs : karta.CRS
+            coordinate system of output bounding box
+
+        Returns
+        -------
+        tuple
+            (xmin, ymin, xmax, ymax)
+        """
         if isinstance(self.crs, GeographicalCRS):
             X, Y = self.get_coordinate_lists(crs)
             xmin = xmax = X[0]
@@ -607,13 +694,17 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
             return multipart_from_singleparts(interx_points)
 
 
-    def _nearest_to_point(self, pt):
+    def _nearest_to_point(self, point):
         """ Return a tuple of the shortest distance on the geometry boundary to
-        *pt*, and the vertex at that location.
+        a point, and the vertex at that location.
 
-        If necessary, project coordinates to the coordinate system of *self*.
+        If necessary, project coordinates to the local coordinate system.
+
+        Parameters
+        ----------
+        point : Point
         """
-        ptvertex = pt.get_vertex(crs=self.crs)
+        ptvertex = point.get_vertex(crs=self.crs)
         segments = zip(self.vertices[:-1], self.vertices[1:])
 
         if isinstance(self.crs, CartesianCRS):
@@ -629,37 +720,51 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
                                                    seg[0], seg[1], tol=0.01)
 
         point_dist = map(func, segments)
-        minpt = None
-        mindist = -1.0
-        for i, (pt, d) in enumerate(point_dist):
-            if d < mindist or (i == 0):
-                minpt = pt
-                mindist = d
+        min_point = None
+        min_dist = -1.0
+        for i, (point, dist) in enumerate(point_dist):
+            if dist < min_dist or (i == 0):
+                min_point = point
+                min_dist = dist
 
-        return mindist, minpt
+        return min_dist, min_point
 
     def shortest_distance_to(self, pt):
         """ Return the shortest distance from any position on the geometry
-        boundary to *pt* (Point).
+        boundary to a point.
+
+        Parameters
+        ----------
+        point : Point
         """
         return self._nearest_to_point(pt)[0]
 
-    def nearest_on_boundary(self, pt):
+    def nearest_on_boundary(self, point):
         """ Returns the position on the geometry boundary that is nearest to
-        *pt* (Point). If two points are equidistant, only one will be returned.
+        a point. If two points are equidistant, only one will be returned.
+
+        Parameters
+        ----------
+        point : Point
         """
-        _, minpt = self._nearest_to_point(pt)
+        _, minpt = self._nearest_to_point(point)
         return Point(minpt, crs=self.crs)
 
-    def within_distance(self, pt, distance):
+    def within_distance(self, point, distance):
         """ Test whether a point is within *distance* geometry.
+
+        Parameters
+        ----------
+        point : Point
+        distance : float
         """
-        return all(distance >= seg.shortest_distance_to(pt) for seg in self.segments)
+        return all(distance >= seg.shortest_distance_to(point)
+                    for seg in self.segments)
 
     @staticmethod
     def _seg_crosses_dateline(seg):
         a, b = seg[0], seg[1]
-        return (sign(a.x) != sign(b.x)) and (abs(a.x-b.x) > 180.0)
+        return (_sign(a.x) != _sign(b.x)) and (abs(a.x-b.x) > 180.0)
 
     def crosses_dateline(self):
         """ Return a boolean that indicates whether any segment crosses the
@@ -676,10 +781,11 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
     Parameters
     ----------
     coords : list of 2-tuples or 3-tuples
-    properties : dict or None
-        geometry specific data [default None]
-    crs : karta.crs.CRS subclass
-        [default Cartesian]
+        vertex coordinates
+    properties : dict, optional
+        geometry specific metadata
+    crs : karta.CRS, optional
+        (default Cartesian)
     """
     #__slots__ = []
 
@@ -780,12 +886,13 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
     Parameters
     ----------
     coords : list of 2-tuples or 3-tuples
-    properties : dict or None
-        geometry specific data [default None]
-    subs : list of Polygon instances or None
+        vertex coordinates
+    subs : list of Polygon instances, optional
         sub-polygons [default None]
-    crs : karta.crs.CRS subclass
-        [default Cartesian]
+    properties : dict, optional
+        geometry specific metadata
+    crs : karta.CRS, optional
+        (default Cartesian)
     """
     #__slots__ = ["subs"]
     def __init__(self, vertices, subs=None, **kwargs):
@@ -840,6 +947,11 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
     def ispolar(self, pole=None):
         """ Return True if polygon contains one pole. If the polygon contains
         neither or both poles, returns False.
+
+        Parameters
+        ----------
+        pole : Point, optional
+            (default point on a sphere at 0 longitude, 90 latitude)
         """
 
         if not isinstance(self.crs, GeographicalCRS):
@@ -855,7 +967,7 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
 
             lon1 = geodesy.reduce_deg(vertex[0])
 
-            if (sign(lon0) == -sign(lon1)) and \
+            if (_sign(lon0) == -_sign(lon1)) and \
                 ((min(abs(lon0-180), abs(lon0+180)) + min(abs(lon1-180), abs(lon1+180))) < (abs(lon0) + abs(lon1))):
                 # Longitudes span the dateline
                 sum_angle += 360.0 + lon1 - lon0
@@ -868,8 +980,7 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
 
     @property
     def segments(self):
-        """ Returns an generator of adjacent line segments.
-        Unique to Polygon: appends a final segment to close the Polygon.
+        """ Returns a generator of adjacent line segments.
         """
         L = len(self.vertices)
         return itertools.chain((self._subset((i,i+1)) for i in range(len(self)-1)),
@@ -877,8 +988,10 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
 
     @property
     def segment_tuples(self):
-        """ Returns an generator of adjacent line segments as coordinate tuples. """
-        return ((self.vertices[i-1], self.vertices[i]) for i in range(len(self.vertices)))
+        """ Returns a generator of adjacent line segments as coordinate
+        tuples. """
+        return ((self.vertices[i-1], self.vertices[i])
+                for i in range(len(self.vertices)))
 
     @property
     def length(self):
@@ -895,7 +1008,6 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
     def area(self):
         """ Return the two-dimensional area of the polygon, excluding
         sub-polygons. """
-
         if isinstance(self.crs, GeographicalCRS):
             major_axis = self.crs.ellipsoid.a
             minor_axis = self.crs.ellipsoid.b
@@ -933,17 +1045,8 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
                     for i in range(-1, len(self)-1)) / (6*A)
         return Point((cx, cy), properties=self.properties, crs=self.crs)
 
-    @staticmethod
-    def _signcross(a, b):
-        """ Return sign of 2D cross product a x b """
-        c = (a[0]*b[1]) - (a[1]*b[0])
-        if c != 0:
-            return c/abs(c)
-        else:
-            return 0
-
-    def contains(self, pt):
-        """ Returns True if pt is inside or on the boundary of the polygon, and
+    def contains(self, point):
+        """ Returns True if point is inside or on the boundary of the polygon, and
         False otherwise. Uses a crossing number scheme.
 
         Behaviour may not be defined for polar geographical polygons.
@@ -955,13 +1058,13 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
                     "implemented. As a workaround, transform to an appropriate "
                     "ProjectedCRS first.")
 
-        x, y = pt.get_vertex(crs=self.crs)[:2]
+        x, y = point.get_vertex(crs=self.crs)[:2]
         cnt = 0
         for seg in self.segment_tuples:
             (a, b) = seg
             if _cvectorgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
                 cnt += 1
-        return cnt % 2 == 1 and not any(p.contains(pt) for p in self.subs)
+        return cnt % 2 == 1 and not any(p.contains(point) for p in self.subs)
 
     def to_line(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
@@ -1015,7 +1118,16 @@ class Multipart(Geometry):
 
     @cache_decorator("bbox")
     def get_bbox(self, crs=None):
-        """ Return the extent of a bounding box as
+        """ Return the bounding box.
+
+        Parameters
+        ----------
+        crs : karta.CRS
+            coordinate system of output bounding box
+
+        Returns
+        -------
+        tuple
             (xmin, ymin, xmax, ymax)
         """
         x, y = list(zip(*_flatten(self.vertices)))[:2]
@@ -1091,32 +1203,34 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
                 "geometry": self.geomdict,
                 "properties": p}
 
-    def within_radius(self, pt, radius):
+    def within_radius(self, point, radius):
         """ Return subset of Multipoint within a radius.
 
         Parameters
         ----------
-        pt : Point
+        point : Point
             point to to center filter at
         radius : float
-            maximum distance from *pt*
+            maximum distance from *point*
 
         Returns
         -------
         Multipoint
         """
         if self.quadtree is None:
-            distances = self.distances_to(pt)
+            distances = self.distances_to(point)
             indices = [i for i,d in enumerate(distances) if d <= radius]
         else:
-            search_bbox = (pt.x-radius, pt.y-radius, pt.x+radius, pt.y+radius)
-            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
-            possible_pts = []
-            for t in possible_pt_tuples:
-                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
-                                                        crs=self.crs))
-            indices = [p.properties["idx"] for p in possible_pts
-                            if pt.distance(p) <= radius]
+            search_bbox = (point.x-radius, point.y-radius,
+                           point.x+radius, point.y+radius)
+            possible_point_tuples = self.quadtree.getfrombbox(search_bbox)
+            possible_points = []
+            for t in possible_point_tuples:
+                possible_points.append(Point((t[0], t[1]),
+                                             properties={"idx": t[2]},
+                                             crs=self.crs))
+            indices = [p.properties["idx"] for p in possible_points
+                       if point.distance(p) <= radius]
 
         return self._subset(indices)
 
@@ -1124,26 +1238,28 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
         """ Return Multipoint subset that is within a square bounding box
         given by (xmin, xymin, xmax, ymax).
         """
-        filtbbox = lambda pt: (bbox[0] <= pt.vertex[0] <= bbox[2]) and \
-                              (bbox[1] <= pt.vertex[1] <= bbox[3])
-        indices = [i for (i, pt) in enumerate(self) if filtbbox(pt)]
+        filtbbox = lambda point: (bbox[0] <= point.vertex[0] <= bbox[2]) and \
+                              (bbox[1] <= point.vertex[1] <= bbox[3])
+        indices = [i for (i, point) in enumerate(self) if filtbbox(point)]
         return self._subset(indices)
 
     def within_polygon(self, poly):
         """ Return Multipoint subset that is within a polygon.
         """
         if self.quadtree is None:
-            indices = [i for (i, pt) in enumerate(self) if poly.contains(pt)]
+            indices = [i for (i, point) in enumerate(self)
+                       if poly.contains(point)]
         else:
             ext = poly.get_extent(crs=self.crs)
             search_bbox = (ext[0], ext[2], ext[1], ext[3])
-            possible_pt_tuples = self.quadtree.getfrombbox(search_bbox)
-            possible_pts = []
-            for t in possible_pt_tuples:
-                possible_pts.append(Point((t[0], t[1]), properties={"idx": t[2]},
-                                                        crs=self.crs))
-            indices = [p.properties["idx"] for p in possible_pts
-                            if poly.contains(p)]
+            possible_point_tuples = self.quadtree.getfrombbox(search_bbox)
+            possible_points = []
+            for t in possible_point_tuples:
+                possible_points.append(Point((t[0], t[1]),
+                                             properties={"idx": t[2]},
+                                             crs=self.crs))
+            indices = [p.properties["idx"] for p in possible_points
+                       if poly.contains(p)]
         return self._subset(indices)
 
     def build_quadtree(self, buff=1e-8):
@@ -1151,11 +1267,11 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
 
         Parameters
         ----------
-        buff : float or 4-tuple of floats
+        buff : float or 4-tuple of floats, optional
             specifies a spatial buffer to create around the current point
             bounding box, permitting the geometry to grow after the quadtree
             has been initialized. *buff* may be a scalar or a sequence of
-            (left, right, bottom, top). (optional)
+            (left, right, bottom, top). (default 1e-8)
         """
         try:
             bf = (buff[0], buff[1], buff[2], buff[3])
@@ -1238,9 +1354,44 @@ def _flatten(vertices):
             out.append(item)
     return out
 
+def _signcross(a, b):
+    """ Return sign of 2D cross product a x b """
+    c = (a[0]*b[1]) - (a[1]*b[0])
+    if c != 0:
+        return c/abs(c)
+    else:
+        return 0
+
+def _matmult(A, x):
+    """ Return product of matrix A and vector x """
+    b = []
+    for a in A:
+        b.append(sum([ai * xi for ai, xi in zip(a, x)]))
+    return b
+
+def _sign(a):
+    """ Return the sign of *a* """
+    if a == 0.0:
+        return 1
+    else:
+        return a/abs(a)
+
 def multipart_from_singleparts(parts, crs=None):
-    """ Merge *parts* into a Multipoint/Multiline/Multipolygon instance.
-    Properties are stored as Multipoint data. """
+    """ Merge singlepart geometries into a multipart geometry.
+    Properties contained by all inputs are stored in Multipart data attribute.
+
+    Parameters
+    ----------
+    parts : iterable of singlepart Geometry instances
+        e.g. list of Points, Lines, or Polygons
+    crs : karta.CRS
+        coordinate system of output Geometry
+
+    Returns
+    -------
+    Multipart
+        e.g. Multipoint, Multiline, or Multipolygon
+    """
     if crs is None:
         crs = parts[0].crs
 
@@ -1278,29 +1429,33 @@ def multipart_from_singleparts(parts, crs=None):
     return cls(vertices, data=data, crs=crs)
 
 def affine_matrix(mpa, mpb):
-    """ Compute the affine transformation matrix that projects Multipoint mpa
-    to Multipoint mpb using a least squares fit. """
+    """ Compute the affine transformation matrix that best matches two
+    Multipoint geometries using a least squares fit.
+
+    Output is relative to the coordinate system of the first geometry, if they
+    differ.
+
+    Parameters
+    ----------
+    mpa, mpb : Multipoint
+        matching length collection of control points to match
+    """
     if len(mpa) != len(mpb):
         raise GeometryError("Input geometries must have identical length")
-    vecp = np.asarray(mpb.get_vertices()).ravel()
+    vecp = np.asarray(mpb.get_vertices(mpa.crs)).ravel()
     A = np.empty([2*len(mpa), 6], dtype=np.float64)
     for i, (x, y) in enumerate(mpa.get_vertices()):
         A[2*i:2*i+2,:] = np.kron(np.eye(2), [x, y, 1])
     M, res, rank, singvals = np.linalg.lstsq(A, vecp)
     return np.vstack([np.reshape(M, [2, 3]), np.atleast_2d([0, 0, 1])])
 
-def sign(a):
-    if a == 0.0:
-        return 1
-    else:
-        return a/abs(a)
-
-def get_tile_tuple(pt, zoom):
-    """ Return the (z, x, y) locator for an OpenStreetMap tile containing *pt*.
+def get_tile_tuple(point, zoom):
+    """ Return the (z, x, y) locator for an OpenStreetMap tile containing a
+    point.
 
     Parameters
     ----------
-    pt : Point
+    point : Point
         geographic point to be contained within tile
     zoom : int
         non-negative zoom level (typically 0-18)
@@ -1309,7 +1464,7 @@ def get_tile_tuple(pt, zoom):
     dlon = 256
     dlat = 256
 
-    lon0, lat0 = pt.crs.project(*pt.vertex, inverse=True)
+    lon0, lat0 = point.crs.project(*point.vertex[:2], inverse=True)
     c = 128/math.pi * 2**z
     x0 = c * (lon0*math.pi/180+math.pi)
     y0 = c * (math.pi-math.log(math.tan(math.pi/4+lat0*math.pi/360)))

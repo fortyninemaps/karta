@@ -1,3 +1,16 @@
+"""
+Band implementations for storing data in Karta Grid instances
+
+Overview
+--------
+
+`BandIndexer` interface for accessing data from one or more bands
+
+`SimpleBand` use numpy arrays for data storage
+
+`CompressedBand` uses blosc compression to reduce in-memory footprint
+"""
+
 import blosc
 import numpy as np
 from math import ceil
@@ -43,6 +56,10 @@ class BandIndexer(object):
 
     @property
     def shape(self):
+        """ Returns the dimensions of raster bands. If there is a single
+        (m x n) band, output is a tuple (m, n). If there are N>1 bands, output
+        is a tuple (N, m, n).
+        """
         if len(self.bands) == 0:
             raise ValueError("no bands")
         elif len(self.bands) == 1:
@@ -52,6 +69,7 @@ class BandIndexer(object):
 
     @property
     def dtype(self):
+        """ Returns bands' dtype """
         return self.bands[0].dtype
 
 class SimpleBand(object):

@@ -1,5 +1,14 @@
-""" Provides functions for reading and writing ESRI shapefiles and returning a
-geometry object. """
+"""
+Shapefile driver for Karta using OGR backend
+
+Overview
+--------
+
+`ogr_write` takes geointerface dictionaries or Karta objects and writes to ESRI
+shapefile
+
+`ogr_read_geometry` converts an OGR geometry object to a geointerface dictionary
+"""
 
 import os
 import datetime

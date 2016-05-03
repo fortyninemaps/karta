@@ -1,5 +1,7 @@
 """
-Vector data classes and functions
+karta.vector
+
+Classes and functions for vector data
 """
 
 import numpy
