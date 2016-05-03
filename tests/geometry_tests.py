@@ -5,8 +5,8 @@ import unittest
 import math
 import numpy as np
 
-from karta.vector.geometry import Point, Multipoint, Line, Polygon
-from karta.vector.geometry import affine_matrix
+from karta.vector.geometry import Point, Line, Polygon, Multipoint, Multiline, Multipolygon
+from karta.vector.geometry import affine_matrix, _flatten
 from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, NSIDCNorth, ProjectedCRS
 from karta.errors import CRSError
 
@@ -667,7 +667,8 @@ class TestGeoInterface(unittest.TestCase):
                           "bbox":(0, 0, 4, 16),
                           "coordinates": list(zip(x[:5],y[:5]))})
 
-class TestHashing(unittest.TestCase):
+class TestMiscellaneous(unittest.TestCase):
+    """ Misc testing that doesn't fit well into other test cases """
 
     def test_hashing(self):
         np.random.seed(49)
@@ -686,6 +687,24 @@ class TestHashing(unittest.TestCase):
         self.assertNotEqual(hash(line0), hash(poly))
 
         self.assertEqual(hash(point), hash(mp[0]))
+        return
+
+    def test_flatten1(self):
+        arr0 = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]
+        arr1 = [[(1, 2), (3, 4)], [(5, 6), (7, 8), (9, 10)]]
+        self.assertEqual(_flatten(arr1), arr0)
+        return
+
+    def test_flatten2(self):
+        arr0 = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]
+        arr1 = [(1, 2), (3, 4), [[(5, 6), (7, 8)], (9, 10)]]
+        self.assertEqual(_flatten(arr1), arr0)
+        return
+
+    def test_flatten3(self):
+        arr0 = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]
+        arr1 = [[(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]]
+        self.assertEqual(_flatten(arr1), arr0)
         return
 
 class TestGeometryProj(unittest.TestCase):

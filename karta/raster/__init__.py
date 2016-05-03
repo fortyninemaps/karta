@@ -2,6 +2,10 @@
 Classes for handling raster data.
 """
 
+import numpy
+import numbers
+numbers.Integral.register(numpy.integer)
+
 from . import grid
 from . import misc
 

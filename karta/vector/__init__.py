@@ -2,6 +2,10 @@
 Vector data classes and functions.
 """
 
+import numpy
+import numbers
+numbers.Integral.register(numpy.integer)
+
 from . import geometry
 from . import xyfile
 from . import geojson

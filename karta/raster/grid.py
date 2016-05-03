@@ -20,8 +20,6 @@ except ImportError:
 BAND_CLASS_DEFAULT = CompressedBand
 CRS_DEFAULT = Cartesian
 
-IntegerType = (numbers.Integral, np.int32, np.int64)
-
 class Grid(object):
     """ Grid base class. Intended only for implementing subclasses. The primary
     attributes defined by all Grid-derived classed are _hdr and data.
@@ -1094,7 +1092,7 @@ def get_nodata(T):
     """
     if T in (np.uint8, np.uint16, np.uint32, np.uint64):
         return np.iinfo(T).max
-    elif issubclass(T, IntegerType):
+    elif issubclass(T, numbers.Integral):
         return np.iinfo(T).min
     elif issubclass(T, (numbers.Real, numbers.Complex)):
         return np.nan
