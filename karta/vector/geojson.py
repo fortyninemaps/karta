@@ -20,7 +20,7 @@ GeometryCollection = namedtuple('GeometryCollection', ['geometries', 'crs'])
 Feature = namedtuple('Feature', ['geometry', 'properties', 'id', 'crs'])
 FeatureCollection = namedtuple('FeatureCollection', ['features', 'crs'])
 
-def as_named_tuple(*geoms, urn=None):
+def as_named_tuple(*geoms, **kwargs):
     """ Convert one or more Geometry instances to GeoJSON-structured named tuples.
 
     Parameters
@@ -39,8 +39,8 @@ def as_named_tuple(*geoms, urn=None):
     TypeError
         if one or more of geoms has an unrecognized `_geotype` attribute
     """
-    if urn is not None:
-        crs = crs_from_urn(urn)
+    if kwargs.get("urn", None) is not None:
+        crs = crs_from_urn(kwargs["urn"])
     else:
         crs = crs_from_karta(geoms[0].crs)
 
