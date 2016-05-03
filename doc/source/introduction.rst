@@ -26,11 +26,18 @@ pull requests are welcome, and accepted via the `Github page`_.
 
 .. _`Github page`: https://www.github.com/fortyninemaps/karta
 
+Getting Started
+---------------
+
+For a whirlwind tour of some basic usage of Karta, look through the `tutorial`_.
+
+.. _`tutorial`: _static/tutorial.html
+
 Data Formats
 ------------
 
 *Karta* provides a basic working interface to several common file formats.
-Currently supported are:
+Currently supported include:
 
 -  vector
 
@@ -51,18 +58,11 @@ it, such as Shapely_ and ArcPy_.
 .. _Shapely: https://github.com/Toblerity/Shapely
 .. _ArcPy: http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//000v00000153000000
 
-Important classes
------------------
-
-This is a listing of some of the more important and commonly-used classes. A
-complete listing of classes, methods, and functions is available in the `package
-documentation`_. 
-
-.. _package documentation: reference.html
-
 
 Examples
 --------
+
+*incomplete*
 
 License
 -------

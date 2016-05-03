@@ -13,7 +13,6 @@ Contents:
 
    introduction
    installation
-   tutorial
    reference
 
 Indices and tables

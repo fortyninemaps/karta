@@ -85,21 +85,16 @@ Geometry
 
 .. automodule:: karta.vector.geometry
 
+Geometry
+++++++++
+
 .. autoclass:: karta.vector.geometry.Geometry
     :members:
-    :inherited-members:
 
 Point
 +++++
 
 .. autoclass:: karta.vector.Point
-    :members:
-    :inherited-members:
-
-Multipoint
-++++++++++
-
-.. autoclass:: karta.vector.Multipoint
     :members:
     :inherited-members:
 
@@ -114,6 +109,27 @@ Polygon
 +++++++
 
 .. autoclass:: karta.vector.Polygon
+    :members:
+    :inherited-members:
+
+Multipoint
+++++++++++
+
+.. autoclass:: karta.vector.Multipoint
+    :members:
+    :inherited-members:
+
+Multiline
++++++++++
+
+.. autoclass:: karta.vector.Multiline
+    :members:
+    :inherited-members:
+
+Multipolygon
+++++++++++++
+
+.. autoclass:: karta.vector.Multipolygon
     :members:
     :inherited-members:
 
@@ -161,6 +177,11 @@ ESRI shapefile (GDAL interface)
 .. automodule:: karta.vector.shp
     :members:
 
+GPS Exchange
+++++++++++++
+
+.. automodule:: karta.vector.gpx
+    :members:
 
 Managing coordinate systems
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
