@@ -1136,7 +1136,7 @@ class Multipart(Geometry):
             x, y = _reproject((x, y), self.crs, crs)
         return (min(x), min(y), max(x), max(y))
 
-class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
+class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes.
 
@@ -1285,7 +1285,7 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
             self.quadtree.addpt((pt.x, pt.y, i))
         return
 
-class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
+class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
 
     def __init__(self, vertices, **kwargs):
         """ Partial init function that establishes geometry rank and creates a
@@ -1310,7 +1310,7 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
             return Multiline(self.vertices[key], properties=self.properties,
                              data=self.d[key], crs=self.crs)
 
-class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
+class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
 
     def __init__(self, vertices, **kwargs):
         """ Partial init function that establishes geometry rank and creates a
