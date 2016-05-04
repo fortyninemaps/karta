@@ -17,7 +17,8 @@ tuples.
 import json
 from collections import namedtuple
 from functools import reduce
-from ..crs import CRS
+from .utilities import _reproject, _reproject_nested
+from ..crs import CRS, LonLatWGS84
 
 Point = namedtuple('Point', ['coordinates', 'crs'])
 MultiPoint = namedtuple('MultiPoint', ['coordinates', 'crs'])
@@ -422,19 +423,40 @@ class GeoJSONOutMixin(object):
 
     _geojson_serializer = GeoJSONSerializer()
 
-    def as_geojson(self, indent=2, urn=None):
+    def as_geojson(self, indent=None, urn=None, force_wgs84=True):
         """ Output representation of internal data as a GeoJSON string.
 
         Parameters
         ----------
         indent : int, optional
             indentation of generated GeoJSON (default 2)
+        force_wgs84 : bool, optional
+            Forces output to use geographical coordinates with the WGS84 datum,
+            as recommended by the GeoJSON draft specification
+            (https://datatracker.ietf.org/doc/draft-ietf-geojson/).
+            If *urn* is not set, "urn:ogc:def:crs:OGC:1.3:CRS84" is used.
+            (default True)
         urn : str, optional
             overrides GeoJSON CRS with provided URN string
         """
-        return self._geojson_serializer(as_named_tuple(self, urn=urn), indent=indent)
+        if force_wgs84 and (urn is None):
+            urn = "urn:ogc:def:crs:OGC:1.3:CRS84"
+        if force_wgs84 and (self.crs != LonLatWGS84):
+            kw = dict(properties=self.properties, crs=LonLatWGS84)
+            if hasattr(self, "data"):
+                kw["data"] = self.data
+            if hasattr(self, "vertices"):
+                vertices = _reproject_nested(self.vertices, self.crs, LonLatWGS84)
+            else:
+                vertices = _reproject(self.vertex, self.crs, LonLatWGS84)
+            geo = type(self)(projected_vertices, **kw)
+        else:
+            geo = self
 
-    def to_geojson(self, f, indent=None, urn=None):
+        return self._geojson_serializer(as_named_tuple(geo, urn=urn),
+                                        indent=indent)
+
+    def to_geojson(self, f, indent=None, urn=None, force_wgs84=True):
         """ Write data as a GeoJSON string to a file-like object `f`.
 
         Parameters
@@ -443,6 +465,12 @@ class GeoJSONOutMixin(object):
             file to receive GeoJSON string
         indent : int, optional
             indentation of generated GeoJSON (default None)
+        force_wgs84 : bool, optional
+            Forces output to use geographical coordinates with the WGS84 datum,
+            as recommended by the GeoJSON draft specification
+            (https://datatracker.ietf.org/doc/draft-ietf-geojson/).
+            If *urn* is not set, "urn:ogc:def:crs:OGC:1.3:CRS84" is used.
+            (default True)
         urn : str, optional
             overrides GeoJSON CRS with provided URN string
         """
@@ -451,7 +479,8 @@ class GeoJSONOutMixin(object):
                 fobj = open(f, "w")
             else:
                 fobj = f
-            fobj.write(self.as_geojson(indent=indent, urn=urn))
+            fobj.write(self.as_geojson(indent=indent, urn=urn,
+                                       force_wgs84=force_wgs84))
         finally:
             if not hasattr(f, "write"):
                 fobj.close()

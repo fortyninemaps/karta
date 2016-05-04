@@ -15,10 +15,11 @@ from .geojson import GeoJSONOutMixin
 from .shp import ShapefileOutMixin
 from . import xyfile
 from .table import Table, Indexer
+from .utilities import _reproject, _reproject_nested
 from . import quadtree
 from . import _cvectorgeo
 from .. import geodesy
-from ..crs import Cartesian, CartesianCRS, GeographicalCRS
+from ..crs import Cartesian, CartesianCRS, GeographicalCRS, LonLatWGS84
 from ..crs import SphericalEarth
 from ..errors import GeometryError, GGeoError, CRSError
 
@@ -1337,11 +1338,6 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin, Geometry):
         elif isinstance(key, slice):
             return Multipolygon(self.vertices[key], properties=self.properties,
                                 data=self.d[key], crs=self.crs)
-
-def _reproject(xy, crs1, crs2):
-    """ Reproject a coordinate (or 2-tuple of x and y vectors) from *crs1* to
-    *crs2*. """
-    return crs1.transform(crs2, *xy)
 
 def _flatten(vertices):
     """ Convert a nested list of coordinates into a flat list of tuples. """

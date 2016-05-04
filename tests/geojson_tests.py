@@ -13,7 +13,7 @@ import karta.vector as vector
 import karta.vector.geojson as geojson
 from karta.vector.geojson import GeoJSONReader, GeoJSONNamedCRS
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
-from karta.crs import LonLatWGS84
+from karta.crs import LonLatWGS84, Cartesian
 
 class TestGeoJSONInput(unittest.TestCase):
 
@@ -185,15 +185,22 @@ class TestGeoJSONOutput(unittest.TestCase):
         s.seek(0)
         return s
 
+    def test_point_write_cartesian(self):
+        p = Point((100.0, 0.0), crs=Cartesian)
+        s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806", force_wgs84=False).read()
+        ans = """{"properties": {}, "geometry": {"coordinates": [100.0, 0.0], "crs": {"properties": {"name": "urn:ogc:def:crs:EPSG::5806"}, "type": "name"}, "type": "Point"}, "type": "Feature"}"""
+        self.verifyJson(s, ans)
+        return
+
     def test_point_write(self):
-        p = Point((100.0, 0.0))
+        p = Point((100.0, 0.0), crs=LonLatWGS84)
         s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806").read()
         ans = """{"properties": {}, "geometry": {"coordinates": [100.0, 0.0], "crs": {"properties": {"name": "urn:ogc:def:crs:EPSG::5806"}, "type": "name"}, "type": "Point"}, "type": "Feature"}"""
         self.verifyJson(s, ans)
         return
 
     def test_line_write(self):
-        p = Line([(100.0, 0.0), (101.0, 1.0)])
+        p = Line([(100.0, 0.0), (101.0, 1.0)], crs=LonLatWGS84)
         s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806").read()
         ans = """{ "type": "Feature", "properties": {}, "geometry": { "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ 100.0, 0.0 ], [ 101.0, 1.0 ] ], "type": "LineString" } }"""
 
@@ -202,7 +209,7 @@ class TestGeoJSONOutput(unittest.TestCase):
 
     def test_polygon_write(self):
         p = Polygon([[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
-                            [100.0, 1.0], [100.0, 0.0]])
+                            [100.0, 1.0], [100.0, 0.0]], crs=LonLatWGS84)
         s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806").read()
         ans = """{ "properties": {}, "geometry": { "type": "Polygon", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ [ 100.0, 0.0 ], [ 101.0, 0.0 ], [ 101.0, 1.0 ], [ 100.0, 1.0 ], [ 100.0, 0.0 ] ] ] }, "type": "Feature" }"""
 
@@ -210,24 +217,27 @@ class TestGeoJSONOutput(unittest.TestCase):
         return
 
     def test_write_string_data(self):
-        capitols = vector.geometry.multipart_from_singleparts(
-            [Point((-112.1, 33.57), properties={"n": "Phoenix, Arizona"}),
-             Point((-121.5, 38.57), properties={"n": "Sacramento, California"}),
-             Point((-84.42, 33.76), properties={"n": "Atlanta, Georgia"}),
-             Point((-86.15, 39.78), properties={"n": "Indianapolis, Indiana"}),
-             Point((-112.0, 46.6,) , properties={"n": "Helena, Montana"}),
-             Point((-82.99, 39.98), properties={"n": "Columbus, Ohio"}),
-             Point((-77.48, 37.53), properties={"n": "Richmond, Virginia"}),
-             Point((-95.69, 39.04), properties={"n": "Topeka, Kansas"}),
-             Point((-71.02, 42.33), properties={"n": "Boston, Massachusetts"}),
-             Point((-96.68, 40.81), properties={"n": "Lincoln, Nebraska"})])
+        capitols = Multipoint([(-112.1, 33.57), (-121.5, 38.57),
+                        (-84.42, 33.76), (-86.15, 39.78), (-112.0, 46.6),
+                        (-82.99, 39.98), (-77.48, 37.53), (-95.69, 39.04),
+                        (-71.02, 42.33), (-96.68, 40.81)],
+                        data = {"n": ["Phoenix, Arizona",
+                                      "Sacramento, California",
+                                      "Atlanta, Georgia",
+                                      "Indianapolis, Indiana",
+                                      "Helena, Montana", "Columbus, Ohio",
+                                      "Richmond, Virginia", "Topeka, Kansas",
+                                      "Boston, Massachusetts",
+                                      "Lincoln, Nebraska"]},
+                        crs=LonLatWGS84)
         s = capitols.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
         ans = """{ "properties": { "n": [ "Phoenix, Arizona", "Sacramento, California", "Atlanta, Georgia", "Indianapolis, Indiana", "Helena, Montana", "Columbus, Ohio", "Richmond, Virginia", "Topeka, Kansas", "Boston, Massachusetts", "Lincoln, Nebraska" ] }, "type": "Feature", "geometry": { "type": "MultiPoint", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ -112.1, 33.57 ], [ -121.5, 38.57 ], [ -84.42, 33.76 ], [ -86.15, 39.78 ], [ -112.0, 46.6 ], [ -82.99, 39.98 ], [ -77.48, 37.53 ], [ -95.69, 39.04 ], [ -71.02, 42.33 ], [ -96.68, 40.81 ] ] } } """
         self.verifyJson(s, ans)
         return
 
     def test_write_data_crs(self):
-        capitols = Multipoint([Point((-112.1, 33.57), crs=LonLatWGS84),
+        capitols = vector.geometry.multipart_from_singleparts(
+                              [Point((-112.1, 33.57), crs=LonLatWGS84),
                                Point((-121.5, 38.57), crs=LonLatWGS84),
                                Point((-84.42, 33.76), crs=LonLatWGS84),
                                Point((-86.15, 39.78), crs=LonLatWGS84),
@@ -242,7 +252,7 @@ class TestGeoJSONOutput(unittest.TestCase):
                                Point((-100.3, 44.38), crs=LonLatWGS84)])
         s = capitols.as_geojson()
         self.assertTrue("crs" in s)
-        self.assertTrue('"type": "link"' in s)
+        self.assertTrue('"name": "urn:ogc:def:crs:OGC:1.3:CRS84"' in s)
         return
 
 class GeoJSONSerializerTests(unittest.TestCase):

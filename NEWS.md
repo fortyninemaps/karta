@@ -7,6 +7,9 @@
     - polygon vertices are double-nested in order to represent sub-polygons
     - only multipart geometries now contain a data attribute
     - implementation adopts mixin pattern
+- GeoJSON now attempts to project all data to geographical WGS84 coordinates as
+  per https://datatracker.ietf.org/doc/draft-ietf-geojson/
+    - `force_wgs84=False` can be set to avoid this behaviour
 
 ## changes with 0.6
 
