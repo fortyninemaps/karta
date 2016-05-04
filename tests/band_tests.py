@@ -2,6 +2,7 @@ import unittest
 import numpy as np
 
 from karta.raster import SimpleBand, CompressedBand
+from karta.raster.band import BandIndexer
 
 class GenericBandTests(object):
     """ Tests that all Band classes must pass """
@@ -55,6 +56,31 @@ class CompressedBandTests(unittest.TestCase, GenericBandTests):
     def setUp(self):
         self.type = CompressedBand
         self.initkwargs = dict(chunksize=(256, 256))
+
+class BandIndexerTests(unittest.TestCase):
+
+    def test_get_masked(self):
+        values = np.ones([16, 16])
+        band = CompressedBand((16, 16), np.float32)
+        band[:,:] = values
+        indexer = BandIndexer([band])
+
+        mask = np.zeros([16, 16], dtype=np.bool)
+        mask[8:, 2:] = True
+
+        self.assertEqual(np.sum(indexer[mask]), 112)
+
+    def test_set_masked(self):
+        values = np.ones([16, 16])
+        band = CompressedBand((16, 16), np.float32)
+        band[:,:] = values
+        indexer = BandIndexer([band])
+
+        mask = np.zeros([16, 16], dtype=np.bool)
+        mask[8:, 2:] = True
+
+        indexer[mask] = -1
+        self.assertEqual(np.sum(indexer[:,:]), 32)
 
 if __name__ == "__main__":
     unittest.main()

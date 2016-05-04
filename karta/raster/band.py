@@ -35,13 +35,17 @@ class BandIndexer(object):
     def __setitem__(self, key, value):
         if len(self.bands) == 1:
             if isinstance(key, np.ndarray):
-                self.bands[0][:,:][key] = value
+                tmp = self.bands[0][:,:]
+                tmp[key] = value
+                self.bands[0][:,:] = tmp
             else:
                 self.bands[0][key] = value
         else:
             if isinstance(key, np.ndarray):
                 for b, v in zip(self.bands, value):
-                    b[:,:][key] = v
+                    tmp = b[:,:]
+                    tmp[key] = v
+                    b[:,:] = tmp
             else:
                 for b, v in zip(self.bands, value):
                     b[key] = v
