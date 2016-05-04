@@ -1,10 +1,12 @@
+import sys
 from ez_setup import use_setuptools
 use_setuptools()
 from os.path import exists
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
-VERSION = "0.7dev"
+sys.path.append("karta")
+from version import __version__ as VERSION
 
 class build_ext(_build_ext):
 
