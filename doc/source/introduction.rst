@@ -1,35 +1,35 @@
-Introduction
-============
+Karta Documentation
+===================
 
 *Karta* is a simple to use package for spatial analysis in Python. It
 streamlines processing of vector and raster data.
 
-*Karta* is divided into two major sections, ``karta.raster`` and
-``karta.vector``, handling gridded image-like data and point-wise geometry data
-respectively. Users of GIS software will find the distinction familiar. Rasters
-are typically used for applications such as satellite imagery, elevation and
-hillshade maps, and heatmaps. Vector datasets are used when it makes sense to
-talk about individual geometries, as in a network of stations, a road system, or
-maps administrative boundaries.
+*Karta* is divided into two major sections, ``karta.raster`` for gridded
+image-like data, and ``karta.vector`` for point-wise geometry data. Users of GIS
+software will find the distinction familiar. Rasters are typically used for
+applications such as satellite imagery, elevation and hillshade maps, and
+heatmaps. Vector datasets are used when it makes sense to talk about discrete
+geometries, as in a network of stations, a road system, or maps administrative
+boundaries.
 
-In addition to the above, *karta* contains the modules ``karta.crs`` and
+In addition to the above, *Karta* contains the modules ``karta.crs`` and
 ``karta.geodesy``, which together provide support classes and functions that
 help represent raster and vector object as positions on earth. There are
-numerous aways of representing positions, including geographical
+numerous ways of representing positions, including geographical
 longitude/latitude, n-vectors, and easting/northings on various projected
 systems. The CRS class encodes the type of coordinate reference system used by
 an individual or set of objects, and provides a translation layer permitting
-intercomparison of objects using diferent systems.
+intercomparison of objects using different systems.
 
 *Karta* is tested with Python 2.7 and Python 3.4+. Suggestions, bug reports, and
-pull requests are welcome, and accepted via the `Github page`_.
+pull requests are welcome via the `Github page`_.
 
 .. _`Github page`: https://www.github.com/fortyninemaps/karta
 
 Getting Started
 ---------------
 
-For a whirlwind tour of some basic usage of Karta, look through the `tutorial`_.
+For a whirlwind tour of some basic usage of *Karta*, look through the `tutorial`_.
 
 .. _`tutorial`: _static/tutorial.html
 
@@ -50,7 +50,7 @@ Currently supported include:
    -  ESRI ASCII grid (r,w)
    -  GeoTiff (GDAL) (r,w)
 
-Furthermore, *karta* vector geometries implement the Python geo_interface_
+Furthermore, *Karta* vector geometries implement the Python geo_interface_
 protocol, permitting direct data interchange with other packages that implement
 it, such as Shapely_ and ArcPy_.
 

@@ -1,17 +1,12 @@
-Karta
-=====
-
-Python toolkit for geospatial analysis
-
-Contents:
----------
+Table of Contents
+=================
 
 .. do not remove the toctree directive
 
 .. toctree::
    :maxdepth: 2
 
-   introduction
+   Introduction <introduction>
    installation
    reference
 
