@@ -60,7 +60,8 @@ class build_ext(_build_ext):
 
 # File extension is added to sources at overloaded build_ext.run()
 extensions = [Extension("karta.raster.crfuncs", ["karta/raster/crfuncs"]),
-              Extension("karta.vector._cvectorgeo", ["karta/vector/_cvectorgeo"])]
+              Extension("karta.vector._cvectorgeo", ["karta/vector/_cvectorgeo"]),
+              Extension("karta.vector.dateline", ["karta/vector/dateline"])]
 
 setup(
     name = "karta",

@@ -18,6 +18,7 @@ from .table import Table, Indexer
 from .utilities import _reproject, _reproject_nested
 from . import quadtree
 from . import _cvectorgeo
+from . import dateline as _cdateline
 from .. import geodesy
 from ..crs import Cartesian, CartesianCRS, GeographicalCRS, LonLatWGS84
 from ..crs import SphericalEarth
@@ -585,32 +586,9 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         """
         if (isinstance(self.crs, GeographicalCRS) and
                 (crs is None or isinstance(crs, GeographicalCRS))):
-            X, Y = self.get_coordinate_lists(crs=crs)
-            xmin = xmax = X[0]
-            ymin = ymax = Y[0]
-            rot = 0
-            for i in range(len(X)-1):
-                x0, x1 = X[i], X[i+1]
-                ymin = min(ymin, Y[i+1])
-                ymax = max(ymax, Y[i+1])
-                seg = Line([(X[i], Y[i]), (X[i+1], Y[i+1])], crs=crs)
-                if self._seg_crosses_dateline(seg):
-                    if x0 > x1:     # east to west
-                        rot += 360
-                    else:           # west to east
-                        rot -= 360
-
-                    xmin = min(xmin, x1+rot)
-                    xmax = max(xmax, x1+rot)
-                else:
-                    if x0 > x1:
-                        xmin = min(xmin, x1)
-                    else:
-                        xmax = max(xmax, x1)
-
-            xmin = (xmin+180) % 360 - 180
-            xmax = (xmax+180) % 360 - 180
-            bbox = (xmin, ymin, xmax, ymax)
+            x, y = self.get_coordinate_lists(crs=crs)
+            return _cdateline.dateline_bbox(np.array(x, dtype=np.float64),
+                                            np.array(y, dtype=np.float64))
         else:
             bbox = super(ConnectedMultiVertexMixin, self).get_bbox(crs=crs)
         return bbox
