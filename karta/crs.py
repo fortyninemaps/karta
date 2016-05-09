@@ -285,6 +285,9 @@ class ProjectedCRS(CartesianCRS):
         return
 
     def __eq__(self, other):
+        if (not hasattr(other, "_proj")) or (not hasattr(other, "_geod")):
+            return False
+
         if (getattr(self._proj, "srs", 0) == getattr(other._proj, "srs", 1) and
             getattr(self._geod, "initstring", 0) == getattr(other._geod, "initstring", 1)):
             return True
