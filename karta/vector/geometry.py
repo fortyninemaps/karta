@@ -312,13 +312,37 @@ class MultiVertexBase(Geometry):
 
 class MultiVertexMixin(object):
 
-    def _bbox_overlap(self, other):
-        """ Whether bounding box overlaps with that of another Geometry. """
-        reg0 = self.bbox
-        reg1 = other.bbox
-        return (reg0[0] <= reg1[2] and reg1[0] <= reg0[2] and
-                reg0[1] <= reg1[3] and reg1[1] <= reg0[3])
+    def get_coordinate_lists(self, crs=None):
+        """ Return horizontal coordinate lists.
 
+        Parameters
+        ----------
+        crs : karta.CRS, optional
+            coordinate system of output vertices
+        """
+        x, y = tuple(zip(*self.vertices))[:2]
+        if crs is not None and (crs != self.crs):
+            x, y = _reproject((x,y), self.crs, crs)
+        return x, y
+
+    @property
+    def coordinates(self):
+        return self.get_coordinate_lists()
+
+    def get_vertices(self, crs=None):
+        """ Return vertices as an array.
+
+        Parameters
+        ----------
+        crs : karta.CRS, optional
+            coordinate system of output vertices
+        """
+        if (crs is None) or (crs is self.crs):
+            return np.array(self.vertices)
+        else:
+            vertices = [_reproject(v[:2], self.crs, crs)
+                        for v in self.vertices]
+            return np.array(vertices)
     @property
     def bbox(self):
         return self.get_bbox()
@@ -337,39 +361,36 @@ class MultiVertexMixin(object):
         tuple
             (xmin, ymin, xmax, ymax)
         """
-        x, y = self.get_coordinate_lists(crs)
+        x, y = self.get_coordinate_lists(crs=crs)
         return (min(x), min(y), max(x), max(y))
 
     @property
-    def coordinates(self):
-        return self.get_coordinate_lists()
+    def extent(self):
+        return self.get_extent()
 
-    def get_vertices(self, crs=None):
-        """ Return vertices as an array.
-
-        Parameters
-        ----------
-        crs : karta.CRS, optional
-            coordinate system of output vertices
-        """
-        if (crs is None) or (crs is self.crs):
-            return np.array(self.vertices)
-        else:
-            vertices = [_reproject(v[:2], self.crs, crs) for v in self.vertices]
-            return np.array(vertices)
-
-    def get_coordinate_lists(self, crs=None):
-        """ Return horizontal coordinate lists.
+    @cache_decorator("extent")
+    def get_extent(self, crs=None):
+        """ Calculate geometry extent.
 
         Parameters
         ----------
-        crs : karta.CRS, optional
-            coordinate system of output vertices
+        crs : karta.CRS
+            coordinate system of output
+
+        Returns
+        -------
+        tuple
+            (xmin, xmax, ymin, ymax)
         """
-        x, y = tuple(zip(*self.vertices))[:2]
-        if crs is not None and (crs != self.crs):
-            x, y = _reproject((x,y), self.crs, crs)
-        return x, y
+        bb = self.get_bbox(crs=crs)
+        return bb[0], bb[2], bb[1], bb[3]
+
+    def _bbox_overlap(self, other):
+        """ Whether bounding box overlaps with that of another Geometry. """
+        reg0 = self.bbox
+        reg1 = other.bbox
+        return (reg0[0] <= reg1[2] and reg1[0] <= reg0[2] and
+                reg0[1] <= reg1[3] and reg1[1] <= reg0[3])
 
     def shift(self, shift_vector, inplace=False):
         """ Shift geometry in space.
@@ -471,40 +492,6 @@ class MultiVertexMixin(object):
         idx = np.argmin(distances)
         return idx
 
-    @property
-    def extent(self):
-        return self.get_extent()
-
-    def get_extent(self, crs=None):
-        """ Calculate geometry extent.
-
-        Parameters
-        ----------
-        crs : karta.CRS
-            coordinate system of output
-
-        Returns
-        -------
-        tuple
-            (xmin, xmax, ymin, ymax)
-        """
-        def gen_minmax(G):
-            """ Get the min/max from a single pass through a generator. """
-            (xmin, ymin) = (xmax, ymax) = next(G)
-            for (x, y) in G:
-                xmin = min(xmin, x)
-                xmax = max(xmax, x)
-                ymin = min(ymin, y)
-                ymax = max(ymax, y)
-            return xmin, xmax, ymin, ymax
-
-        if (crs is None) or (crs == self.crs):
-            xmin, xmax, ymin, ymax = gen_minmax(c[:2] for c in self.vertices)
-        else:
-            xmin, xmax, ymin, ymax = gen_minmax(_reproject(v[:2], self.crs, crs)
-                                                for v in self.vertices)
-        return xmin, xmax, ymin, ymax
-
     def any_within_poly(self, poly):
         """ Return whether any vertices are inside *poly* """
         for pt in self:
@@ -594,10 +581,11 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         Returns
         -------
         tuple
-            (xmin, ymin, xmax, ymax)
+ )           (xmin, ymin, xmax, ymax)
         """
-        if isinstance(self.crs, GeographicalCRS):
-            X, Y = self.get_coordinate_lists(crs)
+        if (isinstance(self.crs, GeographicalCRS) and
+                (crs is None or isinstance(crs, GeographicalCRS))):
+            X, Y = self.get_coordinate_lists(crs=crs)
             xmin = xmax = X[0]
             ymin = ymax = Y[0]
             rot = 0
@@ -624,7 +612,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
             xmax = (xmax+180) % 360 - 180
             bbox = (xmin, ymin, xmax, ymax)
         else:
-            bbox = super(ConnectedMultiVertexMixin, self).get_bbox()
+            bbox = super(ConnectedMultiVertexMixin, self).get_bbox(crs=crs)
         return bbox
 
     @property
@@ -1117,25 +1105,6 @@ class Multipart(Geometry):
     def __len__(self):
         return len(self.vertices)
 
-    @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
-        """ Return the bounding box.
-
-        Parameters
-        ----------
-        crs : karta.CRS
-            coordinate system of output bounding box
-
-        Returns
-        -------
-        tuple
-            (xmin, ymin, xmax, ymax)
-        """
-        x, y = list(zip(*_flatten(self.vertices)))[:2]
-        if crs is not None:
-            x, y = _reproject((x, y), self.crs, crs)
-        return (min(x), min(y), max(x), max(y))
-
 class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
     """ Point cloud with associated attributes. This is a base class for the
     polyline and polygon classes.
@@ -1310,6 +1279,45 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
             return Multiline(self.vertices[key], properties=self.properties,
                              data=self.d[key], crs=self.crs)
 
+    def get_vertices(self, crs=None):
+        """ Return vertices as a list of arrays.
+
+        Parameters
+        ----------
+        crs : karta.CRS, optional
+            coordinate system of output vertices
+        """
+        if crs is None:
+            return [np.array(v) for v in self.vertices]
+        else:
+            vertices = []
+            for line in self.vertices:
+                line_vertices = [_reproject(v[:2], self.crs, crs) for v in line]
+                vertices.append(np.array(line_vertices))
+            return vertices
+
+    @cache_decorator("bbox")
+    def get_bbox(self, crs=None):
+        vertices = self.get_vertices(crs=crs)
+        xmin = min(np.min(v[:,0]) for v in vertices)
+        xmax = max(np.max(v[:,0]) for v in vertices)
+        ymin = min(np.min(v[:,1]) for v in vertices)
+        ymax = max(np.max(v[:,1]) for v in vertices)
+        return (xmin, ymin, xmax, ymax)
+
+    @cache_decorator("extent")
+    def get_extent(self, crs=None):
+        bb = self.get_bbox(crs=crs)
+        return bb[0], bb[2], bb[1], bb[3]
+
+    @property
+    def bbox(self):
+        return self.get_bbox()
+
+    @property
+    def extent(self):
+        return self.get_extent()
+
 class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
 
     def __init__(self, vertices, **kwargs):
@@ -1338,6 +1346,51 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         elif isinstance(key, slice):
             return Multipolygon(self.vertices[key], properties=self.properties,
                                 data=self.d[key], crs=self.crs)
+
+    def get_vertices(self, crs=None):
+        """ Return vertices as a list of arrays.
+
+        Parameters
+        ----------
+        crs : karta.CRS, optional
+            coordinate system of output vertices
+        """
+        if crs is None:
+            vertices = []
+            for poly_vertices in self.vertices:
+                vertices.append([np.array(v) for v in poly_vertices])
+            return vertices
+        else:
+            vertices = []
+            for poly_vertices in self.vertices:
+                poly = []
+                for ring_vertices in poly_vertices:
+                    poly.append(np.array([_reproject(v[:2], self.crs, crs)
+                                          for v in ring_vertices]))
+                vertices.append(poly)
+            return vertices
+
+    @cache_decorator("bbox")
+    def get_bbox(self, crs=None):
+        vertices = self.get_vertices(crs=crs)
+        xmin = min(np.min(v[0][:,0]) for v in vertices)
+        xmax = max(np.max(v[0][:,0]) for v in vertices)
+        ymin = min(np.min(v[0][:,1]) for v in vertices)
+        ymax = max(np.max(v[0][:,1]) for v in vertices)
+        return (xmin, ymin, xmax, ymax)
+
+    @cache_decorator("extent")
+    def get_extent(self, crs=None):
+        bb = self.get_bbox(crs=crs)
+        return bb[0], bb[2], bb[1], bb[3]
+
+    @property
+    def bbox(self):
+        return self.get_bbox()
+
+    @property
+    def extent(self):
+        return self.get_extent()
 
 def _flatten(vertices):
     """ Convert a nested list of coordinates into a flat list of tuples. """
@@ -1407,17 +1460,17 @@ def multipart_from_singleparts(parts, crs=None):
     gt = parts[0]._geotype
     if gt == "Point":
         cls = Multipoint
-        vertices = [part.get_vertex(crs) for part in parts]
+        vertices = [part.get_vertex(crs=crs) for part in parts]
     elif gt == "Line":
         cls = Multiline
-        vertices = [part.get_vertices(crs) for part in parts]
+        vertices = [part.get_vertices(crs=crs) for part in parts]
     elif gt == "Polygon":
         cls = Multipolygon
         vertices = []
         for part in parts:
-            part_vertices = [part.get_vertices(crs)]
+            part_vertices = [part.get_vertices(crs=crs)]
             for sub in part.subs:
-                part_vertices.append(sub.get_vertices(crs))
+                part_vertices.append(sub.get_vertices(crs=crs))
         vertices.append(part_vertices)
     else:
         raise GeometryError("cannot convert type '{0}' to multipart".format(gt))

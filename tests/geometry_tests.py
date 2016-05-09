@@ -5,9 +5,11 @@ import unittest
 import math
 import numpy as np
 
-from karta.vector.geometry import Point, Line, Polygon, Multipoint, Multiline, Multipolygon
+from karta.vector.geometry import (Point, Line, Polygon,
+                                   Multipoint, Multiline, Multipolygon)
 from karta.vector.geometry import affine_matrix, _flatten
-from karta.crs import Cartesian, SphericalEarth, LonLatWGS84, NSIDCNorth, ProjectedCRS
+from karta.crs import (Cartesian, SphericalEarth,
+                       LonLatWGS84, NSIDCNorth, ProjectedCRS)
 from karta.errors import CRSError
 
 class TestGeometry(unittest.TestCase):
@@ -328,6 +330,22 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertEqual(self.mp.bbox, bbox)
         return
 
+    def test_multiline_bbox(self):
+        geom = Multiline([[(1,2), (3,4), (3,2)],
+                          [(6,8),(2,6),(3,0)],
+                          [(-3,-4), (7, -1), (3, 2), (2, -3)]],
+                         crs=LonLatWGS84)
+        self.assertEqual(geom.bbox, (-3, -4, 7, 8))
+        return
+
+    def test_multipolygon_bbox(self):
+        geom = Multipolygon([[[(1,2), (3,4), (3,2)]],
+                             [[(6,8),(2,6),(3,0)]],
+                             [[(-3,-4), (7, -1), (3, 2), (2, -3)]]],
+                            crs=LonLatWGS84)
+        self.assertEqual(geom.bbox, (-3, -4, 7, 8))
+        return
+
     def test_multipoint_bbox_overlap(self):
         self.assertTrue(self.mp._bbox_overlap(self.poly))
         return
@@ -513,10 +531,13 @@ class TestGeometryAnalysis(unittest.TestCase):
 
     def test_poly_extent_foreign_crs(self):
         poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)], crs=LonLatWGS84)
-        poly3 = Polygon([(0.0, 8.0, 0.5), (0.0, 5.0, 0.8), (6.0, 1.0, 0.6)], crs=LonLatWGS84)
+        poly3 = Polygon([(0.0, 8.0, 0.5), (0.0, 5.0, 0.8), (6.0, 1.0, 0.6)],
+                        crs=LonLatWGS84)
         x, y = zip(*poly.get_vertices(crs=NSIDCNorth))
-        self.assertEqual(poly.get_extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
-        self.assertEqual(poly3.get_extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
+        self.assertEqual(poly.get_extent(NSIDCNorth),
+                         (min(x), max(x), min(y), max(y)))
+        self.assertEqual(poly3.get_extent(NSIDCNorth),
+                         (min(x), max(x), min(y), max(y)))
         return
 
     def test_poly_length(self):
