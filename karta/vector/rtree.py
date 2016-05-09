@@ -5,7 +5,7 @@ Implements an R-tree data structure
 import itertools
 import numpy as np
 
-from ._cvectorgeo import bbox_intersection_area
+from .vectorgeo import bbox_intersection_area
 
 MIN_CHILDREN  = 2
 

@@ -17,7 +17,7 @@ from . import xyfile
 from .table import Table, Indexer
 from .utilities import _reproject, _reproject_nested
 from . import quadtree
-from . import _cvectorgeo
+from . import vectorgeo as _cvectorgeo
 from . import dateline as _cdateline
 from .. import geodesy
 from ..crs import Cartesian, CartesianCRS, GeographicalCRS, LonLatWGS84

@@ -1,6 +1,6 @@
 """ Implements a simple QuadTree datastructure. """
 
-from ._cvectorgeo import iswithin, hashpt, bbox_intersection_area
+from .vectorgeo import iswithin, hashpt, bbox_intersection_area
 
 class Node(object):
     def __init__(self, children, bbox, leaf):
