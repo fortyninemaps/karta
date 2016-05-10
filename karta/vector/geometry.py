@@ -19,6 +19,7 @@ from .utilities import _reproject, _reproject_nested
 from . import quadtree
 from . import vectorgeo as _cvectorgeo
 from . import dateline as _cdateline
+from . import intersection as _cintersection
 from .. import geodesy
 from ..crs import Cartesian, CartesianCRS, GeographicalCRS, LonLatWGS84
 from ..crs import SphericalEarth
@@ -616,7 +617,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         """ Return whether an intersection exists with another geometry. """
         if isinstance(self.crs, CartesianCRS):
             interxbool = (np.nan in
-                    _cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+                    _cintersection.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                              a[0][1], a[1][1], b[0][1], b[1][1])
                         for a in self.segments for b in other.segments)
             if self._bbox_overlap(other) and (False in interxbool):
@@ -636,7 +637,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
         if isinstance(self.crs, CartesianCRS):
-            interx = (_cvectorgeo.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
+            interx = (_cintersection.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
                                               a[0][1], a[1][1], b[0][1], b[1][1])
                          for a in self.segments for b in other.segments)
             if not keep_duplicates:
@@ -1029,7 +1030,7 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
         cnt = 0
         for seg in self.segment_tuples:
             (a, b) = seg
-            if _cvectorgeo.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
+            if _cintersection.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
                 cnt += 1
         return cnt % 2 == 1 and not any(p.contains(point) for p in self.subs)
 
