@@ -76,12 +76,10 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
     crs : karta.crs.CRS, optional
         coordinate system for geometry (default Cartesian)
     """
-    #__slots__ = ["vertex", "rank"]
+    #__slots__ = ["vertex"]
 
     def __init__(self, coords, properties=None, **kwargs):
-        try:
-            self.rank = 2 if len(coords) == 2 else 3
-        except TypeError:
+        if len(coords) not in (2, 3):
             raise TypeError("Point coordinates must be a sequence")
         super(Point, self).__init__(properties=properties, **kwargs)
         self.vertex = tuple(coords)
@@ -216,7 +214,7 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         if self.crs != other.crs:
             raise CRSError("Points must share the same coordinate system.")
         flat_dist = self._distance(self, other)
-        if 2 == self.rank == other.rank:
+        if 2 == len(self.vertex) == len(other.vertex):
             return flat_dist
         else:
             return math.sqrt(flat_dist**2. + (self.z-other.z)**2.)
@@ -227,11 +225,11 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         Parameters
         ----------
         shift_vector : iterable
-            vector with length equal to Geometry.rank defining the shift
+            vector with length equal to Geometry rank defining the shift
         inplace : bool
             whether shift should be in place (default False)
         """
-        if len(shift_vector) != self.rank:
+        if len(shift_vector) != len(self.vertex):
             raise GGeoError('Shift vector length must equal geometry rank.')
 
         if inplace:
@@ -243,12 +241,12 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
 
 class MultiVertexBase(Geometry):
 
-    #__slots__ = ["vertices", "data", "rank", "quadtree"]
+    #__slots__ = ["vertices", "data", "quadtree"]
 
     def __init__(self, vertices, **kwargs):
         super(MultiVertexBase, self).__init__(**kwargs)
 
-        if isinstance(vertices, zip):
+        if hasattr(vertices, "__next__"):
             vertices = list(vertices)
 
         if len(vertices) == 0:
@@ -260,11 +258,7 @@ class MultiVertexBase(Geometry):
             if "crs" not in kwargs:
                 self.crs = vertices[0].crs
 
-        try:
-            self.rank = 2 if len(self.vertices[0]) == 2 else 3
-        except IndexError:
-            self.rank = 3
-        except TypeError:
+        if (len(self.vertices) != 0) and (self.vertices.shape[1] not in (2, 3)):
             raise TypeError("Coordinates must be a sequence of sequences")
         return
 
@@ -302,11 +296,11 @@ class MultiVertexBase(Geometry):
 
         if getattr(value, "_geotype", None) == "Point":
             self.vertices[key] = value.vertex
-        elif len(value) == self.rank:
+        elif len(value) == self.vertices.shape[1]:
             self.vertices[key] = value
         else:
-            raise GGeoError('Cannot insert non-Pointlike value with '
-                            'length != {0}'.format(self.rank))
+            raise ValueError("Cannot insert non-Point-like value: "
+                             "{0}".format(repr(value)))
         return
 
     def __delitem__(self, key):
@@ -411,25 +405,20 @@ class MultiVertexMixin(object):
         Parameters
         ----------
         shift_vector : iterable
-            vector with length equal to Geometry.rank defining the shift
+            vector with length equal to Geometry rank defining the shift
         inplace : bool
             whether shift should be in place (default False)
         """
-        if len(shift_vector) != self.rank:
+        if len(shift_vector) != self.vertices.shape[1]:
             raise GGeoError('Shift vector length must equal geometry rank.')
 
-        if self.rank == 2:
-            f = lambda pt: (pt[0] + shift_vector[0], pt[1] + shift_vector[1])
-        elif self.rank == 3:
-            f = lambda pt: (pt[0] + shift_vector[0], pt[1] + shift_vector[1],
-                            pt[2] + shift_vector[2])
         if inplace:
-            self.vertices = list(map(f, self.vertices))
+            self.vertices += shift_vector
             self.quadtree = None
             self._cache = {}
             return self
         else:
-            vertices = list(map(f, self.vertices))
+            vertices = self.vertices + shift_vector
             kw = {"properties": self.properties, "crs": self.crs}
             if hasattr(self, "data"):
                 kw["data"] = self.data
@@ -769,8 +758,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
     #__slots__ = []
 
     def __init__(self, vertices, **kwargs):
-        """ Partial init function that establishes geometry rank and creates a
-        metadata attribute.
+        """ Partial init function that creates a metadata attribute.
         """
         super(Line, self).__init__(vertices, **kwargs)
         self._geotype = "Line"
@@ -793,10 +781,13 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
     def extend(self, other):
         """ Combine two lines, provided that that the data formats are similar.
         """
-        if self.rank != other.rank:
-            raise GGeoError("Rank mismatch ({0} != {1})".format(self.rank, other.rank))
+        if self.vertices.shape[1] != other.vertices.shape[1]:
+            raise ValueError("Rank mismatch ({0} != "
+                    "{1})".format(self.vertices.shape[1],
+                                  other.vertices.shape[1]))
         if self._geotype != other._geotype:
-            raise GGeoError("Geometry mismatch ({0} != {1})".format(self._geotype, other._geotype))
+            raise TypeError("Geometry mismatch ({0} != "
+                    "{1})".format(self._geotype, other._geotype))
 
         self.vertices = np.vstack([self.vertices, other.vertices])
         self._cache = {}
@@ -875,8 +866,7 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
     """
     #__slots__ = ["subs"]
     def __init__(self, vertices, subs=None, **kwargs):
-        """ Partial init function that establishes geometry rank and creates a
-        metadata attribute.
+        """ Partial init function that creates a metadata attribute.
         """
         super(Polygon, self).__init__(vertices, **kwargs)
         self._geotype = "Polygon"
@@ -1095,12 +1085,12 @@ class Multipart(Geometry):
         return len(self.vertices)
 
 class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
-    """ Point cloud with associated attributes. This is a base class for the
-    polyline and polygon classes.
+    """ Point cloud with associated attributes.
 
     Parameters
     ----------
-    coords : list of 2-tuples or 3-tuples
+    coords : list
+        list of 2-tuples or 3-tuples defining vertices
     data : list, dict, Table object, or None
         point-specific data [default None]
     properties : dict or None
@@ -1112,10 +1102,7 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
     #__slots__ = []
 
     def __init__(self, vertices, **kwargs):
-        """ Partial init function that establishes geometry rank and creates a
-        metadata attribute.
-        """
-        if isinstance(vertices, zip):
+        if hasattr(vertices, "__next__"):
             vertices = list(vertices)
 
         if len(vertices) == 0:
@@ -1128,12 +1115,6 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
                 self.crs = vertices[0].crs
 
         super(Multipoint, self).__init__(vertices, **kwargs)
-        try:
-            self.rank = 2 if len(self.vertices[0,:]) == 2 else 3
-        except IndexError:
-            self.rank = 3
-        except TypeError:
-            raise TypeError("Coordinates must be a sequence of sequences")
         self.quadtree = None
         self._geotype = "Multipoint"
         return
@@ -1156,7 +1137,7 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
                     row.append(value.properties.get(field, None))
                 self.data[key] = tuple(row)
             else:
-                if len(value) == self.rank:
+                if len(value) == self.vertices.shape[1]:
                     self.vertices[key] = value
                 self.data[key] = (None for _ in self.data.fields)
 
@@ -1256,20 +1237,23 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
         return
 
 class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
+    """ Collection of lines with associated attributes.
+
+    Parameters
+    ----------
+    coords : list
+        list of lists of 2-tuples or 3-tuples defining lines
+    data : list, dict, Table object, or None
+        point-specific data [default None]
+    properties : dict or None
+        geometry specific data [default None]
+    crs : karta.crs.CRS subclass
+        [default Cartesian]
+    """
 
     def __init__(self, vertices, **kwargs):
-        """ Partial init function that establishes geometry rank and creates a
-        metadata attribute.
-        """
         self.vertices = [np.array(part, dtype=np.float64) for part in vertices]
-
         super(Multiline, self).__init__(vertices, **kwargs)
-        try:
-            self.rank = 2 if len(vertices[0][0]) == 2 else 3
-        except IndexError:
-            self.rank = 3
-        except TypeError:
-            raise TypeError("Coordinates must be a sequence of sequences")
         self._geotype = "Multiline"
         return
 
@@ -1322,23 +1306,26 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         return self.get_extent()
 
 class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
+    """ Collection of polygons with associated attributes.
+
+    Parameters
+    ----------
+    coords : list
+        list of lists of polygon rings, each consisting of 2-tuples or 3-tuples
+    data : list, dict, Table object, or None
+        point-specific data [default None]
+    properties : dict or None
+        geometry specific data [default None]
+    crs : karta.crs.CRS subclass
+        [default Cartesian]
+    """
 
     def __init__(self, vertices, **kwargs):
-        """ Partial init function that establishes geometry rank and creates a
-        metadata attribute.
-        """
         self.vertices = []
         for part in vertices:
             rings = [np.array(ring, dtype=np.float64) for ring in part]
             self.vertices.append(rings)
-
         super(Multipolygon, self).__init__(vertices, **kwargs)
-        try:
-            self.rank = 2 if len(vertices[0][0][0]) == 2 else 3
-        except IndexError:
-            self.rank = 3
-        except TypeError:
-            raise TypeError("Coordinates must be a sequence of sequences")
         self._geotype = "Multipolygon"
         return
 
