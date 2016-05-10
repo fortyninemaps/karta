@@ -647,7 +647,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
                 if np.nan not in vertex:
                     interx_points.append(Point(vertex, properties=self.properties,
                                                crs=self.crs))
-            return multipart_from_singleparts(interx_points)
+            return Multipoint(interx_points)
         else:
             # FIXME: implement for ellipsoidal coordinate systems
             interx = (geodesy.intersection_spherical(a, b)
@@ -659,7 +659,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
                 if np.nan not in vertex:
                     interx_points.append(Point(vertex, properties=self.properties,
                                                crs=self.crs))
-            return multipart_from_singleparts(interx_points)
+            return Multipoint(interx_points)
 
 
     def _nearest_to_point(self, point):
@@ -1425,6 +1425,9 @@ def multipart_from_singleparts(parts, crs=None):
     Multipart
         e.g. Multipoint, Multiline, or Multipolygon
     """
+    if len(parts) == 0:
+        raise ValueError("cannot construct multipart from zero singleparts")
+
     if crs is None:
         crs = parts[0].crs
 
