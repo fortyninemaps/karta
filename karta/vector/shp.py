@@ -258,7 +258,7 @@ def ogr_write_feature(lyr, gi, id=0):
 def ogr_write_string_geometry(feature, gi):
     geom = ogr.Geometry(OGRTYPES[gi["type"]])
     for pt in gi["coordinates"]:
-        geom.AddPoint(pt[0], pt[1])
+        geom.AddPoint(float(pt[0]), float(pt[1]))
     feature.SetGeometry(geom)
     return
 

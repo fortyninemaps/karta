@@ -6,6 +6,7 @@ import shapely.geometry
 
 import karta.vector as vector
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
+from karta.vector.utilities import _as_nested_lists
 
 class TestGeoInterface(unittest.TestCase):
 
@@ -22,7 +23,7 @@ class TestGeoInterface(unittest.TestCase):
         self.assertEqual(poly.geomdict,
                          {"type":"Polygon",
                           "bbox":(0, 0, 4, 16),
-                          "coordinates": [list(zip(x, y))]})
+                          "coordinates": [_as_nested_lists(zip(x, y))]})
 
     def test_line(self):
         x = np.arange(10)
@@ -31,12 +32,12 @@ class TestGeoInterface(unittest.TestCase):
         self.assertEqual(line.geomdict,
                          {"type":"LineString",
                           "bbox":(0, 0, 9, 81),
-                          "coordinates": list(zip(x,y))})
+                          "coordinates": _as_nested_lists(zip(x,y))})
         line = line[:5]
         self.assertEqual(line.geomdict,
                          {"type":"LineString",
                           "bbox":(0, 0, 4, 16),
-                          "coordinates": list(zip(x[:5],y[:5]))})
+                          "coordinates": _as_nested_lists(zip(x[:5],y[:5]))})
 
 
     def test_point_output(self):

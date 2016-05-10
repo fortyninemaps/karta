@@ -47,7 +47,7 @@ class GPXTests(unittest.TestCase):
         g = vector.gpx.GPX()
         g.add_track(track)
         expected = self.Track([self.Trkseg(
-                        [self.Point(xy, {}, {}) for xy in track.vertices],
+                        [self.Point(tuple(xy), {}, {}) for xy in track.vertices],
                         {"name":"segment0"}, {})], {}, {})
         self.assertEqual(g.tracks[0], expected)
         return
@@ -57,7 +57,7 @@ class GPXTests(unittest.TestCase):
                       for i in range(10)], properties={"name":"route0"})
         g = vector.gpx.GPX()
         g.add_route(route)
-        expected = self.Route([self.Point(xy, {}, {}) for xy in route.vertices],
+        expected = self.Route([self.Point(tuple(xy), {}, {}) for xy in route.vertices],
                               {"name":"route0"}, {})
         self.assertEqual(g.routes[0], expected)
         return

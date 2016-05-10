@@ -17,7 +17,7 @@ tuples.
 import json
 from collections import namedtuple
 from functools import reduce
-from .utilities import _reproject, _reproject_nested
+from .utilities import _reproject, _reproject_nested, _as_nested_lists
 from ..crs import CRS, LonLatWGS84
 
 Point = namedtuple('Point', ['coordinates', 'crs'])
@@ -59,18 +59,18 @@ def as_named_tuple(*geoms, **kwargs):
         if geom._geotype == "Point":
             g = Point(geom.vertex, crs)
         elif geom._geotype == "Line":
-            g = LineString(geom.vertices, crs)
+            g = LineString(_as_nested_lists(geom.vertices), crs)
         elif geom._geotype == "Polygon":
-            verts = [geom.vertices]
+            verts = [_as_nested_lists(geom.vertices)]
             for sub in geom.subs:
-                verts.append(sub.vertices)
+                verts.append(_as_nested_lists(sub.vertices))
             g = Polygon(verts, crs)
         elif geom._geotype == "Multipoint":
-            g = MultiPoint(geom.vertices, crs)
+            g = MultiPoint(_as_nested_lists(geom.vertices), crs)
         elif geom._geotype == "Multiline":
-            g = MultiLineString(geom.vertices, crs)
+            g = MultiLineString(_as_nested_lists(geom.vertices), crs)
         elif geom._geotype == "Multipolygon":
-            g = MultiPolygon(geom.vertices, crs)
+            g = MultiPolygon(_as_nested_lists(geom.vertices), crs)
         else:
             raise TypeError("unhandled type: {0}".format(type(geom)))
 
@@ -126,17 +126,16 @@ class NumpyAwareJSONEncoder(json.JSONEncoder):
     JSON serialization. """
 
     def default(self, o):
-        try:
-            if o.dtype in ("int8", "int16", "int32", "int64"):
-                return int(o)
-            elif o.dtype in ("float16", "float32", "float64", "float128"):
-                return float(o)
-            elif o.dtype in ("complex64", "complex128", "complex256"):
-                return complex(o)
-            else:
-                raise TypeError("not a recognized type")
-        except (AttributeError, TypeError):
+        if not hasattr(o, "dtype") or (hasattr(o, "__len__") and (len(o) != 1)):
             return json.JSONEncoder.default(self, o)
+        elif o.dtype in ("int8", "int16", "int32", "int64"):
+            return int(o)
+        elif o.dtype in ("float16", "float32", "float64", "float128"):
+            return float(o)
+        elif o.dtype in ("complex64", "complex128", "complex256"):
+            return complex(o)
+        else:
+            raise TypeError("not a recognized type")
 
 class GeoJSONReader(object):
 

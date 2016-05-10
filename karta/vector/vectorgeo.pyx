@@ -61,8 +61,6 @@ def pt_nearest_planar(double x, double y,
     pt0 = point(endpt0_0, endpt0_1)
     pt1 = point(endpt1_0, endpt1_1)
 
-    #dist = lambda u,v: sqrt((u[0]-v[0])**2. + (u[1]-v[1])**2.)
-
     u = vector(x - pt0.x, y - pt0.y)
     v = vector(pt1.x - pt0.x, pt1.y - pt0.y)
     u_on_v = cproj2(u, v)
@@ -124,7 +122,7 @@ cdef double _along_distance_gradient(object fwd, object inv, double x0, double y
     d2 = _along_distance(fwd, inv, x0, y0, xp, yp, az, f+dx)
     return (d2-d1)/dx
 
-def pt_nearest_proj(object fwd, object inv, tuple pt, tuple endpt0, tuple endpt1,
+def pt_nearest_proj(object fwd, object inv, tuple pt, double[:] endpt0, double[:] endpt1,
         float tol=0.1, int maxiter=100):
     """ Given geodetic functions *fwd* and *inv*, a Point *pt*, and an arc from
     *endpt1* to *endpt2*, return the point on the arc that is nearest *pt*.

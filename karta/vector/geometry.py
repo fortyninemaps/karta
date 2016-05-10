@@ -15,7 +15,7 @@ from .geojson import GeoJSONOutMixin
 from .shp import ShapefileOutMixin
 from . import xyfile
 from .table import Table, Indexer
-from .utilities import _reproject, _reproject_nested
+from .utilities import _reproject, _reproject_nested, _flatten, _as_nested_lists
 from . import quadtree
 from . import vectorgeo as _cvectorgeo
 from . import dateline as _cdateline
@@ -247,7 +247,18 @@ class MultiVertexBase(Geometry):
 
     def __init__(self, vertices, **kwargs):
         super(MultiVertexBase, self).__init__(**kwargs)
-        self.vertices = list(map(tuple, vertices))
+
+        if isinstance(vertices, zip):
+            vertices = list(vertices)
+
+        if len(vertices) == 0:
+            self.vertices = np.array([], dtype=np.float64)
+        elif not isinstance(vertices[0], Point):
+            self.vertices = np.array(_flatten(vertices), dtype=np.float64)
+        else:
+            self.vertices = np.array([point.vertex for point in vertices])
+            if "crs" not in kwargs:
+                self.crs = vertices[0].crs
 
         try:
             self.rank = 2 if len(self.vertices[0]) == 2 else 3
@@ -260,10 +271,10 @@ class MultiVertexBase(Geometry):
     def __eq__(self, other):
         try:
             return (self._geotype == other._geotype) and \
-                   (self.vertices == other.vertices) and \
+                   np.all(np.equal(self.vertices, other.vertices)) and \
                    (self.properties == other.properties) and \
                    (self.crs == other.crs)
-        except (AttributeError, TypeError):
+        except (AttributeError, TypeError, ValueError):
             return False
 
     def __neq__(self, other):
@@ -271,7 +282,7 @@ class MultiVertexBase(Geometry):
 
     def __hash__(self):
         ht = hash(self._geotype)
-        hd = hash(tuple(self.vertices))
+        hd = hash(self.vertices.tostring())
         hc = hash(str(self.crs))
         return ht + (hd << 1) + hd + hc
 
@@ -777,7 +788,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
     def geomdict(self):
         return {"type" : "LineString",
                 "bbox" : self.bbox,
-                "coordinates" : self.vertices}
+                "coordinates" : _as_nested_lists(self.vertices)}
 
     def extend(self, other):
         """ Combine two lines, provided that that the data formats are similar.
@@ -787,7 +798,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
         if self._geotype != other._geotype:
             raise GGeoError("Geometry mismatch ({0} != {1})".format(self._geotype, other._geotype))
 
-        self.vertices.extend(other.vertices)
+        self.vertices = np.vstack([self.vertices, other.vertices])
         self._cache = {}
         return self
 
@@ -893,9 +904,9 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
 
     @property
     def geomdict(self):
-        coords = [self.vertices]
+        coords = [_as_nested_lists(self.vertices)]
         for geom in self.subs:
-            coords.append(geom.vertices)
+            coords.append(_as_nested_lists(geom.vertices))
         return {"type" : "Polygon",
                 "bbox" : self.bbox,
                 "coordinates" : coords}
@@ -1044,7 +1055,6 @@ class Multipart(Geometry):
 
     def __init__(self, vertices, data=None, **kwargs):
         super(Multipart, self).__init__(**kwargs)
-        self.vertices = list(vertices)
 
         if data is None:
             self.data = Table(size=len(self.vertices))
@@ -1059,7 +1069,7 @@ class Multipart(Geometry):
     def __eq__(self, other):
         try:
             return (self._geotype == other._geotype) and \
-                   (self.vertices == other.vertices) and \
+                   np.all(np.equal(self.vertices, other.vertices)) and \
                    (self.data == other.data) and \
                    (self.properties == other.properties) and \
                    (self.crs == other.crs)
@@ -1071,7 +1081,7 @@ class Multipart(Geometry):
 
     def __hash__(self):
         ht = hash(self._geotype)
-        hd = hash(tuple(self.vertices))
+        hd = hash(self.vertices.tostring())
         hc = hash(str(self.crs))
         return ht + (hd << 1) + hd + hc
 
@@ -1105,9 +1115,21 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
         """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
         """
-        super(Multipoint, self).__init__(list(map(tuple, vertices)), **kwargs)
+        if isinstance(vertices, zip):
+            vertices = list(vertices)
+
+        if len(vertices) == 0:
+            self.vertices = np.array([], dtype=np.float64)
+        elif not isinstance(vertices[0], Point):
+            self.vertices = np.array(vertices, dtype=np.float64)
+        else:
+            self.vertices = np.array([point.vertex for point in vertices])
+            if "crs" not in kwargs:
+                self.crs = vertices[0].crs
+
+        super(Multipoint, self).__init__(vertices, **kwargs)
         try:
-            self.rank = 2 if len(self.vertices[0]) == 2 else 3
+            self.rank = 2 if len(self.vertices[0,:]) == 2 else 3
         except IndexError:
             self.rank = 3
         except TypeError:
@@ -1142,7 +1164,7 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
     def geomdict(self):
         return {"type" : "MultiPoint",
                 "bbox" : self.bbox,
-                "coordinates" : self.vertices}
+                "coordinates" : _as_nested_lists(self.vertices)}
 
     @property
     def __geo_interface__(self):
@@ -1239,6 +1261,8 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
         """
+        self.vertices = [np.array(part, dtype=np.float64) for part in vertices]
+
         super(Multiline, self).__init__(vertices, **kwargs)
         try:
             self.rank = 2 if len(vertices[0][0]) == 2 else 3
@@ -1303,6 +1327,11 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         """ Partial init function that establishes geometry rank and creates a
         metadata attribute.
         """
+        self.vertices = []
+        for part in vertices:
+            rings = [np.array(ring, dtype=np.float64) for ring in part]
+            self.vertices.append(rings)
+
         super(Multipolygon, self).__init__(vertices, **kwargs)
         try:
             self.rank = 2 if len(vertices[0][0][0]) == 2 else 3
@@ -1370,17 +1399,6 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     @property
     def extent(self):
         return self.get_extent()
-
-def _flatten(vertices):
-    """ Convert a nested list of coordinates into a flat list of tuples. """
-    out = []
-    for item in vertices:
-        if hasattr(item[0], "__iter__"):
-            verts = _flatten(item)
-            out.extend(verts)
-        else:
-            out.append(item)
-    return out
 
 def _signcross(a, b):
     """ Return sign of 2D cross product a x b """

@@ -162,8 +162,9 @@ class TestGeometry(unittest.TestCase):
 
     def test_segments(self):
         v = self.vertices
-        self.assertEqual([tuple(a.vertices) for a in self.line.segments],
-                         [(v[i], v[i+1]) for i in range(len(self.vertices)-1)])
+        for i, seg in enumerate(self.line.segments):
+            self.assertTrue(np.all(np.equal(seg.vertices[0], self.vertices[i])))
+            self.assertTrue(np.all(np.equal(seg.vertices[1], self.vertices[i+1])))
         return
 
 class TestDateline(unittest.TestCase):
@@ -392,7 +393,7 @@ class TestGeometryAnalysis(unittest.TestCase):
         ch = mp.convex_hull()
         hull_vertices = [(187, 85), (953, 198), (986, 271), (965, 704), (863,
             979), (27, 990), (88, 254)]
-        self.assertEqual(ch.vertices, hull_vertices)
+        self.assertTrue(np.all(np.equal(ch.vertices, hull_vertices)))
         return
 
     def test_multipoint_convex_hull2(self):
@@ -404,7 +405,7 @@ class TestGeometryAnalysis(unittest.TestCase):
         ch = mp.convex_hull()
         hull_vertices = [(2, -499), (431, -492), (476, 235), (402, 301), (314,
             331), (-59, 355), (-421, 172), (-482, 26), (-400, -491)]
-        self.assertEqual(ch.vertices, hull_vertices)
+        self.assertTrue(np.all(np.equal(ch.vertices, hull_vertices)))
         return
 
     def test_connected_multipoint_shortest_distance_to(self):
