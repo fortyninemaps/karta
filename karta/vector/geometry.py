@@ -620,16 +620,19 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         """ Return whether an intersection exists with another geometry. """
         if isinstance(self.crs, CartesianCRS):
             interxbool = (np.nan in
-                    _cintersection.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
-                                             a[0][1], a[1][1], b[0][1], b[1][1])
-                        for a in self.segments for b in other.segments)
+                    _cintersection.intersection(a[0][0], a[1][0],
+                                                b[0][0], b[1][0],
+                                                a[0][1], a[1][1],
+                                                b[0][1], b[1][1])
+                            for a in self.segment_tuples
+                            for b in other.segment_tuples)
             if self._bbox_overlap(other) and (False in interxbool):
                 return True
             else:
                 return False
         else:
-            for a in self.segments:
-                for b in other.segments:
+            for a in self.segment_tuples:
+                for b in other.segment_tuples:
                     try:
                         geodesy.intersection_spherical(a, b)
                     except geodesy.NoIntersection:
@@ -640,9 +643,12 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
         if isinstance(self.crs, CartesianCRS):
-            interx = (_cintersection.intersection(a[0][0], a[1][0], b[0][0], b[1][0],
-                                              a[0][1], a[1][1], b[0][1], b[1][1])
-                         for a in self.segments for b in other.segments)
+            interx = (_cintersection.intersection(a[0][0], a[1][0],
+                                                  b[0][0], b[1][0],
+                                                  a[0][1], a[1][1],
+                                                  b[0][1], b[1][1])
+                            for a in self.segment_tuples
+                            for b in other.segment_tuples)
             if not keep_duplicates:
                 interx = set(interx)
             interx_points = []
@@ -654,7 +660,8 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         else:
             # FIXME: implement for ellipsoidal coordinate systems
             interx = (geodesy.intersection_spherical(a, b)
-                         for a in self.segments for b in other.segments)
+                            for a in self.segment_tuples
+                            for b in other.segment_tuples)
             if not keep_duplicates:
                 interx = set(interx)
             interx_points = []
@@ -914,7 +921,7 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
     def isclockwise(self):
         """ Return whether polygon winds clockwise around its interior. """
         s = sum((seg[1][0] - seg[0][0]) * (seg[1][1] + seg[0][1])
-                for seg in self.segments)
+                        for seg in self.segment_tuples)
         return s > 0
 
     def ispolar(self, pole=None):
