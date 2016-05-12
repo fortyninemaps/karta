@@ -254,8 +254,16 @@ class RegularGrid(Grid):
         return xcoords, ycoords
 
     @property
+    def origin(self):
+        return self.transform[:2]
+
+    @property
     def resolution(self):
         return self.transform[2:4]
+
+    @property
+    def skew(self):
+        return self.transform[4:]
 
     @property
     def bbox(self):
