@@ -17,6 +17,7 @@ from . import xyfile
 from .table import Table, Indexer
 from .utilities import _reproject, _reproject_nested, _flatten, _as_nested_lists
 from . import quadtree
+from .coordstring import CoordString
 from . import vectorgeo as _cvectorgeo
 from . import dateline as _cdateline
 from . import intersection as _cintersection
@@ -233,7 +234,7 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
             raise GGeoError('Shift vector length must equal geometry rank.')
 
         if inplace:
-            self.vertex = [a+b for a,b in zip(self.vertex, shift_vector)]
+            self.vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
             return self
         else:
             vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
@@ -250,15 +251,15 @@ class MultiVertexBase(Geometry):
             vertices = list(vertices)
 
         if len(vertices) == 0:
-            self.vertices = np.array([], dtype=np.float64)
+            self.vertices = CoordString([])
         elif not isinstance(vertices[0], Point):
-            self.vertices = np.array(_flatten(vertices), dtype=np.float64)
+            self.vertices = CoordString(_flatten(vertices))
         else:
-            self.vertices = np.array([point.vertex for point in vertices])
+            self.vertices = CoordString([point.vertex for point in vertices])
             if "crs" not in kwargs:
                 self.crs = vertices[0].crs
 
-        if (len(self.vertices) != 0) and (self.vertices.shape[1] not in (2, 3)):
+        if self.vertices.rank not in (2, 3):
             raise TypeError("Coordinates must be a sequence of sequences")
         return
 
@@ -276,16 +277,16 @@ class MultiVertexBase(Geometry):
 
     def __hash__(self):
         ht = hash(self._geotype)
-        hd = hash(self.vertices.tostring())
+        hd = hash(self.vertices.asarray().tostring())
         hc = hash(str(self.crs))
         return ht + (hd << 1) + hd + hc
 
     def __getitem__(self, key):
         if isinstance(key, (int, np.int64)):
-            verts = self.vertices[key]
-            return Point(verts, properties=self.properties, crs=self.crs)
+            return Point(self.vertices[key], properties=self.properties, crs=self.crs)
         elif isinstance(key, slice):
-            verts = self.vertices[key]
+            start, stop, stride = key.indices(len(self.vertices))
+            verts = self.vertices.slice(start, stop, stride)
             return type(self)(verts, properties=self.properties, crs=self.crs)
         else:
             raise GGeoError('Index must be an integer or a slice object')
@@ -409,16 +410,18 @@ class MultiVertexMixin(object):
         inplace : bool
             whether shift should be in place (default False)
         """
-        if len(shift_vector) != self.vertices.shape[1]:
-            raise GGeoError('Shift vector length must equal geometry rank.')
+        if len(self.vertices) == 0:
+            raise GGeoError('Cannot shift zero length geometry')
+        if len(shift_vector) != len(self.vertices[0]):
+            raise GGeoError('Shift vector length must equal geometry rank')
 
         if inplace:
-            self.vertices += shift_vector
+            self.vertices = CoordString(self.vertices.asarray() + shift_vector)
             self.quadtree = None
             self._cache = {}
             return self
         else:
-            vertices = self.vertices + shift_vector
+            vertices = self.vertices.asarray() + shift_vector
             kw = {"properties": self.properties, "crs": self.crs}
             if hasattr(self, "data"):
                 kw["data"] = self.data
@@ -673,7 +676,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         point : Point
         """
         ptvertex = point.get_vertex(crs=self.crs)
-        segments = zip(self.vertices[:-1], self.vertices[1:])
+        segments = zip(self.vertices.slice(0, -1), self.vertices.slice(1, 0))
 
         if isinstance(self.crs, CartesianCRS):
             func = _cvectorgeo.pt_nearest_planar
@@ -781,7 +784,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
     def extend(self, other):
         """ Combine two lines, provided that that the data formats are similar.
         """
-        if self.vertices.shape[1] != other.vertices.shape[1]:
+        if len(self.vertices[0]) != len(other.vertices[0]):
             raise ValueError("Rank mismatch ({0} != "
                     "{1})".format(self.vertices.shape[1],
                                   other.vertices.shape[1]))
@@ -825,7 +828,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
                 seg_remaining -= step_remaining
                 step_remaining = step
                 points.append(pos)
-                seg.vertices[0] = pos.vertex
+                seg.vertices[0] = np.array(pos.vertex, dtype=np.float64)
 
             else:
                 pos = seg[1]
@@ -878,9 +881,10 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            ind = key.indices(len(self))
-            if len(self) != ((ind[1] - ind[0]) // ind[2]):
-                return Line(self.vertices[key], properties=self.properties,
+            start, stop, stride = key.indices(len(self.vertices))
+            if len(self) != ((stop - start) // stride):
+                return Line(self.vertices.slice(start, stop, stride),
+                            properties=self.properties,
                             crs=self.crs)
         return super(Polygon, self).__getitem__(key)
 
@@ -1071,7 +1075,7 @@ class Multipart(Geometry):
 
     def __hash__(self):
         ht = hash(self._geotype)
-        hd = hash(self.vertices.tostring())
+        hd = hash(self.vertices.asarray().tostring())
         hc = hash(str(self.crs))
         return ht + (hd << 1) + hd + hc
 
@@ -1106,11 +1110,11 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
             vertices = list(vertices)
 
         if len(vertices) == 0:
-            self.vertices = np.array([], dtype=np.float64)
+            self.vertices = CoordString([])
         elif not isinstance(vertices[0], Point):
-            self.vertices = np.array(vertices, dtype=np.float64)
+            self.vertices = CoordString(vertices)
         else:
-            self.vertices = np.array([point.vertex for point in vertices])
+            self.vertices = CoordString([point.vertex for point in vertices])
             if "crs" not in kwargs:
                 self.crs = vertices[0].crs
 
@@ -1125,20 +1129,24 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
             p.update(self.properties)
             return Point(self.vertices[key], properties=p, crs=self.crs)
         elif isinstance(key, slice):
-            return Multipoint(self.vertices[key], properties=self.properties,
+            start, stop, stride = key.indices(len(self.vertices))
+            return Multipoint(self.vertices.slice(start, stop, stride),
+                              properties=self.properties,
                               data=self.d[key], crs=self.crs)
 
     def __setitem__(self, key, value):
         if isinstance(key, numbers.Integral):
             if hasattr(value, "vertex"):
-                self.vertices[key] = value.get_vertex(self.crs)
+                self.vertices[key] = np.array(value.get_vertex(self.crs), dtype=np.float64)
                 row = []
                 for field in self.data.fields:
                     row.append(value.properties.get(field, None))
                 self.data[key] = tuple(row)
             else:
-                if len(value) == self.vertices.shape[1]:
-                    self.vertices[key] = value
+                if len(value) == len(self.vertices[0]):
+                    verts = self.vertices.asarray()
+                    verts[key] = value
+                    self.vertices = CoordString(verts)
                 self.data[key] = (None for _ in self.data.fields)
 
     @property
@@ -1252,7 +1260,7 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     """
 
     def __init__(self, vertices, **kwargs):
-        self.vertices = [np.array(part, dtype=np.float64) for part in vertices]
+        self.vertices = [CoordString(part) for part in vertices]
         super(Multiline, self).__init__(vertices, **kwargs)
         self._geotype = "Multiline"
         return
@@ -1323,7 +1331,7 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     def __init__(self, vertices, **kwargs):
         self.vertices = []
         for part in vertices:
-            rings = [np.array(ring, dtype=np.float64) for ring in part]
+            rings = [CoordString(ring) for ring in part]
             self.vertices.append(rings)
         super(Multipolygon, self).__init__(vertices, **kwargs)
         self._geotype = "Multipolygon"
