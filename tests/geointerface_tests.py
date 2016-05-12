@@ -51,8 +51,8 @@ class TestGeoInterface(unittest.TestCase):
         p = Multipoint([(4, 2), (3, 5), (3, 2), (7, 3)])
         sp = shapely.geometry.shape(p.geomdict)
         x, y = p.coordinates
-        self.assertEqual(x, tuple([el.x for el in sp]))
-        self.assertEqual(y, tuple([el.y for el in sp]))
+        self.assertTrue(np.all(x == np.array([el.x for el in sp])))
+        self.assertTrue(np.all(y == np.array([el.y for el in sp])))
         return
 
     def test_line_output(self):
@@ -60,8 +60,8 @@ class TestGeoInterface(unittest.TestCase):
         sp = shapely.geometry.shape(p.geomdict)
         x, y = p.coordinates
         sx, sy = sp.xy
-        self.assertEqual(x, tuple(sx))
-        self.assertEqual(y, tuple(sy))
+        self.assertTrue(np.all(x == np.array(sx)))
+        self.assertTrue(np.all(y == np.array(sy)))
         return
 
     def test_poly_output(self):
@@ -82,8 +82,8 @@ class TestGeoInterface(unittest.TestCase):
         p = vector.read.from_shape(sp)
         x, y = p.coordinates
         sx, sy = sp.xy
-        self.assertEqual(x, tuple(sx))
-        self.assertEqual(y, tuple(sy))
+        self.assertTrue(np.all(x == np.array(sx)))
+        self.assertTrue(np.all(y == np.array(sy)))
         return
 
     def test_poly_input(self):
@@ -109,12 +109,12 @@ class TestGeoInterface(unittest.TestCase):
         p1, p2 = vector.read.from_shape(smp)
         x, y = p1.coordinates
         sx, sy = sp1.xy
-        self.assertEqual(x, tuple(sx))
-        self.assertEqual(y, tuple(sy))
+        self.assertTrue(np.all(x == np.array(sx)))
+        self.assertTrue(np.all(y == np.array(sy)))
         x, y = p2.coordinates
         sx, sy = sp2.xy
-        self.assertEqual(x, tuple(sx))
-        self.assertEqual(y, tuple(sy))
+        self.assertTrue(np.all(x == np.array(sx)))
+        self.assertTrue(np.all(y == np.array(sy)))
         return
 
     def test_feature_input(self):

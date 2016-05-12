@@ -328,7 +328,7 @@ class MultiVertexMixin(object):
         crs : karta.CRS, optional
             coordinate system of output vertices
         """
-        x, y = tuple(zip(*self.vertices))[:2]
+        x, y = self.vertices.vectors()[:2]
         if crs is not None and (crs != self.crs):
             x, y = _reproject((x,y), self.crs, crs)
         return x, y

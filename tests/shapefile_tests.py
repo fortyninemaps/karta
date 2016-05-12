@@ -149,14 +149,18 @@ class TestShapefile(unittest.TestCase):
         mp = multipart_from_singleparts(points)
         self.assertEqual(mp.d["species"], ['T. officianale', 'C. tectorum', 'M. alba', 'V. cracca'])
         self.assertEqual(mp.d["ID"], ['0', '1', '2', '3'])
-        self.assertEqual(mp.coordinates, ((1.0, 3.0, 4.0, 2.0), (1.0, 1.0, 3.0, 2.0)))
+        x, y = mp.coordinates
+        self.assertTrue(np.all(x == np.array((1.0, 3.0, 4.0, 2.0))))
+        self.assertTrue(np.all(y == np.array((1.0, 1.0, 3.0, 2.0))))
 
     def test_read_line(self):
         line = read_shapefile(os.path.join(TESTDATA, "shp_input", "line"))[0]
         self.assertTrue("+proj=lonlat" in line.crs.get_proj4())
         self.assertTrue("+a=6378137.0" in line.crs.get_proj4())
         self.assertTrue("+f=0.00335281" in line.crs.get_proj4())
-        self.assertEqual(line.coordinates, ((1.0, 5.0, 5.0, 3.0, 1.0), (5.0, 5.0, 1.0, 3.0, 1.0)))
+        x, y = line.coordinates
+        self.assertTrue(np.all(x == np.array([1.0, 5.0, 5.0, 3.0, 1.0])))
+        self.assertTrue(np.all(y == np.array([5.0, 5.0, 1.0, 3.0, 1.0])))
         return
 
     def test_read_polygon(self):
@@ -164,7 +168,9 @@ class TestShapefile(unittest.TestCase):
         self.assertTrue("+proj=lonlat" in polygon.crs.get_proj4())
         self.assertTrue("+a=6378137.0" in polygon.crs.get_proj4())
         self.assertTrue("+f=0.00335281" in polygon.crs.get_proj4())
-        self.assertEqual(polygon.coordinates, ((1.0, 5.0, 5.0, 3.0, 1.0), (5.0, 5.0, 1.0, 3.0, 1.0)))
+        x, y = polygon.coordinates
+        self.assertTrue(np.all(x == np.array([1.0, 5.0, 5.0, 3.0, 1.0])))
+        self.assertTrue(np.all(y == np.array([5.0, 5.0, 1.0, 3.0, 1.0])))
         return
 
     def test_read_points_newp(self):
