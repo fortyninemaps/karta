@@ -2,8 +2,9 @@
 
 [![Build Status](https://travis-ci.org/fortyninemaps/karta.svg?branch=master)](https://travis-ci.org/fortyninemaps/karta)
 
-*Karta* is a package for spatial analysis in Python. It streamlines processing
-vector and raster data.
+*Karta* is a package for spatial analysis in Python. It streamlines data
+processing by providing generic geographical types for vector and raster sources
+as well as a selection of analysis functions.
 
 For example, read or create vector geometries:
 

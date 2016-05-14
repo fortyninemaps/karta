@@ -1,8 +1,9 @@
 Karta Documentation
 ===================
 
-*Karta* is a simple to use package for spatial analysis in Python. It
-streamlines processing of vector and raster data.
+*Karta* is a package for spatial analysis in Python. It streamlines data
+processing by providing generic geographical types for vector and raster sources
+as well as a selection of analysis functions.
 
 *Karta* is divided into two major sections, ``karta.raster`` for gridded
 image-like data, and ``karta.vector`` for point-wise geometry data. Users of GIS

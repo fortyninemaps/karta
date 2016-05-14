@@ -76,7 +76,9 @@ setup(
     url = "http://www.fortyninemaps.com/karta.html",
     description = "Geospatial analysis in Python",
     long_description = """
-*Karta* streamlines processing raster and vector geographical data in Python.
+*Karta* is a package for spatial analysis in Python. It streamlines data
+processing by providing generic geographical types for vector and raster sources
+as well as a selection of analysis functions.
 
 Create vector geometries:
 
