@@ -7,10 +7,10 @@ cdef array template_dbl = array("d", [])
 
 cdef class CoordString:
 
-    cdef public double[:] coords
-    cdef public int rank
+    cdef readonly double[:] coords
+    cdef readonly int rank
 
-    def __init__(self, coords):
+    def __cinit__(self, object coords):
         cdef int length = len(coords)
         if length == 0:
             self.rank = 0
@@ -18,12 +18,13 @@ cdef class CoordString:
             self.rank = len(coords[0])
 
         if self.rank not in (0, 2, 3):
-            raise ValueError("Geometry rank must be 2 or 3")
+            raise ValueError("non-empty Geometry rank must be 2 or 3")
 
         cdef array coords_array = clone(template_dbl, length*self.rank, False)
         self.coords = coords_array
 
         cdef int i, j
+        cdef object xy
         i = 0
         for xy in coords:
             for j in range(self.rank):
