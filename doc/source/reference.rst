@@ -72,8 +72,8 @@ Vector package (``karta.vector``)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The package ``karta.vector`` provides a *Geometry* class, subclasses for
-*Point*, *Line*, *Polygon*, and *Multipoint* types, as well as readers and
-writers for ESRI shapefiles, GeoJSON, and GPX files.
+*Point*, *Line*, and *Polygon* types and their multipart counterparts, as well
+as readers and writers for ESRI shapefiles, GeoJSON, and GPX files.
 
 All concrete geometries support the `__geo_interface__`_ attribute, and map to
 *Point*, *MultiPoint*, *LineString*, and *Polygon* types, respectively.

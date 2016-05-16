@@ -155,8 +155,20 @@ class Table(Sequence):
                                           for j in range(len(self._fields))]))
 
 class Indexer(object):
-    """ Provides a pleasanter syntax for querying Table """
+    """ Provides a pleasanter syntax for querying Table.
 
+    The Indexer object can be used with standard indexing syntax, with integer,
+    slice, or string keys.
+
+    - `Indexer[int]` returns the table row at position `int` as a dictionary. It
+      is equivalent to `Table.get(int)`.
+
+    - `Indexer[slice]` returns the table rows at `slice` as a dictionary. It is
+      equivalent to `Table.get(slice)`.
+
+    - `Indexer[str]` returns the vector under column `str` as a list. It is
+      equivalent to `Table.getfield(str)`.
+    """
     def __init__(self, metadata):
         if metadata is None:
             raise KeyError("cannot index data-less geometry")

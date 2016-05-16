@@ -122,6 +122,7 @@ Then, clone the repository and install,
 
 - Python 2.7 or Python 3.4+
 - numpy
+- blosc
 - pyproj
 - gdal
 - C-compiler
