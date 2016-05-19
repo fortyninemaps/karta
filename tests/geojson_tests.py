@@ -209,7 +209,7 @@ class TestGeoJSONOutput(unittest.TestCase):
 
     def test_polygon_write(self):
         p = Polygon([[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
-                            [100.0, 1.0], [100.0, 0.0]], crs=LonLatWGS84)
+                     [100.0, 1.0]], crs=LonLatWGS84)
         s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806").read()
         ans = """{ "properties": {}, "geometry": { "type": "Polygon", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ [ 100.0, 0.0 ], [ 101.0, 0.0 ], [ 101.0, 1.0 ], [ 100.0, 1.0 ], [ 100.0, 0.0 ] ] ] }, "type": "Feature" }"""
 
@@ -277,11 +277,12 @@ class GeoJSONSerializerTests(unittest.TestCase):
         return
 
     def test_serialize_polygon(self):
-        polygon = geojson.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
-                                   [[1.0, 1.0], [0.5, -0.5], [0.8, [-0.7]]]],
+        polygon = geojson.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0], [44.0, 17.0]],
+                                   [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7], [1.0, 1.0]]],
                                   LonLatWGS84)
         s = self.serializer(polygon)
         d = json.loads(s)
+
         self.assertEqual(list(polygon.coordinates), list(d["coordinates"]))
         return
 

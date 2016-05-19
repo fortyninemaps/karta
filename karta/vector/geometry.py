@@ -904,10 +904,17 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
                 "properties": p}
 
     @property
+    def vertices_ring(self):
+        # inefficient implementation
+        vertices = [xy for xy in self.vertices]
+        vertices.append(vertices[0])
+        return CoordString(vertices)
+
+    @property
     def geomdict(self):
-        coords = [_as_nested_lists(self.vertices)]
+        coords = [_as_nested_lists(self.vertices_ring)]
         for geom in self.subs:
-            coords.append(_as_nested_lists(geom.vertices))
+            coords.append(_as_nested_lists(geom.vertices_ring))
         return {"type" : "Polygon",
                 "bbox" : self.bbox,
                 "coordinates" : coords}

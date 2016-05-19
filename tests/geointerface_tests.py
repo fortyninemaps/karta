@@ -17,13 +17,15 @@ class TestGeoInterface(unittest.TestCase):
         self.assertEqual(pt.geomdict, {"type":"Point", "coordinates":(3,4)})
 
     def test_poly(self):
-        x = np.arange(5)
+        x = np.arange(5.0)
         y = x**2
+        vertices_ring = _as_nested_lists(zip(x, y))
+        vertices_ring.append(vertices_ring[0])
         poly = Polygon(list(zip(x, y)))
         self.assertEqual(poly.geomdict,
                          {"type":"Polygon",
                           "bbox":(0, 0, 4, 16),
-                          "coordinates": [_as_nested_lists(zip(x, y))]})
+                          "coordinates": [vertices_ring]})
 
     def test_line(self):
         x = np.arange(10)

@@ -61,7 +61,7 @@ def as_named_tuple(*geoms, **kwargs):
         elif geom._geotype == "Line":
             g = LineString(_as_nested_lists(geom.vertices), crs)
         elif geom._geotype == "Polygon":
-            verts = [_as_nested_lists(geom.vertices)]
+            verts = [_as_nested_lists(geom.vertices_ring)]
             for sub in geom.subs:
                 verts.append(_as_nested_lists(sub.vertices))
             g = Polygon(verts, crs)
@@ -70,7 +70,7 @@ def as_named_tuple(*geoms, **kwargs):
         elif geom._geotype == "Multiline":
             g = MultiLineString(_as_nested_lists(geom.vertices), crs)
         elif geom._geotype == "Multipolygon":
-            g = MultiPolygon(_as_nested_lists(geom.vertices), crs)
+            g = MultiPolygon(_as_nested_lists(geom.vertices_ring), crs)
         else:
             raise TypeError("unhandled type: {0}".format(type(geom)))
 
