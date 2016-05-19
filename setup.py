@@ -48,14 +48,17 @@ class build_ext(_build_ext):
             print("If C sources exist in the build directory, they will be used")
 
             for ext in self.extensions:
-                ext.sources = list(map(lambda f: f+".c", ext.sources))
+                ext.sources = [fnm+".c" if not fnm.endswith(".c") else fnm
+                               for fnm in ext.sources]
 
         # Check that sources exist for each extension, either from Cython for
         # from having the C-code sitting around. Also, add a _needs_stub
         # attribute to each extension for setuptools.
         for ext in self.extensions:
-            if not all(exists(src) for src in ext.sources):
-                raise Exception("Extension sources not found - Cython required for install")
+            for src in ext.sources:
+                if not exists(src):
+                    raise Exception("Extension source code not found ({0})\n"
+                                    "Cython required for install".format(src))
         return
 
 # File extension is added to sources at overloaded build_ext.run()
