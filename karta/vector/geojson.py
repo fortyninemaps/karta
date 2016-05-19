@@ -448,7 +448,7 @@ class GeoJSONOutMixin(object):
                 vertices = _reproject_nested(self.vertices, self.crs, LonLatWGS84)
             else:
                 vertices = _reproject(self.vertex, self.crs, LonLatWGS84)
-            geo = type(self)(projected_vertices, **kw)
+            geo = type(self)(vertices, **kw)
         else:
             geo = self
 

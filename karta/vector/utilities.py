@@ -33,6 +33,7 @@ def _reproject_nested(xy, crs1, crs2):
         out = []
         for xy_ in xy:
             out.append(_reproject_nested(xy_, crs1, crs2))
+        return out
     else:
         return _reproject(xy, crs1, crs2)
 

@@ -13,7 +13,7 @@ import karta.vector as vector
 import karta.vector.geojson as geojson
 from karta.vector.geojson import GeoJSONReader, GeoJSONNamedCRS
 from karta.vector.geometry import Point, Line, Polygon, Multipoint, Multiline, Multipolygon
-from karta.crs import LonLatWGS84, Cartesian
+from karta.crs import LonLatWGS84, WebMercator, Cartesian
 
 class TestGeoJSONInput(unittest.TestCase):
 
@@ -232,6 +232,20 @@ class TestGeoJSONOutput(unittest.TestCase):
     } }"""
 
         self.verifyJson(s, ans)
+
+    def test_write_reproject(self):
+        # tests whether coordinates are correctly reprojected to WGS84 lon/lat
+        p = Line([(1e6, 1e6), (1.2e6, 1.4e6)], crs=WebMercator)
+        s = p.as_geojson()
+        ans = """{ "type": "Feature", "properties": {},
+            "geometry": {
+                "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+                "coordinates": [[8.983152841195214, 8.946573850543412],
+                                [10.779783409434257, 12.476624651238847]],
+                "type": "LineString" } }"""
+
+        self.verifyJson(s, ans)
+        return
 
     def test_write_string_data(self):
         capitols = Multipoint([(-112.1, 33.57), (-121.5, 38.57),
