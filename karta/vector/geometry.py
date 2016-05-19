@@ -1364,6 +1364,19 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
             return Multipolygon(self.vertices[key], properties=self.properties,
                                 data=self.d[key], crs=self.crs)
 
+    @property
+    def vertices_ring(self):
+        # inefficient implementation
+        vertices = []
+        for poly in self.vertices:
+            rings = []
+            for ring in poly:
+                xys = [xy for xy in ring]
+                xys.append(ring[0])
+                rings.append(CoordString(xys))
+            vertices.append(rings)
+        return vertices
+
     def get_vertices(self, crs=None):
         """ Return vertices as a list of arrays.
 

@@ -12,7 +12,7 @@ from test_helper import TESTDATA
 import karta.vector as vector
 import karta.vector.geojson as geojson
 from karta.vector.geojson import GeoJSONReader, GeoJSONNamedCRS
-from karta.vector.geometry import Point, Multipoint, Line, Polygon
+from karta.vector.geometry import Point, Line, Polygon, Multipoint, Multiline, Multipolygon
 from karta.crs import LonLatWGS84, Cartesian
 
 class TestGeoJSONInput(unittest.TestCase):
@@ -179,29 +179,23 @@ class TestGeoJSONOutput(unittest.TestCase):
         self.assertEqual(obj1, obj2)
         return
 
-    def asJsonBuffer(self, geo, **kw):
-        s = StringIO()
-        geo.to_geojson(s, **kw)
-        s.seek(0)
-        return s
-
     def test_point_write_cartesian(self):
         p = Point((100.0, 0.0), crs=Cartesian)
-        s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806", force_wgs84=False).read()
+        s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806", force_wgs84=False)
         ans = """{"properties": {}, "geometry": {"coordinates": [100.0, 0.0], "crs": {"properties": {"name": "urn:ogc:def:crs:EPSG::5806"}, "type": "name"}, "type": "Point"}, "type": "Feature"}"""
         self.verifyJson(s, ans)
         return
 
     def test_point_write(self):
         p = Point((100.0, 0.0), crs=LonLatWGS84)
-        s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806").read()
+        s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
         ans = """{"properties": {}, "geometry": {"coordinates": [100.0, 0.0], "crs": {"properties": {"name": "urn:ogc:def:crs:EPSG::5806"}, "type": "name"}, "type": "Point"}, "type": "Feature"}"""
         self.verifyJson(s, ans)
         return
 
     def test_line_write(self):
         p = Line([(100.0, 0.0), (101.0, 1.0)], crs=LonLatWGS84)
-        s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806").read()
+        s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
         ans = """{ "type": "Feature", "properties": {}, "geometry": { "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ 100.0, 0.0 ], [ 101.0, 1.0 ] ], "type": "LineString" } }"""
 
         self.verifyJson(s, ans)
@@ -210,11 +204,34 @@ class TestGeoJSONOutput(unittest.TestCase):
     def test_polygon_write(self):
         p = Polygon([[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
                      [100.0, 1.0]], crs=LonLatWGS84)
-        s = self.asJsonBuffer(p, urn="urn:ogc:def:crs:EPSG::5806").read()
+        s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
         ans = """{ "properties": {}, "geometry": { "type": "Polygon", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ [ 100.0, 0.0 ], [ 101.0, 0.0 ], [ 101.0, 1.0 ], [ 100.0, 1.0 ], [ 100.0, 0.0 ] ] ] }, "type": "Feature" }"""
 
         self.verifyJson(s, ans)
         return
+
+    def test_multiline_write(self):
+        p = Multiline([[(100, 0), (101, 1)], [(102, 2), (103, 3)]], crs=LonLatWGS84)
+        s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
+        ans = """{"type": "Feature", "properties": {}, "geometry" : { "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "type": "MultiLineString", "coordinates": [ [ [100.0, 0.0], [101.0, 1.0] ], [ [102.0, 2.0], [103.0, 3.0] ] ] } }"""
+
+        self.verifyJson(s, ans)
+
+    def test_multipolygon_write(self):
+        p = Multipolygon([[[(102, 2), (103, 2), (103, 3), (102, 3)]],
+                          [[(100, 0), (101, 0), (101, 1), (100, 1)],
+                           [(100.2, 0.2), (100.8, 0.2), (100.8, 0.8), (100.2, 0.8)]]],
+                          crs=LonLatWGS84)
+        s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
+        ans = """{"type": "Feature", "properties": {}, "geometry" : { "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "type": "MultiPolygon",
+    "coordinates": [
+      [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
+      [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
+       [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]
+      ]
+    } }"""
+
+        self.verifyJson(s, ans)
 
     def test_write_string_data(self):
         capitols = Multipoint([(-112.1, 33.57), (-121.5, 38.57),
