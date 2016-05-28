@@ -1,6 +1,6 @@
 // pool data structure
-
 #include <stdlib.h>
+#include <stdio.h>
 
 typedef struct PointerPool {
     int size;
@@ -46,7 +46,8 @@ int pool_add(Pool *pool, char *item) {
 
 char* pool_pop(Pool *pool, int index) {
     if (index >= pool->count) {
-        return NULL;
+        printf("pool error: pop index beyond pool size\n");
+        exit(1);
     }
     char *ptr = pool->members[index];
     if (index != pool->count) {
