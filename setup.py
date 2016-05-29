@@ -29,15 +29,6 @@ class build_ext(_build_ext):
         # Attempt to compile with Cython - or fallback on local C sources
         try:
             from Cython.Build import cythonize
-            for ext in self.extensions:
-                sources = []
-                for src in ext.sources:
-                    if src.endswith(".pyx"):
-                        sources.append(src)
-                    else:
-                        sources.append(src+".pyx")
-                ext.sources = sources
-
             _needs_stub = [ext._needs_stub for ext in self.extensions]
             self.extensions = cythonize(self.extensions)
             for ns, ext in zip(_needs_stub, self.extensions):
@@ -48,8 +39,7 @@ class build_ext(_build_ext):
             print("If C sources exist in the build directory, they will be used")
 
             for ext in self.extensions:
-                ext.sources = [fnm+".c" if not fnm.endswith(".c") else fnm
-                               for fnm in ext.sources]
+                ext.sources = [f.replace(".pyx", ".c") for f in ext.sources]
 
         # Check that sources exist for each extension, either from Cython for
         # from having the C-code sitting around. Also, add a _needs_stub
@@ -66,10 +56,7 @@ extensions = [Extension("karta.raster.crfuncs", ["karta/raster/crfuncs.pyx"]),
               Extension("karta.vector.coordstring", ["karta/vector/coordstring.pyx"]),
               Extension("karta.vector.vectorgeo", ["karta/vector/vectorgeo.pyx"]),
               Extension("karta.vector.dateline", ["karta/vector/dateline.pyx"]),
-              Extension("karta.vector.intersection", ["karta/vector/intersection.pyx"]),
-              Extension("karta.vector.crtree", ["karta/vector/crtree.pyx"]),
-              Extension("karta.vector.crtree_new", ["karta/vector/crtree_new.pyx",
-                                                    "karta/vector/linkedlist.c"])]
+              Extension("karta.vector.intersection", ["karta/vector/intersection.pyx"])]
 
 setup(
     name = "karta",
