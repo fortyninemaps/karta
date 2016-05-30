@@ -57,17 +57,17 @@ Node* rt_new_node(NodeType type, Strategy strategy, int maxchildren, Node* paren
         printf("rtree error: maxchildren must be greater than 4");
         exit(1);
     }
-    Node *node = (Node*) malloc(sizeof(Node));
+    Node *node = malloc(sizeof(Node));
     node->type = type;
     node->strategy = strategy;
     node->count = 0;
     node->maxchildren = maxchildren;
     node->parent = parent;
-    node->children = (char**) malloc((maxchildren+1) * sizeof(ChildUnion));
-    node->indices = (int*) malloc((maxchildren+1) * sizeof(int));
+    node->children = malloc((maxchildren+1) * sizeof(ChildUnion));
+    node->indices = malloc((maxchildren+1) * sizeof(int));
 
     // TODO: use NaN values
-    node->bbox = (Bbox*) malloc(sizeof(Bbox));
+    node->bbox = malloc(sizeof(Bbox));
     node->bbox->xmin = 1e38;
     node->bbox->xmax = -1e38;
     node->bbox->ymin = 1e38;
@@ -76,7 +76,7 @@ Node* rt_new_node(NodeType type, Strategy strategy, int maxchildren, Node* paren
 }
 
 Bbox* new_bbox() {
-    Bbox* bb = (Bbox*) malloc(sizeof(Bbox));
+    Bbox* bb = malloc(sizeof(Bbox));
     return bb;
 }
 
@@ -110,8 +110,8 @@ int add_node(Node *parent, Node *child) {
 Node* rt_insert(Node *root, Bbox *bbox, int index) {
     Node *sibling = NULL;
     Node *leaf = rt_choose_leaf(root, bbox);
-    Node **outnode = (Node**) malloc(sizeof(Node*));
-    Node **outsibling = (Node**) malloc(sizeof(Node*));
+    Node **outnode = malloc(sizeof(Node*));
+    Node **outsibling = malloc(sizeof(Node*));
     Node *returned_root;
 
     leaf->children[leaf->count] = (char*) bbox;

@@ -10,15 +10,15 @@ typedef struct PointerPool {
 
 
 Pool* pool_new(int membersize, int size) {
-    Pool *pool = (Pool*) malloc(sizeof(Pool));
+    Pool *pool = malloc(sizeof(Pool));
     pool->size = size;
     pool->count = 0;
-    pool->members = (char**) malloc(size*membersize);
+    pool->members = malloc(size*membersize);
     return pool;
 }
 
 int pool_resize(Pool *pool, int membersize) {
-    char **newmembers = (char**) malloc((pool->size)*2 * membersize);
+    char **newmembers = malloc((pool->size)*2 * membersize);
     int i = 0;
     while (i != pool->size) {
         newmembers[i] = pool->members[i];

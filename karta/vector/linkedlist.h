@@ -11,7 +11,7 @@ typedef struct LinkedListNode {
 // create a new linked list
 static LLNode *ll_new(void *ptr) {
     LLNode *node;
-    node = (LLNode*) malloc(sizeof(LLNode));
+    node = malloc(sizeof(LLNode));
     node->value = ptr;
     node->next = NULL;
     return node;
