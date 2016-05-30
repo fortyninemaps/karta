@@ -136,7 +136,7 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         ----------
         other : Point
             second point defining direction
-        projected : bool
+        projected : bool, optional
             If True and self.crs is a ProjectedCRS, return the azimuth in the
             projected cooridnate system. If False, return the geodetic azimuth.
             if self.crs is a GeographicalCRS, result is always geodetic and this
@@ -167,23 +167,32 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
             az, _, _ = self.crs.inverse(lon0, lat0, lon1, lat1)
         return az
 
-    def walk(self, distance, direction, radians=False):
+    def walk(self, distance, azimuth, projected=True):
         """ Returns the point reached when moving in a given direction for
         a given distance from a specified starting location.
 
         Parameters
         ----------
         distance : float
-            distance to walk
-        direction : float
-            walk azimuth (clockwise with "north" at 0)
-        radians : bool, optional
-            whether direction is given in radians (default False)
+            distance to shift point
+        azimuth: float
+            shift azimuth (clockwise with north at 0)
+        projected: bool, optional
+            If True and self.crs is a ProjectedCRS, return the compute new
+            position using the projected cooridnate system. If False, return
+            the geodetically correct new position. if self.crs is a
+            GeographicalCRS, result is always geodetic and this option has no
+            effect.
         """
-        xg1, yg1 = self.crs.project(self.x, self.y, inverse=True)
-        xg2, yg2, _ = self.crs.forward(xg1, yg1, direction, distance,
-                                       radians=radians)
-        x, y = self.crs.project(xg2, yg2)
+        if projected and not isinstance(self.crs, GeographicalCRS):
+            maz = -(azimuth+90)*math.pi/180
+            maz = (90-azimuth) * math.pi/180
+            x = self.x + distance*math.cos(maz)
+            y = self.y + distance*math.sin(maz)
+        else:
+            x1, y1 = self.crs.project(self.x, self.y, inverse=True)
+            x2, y2, _ = self.crs.forward(x1, y1, azimuth, distance, radians=False)
+            x, y = self.crs.project(x2, y2)
         return Point((x, y), properties=self.properties, crs=self.crs)
 
     def distance(self, other, projected=True):
@@ -195,7 +204,7 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         ----------
         other : Point
             point to compute distance to
-        projected : bool
+        projected : bool, optional
             If True and self.crs is a ProjectedCRS, return the distance in the
             projected cooridnate system. If False, return the geodetic distance.
             if self.crs is a GeographicalCRS, result is always geodetic and this

@@ -237,7 +237,7 @@ class TestGeometryAnalysis(unittest.TestCase):
 
     def test_walk_cartesian(self):
         start = Point((-3, -4), crs=Cartesian)
-        dest = start.walk(5.0, math.atan(3.0/4.0), radians=True)
+        dest = start.walk(5.0, 90-math.atan2(4.0, 3.0)*180/math.pi)
         self.assertAlmostEqual(dest.x, 0.0)
         self.assertAlmostEqual(dest.y, 0.0)
         return
@@ -249,14 +249,23 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertAlmostEqual(dest.y, 49.398187, places=6)
         return
 
-    def test_walk_albers(self):
+    def test_walk_albers_geodetic(self):
+        AlaskaAlbers = ProjectedCRS("+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 "
+                                "+x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs",
+                                "+ellps=GRS80")
+        start = Point((-2658638, 2443580), crs=AlaskaAlbers)
+        dest = start.walk(4500, 195.0, projected=False)
+        self.assertAlmostEqual(dest.x, -2662670.889, places=3)
+        self.assertAlmostEqual(dest.y, 2441551.155, places=3)
+
+    def test_walk_albers_projected(self):
         AlaskaAlbers = ProjectedCRS("+proj=aea +lat_1=55 +lat_2=65 +lat_0=50 +lon_0=-154 "
                                 "+x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs",
                                 "+ellps=GRS80")
         start = Point((-2658638, 2443580), crs=AlaskaAlbers)
         dest = start.walk(4500, 195.0)
-        self.assertAlmostEqual(dest.x, -2662670.889, places=3)
-        self.assertAlmostEqual(dest.y, 2441551.155, places=3)
+        self.assertAlmostEqual(dest.x, -2659802.686, places=3)
+        self.assertAlmostEqual(dest.y, 2439233.334, places=3)
         return
 
     def test_point_azimuth(self):
