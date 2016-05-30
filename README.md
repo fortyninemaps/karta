@@ -43,6 +43,9 @@ The latest release is on PyPI (see [Installation](#installation)). *Karta* is
 tested with Python 2.7 and Python 3.4+. Suggestions, bug reports, test cases,
 and pull requests are welcome.
 
+The latest stable release is 0.6.1. The repository master branch is considered
+an moderately-unstable development version.
+
 ## DOCUMENTATION
 
 See the [online manual](http://www.fortyninemaps.com/kartadocs/karta-manual.html),
@@ -69,7 +72,7 @@ documentation requires [Sphinx](http://sphinx-doc.org/) and
   (supporting CRS-aware clipping, sampling, profiling along vector tracks), and
   experimental `WarpedGrid`
 
-- **karta.tests**: unit tests, to be run with `python tests/runtests.py`
+- **tests**: unit tests, to be run with `python tests/runtests.py`
 
 ## FORMATS
 
@@ -78,11 +81,11 @@ Currently implemented are:
 
 - vector
     - GeoJSON (r,w)
-    - ESRI Shapefiles (requires OGR) (r,w)
+    - ESRI Shapefiles (via GDAL) (r,w)
     - GPS eXchange (GPX) (r,w)
 - raster
+    - GeoTiff (via GDAL) (r,w)
     - ESRI ASCII Grid (r,w)
-    - GeoTiff (requires GDAL) (r,w)
 
 *Karta* implements the Python [`__geo_interface__`
 attribute](https://gist.github.com/sgillies/2217756) for vector geometries. This
@@ -94,21 +97,21 @@ implement `__geo_interface__` (e.g.
 ## INSTALLATION
 
 The easiest way to install in production is to use `pip`. Installation requires
-a version of `setuptools>=17.0`.
+a version of `setuptools>=17.0`:
 
     pip install -U setuptools
 
-To install the latest release from PyPI, run
+Then, to install the latest release from PyPI:
 
     pip install karta
 
 ### Building from source
 
-Building from source requires Cython to be available.
+Building from source requires Cython:
 
     pip install Cython
 
-Then, clone the repository and install,
+Then, clone the repository and install:
 
     git clone https://github.com/fortyninemaps/karta.git karta
     pip install -r karta/requirements.txt
@@ -118,8 +121,9 @@ Then, clone the repository and install,
 
 - Python 2.7 or Python 3.4+
 - numpy
-- pyproj
 - gdal
+- pyproj
+- blosc
 - C-compiler
 
 ## LICENSE

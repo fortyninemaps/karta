@@ -76,7 +76,7 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(point.azimuth(other), 0.0)
 
         other = Point((1.0, 1.0))
-        self.assertEqual(point.azimuth(other), 180.0)
+        self.assertEqual(point.azimuth(other), -180.0)
         return
 
     def test_point_azimuth2(self):
@@ -92,7 +92,7 @@ class TestGeometry(unittest.TestCase):
         """
         point = Point((0.0, -10e5), crs=NSIDCNorth)
         other = Point((1e5, -9e5), crs=NSIDCNorth)
-        self.assertAlmostEqual(point.azimuth(other), 45.036973, places=6)
+        self.assertAlmostEqual(point.azimuth(other, projected=False), 45.036973, places=6)
         return
 
     def test_point_shift_inplace(self):

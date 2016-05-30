@@ -51,23 +51,6 @@ class Geometry(object):
         self._cache = {}
         return
 
-    @staticmethod
-    def _distance(pos0, pos1):
-        """ Generic method for calculating distance between positions that
-        respects CRS """
-        if pos0.crs == pos1.crs:
-            (x0,y0) = pos0.x, pos0.y
-            (x1,y1) = pos1.x, pos1.y
-            if isinstance(pos0.crs, GeographicalCRS):
-                ((x0,x1), (y0,y1)) = pos0.crs.project([x0, x1], [y0, y1],
-                                                      inverse=True)
-                _, _, dist = pos0.crs.inverse(x0, y0, x1, y1, radians=False)
-            else:
-                dist = math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
-        else:
-            raise CRSError("Positions must use the same CRS")
-        return dist
-
     @property
     def d(self):
         return Indexer(self.data)
@@ -203,21 +186,43 @@ class Point(Geometry):
         else:
             return (self.x, self.y)
 
-    def azimuth(self, other, crs=SphericalEarth):
-        """ Returns the compass azimuth from self to other in radians (i.e.
-        clockwise, with north at 0). Returns NaN if points are coincident. """
+    def azimuth(self, other, projected=True):
+        """ Returns the compass azimuth from self to other in degrees, measured
+        clockwise with north at 0.
 
-        if (self.x, self.y) == (other.x, other.y):
-            az = np.nan
+        Parameters
+        ----------
+        other : Point
+            second point defining direction
+        projected : bool
+            If True and self.crs is a ProjectedCRS, return the azimuth in the
+            projected cooridnate system. If False, return the geodetic azimuth.
+            if self.crs is a GeographicalCRS, result is always geodetic and this
+            option has no effect.
 
-        elif self.crs == other.crs:
-            lon0, lat0 = self.crs.project(self.x, self.y, inverse=True)
-            lon1, lat1 = self.crs.project(other.x, other.y, inverse=True)
-            az, _, _ = self.crs.inverse(lon0, lat0, lon1, lat1)
+        Returns
+        -------
+        float
 
+        Notes
+        -----
+        return value is NaN if points are coincident
+        """
+        x0, y0 = self.x, self.y
+        if self.crs != other.crs:
+            x1, y1 = other.get_vertex(self.crs)[:2]
         else:
-            raise CRSError("Azimuth undefined for points in CRS {0} and "
-                           "{1}".format(self.crs, other.crs))
+            x1, y1 = other.x, other.y
+
+        if (x0, y0) == (x1, y1):
+            az = np.nan
+        elif projected and not isinstance(self.crs, GeographicalCRS):
+            az = 90.0 - math.atan2(y1-y0, x1-x0)*180.0/math.pi
+            az = (az+180) % 360 - 180
+        else:
+            lon0, lat0 = self.crs.project(x0, y0, inverse=True)
+            lon1, lat1 = self.crs.project(x1, y1, inverse=True)
+            az, _, _ = self.crs.inverse(lon0, lat0, lon1, lat1)
         return az
 
     def walk(self, distance, direction, radians=False):
@@ -238,17 +243,38 @@ class Point(Geometry):
         return Point((x, y), properties=self.properties, data=self.data,
                      crs=self.crs)
 
-    def distance(self, other):
+    def distance(self, other, projected=True):
         """ Returns a distance to another Point. If the coordinate system is
         geographical and a third (z) coordinate exists, it is assumed to have
-        the same units as the real-world horizontal distance (i.e. meters). """
-        if self.crs != other.crs:
-            raise CRSError("Points must share the same coordinate system.")
-        flat_dist = self._distance(self, other)
-        if 2 == self.rank == other.rank:
-            return flat_dist
+        the same units as the real-world horizontal distance (i.e. meters).
+
+        Parameters
+        ----------
+        other : Point
+            point to compute distance to
+        projected : bool
+            If True and self.crs is a ProjectedCRS, return the distance in the
+            projected cooridnate system. If False, return the geodetic distance.
+            if self.crs is a GeographicalCRS, result is always geodetic and this
+            option has no effect.
+
+        Returns
+        -------
+        float
+        """
+        if projected and not isinstance(self.crs, GeographicalCRS):
+            (x0, y0) = self.vertex[:2]
+            (x1, y1) = other.get_vertex(self.crs)[:2]
+            dist = math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
         else:
-            return math.sqrt(flat_dist**2. + (self.z-other.z)**2.)
+            lon0, lat0 = self.crs.project(self.x, self.y, inverse=True)
+            lon1, lat1 = self.crs.project(other.x, other.y, inverse=True)
+            _, _, dist = self.crs.inverse(lon0, lat0, lon1, lat1)
+
+        if 2 == len(self.vertex) == len(other.vertex):
+            return dist
+        else:
+            return math.sqrt(dist**2. + (self.z-other.z)**2.)
 
     def shift(self, shift_vector, inplace=False):
         """ Shift point by the amount given by a vector. """
