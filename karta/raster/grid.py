@@ -887,30 +887,9 @@ class RegularGrid(Grid):
         """
         if resolution is None:
             resolution = min(self.transform[2:4])
-
-        remainder = 0
-        pt0 = line[0]
-        vertices = [pt0.get_vertex(self.crs)]
-
-        for seg in line.segments:
-            pos = 0
-            az = seg[0].azimuth(seg[1])
-
-            while pos < seg.length:
-                distance_to_endpt = pt0.distance(seg[1])
-                if distance_to_endpt >= resolution:
-                    pt1 = pt0.walk(resolution - remainder, az)
-                    pos += resolution - remainder
-                    vertices.append(pt1.get_vertex(self.crs))
-                    remainder = 0
-                    pt0 = pt1
-                else:
-                    remainder = distance_to_endpt
-                    pos = seg.length
-                    pt0 = seg[1]
-
-        z = self.sample(*zip(*vertices), **kw)
-        return vertices, z
+        points = line.to_points(resolution)
+        z = self.sample(*points.coordinates, **kw)
+        return points, z
 
     def as_warpedgrid(self):
         """ Return a copy of grid as a `WarpedGrid`. This is a more general

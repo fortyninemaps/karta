@@ -821,14 +821,50 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
             pta = ptb
         return d
 
-    def subsection(self, n):
-        """ Return *n* equally spaced Point instances along line. """
+    def to_points(self, dx):
+        """ Return equally spaced Point instances along line.
+
+        Parameters
+        ----------
+        dx : float
+            spacing of points
+        """
+        remainder = 0
+        pt0 = self[0]
+        vertices = [pt0.get_vertex()]
+
+        for seg in self.segments:
+            pos = 0
+            az = seg[0].azimuth(seg[1])
+
+            while pos < seg.length:
+                distance_to_endpt = pt0.distance(seg[1])
+                if distance_to_endpt >= dx:
+                    pt1 = pt0.walk(dx - remainder, az)
+                    pos += dx - remainder
+                    vertices.append(pt1.get_vertex())
+                    remainder = 0
+                    pt0 = pt1
+                else:
+                    remainder = distance_to_endpt
+                    pos = seg.length
+                    pt0 = seg[1]
+        return Multipoint(vertices, crs=self.crs)
+
+    def to_npoints(self, n):
+        """ Return *n* equally spaced Point instances along line.
+
+        Parameters
+        ----------
+        n : int
+            number of points to return
+        """
         segments = self.segments
         Ltotal = self.cumulength()[-1]
         step = Ltotal / float(n-1)
         step_remaining = step
 
-        points = [self[0]]
+        vertices = [self[0].get_vertex()]
         x = 0.0
         pos = self[0]
         seg = next(segments)
@@ -842,7 +878,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
                 x += step_remaining
                 seg_remaining -= step_remaining
                 step_remaining = step
-                points.append(pos)
+                vertices.append(pos.get_vertex())
                 seg.vertices[0] = np.array(pos.vertex, dtype=np.float64)
 
             else:
@@ -856,9 +892,9 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
                 #     if abs(Ltotal-x) > 1e-8:       # tolerance for endpoint
                 #         raise e
 
-        if len(points) == n-1:
-            points.append(seg[-1])
-        return points
+        if len(vertices) == n-1:
+            vertices.append(seg[-1].get_vertex())
+        return Multipoint(vertices, crs=self.crs)
 
     def displacement(self):
         """ Returns the distance between the first and last vertex. """

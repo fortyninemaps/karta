@@ -399,8 +399,9 @@ class RegularGridTests(unittest.TestCase):
 
     def test_profile(self):
         path = karta.Line([(15.0, 15.0), (1484.0, 1484.0)], crs=karta.crs.Cartesian)
-        _, z = self.rast.profile(path, resolution=42.426406871192853, method="nearest")
+        pts, z = self.rast.profile(path, resolution=42.426406871192853, method="nearest")
         expected = self.rast[:,:].diagonal()
+        self.assertEqual(len(pts), 49)
         self.assertTrue(np.allclose(z, expected))
         return
 

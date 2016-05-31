@@ -633,10 +633,40 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertAlmostEqual(kp.area, np.pi, places=6)
         return
 
-    def test_subsection_cartesian(self):
+    def test_to_points_cartesian(self):
+        line = Line([(0.0, 0.0), (4.0, 3.0), (1.0, 7.0)])
+        points = line.to_points(1.0)
+        ans = [(0., 0.), (0.8, 0.6), (1.6, 1.2), (2.4, 1.8), (3.2, 2.4),
+               (4., 3.), (3.4, 3.8), (2.8, 4.6), (2.2, 5.4), (1.6, 6.2),
+               (1., 7.)]
+        self.assertEqual(len(points), len(ans))
+        for pt, vert in zip(points, ans):
+            self.assertAlmostEqual(pt.x, vert[0])
+            self.assertAlmostEqual(pt.y, vert[1])
+        return
+
+    def test_to_points_lonlat(self):
+        line = Line([(0.0, 38.0), (-10.5, 33.0), (-6.0, 35.0)], crs=LonLatWGS84)
+        points = line.to_points(100000.0)
+        ans = [(  0.        , 38.        ), ( -1.00809817, 37.58554833),
+               ( -2.01066416, 37.17113146), ( -3.00781084, 36.7567488 ),
+               ( -3.99964867, 36.34239982), ( -4.98628577, 35.92808398),
+               ( -5.96782797, 35.51380078), ( -6.94437893, 35.09954973),
+               ( -7.91604017, 34.68533037), ( -8.88291117, 34.27114226),
+               ( -9.84508939, 33.85698498), (-10.80267038, 33.44285814),
+               (-10.09466286, 33.19083929), ( -9.15505703, 33.62895663),
+               ( -8.21064326, 34.0669835 ), ( -7.26131724, 34.5049191 ),
+               ( -6.30697252, 34.94276264)]
+        self.assertEqual(len(points), len(ans))
+        for pt, vert in zip(points, ans):
+            self.assertAlmostEqual(pt.x, vert[0])
+            self.assertAlmostEqual(pt.y, vert[1])
+        return
+
+    def test_to_npoints_cartesian(self):
         line = Line([(0.0, 0.0), (1.0, 2.0), (3.0, -2.0), (4.0, -1.0),
                      (4.0, 3.0), (3.0, 2.0)])
-        points = line.subsection(20)
+        points = line.to_npoints(20)
         ans = [Point(v) for v in [(0.0, 0.0),
                                   (0.318619234003536, 0.637238468007072),
                                   (0.637238468007072, 1.274476936014144),
@@ -661,9 +691,9 @@ class TestGeometryAnalysis(unittest.TestCase):
             self.assertPointAlmostEqual(a, b)
         return
 
-    def test_subsection_lonlat(self):
+    def test_to_npoints_lonlat(self):
         line = Line([(0, 40), (120, 40)], crs=LonLatWGS84)
-        points = line.subsection(20)
+        points = line.to_npoints(20)
         ans = [Point(v, crs=LonLatWGS84) for v in [(0, 40),
                                   (4.006549675732082, 43.200316625343305),
                                   (8.44359845345209, 46.2434129228378),
@@ -688,7 +718,7 @@ class TestGeometryAnalysis(unittest.TestCase):
             self.assertPointAlmostEqual(a, b)
         return
 
-    def test_subsection_lonlat_precision(self):
+    def test_to_npoints_lonlat_precision(self):
 
         line = Line([(-20.247017, 79.683933), (-20.0993, 79.887917),
             (-19.13705, 80.048567), (-18.680467, 80.089333), (-17.451917,
@@ -697,7 +727,7 @@ class TestGeometryAnalysis(unittest.TestCase):
                 80.021283)], crs=LonLatWGS84)
 
         for n in range(2, 30):
-            self.assertEqual(len(line.subsection(n)), n)
+            self.assertEqual(len(line.to_npoints(n)), n)
         return
 
 class TestMiscellaneous(unittest.TestCase):
