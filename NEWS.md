@@ -6,10 +6,16 @@
     - adds Multiline and Multipolygon classes
     - polygon vertices are double-nested in order to represent sub-polygons
     - only multipart geometries now contain a data attribute
-    - implementation adopts mixin pattern
 - GeoJSON now attempts to project all data to geographical WGS84 coordinates as
   per https://datatracker.ietf.org/doc/draft-ietf-geojson/
     - `force_wgs84=False` can be set to avoid this behaviour
+- multivertex geometries now use CoordString as a data backend, which should
+  permit faster operations on the C side
+- rename `Line.subsection` -> `Line.to_npoints`
+- new R-tree implementation in C
+- `projected` keyword argument added to `Point.distance`, `Point.azimuth`, and
+  `Point.walk` to control whether geodetic or planar algorithms are used with
+  the CRS is not geographical
 
 ## changes with 0.6
 
