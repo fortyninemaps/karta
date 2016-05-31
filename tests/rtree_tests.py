@@ -2,7 +2,7 @@ import unittest
 import numpy as np
 
 import karta
-import karta.vector.rtree as rtree
+import karta.vector.pyrtree as rtree
 
 class TestGeom(object):
     def __init__(self, bbox):

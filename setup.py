@@ -56,7 +56,8 @@ extensions = [Extension("karta.raster.crfuncs", ["karta/raster/crfuncs.pyx"]),
               Extension("karta.vector.coordstring", ["karta/vector/coordstring.pyx"]),
               Extension("karta.vector.vectorgeo", ["karta/vector/vectorgeo.pyx"]),
               Extension("karta.vector.dateline", ["karta/vector/dateline.pyx"]),
-              Extension("karta.vector.intersection", ["karta/vector/intersection.pyx"])]
+              Extension("karta.vector.intersection", ["karta/vector/intersection.pyx"]),
+              Extension("karta.vector.rtree", ["karta/vector/rtree.pyx"])]
 
 setup(
     name = "karta",

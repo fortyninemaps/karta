@@ -75,13 +75,28 @@ Node* rt_new_node(NodeType type, Strategy strategy, int maxchildren, Node* paren
     return node;
 }
 
-Bbox* new_bbox() {
+Bbox* rt_new_bbox() {
     Bbox* bb = malloc(sizeof(Bbox));
     return bb;
 }
 
+void rt_free(Node *node) {
+    if (node->type == LEAF) {
+        for (int i; i!=node->count; i++) {
+            free(((Bbox**) node->children)[i]);
+        }
+        free(node->indices);
+        free(node->bbox);
+        free(node);
+    } else {
+        for (int i; i!=node->count; i++) {
+            rt_free(((Node**) node->children)[i]);
+        }
+    }
+}
+
 void print_bbox(Bbox *bb) {
-    printf("%.3f %.3f %.3f %.3f\n", bb->xmin, bb->xmax, bb->ymin, bb->ymax);
+    printf("%.3f %.3f %.3f %.3f\n", bb->xmin, bb->ymin, bb->xmax, bb->ymax);
 }
 
 // destroy_node frees the memory associated with a single node
@@ -490,16 +505,13 @@ Bbox* union_bbox(Bbox **bboxes, int nbboxes) {
     float xmax = bboxes[0]->xmax;
     float ymin = bboxes[0]->ymin;
     float ymax = bboxes[0]->ymax;
-    int i = 1;
-    while (i != nbboxes) {
+    for (int i=0; i!=nbboxes; i++) {
         xmin = minf(xmin, bboxes[i]->xmin);
         xmax = maxf(xmax, bboxes[i]->xmax);
         ymin = minf(ymin, bboxes[i]->ymin);
         ymax = maxf(ymax, bboxes[i]->ymax);
-        i++;
     }
-
-    Bbox* bb = new_bbox();
+    Bbox* bb = rt_new_bbox();
     bb->xmin = xmin;
     bb->ymin = xmax;
     bb->xmax = ymin;
@@ -519,14 +531,12 @@ int linear_pick_seeds(int nbboxes, Bbox **bboxes, int *seed0, int *seed1) {
     for (int i=1; i!=nbboxes; i++) {
         if (bboxes[i]->xmin > bboxes[imaxxmin]->xmin) {
             imaxxmin = i;
-        }
-        if (bboxes[i]->xmax < bboxes[iminxmax]->xmax) {
+        } else if (bboxes[i]->xmax < bboxes[iminxmax]->xmax) {
             iminxmax = i;
         }
         if (bboxes[i]->ymin > bboxes[imaxymin]->ymin) {
             imaxymin = i;
-        }
-        if (bboxes[i]->ymax < bboxes[iminymax]->ymax) {
+        } else if (bboxes[i]->ymax < bboxes[iminymax]->ymax) {
             iminymax = i;
         }
 

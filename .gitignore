@@ -1,6 +1,5 @@
 *.pyc
 *.so
-*.c
 *.swp
 *.png
 *.lprof
