@@ -58,7 +58,7 @@ char* pool_pop(Pool *pool, int index) {
     return ptr;
 }
 
-int pool_destroy(Pool *pool) {
+void pool_destroy(Pool *pool) {
     free(pool->members);
     free(pool);
 }
