@@ -16,8 +16,9 @@ from .shp import ShapefileOutMixin
 from . import xyfile
 from .table import Table, Indexer
 from .utilities import _reproject, _reproject_nested, _flatten, _as_nested_lists
-from . import quadtree
 from .coordstring import CoordString
+from .rtree import RTree
+from . import quadtree
 from . import vectorgeo as _cvectorgeo
 from . import dateline as _cdateline
 from . import intersection as _cintersection
@@ -1317,9 +1318,11 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         [default Cartesian]
     """
 
-    def __init__(self, vertices, **kwargs):
+    def __init__(self, vertices, build_index=True, **kwargs):
         self.vertices = [CoordString(part) for part in vertices]
         super(Multiline, self).__init__(vertices, **kwargs)
+        if build_index:
+            self.rtree = RTree(self.vertices)
         self._geotype = "Multiline"
         return
 
@@ -1386,12 +1389,14 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         [default Cartesian]
     """
 
-    def __init__(self, vertices, **kwargs):
+    def __init__(self, vertices, build_index=True, **kwargs):
         self.vertices = []
         for part in vertices:
             rings = [CoordString(ring) for ring in part]
             self.vertices.append(rings)
         super(Multipolygon, self).__init__(vertices, **kwargs)
+        if build_index:
+            self.rtree = RTree([v[0] for v in self.vertices])
         self._geotype = "Multipolygon"
         return
 

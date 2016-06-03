@@ -645,7 +645,7 @@ int linear_pick_seeds(int nbboxes, Bbox **bboxes, int *seed0, int *seed1) {
         minymin = minf(minymin, bboxes[i]->ymin);
         maxymax = maxf(maxymax, bboxes[i]->ymax);
     }
-    if ((maxxmax == minxmin) | (maxymax == minymin)) {
+    if ((maxxmax == minxmin) || (maxymax == minymin)) {
         return 1;
     }
     float xrat = (bboxes[imaxxmin]->xmin - bboxes[iminxmax]->xmax) / (maxxmax - minxmin);
@@ -688,8 +688,8 @@ float volume_expanded(Bbox *bbox0, Bbox *bbox1) {
 }
 
 int is_within(Bbox *outerbb, Bbox *testbb) {
-    if ((testbb->xmin > outerbb->xmin) & (testbb->xmax <= outerbb->xmax) &
-        (testbb->ymin > outerbb->ymin) & (testbb->ymax <= outerbb->ymax)) {
+    if ((testbb->xmin > outerbb->xmin) && (testbb->xmax <= outerbb->xmax) &&
+        (testbb->ymin > outerbb->ymin) && (testbb->ymax <= outerbb->ymax)) {
         return 1;
     } else {
         return 0;
