@@ -3,6 +3,12 @@ cimport numpy as np
 from cpython cimport bool
 from cpython.array cimport array, clone
 
+cdef double mind(double a, double b):
+    return a if a<= b else b
+
+cdef double maxd(double a, double b):
+    return a if a>= b else b
+
 cdef array template_dbl = array("d", [])
 
 cdef class CoordString:
@@ -98,6 +104,25 @@ cdef class CoordString:
             i += 1
             pos += step
         return result
+
+    @property
+    def bbox(self):
+        cdef double xmin, ymin, xmax, ymax
+        cdef int i = 0
+        cdef int offset = 0
+
+        xmin = self.coords[0]
+        xmax = self.coords[0]
+        ymin = self.coords[1]
+        ymax = self.coords[1]
+        while i != len(self)-1:
+            offset += self.rank
+            xmin = mind(xmin, self.coords[offset])
+            xmax = maxd(xmax, self.coords[offset])
+            ymin = mind(ymin, self.coords[offset+1])
+            ymax = maxd(ymax, self.coords[offset+1])
+            i += 1
+        return (xmin, ymin, xmax, ymax)
 
     def vectors(self):
         cdef int i = 0, pos = 0, n = len(self)
