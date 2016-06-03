@@ -52,11 +52,16 @@ class Grid(object):
         else:
             return (np.nan, np.nan)
 
-    def apply(self, func):
+    def apply(self, func, copy=False):
         """ Apply a function *func* to grid values """
         msk = self.data_mask
-        self[:,:] = np.where(msk, func(self[:,:]), self._nodata)
-        return self
+        if copy:
+            newgrid = self.copy()
+            newgrid[:,:] = np.where(msk, func(self[:,:]), self._nodata)
+            return newgrid
+        else:
+            self[:,:] = np.where(msk, func(self[:,:]), self._nodata)
+            return self
 
     def copy(self):
         """ Return a copy. """
