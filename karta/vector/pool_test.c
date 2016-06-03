@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <stdio.h>
 #include "pool.h"
 
@@ -9,32 +10,46 @@ int main() {
     printf("count: %d\n", pool->count);
     printf("size:  %d\n", pool->size);
 
-    int err = 0;
-    double d1 = 1.0;
-    err = pool_add(pool, (char*) &d1);
-    printf("\terr: %d\n", err);
-    double d2 = 2.0;
-    err = pool_add(pool, (char*) &d2);
-    printf("\terr: %d\n", err);
-    double d3 = 3.0;
-    err = pool_add(pool, (char*) &d3);
-    printf("\terr: %d\n", err);
+    int i, err;
+    double a[10];
+    for (i=0; i!=10; i++) {
+        a[i] = i*1.0;
+        printf("%f\n", a[i]);
+        err = pool_add(pool, (char*) &a[i]);
+        if (err!=0) {
+            printf("\tALLOCATION ERROR: %d\n", err);
+            exit(1);
+        }
+    }
 
     printf("count: %d\n", pool->count);
     printf("size:  %d\n", pool->size);
 
-
-    double r1, r2;
+    double r1, r2, r3;
+    for (i=0; i!=pool->count; i++) {
+        printf("item %d: %f\n", i, *((double**) pool->members)[i]);
+    }
     r1 = *((double*) pool_pop(pool, 1));
-    r2 = *((double*) pool_pop(pool, 1));
     printf("r1: %f\n", r1);
+    for (i=0; i!=pool->count; i++) {
+        printf("item %d: %f\n", i, *((double**) pool->members)[i]);
+    }
+    r2 = *((double*) pool_pop(pool, 2));
     printf("r2: %f\n", r2);
+    for (i=0; i!=pool->count; i++) {
+        printf("item %d: %f\n", i, *((double**) pool->members)[i]);
+    }
+
+    r3 = *((double*) pool_pop(pool, 1));
+    printf("r3: %f\n", r3);
+    for (i=0; i!=pool->count; i++) {
+        printf("item %d: %f\n", i, *((double**) pool->members)[i]);
+    }
 
     printf("count: %d\n", pool->count);
     printf("size:  %d\n", pool->size);
 
-
-    printf("clearing\n");
+    printf("clearing pool\n");
     pool_destroy(pool);
     return 0;
 }

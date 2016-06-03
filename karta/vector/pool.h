@@ -44,17 +44,28 @@ int pool_add(Pool *pool, char *item) {
     }
 }
 
+// remove item from pool and return reference
 char* pool_pop(Pool *pool, int index) {
     if (index >= pool->count) {
         printf("pool error: pop index beyond pool size\n");
         exit(1);
     }
     char *ptr = pool->members[index];
-    if (index != pool->count) {
+    if (index != pool->count-1) {
         // swap final item into place
         pool->members[index] = pool->members[pool->count-1];
     }
     pool->count -= 1;
+    return ptr;
+}
+
+// get reference without removing from pool
+char* pool_get(Pool *pool, int index) {
+    if (index >= pool->count) {
+        printf("pool error: pop index beyond pool size\n");
+        exit(1);
+    }
+    char *ptr = pool->members[index];
     return ptr;
 }
 

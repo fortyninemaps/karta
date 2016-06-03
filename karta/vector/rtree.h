@@ -50,6 +50,8 @@ int rt_adjust_tree(Node*, Node*, Node**, Node**);
 float volume_expanded(Bbox*, Bbox*);
 int linear_pick_seeds(int, Bbox**, int*, int*);
 int linear_pick_next(int, Bbox**, Node*, Node*, int*, int*);
+int is_within(Bbox*, Bbox*);
+int is_overlapping(Bbox*, Bbox*);
 
 // new_node allocates a new node struct
 Node* rt_new_node(NodeType type, Strategy strategy, int maxchildren, Node* parent) {
@@ -81,15 +83,16 @@ Bbox* rt_new_bbox() {
 }
 
 void rt_free(Node *node) {
+    int i;
     if (node->type == LEAF) {
-        for (int i; i!=node->count; i++) {
+        for (i=0; i!=node->count; i++) {
             free(((Bbox**) node->children)[i]);
         }
         free(node->indices);
         free(node->bbox);
         free(node);
-    } else {
-        for (int i; i!=node->count; i++) {
+    } else if (node->type == NONLEAF) {
+        for (i=0; i!=node->count; i++) {
             rt_free(((Node**) node->children)[i]);
         }
     }
@@ -100,7 +103,7 @@ void print_bbox(Bbox *bb) {
 }
 
 // destroy_node frees the memory associated with a single node
-void destroy_node(Node *node) {
+void rt_free_single(Node *node) {
     free(node->children);
     free(node->indices);
     free(node);
@@ -119,6 +122,85 @@ int add_node(Node *parent, Node *child) {
         ret = 0;
     }
     return ret;
+}
+
+// search for geometries within a bbox
+Pool *rt_search_within(Node *node, Bbox *bbox, int max_results) {
+    Pool *index_pool = pool_new(sizeof(int*), 16);
+    Pool *node_pool = pool_new(sizeof(Node*), 16);
+    pool_add(node_pool, (char*) node);
+    Node *active_node = NULL;
+    Node *child_node = NULL;
+    Bbox *child_bbox = NULL;
+    int nfound = 0;
+    int debug_iter = 0;
+    int j;
+    while (nfound != max_results) {
+        active_node = (Node*) pool_pop(node_pool, node_pool->count-1);
+        if (active_node->type == LEAF) {
+            for (j=0; j!=active_node->count; j++){
+                child_bbox = ((Bbox**) active_node->children)[j];
+                printf("  child %d\n", active_node->indices[j]);
+                printf("  child %p\n", child_bbox);
+                print_bbox(child_bbox);
+                if (is_within(bbox, child_bbox) == 1) {
+                    pool_add(index_pool, (char*) &(active_node->indices[j]));
+                    nfound++;
+                }
+            }
+        } else if (active_node->type == NONLEAF) {
+            for (j=0; j!=active_node->count; j++) {
+                child_node = ((Node**) active_node->children)[j];
+                if (is_overlapping(bbox, child_node->bbox) == 1) {
+                    pool_add(node_pool, (char*) child_node);
+                }
+            }
+        }
+
+        debug_iter++;
+        printf("search iter %d, pool count %d\n", debug_iter, node_pool->count);
+        if (node_pool->count == 0) {
+            break;
+        }
+    }
+    pool_destroy(node_pool);
+    return index_pool;
+}
+
+// search for geometries overlapping a bbox
+Pool *rt_search_overlapping(Node *node, Bbox *bbox, int max_results) {
+    Pool *index_pool = pool_new(sizeof(int*), 16);
+    Pool *node_pool = pool_new(sizeof(Node*), 16);
+    pool_add(node_pool, (char*) node);
+    Node *active_node = NULL;
+    Node *child_node = NULL;
+    Bbox *child_bbox = NULL;
+    int i = 0;
+    int j;
+    while (i != max_results) {
+        active_node = (Node*) pool_pop(node_pool, node_pool->count-1);
+        if (active_node->type == LEAF) {
+            for (j=0; j!=active_node->count; j++){
+                child_bbox = ((Bbox**) active_node->children)[j];
+                if (is_overlapping(bbox, child_bbox) == 1) {
+                    pool_add(index_pool, (char*) &(active_node->indices[j]));
+                }
+            }
+        } else if (active_node->type == NONLEAF) {
+            for (j=0; j!=active_node->count; j++) {
+                child_node = ((Node**) active_node->children)[j];
+                if (is_overlapping(bbox, child_node->bbox) == 1) {
+                    pool_add(node_pool, (char*) child_node);
+                }
+            }
+        }
+
+        if (node_pool->count == 0) {
+            break;
+        }
+    }
+    pool_destroy(node_pool);
+    return index_pool;
 }
 
 // add a bbox to rtree, returning a reference to the root node
@@ -157,12 +239,12 @@ Node* rt_insert(Node *root, Bbox *bbox, int index) {
 
 // chose a leaf node below node in which to place bbox
 Node* rt_choose_leaf(Node *node, Bbox *bbox) {
-    int iminexpanded;
+    int i, iminexpanded;
     float vol, cur_vol;
     while (node->type != LEAF) {
         iminexpanded = 0;
         vol = volume_expanded(((Node**) node->children)[0]->bbox, bbox);
-        for (int i=1; i != node->count; i++) {
+        for (i=1; i!=node->count; i++) {
             cur_vol = volume_expanded(((Node**) node->children)[i]->bbox, bbox);
             if (cur_vol < vol) {
                 iminexpanded = i;
@@ -238,12 +320,13 @@ int rt_tighten_bbox(Node *node) {
     if (node->count == 0) {
         return 1;
     }
+    int i;
     if (node->type == LEAF) {
         node->bbox->xmin = ((Bbox**) node->children)[0]->xmin;
         node->bbox->xmax = ((Bbox**) node->children)[0]->xmax;
         node->bbox->ymin = ((Bbox**) node->children)[0]->ymin;
         node->bbox->ymax = ((Bbox**) node->children)[0]->ymax;
-        for (int i=1; i!=node->count; i++) {
+        for (i=1; i!=node->count; i++) {
             node->bbox->xmin = minf(node->bbox->xmin,
                                     ((Bbox*) node->children[i])->xmin);
             node->bbox->xmax = maxf(node->bbox->xmax,
@@ -258,7 +341,7 @@ int rt_tighten_bbox(Node *node) {
         node->bbox->xmax = ((Node**) node->children)[0]->bbox->xmax;
         node->bbox->ymin = ((Node**) node->children)[0]->bbox->ymin;
         node->bbox->ymax = ((Node**) node->children)[0]->bbox->ymax;
-        for (int i=1; i!=node->count; i++) {
+        for (i=1; i!=node->count; i++) {
             node->bbox->xmin = minf(node->bbox->xmin,
                                     ((Node**) node->children)[i]->bbox->xmin);
             node->bbox->xmax = maxf(node->bbox->xmax,
@@ -293,15 +376,23 @@ Node* rt_split_leaf(Node *node) {
         printf("rtree error: node passed to rt_split_leaf must be leaf\n");
         exit(1);
     }
+    int i;
     // create a new leaf node to take some of node's children
     Node *sibling = rt_new_node(node->type, node->strategy, node->maxchildren, node->parent);
 
+    // copy an array of bbox indices to back the pointer pool
+    int *index_array;
+    index_array = malloc((node->maxchildren+1) * sizeof(int));
+    for (i=0; i!=node->maxchildren+1; i++) {
+        index_array[i] = node->indices[i];
+    }
+
     // construct a pool of the undistributed bounding boxes
-    Pool *pool = pool_new(sizeof(Bbox*), node->maxchildren);
-    Pool *idx_pool = pool_new(sizeof(int*), node->maxchildren);
-    for (int i=0; i!=pool->size; i++) {
+    Pool *pool = pool_new(sizeof(Bbox*), node->maxchildren+1);
+    Pool *idx_pool = pool_new(sizeof(int*), node->maxchildren+1);
+    for (i=0; i!=pool->size; i++) {
         pool_add(pool, node->children[i]);
-        pool_add(idx_pool, (char*) &node->indices[i]);
+        pool_add(idx_pool, (char*) &index_array[i]);
     }
     node->count = 0;    // effectively empties node
 
@@ -342,6 +433,7 @@ Node* rt_split_leaf(Node *node) {
     // choose bounding boxes from pool and place each in best of node, sibling
     int inextchild = -1;
     int ibestnode = -1;
+    int *index;
     Node *target;
     Bbox *bbox = NULL;
     while (pool->count != 0) {
@@ -355,13 +447,18 @@ Node* rt_split_leaf(Node *node) {
         // copy the indicated bounding box from pool to the best node
         if (ibestnode == 0) {
             target = node;
-        } else {
+        } else if (ibestnode == 1) {
             target = sibling;
         }
+
         bbox = (Bbox*) pool_pop(pool, inextchild);
+        index = (int*) pool_pop(idx_pool, inextchild);
         target->children[target->count] = (char*) bbox;
-        target->indices[target->count] = *((int*) pool_pop(idx_pool, inextchild));
+        target->indices[target->count] = *index;
         target->count++;
+
+        // after the index pool is popped, it's contents are correct
+        // somehow at the next iteration, the final value is getting messed up
 
         target->bbox->xmin = minf(target->bbox->xmin, bbox->xmin);
         target->bbox->xmax = maxf(target->bbox->xmax, bbox->xmax);
@@ -384,6 +481,7 @@ Node* rt_split_leaf(Node *node) {
         }
     }
 
+    free(index_array);
     pool_destroy(pool);
     pool_destroy(idx_pool);
     return sibling;
@@ -398,8 +496,8 @@ Node* rt_split_nonleaf(Node *node) {
     Node *sibling = rt_new_node(node->type, node->strategy, node->maxchildren, node->parent);
 
     // construct a pool of the undistributed bounding boxes
-    Pool *pool = pool_new(sizeof(Bbox*), node->maxchildren);
-    Pool *node_pool = pool_new(sizeof(Node*), node->maxchildren);
+    Pool *pool = pool_new(sizeof(Bbox*), node->maxchildren+1);
+    Pool *node_pool = pool_new(sizeof(Node*), node->maxchildren+1);
     int i = 0;
     while (i != pool->size) {
         pool_add(pool, (char*) ((Node**) node->children)[i]->bbox);
@@ -505,7 +603,8 @@ Bbox* union_bbox(Bbox **bboxes, int nbboxes) {
     float xmax = bboxes[0]->xmax;
     float ymin = bboxes[0]->ymin;
     float ymax = bboxes[0]->ymax;
-    for (int i=0; i!=nbboxes; i++) {
+    int i;
+    for (i=0; i!=nbboxes; i++) {
         xmin = minf(xmin, bboxes[i]->xmin);
         xmax = maxf(xmax, bboxes[i]->xmax);
         ymin = minf(ymin, bboxes[i]->ymin);
@@ -528,7 +627,8 @@ int linear_pick_seeds(int nbboxes, Bbox **bboxes, int *seed0, int *seed1) {
     float maxxmax = bboxes[0]->xmax;
     float minymin = bboxes[0]->ymin;
     float maxymax = bboxes[0]->ymax;
-    for (int i=1; i!=nbboxes; i++) {
+    int i;
+    for (i=1; i!=nbboxes; i++) {
         if (bboxes[i]->xmin > bboxes[imaxxmin]->xmin) {
             imaxxmin = i;
         } else if (bboxes[i]->xmax < bboxes[iminxmax]->xmax) {
@@ -587,3 +687,26 @@ float volume_expanded(Bbox *bbox0, Bbox *bbox1) {
     return v_new - v_original;
 }
 
+int is_within(Bbox *outerbb, Bbox *testbb) {
+    if ((testbb->xmin > outerbb->xmin) & (testbb->xmax <= outerbb->xmax) &
+        (testbb->ymin > outerbb->ymin) & (testbb->ymax <= outerbb->ymax)) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
+
+float bbox_intersection_area(Bbox *bb0, Bbox *bb1) {
+    float dx = 0, dy = 0;
+    dx = maxf(minf(bb0->xmax, bb1->xmax) - maxf(bb0->xmin, bb1->xmin), 0.0);
+    dy = maxf(minf(bb0->ymax, bb1->ymax) - maxf(bb0->ymin, bb1->ymin), 0.0);
+    return dx * dy;
+}
+
+int is_overlapping(Bbox *bb, Bbox *testbb) {
+    if (bbox_intersection_area(bb, testbb) > 0.0) {
+        return 1;
+    } else {
+        return 0;
+    }
+}
