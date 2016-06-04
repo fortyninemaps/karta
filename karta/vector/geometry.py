@@ -1374,6 +1374,14 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     def extent(self):
         return self.get_extent()
 
+    def within(self, bbox, max_results=-1):
+        indices = self.rtree.search_within(bbox, max_results=max_results)
+        return type(self)([self[i] for i in indices])
+
+    def touching(self, bbox, max_results=-1):
+        indices = self.rtree.search_within(bbox, max_results=max_results)
+        return type(self)([self[i] for i in indices])
+
 class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     """ Collection of polygons with associated attributes.
 

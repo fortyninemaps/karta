@@ -46,16 +46,17 @@ cdef extern from "rtree.h":
     void pool_destroy(Pool*)
 
 cdef class RTree:
+    cdef int count
     cdef list geometries
     cdef Node* root
 
     def __init__(self, list geometries, maxchildren=50):
-        cdef int i
+        cdef int i = 0
         cdef object geom
         cdef Node* root
 
         root = rt_new_node(LEAF, LINEAR, maxchildren, NULL)
-        for i, geom in enumerate(geometries):
+        for geom in geometries:
             _bb = geom.bbox
             bb = rt_new_bbox()
             bb.xmin = _bb[0]
@@ -63,8 +64,9 @@ cdef class RTree:
             bb.xmax = _bb[2]
             bb.ymax = _bb[3]
             root = rt_insert(root, bb, i)
+            i += 1
 
-        self.geometries = geometries
+        self.count = i
         self.root = root
         return
 
@@ -80,14 +82,16 @@ cdef class RTree:
         """ Return a list of geometries that are within a bounding box. """
         cdef Pool* result
         cdef Bbox* bb = rt_new_bbox()
+        cdef list out = []
+
         bb.xmin = bbox[0]
         bb.ymin = bbox[1]
         bb.xmax = bbox[2]
         bb.ymax = bbox[3]
+
         result = rt_search_within(self.root, bb, max_results)
-        cdef list out = []
         while result.count != 0:
-            out.append(self.geometries[(<int*> pool_pop(result, result.count-1))[0]])
+            out.append((<int*> pool_pop(result, result.count-1))[0])
         pool_destroy(result)
         return out
 
@@ -95,14 +99,16 @@ cdef class RTree:
         """ Return a list of geometries that are within a bounding box. """
         cdef Pool* result
         cdef Bbox* bb = rt_new_bbox()
+        cdef list out = []
+
         bb.xmin = bbox[0]
         bb.ymin = bbox[1]
         bb.xmax = bbox[2]
         bb.ymax = bbox[3]
+
         result = rt_search_overlapping(self.root, bb, max_results)
-        cdef list out = []
         while result.count != 0:
-            out.append(self.geometries[(<int*> pool_pop(result, result.count-1))[0]])
+            out.append((<int*> pool_pop(result, result.count-1))[0])
         pool_destroy(result)
         return out
 
