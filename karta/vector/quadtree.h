@@ -82,6 +82,7 @@ NonleafNode *qt_insert(NodePtrUnion node_union, Position position) {
     LeafNode *leaf;
     Quadrant quad;
     NodeType type = node_union.leafnode->type;
+    int loops = 0;
 
     switch (type) {
         case LEAF: leaf = node_union.leafnode; break;
@@ -94,6 +95,9 @@ NonleafNode *qt_insert(NodePtrUnion node_union, Position position) {
             leaf->count++;
             if (leaf->count >= leaf->max_positions) {
                 retnode = qt_split(leaf);
+                if (loops != 0) {
+                    retnode = NULL;
+                }
             }
             break;
         }
@@ -146,6 +150,7 @@ NonleafNode *qt_insert(NodePtrUnion node_union, Position position) {
             printf("illegal node type\n");
             exit(1);
         }
+        loops++;
     }
     return retnode;
 }
