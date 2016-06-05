@@ -4,7 +4,7 @@ cdef enum Strategy:
     LINEAR, QUADRATIC
 
 cdef enum NodeType:
-    LEAF, NONLEAAF
+    LEAF, NONLEAF
 
 cdef struct BoundingBox:
     float xmin
