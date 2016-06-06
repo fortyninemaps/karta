@@ -51,12 +51,16 @@ cdef class RTree:
     cdef Node* root
 
     def __init__(self, list geometries, maxchildren=50):
+        self.root = NULL
         cdef int i = 0
         cdef object geom
         cdef Node* root
 
         root = rt_new_node(LEAF, LINEAR, maxchildren, NULL)
         for geom in geometries:
+            if not hasattr(geom, "bbox"):
+                raise AttributeError("cannot construct R-tree index from items "
+                                     "missing a `bbox` attribute")
             _bb = geom.bbox
             bb = rt_new_bbox()
             bb.xmin = _bb[0]
@@ -71,7 +75,8 @@ cdef class RTree:
         return
 
     def __dealloc__(self):
-        rt_free(self.root)
+        if self.root != NULL:
+            rt_free(self.root)
 
     @property
     def bbox(self):

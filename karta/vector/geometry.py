@@ -1319,7 +1319,10 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     """
 
     def __init__(self, vertices, build_index=True, **kwargs):
-        self.vertices = [CoordString(part) for part in vertices]
+        if isinstance(vertices[0], Line):
+            self.vertices = [line.vertices for line in vertices]
+        else:
+            self.vertices = [CoordString(part) for part in vertices]
         super(Multiline, self).__init__(vertices, **kwargs)
         if build_index:
             self.rtree = RTree(self.vertices)
@@ -1411,10 +1414,18 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     """
 
     def __init__(self, vertices, build_index=True, **kwargs):
-        self.vertices = []
-        for part in vertices:
-            rings = [CoordString(ring) for ring in part]
-            self.vertices.append(rings)
+        if isinstance(vertices[0], Polygon):
+            self.vertices = []
+            for polygon in vertices:
+                rings = [polygon.vertices]
+                for sub in polygon.subs:
+                    rings.append(sub)
+                self.vertices.append(rings)
+        else:
+            self.vertices = []
+            for part in vertices:
+                rings = [CoordString(ring) for ring in part]
+                self.vertices.append(rings)
         super(Multipolygon, self).__init__(vertices, **kwargs)
         if build_index:
             self.rtree = RTree([v[0] for v in self.vertices])

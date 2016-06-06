@@ -55,6 +55,9 @@ int test_is_within() {
         printf("fail is_within test 2\n");
         return 1;
     }
+    free(bb);
+    free(bb1);
+    free(bb2);
     return 0;
 }
 
@@ -96,6 +99,10 @@ int test_is_overlapping() {
         printf("fail is_overlapping test 3\n");
         return 1;
     }
+    free(bb);
+    free(bb1);
+    free(bb2);
+    free(bb3);
     return 0;
 }
 
@@ -115,6 +122,7 @@ int count_geometries(Node *node) {
             }
         }
     }
+    pool_destroy(pool);
     return count;
 }
 
@@ -141,9 +149,12 @@ int test_tree_construction() {
     }
     if (i != count_geometries(root)) {
         printf("failed geometry count\n");
+        rt_free(root);
         return 1;
+    } else {
+        rt_free(root);
+        return 0;
     }
-    return 0;
 }
 
 int main() {
@@ -204,6 +215,8 @@ int main() {
     Pool *results = rt_search_within(root, bb, -1);
     printf("number of results: %d\n", results->count);
 
+    free(bb);
+    pool_destroy(results);
     rt_free(root);
     printf("memory free'd\n");
     return 0;
