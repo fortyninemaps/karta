@@ -1335,6 +1335,19 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
             return Multiline(self.vertices[key], properties=self.properties,
                              data=self.d[key], crs=self.crs)
 
+    @property
+    def geomdict(self):
+        return {"type" : "MultiLineString",
+                "bbox" : self.bbox,
+                "coordinates" : _as_nested_lists(self.vertices)}
+
+    @property
+    def __geo_interface__(self):
+        p = dict(_karta_proj4=self.crs.get_proj4())
+        return {"type": "Feature",
+                "geometry": self.geomdict,
+                "properties": p}
+
     def get_vertices(self, crs=None):
         """ Return vertices as a list of arrays.
 
@@ -1420,6 +1433,19 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         elif isinstance(key, slice):
             return Multipolygon(self.vertices[key], properties=self.properties,
                                 data=self.d[key], crs=self.crs)
+
+    @property
+    def geomdict(self):
+        return {"type" : "MultiPolygon",
+                "bbox" : self.bbox,
+                "coordinates" : _as_nested_lists(self.vertices)}
+
+    @property
+    def __geo_interface__(self):
+        p = dict(_karta_proj4=self.crs.get_proj4())
+        return {"type": "Feature",
+                "geometry": self.geomdict,
+                "properties": p}
 
     @property
     def vertices_ring(self):

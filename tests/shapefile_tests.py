@@ -7,7 +7,7 @@ import datetime
 from copy import copy
 
 from karta.vector import shp, read_shapefile
-from karta.vector.geometry import (Point, Multipoint, Line, Polygon,
+from karta.vector.geometry import (Point, Line, Polygon, Multipoint, Multiline, Multipolygon,
                                    multipart_from_singleparts)
 from karta.crs import LonLatWGS84
 
@@ -66,55 +66,72 @@ class TestShapefile(unittest.TestCase):
             print("warning: crs equality not established")
         return
 
-    def test_writepoint(self):
+    def test_write_point(self):
         point = self.points[0]
         point.to_shapefile(os.path.join(TESTDIR, "data/point"))
         for fnm in ("point.shx", "point.shx", "point.dbf", "point.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
-    def test_writepoints(self):
+    def test_write_points(self):
         points = self.points
         shp.write_shapefile(os.path.join(TESTDIR, "data/points.shp"), *points)
         for fnm in ("points.shx", "points.shx", "points.dbf", "points.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
-    def test_writemultipoint(self):
-        mp = Multipoint(self.points)
-        mp.to_shapefile(os.path.join(TESTDIR, "data/multipoint"))
-        for fnm in ("multipoint.shx", "multipoint.shx", "multipoint.dbf", "multipoint.prj"):
-            self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
-        return
-
-    def test_writeline(self):
+    def test_write_line(self):
         self.line.to_shapefile(os.path.join(TESTDIR, "data/line"))
         for fnm in ("line.shx", "line.shx", "line.dbf", "line.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
-    def test_writepoly(self):
+    def test_write_poly(self):
         self.polygon.to_shapefile(os.path.join(TESTDIR, "data/polygon"))
         for fnm in ("polygon.shx", "polygon.shx", "polygon.dbf", "polygon.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
-    def test_writepoints3(self):
+    def test_write_points3(self):
         mp = Multipoint(self.points3)
         mp.to_shapefile(os.path.join(TESTDIR, "data/multipointz"))
         for fnm in ("multipointz.shx", "multipointz.shx", "multipointz.dbf", "multipointz.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
-    def test_writeline3(self):
+    def test_write_line3(self):
         self.line3.to_shapefile(os.path.join(TESTDIR, "data/linez"))
         for fnm in ("linez.shx", "linez.shx", "linez.dbf", "linez.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
-    def test_writepoly3(self):
+    def test_write_poly3(self):
         self.polygon3.to_shapefile(os.path.join(TESTDIR, "data/polygonz"))
         for fnm in ("polygonz.shx", "polygonz.shx", "polygonz.dbf", "polygonz.prj"):
+            self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
+        return
+
+    def test_write_multipoint(self):
+        mp = Multipoint(self.points)
+        mp.to_shapefile(os.path.join(TESTDIR, "data/multipoint"))
+        for fnm in ("multipoint.shx", "multipoint.shx", "multipoint.dbf", "multipoint.prj"):
+            self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
+        return
+
+    def test_write_multiline(self):
+        g = Multiline([[(0,0), (1,1), (2,2)], [(1,0), (2,1), (3,2)],
+                       [(2,0), (1,1), (0,2)]], crs=LonLatWGS84)
+        g.to_shapefile(os.path.join(TESTDIR, "data/multiline"))
+        for fnm in ("multiline.shx", "multiline.shx", "multiline.dbf", "multiline.prj"):
+            self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
+        return
+
+    def test_write_multipolygon(self):
+        g = Multipolygon([[[(0,0), (2,2), (1,3)]],
+                          [[(2,0), (4,2), (3,3)]],
+                          [[(2,-2), (1,0), (-1,-1)]]], crs=LonLatWGS84)
+        g.to_shapefile(os.path.join(TESTDIR, "data/multipoly"))
+        for fnm in ("multipoly.shx", "multipoly.shx", "multipoly.dbf", "multipoly.prj"):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
         return
 
@@ -245,42 +262,69 @@ class ShapelibTestSuite(unittest.TestCase):
 
     def test_1(self):
         res = read_shapefile(os.path.join(self.dirname, "test1.shp"))
+        self.assertEqual(type(res[0]), Point)
+        self.assertEqual(len(res), 2)
 
     def test_2(self):
         res = read_shapefile(os.path.join(self.dirname, "test2.shp"))
+        self.assertEqual(type(res[0]), Point)
+        self.assertEqual(len(res), 2)
 
     def test_3(self):
         res = read_shapefile(os.path.join(self.dirname, "test3.shp"))
+        self.assertEqual(type(res[0]), Point)
+        self.assertEqual(len(res), 2)
 
     def test_4(self):
         res = read_shapefile(os.path.join(self.dirname, "test4.shp"))
+        self.assertEqual(type(res[0]), Multipoint)
+        self.assertEqual(len(res), 3)
 
     def test_5(self):
         res = read_shapefile(os.path.join(self.dirname, "test5.shp"))
+        self.assertEqual(type(res[0]), Multipoint)
+        self.assertEqual(len(res), 3)
 
     def test_6(self):
         res = read_shapefile(os.path.join(self.dirname, "test6.shp"))
+        self.assertEqual(type(res[0]), Multipoint)
+        self.assertEqual(len(res), 3)
 
     def test_7(self):
         res = read_shapefile(os.path.join(self.dirname, "test7.shp"))
+        self.assertEqual(type(res[0]), Line)
+        self.assertEqual(type(res[3]), Multiline)
+        self.assertEqual(len(res), 4)
 
     def test_8(self):
         res = read_shapefile(os.path.join(self.dirname, "test8.shp"))
+        self.assertEqual(type(res[0]), Line)
+        self.assertEqual(len(res), 4)
 
     def test_9(self):
         res = read_shapefile(os.path.join(self.dirname, "test9.shp"))
+        self.assertEqual(type(res[0]), Line)
+        self.assertEqual(len(res), 4)
 
     def test_10(self):
         res = read_shapefile(os.path.join(self.dirname, "test10.shp"))
+        self.assertEqual(type(res[0]), Polygon)
+        self.assertEqual(len(res), 4)
 
     def test_11(self):
         res = read_shapefile(os.path.join(self.dirname, "test11.shp"))
+        self.assertEqual(type(res[0]), Polygon)
+        self.assertEqual(len(res), 4)
 
     def test_12(self):
         res = read_shapefile(os.path.join(self.dirname, "test12.shp"))
+        self.assertEqual(type(res[0]), Polygon)
+        self.assertEqual(len(res), 4)
 
     def test_13(self):
         res = read_shapefile(os.path.join(self.dirname, "test13.shp"))
+        self.assertEqual(type(res[0]), Multipolygon)
+        self.assertEqual(len(res), 4)
 
 if __name__ == "__main__":
     unittest.main()

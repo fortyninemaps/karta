@@ -124,7 +124,8 @@ def ogr_read_geometry(geom):
         pts = ogr_get_polygon_points(geom)
     elif wkbtype in ('MultiPoint', 'MultiPoint25D'):
         jsontype = 'MultiPoint'
-        pts = geom.GetPoints()
+        pts = [geom.GetGeometryRef(i).GetPoints()[0]
+               for i in range(geom.GetGeometryCount())]
     elif wkbtype in ('MultiLineString', 'MultiLineString25D'):
         jsontype = 'MultiLineString'
         pts = [geom.GetGeometryRef(i).GetPoints()
@@ -246,25 +247,33 @@ def ogr_write_feature(lyr, gi, id=0):
         attr_name = layer_def.GetFieldDefn(i).GetNameRef()
         feature.SetField(attr_name, gi["properties"][attr_name])
 
-    if gi["geometry"]["type"] == "Polygon":
-        ogr_write_ring_geometry(feature, gi["geometry"])
-    elif gi["geometry"]["type"] == "Point":
+    if gi["geometry"]["type"] == "Point":
         ogr_write_point_geometry(feature, gi["geometry"])
-    else:
+    elif gi["geometry"]["type"] == "LineString":
         ogr_write_string_geometry(feature, gi["geometry"])
+    elif gi["geometry"]["type"] == "Polygon":
+        ogr_write_ring_geometry(feature, gi["geometry"])
+    elif gi["geometry"]["type"] == "MultiPoint":
+        ogr_write_string_geometry(feature, gi["geometry"])
+    elif gi["geometry"]["type"] == "MultiLineString":
+        ogr_write_multilinestring_geometry(feature, gi["geometry"])
+    elif gi["geometry"]["type"] == "MultiPolygon":
+        ogr_write_multiring_geometry(feature, gi["geometry"])
+    else:
+        raise ValueError("geometry type unhandled: {0}".format(gi["geometry"]["type"]))
     lyr.CreateFeature(feature)
+    return
+
+def ogr_write_point_geometry(feature, gi):
+    geom = ogr.Geometry(OGRTYPES[gi["type"]])
+    geom.AddPoint(gi["coordinates"][0], gi["coordinates"][1])
+    feature.SetGeometry(geom)
     return
 
 def ogr_write_string_geometry(feature, gi):
     geom = ogr.Geometry(OGRTYPES[gi["type"]])
     for pt in gi["coordinates"]:
         geom.AddPoint(float(pt[0]), float(pt[1]))
-    feature.SetGeometry(geom)
-    return
-
-def ogr_write_point_geometry(feature, gi):
-    geom = ogr.Geometry(OGRTYPES[gi["type"]])
-    geom.AddPoint(gi["coordinates"][0], gi["coordinates"][1])
     feature.SetGeometry(geom)
     return
 
@@ -275,6 +284,30 @@ def ogr_write_ring_geometry(feature, gi):
         for pt in poly:
             ring.AddPoint(pt[0], pt[1])
         geom.AddGeometry(ring)
+    geom.CloseRings()
+    feature.SetGeometry(geom)
+    return
+
+def ogr_write_multilinestring_geometry(feature, gi):
+    geom = ogr.Geometry(OGRTYPES[gi["type"]])
+    for linestring in gi["coordinates"]:
+        g = ogr.Geometry(OGRTYPES["LineString"])
+        for pt in linestring:
+            g.AddPoint(float(pt[0]), float(pt[1]))
+        geom.AddGeometry(g)
+    feature.SetGeometry(geom)
+    return
+
+def ogr_write_multiring_geometry(feature, gi):
+    geom = ogr.Geometry(OGRTYPES[gi["type"]])
+    for poly in gi["coordinates"]:
+        g = ogr.Geometry(OGRTYPES["Polygon"])
+        for polyring in poly:
+            ring = ogr.Geometry(ogr.wkbLinearRing)
+            for pt in polyring:
+                ring.AddPoint(pt[0], pt[1])
+            g.AddGeometry(ring)
+        geom.AddGeometry(g)
     geom.CloseRings()
     feature.SetGeometry(geom)
     return
