@@ -157,7 +157,7 @@ class TestShapefile(unittest.TestCase):
         return
 
     def test_read_points(self):
-        points = read_shapefile(os.path.join(TESTDATA, "shp_input", "points"))
+        points = read_shapefile(os.path.join(TESTDATA, "shapefile", "points"))
         self.assertEqual(len(points), 4)
         pt = points[0]
         self.assertTrue("+proj=lonlat" in pt.crs.get_proj4())
@@ -171,7 +171,7 @@ class TestShapefile(unittest.TestCase):
         self.assertTrue(np.all(y == np.array((1.0, 1.0, 3.0, 2.0))))
 
     def test_read_line(self):
-        line = read_shapefile(os.path.join(TESTDATA, "shp_input", "line"))[0]
+        line = read_shapefile(os.path.join(TESTDATA, "shapefile", "line"))[0]
         self.assertTrue("+proj=lonlat" in line.crs.get_proj4())
         self.assertTrue("+a=6378137.0" in line.crs.get_proj4())
         self.assertTrue("+f=0.00335281" in line.crs.get_proj4())
@@ -181,7 +181,7 @@ class TestShapefile(unittest.TestCase):
         return
 
     def test_read_polygon(self):
-        polygon = read_shapefile(os.path.join(TESTDATA, "shp_input", "polygon"))[0]
+        polygon = read_shapefile(os.path.join(TESTDATA, "shapefile", "polygon"))[0]
         self.assertTrue("+proj=lonlat" in polygon.crs.get_proj4())
         self.assertTrue("+a=6378137.0" in polygon.crs.get_proj4())
         self.assertTrue("+f=0.00335281" in polygon.crs.get_proj4())
@@ -192,8 +192,7 @@ class TestShapefile(unittest.TestCase):
 
     def test_read_points_newp(self):
         # Read a multipoint with a projected cooridnate system
-        newp = read_shapefile(os.path.join(TESTDATA, "shp_input", 
-                                                     "newp_nsidc_north"))
+        newp = read_shapefile(os.path.join(TESTDATA, "shapefile", "newp_nsidc_north"))
 
         proj4 = ('+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 '
                  '+y_0=0 +a=6378273 +b=6356889.449 +units=m +no_defs')
