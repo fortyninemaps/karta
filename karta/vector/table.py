@@ -2,6 +2,7 @@
 
 from collections import Sequence
 from numbers import Integral
+import json
 
 class Table(Sequence):
     """ Represents a metadata table. """
@@ -154,6 +155,14 @@ class Table(Sequence):
                                           else other._data[i][idxs_other[j]]
                                           for j in range(len(self._fields))]))
 
+    def asjson(self):
+        """ Return a JSON-serialized string. """
+        d = {field:[] for field in self.fields}
+        for i, field in enumerate(self.fields):
+            d[field] = [self.getfield(field)]
+        return json.dumps(d, cls=NumpyAwareJSONEncoder)
+
+
 class Indexer(object):
     """ Provides a pleasanter syntax for querying Table.
 
@@ -182,6 +191,23 @@ class Indexer(object):
             return self.metadata.get(key)
         else:
             raise KeyError("invalid key type: {0}".format(type(key)))
+
+class NumpyAwareJSONEncoder(json.JSONEncoder):
+    """ Numpy-specific numbers prior to 1.9 don't inherit from Python numeric
+    ABCs. This class is a hack to coerce numpy values into Python types for
+    JSON serialization. """
+
+    def default(self, o):
+        if not hasattr(o, "dtype") or (hasattr(o, "__len__") and (len(o) != 1)):
+            return json.JSONEncoder.default(self, o)
+        elif o.dtype in ("int8", "int16", "int32", "int64"):
+            return int(o)
+        elif o.dtype in ("float16", "float32", "float64", "float128"):
+            return float(o)
+        elif o.dtype in ("complex64", "complex128", "complex256"):
+            return complex(o)
+        else:
+            raise TypeError("not a recognized type")
 
 def tuplemut(tpl, val, idx):
     """ Return a tuple with *idx* changed to *val* """

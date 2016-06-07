@@ -1,4 +1,5 @@
 import unittest
+import json
 import numpy as np
 from karta.vector.table import Table
 
@@ -9,6 +10,20 @@ class TestTable(unittest.TestCase):
         self.multifield = Table(data={"a":np.arange(200),
                                          "b":np.arange(200,400), 
                                          "c":np.arange(200)**2})
+        return
+
+    def test_asjson_onefield(self):
+        d = json.loads(self.onefield.asjson())
+        self.assertEqual(len(d), 1)
+        self.assertTrue("value" in d)
+        return
+
+    def test_asjson_multifield(self):
+        d = json.loads(self.multifield.asjson())
+        self.assertEqual(len(d), 3)
+        self.assertTrue("a" in d)
+        self.assertTrue("b" in d)
+        self.assertTrue("c" in d)
         return
 
     def test_indexing(self):

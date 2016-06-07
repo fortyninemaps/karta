@@ -179,14 +179,11 @@ def ogr_read_attributes(lyr):
     return propertylist
 
 def ogr_write(fnm, *objs):
-    """ Write features to shapefile using OGR backend. Features may be karta
-    geometry objects or __geo_interface__ features. """
+    """ Write features to shapefile using OGR backend. Features are
+    __geo_interface__ Feature mappings. """
     if not HAS_OSGEO:
         raise errors.MissingDependencyError("Writing shapefiles requires GDAL "
                                             "bindings")
-
-    objs = [obj.__geo_interface__ if hasattr(obj, "_geotype") else obj
-            for obj in objs]
 
     driver = ogr.GetDriverByName("ESRI Shapefile")
     if driver is None:
@@ -238,8 +235,8 @@ def ogr_write(fnm, *objs):
     return
 
 def ogr_write_feature(lyr, gi, id=0):
-    """ Write the geometry encoded in a __geointerface__ dictionary to a
-    shapefile. """
+    """ Write the geometry encoded in a __geointerface__ dictionary to an OGR
+    Layer. """
     layer_def = lyr.GetLayerDefn()
     feature = ogr.Feature(layer_def)
     feature.SetField("id", id)
@@ -328,6 +325,9 @@ def _isnumpytype(o):
     return hasattr(o, "dtype")
 
 write_shapefile = ogr_write
+
+def write_shapefile(fnm, *geometries):
+    return ogr_write(fnm, *[g.__geo_interface__ for g in geometries])
 
 class ShapefileOutMixin(object):
     """ Mixin class to be added to geometry objects, adding shapefile
