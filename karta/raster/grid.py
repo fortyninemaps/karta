@@ -847,7 +847,7 @@ class RegularGrid(Grid):
             if args[0]._geotype == "Point":
                 x, y = args[0].get_vertex(crs=self.crs)[:2]
             elif args[0]._geotype == "Multipoint":
-                x, y = args[0].get_coordsinates(crs=self.crs)
+                x, y = args[0].get_coordinate_lists(crs=self.crs)
             else:
                 raise argerror
         else:

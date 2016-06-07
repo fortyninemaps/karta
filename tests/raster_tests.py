@@ -114,6 +114,15 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid.sample_nearest(1.6, 1.3), 0.5)
         return
 
+    def test_sample_multipoint(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        mp = karta.Multipoint([(0.6, 0.7), (0.6, 1.3), (1.4, 0.3), (1.6, 1.3)],
+                              crs=grid.crs)
+        self.assertTrue(np.all(np.allclose(grid.sample(mp, method="nearest"),
+                                           np.array([0.0, 1.0, 1.0, 0.5]))))
+        return
+
     def test_sample_nearest_skewed(self):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
                                  values=np.array([[0, 1], [1, 0.5]]))
