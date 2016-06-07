@@ -71,7 +71,7 @@ class Table(Sequence):
         return
 
     def __repr__(self):
-        return "D[" + ", ".join(self._fields) + "]"
+        return "".join("D[", ", ".join(self._fields), "]")
 
     def __eq__(self, other):
         return (self._data == other._data) and (self._fields == other._fields)
@@ -129,7 +129,7 @@ class Table(Sequence):
     def setfield(self, field, values):
         """ Modify or add a field with *values* """
         if len(values) != self.__len__():
-            raise ValueError("mismatch between metadata length and field values")
+            raise ValueError("mismatch between table length and field values")
         if field in self._fields:
             idx = self._fields.index(field)
             self._data = [tuplemut(row, v, idx) for row, v in zip(self._data, values)]
@@ -164,7 +164,7 @@ class Table(Sequence):
 
 
 class Indexer(object):
-    """ Provides a pleasanter syntax for querying Table.
+    """ Provides a pleasanter syntax for querying a Table.
 
     The Indexer object can be used with standard indexing syntax, with integer,
     slice, or string keys.
@@ -178,17 +178,20 @@ class Indexer(object):
     - `Indexer[str]` returns the vector under column `str` as a list. It is
       equivalent to `Table.getfield(str)`.
     """
-    def __init__(self, metadata):
-        if metadata is None:
+    def __init__(self, table):
+        if table is None:
             raise KeyError("cannot index data-less geometry")
         else:
-            self.metadata = metadata
+            self.table = table
+
+    def __repr__(self):
+        return "Indexer({0})".format(repr(self.table))
 
     def __getitem__(self, key):
         if isinstance(key, str):
-            return self.metadata.getfield(key)
+            return self.table.getfield(key)
         elif isinstance(key, (Integral, slice)):
-            return self.metadata.get(key)
+            return self.table.get(key)
         else:
             raise KeyError("invalid key type: {0}".format(type(key)))
 
