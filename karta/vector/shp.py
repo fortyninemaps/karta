@@ -248,69 +248,73 @@ def ogr_write_feature(lyr, gi, id=0):
         feature.SetField(attr_name, gi["properties"][attr_name])
 
     if gi["geometry"]["type"] == "Point":
-        ogr_write_point_geometry(feature, gi["geometry"])
+        geom = ogr_asPoint(gi["geometry"])
     elif gi["geometry"]["type"] == "LineString":
-        ogr_write_string_geometry(feature, gi["geometry"])
+        geom = ogr_asLineString(gi["geometry"])
     elif gi["geometry"]["type"] == "Polygon":
-        ogr_write_ring_geometry(feature, gi["geometry"])
+        geom = ogr_asPolygon(gi["geometry"])
     elif gi["geometry"]["type"] == "MultiPoint":
-        ogr_write_string_geometry(feature, gi["geometry"])
+        geom = ogr_asMultiPoint(gi["geometry"])
     elif gi["geometry"]["type"] == "MultiLineString":
-        ogr_write_multilinestring_geometry(feature, gi["geometry"])
+        geom = ogr_asMultiLineString(gi["geometry"])
     elif gi["geometry"]["type"] == "MultiPolygon":
-        ogr_write_multiring_geometry(feature, gi["geometry"])
+        geom = ogr_asMultiPolygon(gi["geometry"])
     else:
         raise ValueError("geometry type unhandled: {0}".format(gi["geometry"]["type"]))
+    feature.SetGeometry(geom)
     lyr.CreateFeature(feature)
     return
 
-def ogr_write_point_geometry(feature, gi):
-    geom = ogr.Geometry(OGRTYPES[gi["type"]])
+def ogr_asPoint(gi):
+    geom = ogr.Geometry(1)
     geom.AddPoint(gi["coordinates"][0], gi["coordinates"][1])
-    feature.SetGeometry(geom)
-    return
+    return geom
 
-def ogr_write_string_geometry(feature, gi):
-    geom = ogr.Geometry(OGRTYPES[gi["type"]])
+def ogr_asLineString(gi):
+    geom = ogr.Geometry(2)
     for pt in gi["coordinates"]:
         geom.AddPoint(float(pt[0]), float(pt[1]))
-    feature.SetGeometry(geom)
-    return
+    return geom
 
-def ogr_write_ring_geometry(feature, gi):
-    geom = ogr.Geometry(OGRTYPES[gi["type"]])
-    for poly in gi["coordinates"]:
-        ring = ogr.Geometry(ogr.wkbLinearRing)
-        for pt in poly:
-            ring.AddPoint(pt[0], pt[1])
-        geom.AddGeometry(ring)
+def ogr_asPolygon(gi):
+    geom = ogr.Geometry(3)
+    for ring in gi["coordinates"]:
+        ogr_ring = ogr.Geometry(ogr.wkbLinearRing)
+        for pt in ring:
+            ogr_ring.AddPoint(pt[0], pt[1])
+        geom.AddGeometry(ogr_ring)
     geom.CloseRings()
-    feature.SetGeometry(geom)
-    return
+    return geom
 
-def ogr_write_multilinestring_geometry(feature, gi):
-    geom = ogr.Geometry(OGRTYPES[gi["type"]])
+def ogr_asMultiPoint(gi):
+    geom = ogr.Geometry(4)
+    for pt in gi["coordinates"]:
+        g = ogr.Geometry(1)
+        g.AddPoint(float(pt[0]), float(pt[1]))
+        geom.AddGeometry(g)
+    return geom
+
+def ogr_asMultiLineString(gi):
+    geom = ogr.Geometry(5)
     for linestring in gi["coordinates"]:
-        g = ogr.Geometry(OGRTYPES["LineString"])
+        ogr_linstring = ogr.Geometry(2)
         for pt in linestring:
-            g.AddPoint(float(pt[0]), float(pt[1]))
-        geom.AddGeometry(g)
-    feature.SetGeometry(geom)
-    return
+            ogr_linstring.AddPoint(float(pt[0]), float(pt[1]))
+        geom.AddGeometry(ogr_linstring)
+    return geom
 
-def ogr_write_multiring_geometry(feature, gi):
-    geom = ogr.Geometry(OGRTYPES[gi["type"]])
-    for poly in gi["coordinates"]:
-        g = ogr.Geometry(OGRTYPES["Polygon"])
-        for polyring in poly:
-            ring = ogr.Geometry(ogr.wkbLinearRing)
-            for pt in polyring:
-                ring.AddPoint(pt[0], pt[1])
-            g.AddGeometry(ring)
-        geom.AddGeometry(g)
-    geom.CloseRings()
-    feature.SetGeometry(geom)
-    return
+def ogr_asMultiPolygon(gi):
+    geom = ogr.Geometry(5)
+    for polygon in gi["coordinates"]:
+        ogr_polygon = ogr.Geometry(3)
+        for ring in polygon:
+            ogr_ring = ogr.Geometry(ogr.wkbLinearRing)
+            for pt in ring:
+                ogr_ring.AddPoint(pt[0], pt[1])
+            ogr_polygon.AddGeometry(ogr_ring)
+        ogr_polygon.CloseRings()
+        geom.AddGeometry(ogr_polygon)
+    return geom
 
 def _isnumpyint(o):
     return hasattr(o, "dtype") and \
