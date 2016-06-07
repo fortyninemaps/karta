@@ -9,6 +9,18 @@ cdef double mind(double a, double b):
 cdef double maxd(double a, double b):
     return a if a>= b else b
 
+cdef int floord(double a):
+    if (a % 1) == 0:
+        return <int> a
+    else:
+        return <int> (a // 1)
+
+cdef int ceild(double a):
+    if (a % 1) == 0:
+        return <int> a
+    else:
+        return floord(a) + 1
+
 cdef array template_dbl = array("d", [])
 
 cdef class CoordString:
@@ -92,7 +104,7 @@ cdef class CoordString:
 
         cdef int outlength
         if step != 0:
-            outlength = (abs(stop) - abs(start)) / abs(step)
+            outlength = ceild(<double> (abs(stop) - abs(start)) / abs(step))
         else:
             raise ValueError("step cannot equal zero")
 

@@ -1109,7 +1109,7 @@ class Multipart(Geometry):
     def __init__(self, vertices, data=None, **kwargs):
         super(Multipart, self).__init__(**kwargs)
 
-        if data is None:
+        if (data is None) or (len(data) == 0):
             self.data = Table(size=len(self.vertices))
         else:
             self.data = Table(data)

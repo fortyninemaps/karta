@@ -127,6 +127,11 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(self.mp[5:], submp)
         return
 
+    def test_multipoint_slicing3(self):
+        mp = Multipoint(np.arange(214).reshape([107, 2]))
+        self.assertEqual(len(mp[::10]), 11)
+        return
+
     def test_multipoint_negative_index(self):
         self.assertEqual(self.mp[len(self.mp)-1], self.mp[-1])
         return
