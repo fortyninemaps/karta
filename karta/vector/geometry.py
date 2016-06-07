@@ -298,7 +298,7 @@ class MultiVertexBase(Geometry):
             verts = self.vertices.slice(start, stop, stride)
             return type(self)(verts, properties=self.properties, crs=self.crs)
         else:
-            raise GGeoError('Index must be an integer or a slice object')
+            raise KeyError('index must be integer or slice object')
 
     def __setitem__(self, key, value):
         if not isinstance(key, int):
@@ -309,7 +309,7 @@ class MultiVertexBase(Geometry):
         elif len(value) == self.vertices.shape[1]:
             self.vertices[key] = value
         else:
-            raise ValueError("Cannot insert non-Point-like value: "
+            raise ValueError("cannot insert non-Point-like value: "
                              "{0}".format(repr(value)))
         return
 
@@ -475,7 +475,8 @@ class MultiVertexMixin(object):
         if len(idxs) == 0:
             raise ValueError("attempted to extract a zero-length subset")
         vertices = [self.vertices[i] for i in idxs]
-        return type(self)(vertices, properties=self.properties, crs=self.crs)
+        data = Table(data=[self.data._data[i] for i in idxs], fields=self.data.fields)
+        return type(self)(vertices, properties=self.properties, data=data, crs=self.crs)
 
     def flat_distances_to(self, pt):
         """ Return the "flat Earth" distance from each vertex to a point. """
@@ -1192,6 +1193,8 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
             return Multipoint(self.vertices.slice(start, stop, stride),
                               properties=self.properties,
                               data=self.d[key], crs=self.crs)
+        else:
+            raise KeyError(type(key))
 
     def __setitem__(self, key, value):
         if isinstance(key, numbers.Integral):
@@ -1337,6 +1340,8 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         elif isinstance(key, slice):
             return Multiline(self.vertices[key], properties=self.properties,
                              data=self.d[key], crs=self.crs)
+        else:
+            raise KeyError(type(key))
 
     @property
     def geomdict(self):
@@ -1444,6 +1449,8 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         elif isinstance(key, slice):
             return Multipolygon(self.vertices[key], properties=self.properties,
                                 data=self.d[key], crs=self.crs)
+        else:
+            raise KeyError(type(key))
 
     @property
     def geomdict(self):
