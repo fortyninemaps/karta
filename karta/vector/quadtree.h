@@ -14,6 +14,7 @@ typedef struct BoundingBox {
 } Bbox;
 
 typedef struct PositionStruct {
+    int id;
     double x;
     double y;
 } Position;
@@ -46,9 +47,12 @@ typedef struct QuadTreeNonleafNode {
 void qt_free_node(NodePtrUnion);
 NonleafNode *qt_split(LeafNode*);
 Quadrant get_quadrant(Bbox*, Position*);
+int iswithin(Bbox*, Position*);
+int overlaps(Bbox*, Bbox*);
 
-Position* qt_new_position(double x, double y) {
+Position* qt_new_position(int id, double x, double y) {
     Position *p = (Position*) malloc(sizeof(Position));
+    p->id = id;
     p->x = x;
     p->y = y;
     return p;
@@ -259,12 +263,55 @@ NonleafNode *qt_split(LeafNode *node) {
 }
 
 Pool *qt_search_within(NodePtrUnion node_union, Bbox *bbox) {
-    Pool *pool = pool_new(sizeof(int), 16);
-    return pool;
+    Pool *results = pool_new(sizeof(int*), 64);
+    Pool *quadrants = pool_new(sizeof(NodePtrUnion*), 16);
+    NodePtrUnion active_node;
+    NonleafNode *nonleaf;
+    NodeType type;
+    int i;
+
+    pool_add(quadrants, (char*) &node_union);
+    while (quadrants->count != 0) {
+
+        active_node = *((NodePtrUnion*) pool_pop(quadrants, quadrants->count-1));
+        type = active_node.leafnode->type;
+
+        switch (type) {
+            case LEAF:
+                for (i=0; i!=active_node.leafnode->count; i++) {
+                    if (iswithin(bbox, &(active_node.leafnode->positions[i])) == 1) {
+                        pool_add(results, (char*) &(active_node.leafnode->positions[i]).id);
+                    }
+                }
+                break;
+            case NONLEAF:
+                nonleaf = active_node.nonleafnode;
+                if (overlaps(bbox, nonleaf->ulnode.leafnode->bbox)) {
+                    pool_add(quadrants, (char*) &(nonleaf->ulnode));
+                }
+                if (overlaps(bbox, nonleaf->urnode.leafnode->bbox)) {
+                    pool_add(quadrants, (char*) &(nonleaf->urnode));
+                }
+                if (overlaps(bbox, nonleaf->llnode.leafnode->bbox)) {
+                    pool_add(quadrants, (char*) &(nonleaf->llnode));
+                }
+                if (overlaps(bbox, nonleaf->lrnode.leafnode->bbox)) {
+                    pool_add(quadrants, (char*) &(nonleaf->lrnode));
+                }
+                break;
+        }
+    }
+
+    pool_destroy(quadrants);
+    return results;
 }
 
 void qt_free_position(Position *pos) {
     free(pos);
+}
+
+void qt_free_bbox(Bbox *bbox) {
+    free(bbox);
 }
 
 void qt_free_node(NodePtrUnion node_union) {
@@ -304,6 +351,34 @@ Quadrant get_quadrant(Bbox *bbox, Position *position) {
         } else {
             return UPPERRIGHT;
         }
+    }
+}
+
+double mind(double a, double b) {
+    return (a >= b) ? b : a;
+}
+
+double maxd(double a, double b) {
+    return (a >= b) ? a : b;
+}
+
+int iswithin(Bbox *bbox, Position *position) {
+    if ((position->x > bbox->xmin) && (position->x < bbox->xmax) &&
+        (position->y > bbox->ymin) && (position->y < bbox->ymax)) {
+        return 1;
+    }
+    else {
+        return 0;
+    }
+}
+
+int overlaps(Bbox *bbox1, Bbox *bbox2) {
+    if ((mind(bbox1->xmax, bbox2->xmax) >= maxd(bbox1->xmin, bbox2->xmin)) &&
+        (mind(bbox1->ymax, bbox2->ymax) >= maxd(bbox1->ymin, bbox2->ymin))) {
+        return 1;
+    }
+    else {
+        return 0;
     }
 }
 

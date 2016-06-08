@@ -13,26 +13,16 @@ cdef extern from "rtree.h":
         float ymin
         float xmax
         float ymax
-
     ctypedef BoundingBox Bbox
 
     cdef struct RTreeNode:
-        NodeType type
-        Strategy strategy
         int count
-        int maxchildren
-        RTreeNode* parent
-        char** children
-        int* indices
         Bbox* bbox
-
     ctypedef RTreeNode Node
 
     cdef struct PointerPool:
         int size
-        char **members
         int count
-
     ctypedef PointerPool Pool
 
     Node* rt_new_node(NodeType, Strategy, int, Node*)

@@ -275,6 +275,7 @@ class MultiVertexBase(Geometry):
     def __eq__(self, other):
         try:
             return (self._geotype == other._geotype) and \
+                   (len(self.vertices) == len(other.vertices)) and \
                    np.all(np.equal(self.vertices, other.vertices)) and \
                    (self.properties == other.properties) and \
                    (self.crs == other.crs)
@@ -1124,6 +1125,7 @@ class Multipart(Geometry):
     def __eq__(self, other):
         try:
             return (self._geotype == other._geotype) and \
+                   (len(self.vertices) == len(other.vertices)) and \
                    np.all(np.equal(self.vertices, other.vertices)) and \
                    (self.data == other.data) and \
                    (self.properties == other.properties) and \
@@ -1228,7 +1230,8 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
                 "properties": p}
 
     def within_radius(self, point, radius):
-        """ Return subset of Multipoint within a radius.
+        """ Return subset of Multipoint within a radius. Items on the border
+        are excluded.
 
         Parameters
         ----------
@@ -1242,49 +1245,49 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
         Multipoint
         """
         if self.quadtree is None:
-            distances = self.distances_to(point)
-            indices = [i for i,d in enumerate(distances) if d <= radius]
+            confirmed_indices = [i for i,d in enumerate(self.distances_to(point))
+                                   if d < radius]
         else:
             search_bbox = (point.x-radius, point.y-radius,
                            point.x+radius, point.y+radius)
-            possible_point_tuples = self.quadtree.getfrombbox(search_bbox)
-            possible_points = []
-            for t in possible_point_tuples:
-                possible_points.append(Point((t[0], t[1]),
-                                             properties={"idx": t[2]},
-                                             crs=self.crs))
-            indices = [p.properties["idx"] for p in possible_points
-                       if point.distance(p) <= radius]
-
-        return self._subset(indices)
+            candidate_indices = self.quadtree.search_within(point.x-radius,
+                                                            point.y-radius,
+                                                            point.x+radius,
+                                                            point.y+radius)
+            confirmed_indices = []
+            for i in candidate_indices:
+                if point.distance(self[i]) < radius:
+                    confirmed_indices.append(i)
+        confirmed_indices.sort()
+        return self._subset(confirmed_indices)
 
     def within_bbox(self, bbox):
         """ Return Multipoint subset that is within a square bounding box
         given by (xmin, xymin, xmax, ymax).
         """
-        filtbbox = lambda point: (bbox[0] <= point.vertex[0] <= bbox[2]) and \
-                              (bbox[1] <= point.vertex[1] <= bbox[3])
-        indices = [i for (i, point) in enumerate(self) if filtbbox(point)]
+        if self.quadtree is None:
+            indices = [i for (i, pt) in enumerate(self)
+                         if (bbox[0] < pt.x < bbox[2]) and (bbox[1] < pt.y < bbox[3])]
+        else:
+            indices = self.quadtree.search_within(*bbox)
+            indices.sort()
         return self._subset(indices)
 
     def within_polygon(self, poly):
         """ Return Multipoint subset that is within a polygon.
         """
         if self.quadtree is None:
-            indices = [i for (i, point) in enumerate(self)
-                       if poly.contains(point)]
+            confirmed_indices = [i for (i, point) in enumerate(self)
+                                   if poly.contains(point)]
         else:
-            ext = poly.get_extent(crs=self.crs)
-            search_bbox = (ext[0], ext[2], ext[1], ext[3])
-            possible_point_tuples = self.quadtree.getfrombbox(search_bbox)
-            possible_points = []
-            for t in possible_point_tuples:
-                possible_points.append(Point((t[0], t[1]),
-                                             properties={"idx": t[2]},
-                                             crs=self.crs))
-            indices = [p.properties["idx"] for p in possible_points
-                       if poly.contains(p)]
-        return self._subset(indices)
+            bbox = poly.get_bbox(crs=self.crs)
+            candidate_indices = self.quadtree.search_within(*bbox)
+            confirmed_indices = []
+            for i in candidate_indices:
+                if poly.contains(self[i]):
+                    confirmed_indices.append(i)
+        confirmed_indices.sort()
+        return self._subset(confirmed_indices)
 
 class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     """ Collection of lines with associated attributes.

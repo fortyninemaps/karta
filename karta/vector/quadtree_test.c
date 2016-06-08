@@ -16,6 +16,7 @@ int main() {
     Position p;
     for (i=0; i!=1000000; i++) {
         Position *p = (Position*) malloc(sizeof(Position));
+        p->id = i;
         p->x = rand()/(double) RAND_MAX;
         p->y = rand()/(double) RAND_MAX;
 

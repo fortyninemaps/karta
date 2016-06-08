@@ -20,6 +20,7 @@ cdef extern from "quadtree.h":
     ctypedef BoundingBox Bbox
 
     struct PositionStruct:
+        int id
         double x
         double y
     ctypedef PositionStruct Position
@@ -37,15 +38,23 @@ cdef extern from "quadtree.h":
         QuadTreeNonleafNode *nonleafnode
     ctypedef NodePtrUnionTag NodePtrUnion
 
-    Position *qt_new_position(double, double)
+    cdef struct PointerPool:
+        int size
+        int count
+    ctypedef PointerPool Pool
+
+    Position *qt_new_position(int, double, double)
     void qt_free_position(Position*)
 
     Bbox *qt_new_bbox(double, double, double, double)
+    void qt_free_bbox(Bbox*)
 
     LeafNode *qt_new_leaf(int, Bbox*)
     NonleafNode *qt_new_nonleaf(Bbox*)
     NonleafNode *qt_insert(NodePtrUnion, Position)
     void qt_free_node(NodePtrUnion)
+    Pool *qt_search_within(NodePtrUnion, Bbox*)
+    char *pool_pop(Pool*, int)
 
 cdef class QuadTree:
     cdef int count
@@ -65,7 +74,7 @@ cdef class QuadTree:
 
         while i != len(points):
             x, y = points[i][:2]
-            pos = qt_new_position(x, y)
+            pos = qt_new_position(i, x, y)
             retnode = qt_insert(self.root, pos[0])
             if (retnode != NULL):
                 self.root.nonleafnode = retnode
@@ -93,5 +102,14 @@ cdef class QuadTree:
         return (xmin, ymin, xmax, ymax)
 
     def search_within(self, double xmin, double ymin, double xmax, double ymax):
-        raise NotImplementedError()
+        cdef Bbox *bbox = qt_new_bbox(xmin, ymin, xmax, ymax)
+        cdef Pool *results = qt_search_within(self.root, bbox)
+        cdef int *idx
+        cdef list out = []
+
+        while results.count != 0:
+            idx = <int*> pool_pop(results, results.count-1)
+            out.append(idx[0])
+        qt_free_bbox(bbox)
+        return out
 
