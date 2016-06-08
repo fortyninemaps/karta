@@ -27,7 +27,7 @@ class Table(Sequence):
         if data is None:
             if size is None:
                 raise ValueError("either `data` or `size` must be specified")
-            self._fields = []
+            self._fields = ()
             self._data = [() for _ in range(size)]
         elif fields is None:
             if hasattr(data, "_fields"):
@@ -71,7 +71,7 @@ class Table(Sequence):
         return
 
     def __repr__(self):
-        return "".join("D[", ", ".join(self._fields), "]")
+        return "".join(["D[", ", ".join(self._fields), "]"])
 
     def __eq__(self, other):
         return (self._data == other._data) and (self._fields == other._fields)

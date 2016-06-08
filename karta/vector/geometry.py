@@ -471,12 +471,15 @@ class MultiVertexMixin(object):
         return type(self)(vertices, properties=self.properties, crs=self.crs)
 
     def _subset(self, idxs):
-        """ Return a subset defined by indice. """
+        """ Return a subset defined by indices. """
         if len(idxs) == 0:
             raise ValueError("attempted to extract a zero-length subset")
         vertices = [self.vertices[i] for i in idxs]
-        data = Table(data=[self.data._data[i] for i in idxs], fields=self.data.fields)
-        return type(self)(vertices, properties=self.properties, data=data, crs=self.crs)
+        if hasattr(self, "data"):
+            data = Table(data=[self.data._data[i] for i in idxs], fields=self.data.fields)
+            return type(self)(vertices, properties=self.properties, data=data, crs=self.crs)
+        else:
+            return type(self)(vertices, properties=self.properties, crs=self.crs)
 
     def flat_distances_to(self, pt):
         """ Return the "flat Earth" distance from each vertex to a point. """
