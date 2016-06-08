@@ -359,7 +359,7 @@ int rt_tighten_bbox(Node *node) {
 // split an Rtree node, returning the new node. The original node and the new
 // node combined contain the contents originally in node
 Node* rt_split(Node *node) {
-    Node *sibling;
+    Node *sibling = NULL;
     if (node->type == LEAF) {
         sibling = rt_split_leaf(node);
     } else if (node->type == NONLEAF) {
@@ -434,7 +434,7 @@ Node* rt_split_leaf(Node *node) {
     int inextchild = -1;
     int ibestnode = -1;
     int *index;
-    Node *target;
+    Node *target = NULL;
     Bbox *bbox = NULL;
     while (pool->count != 0) {
         err = linear_pick_next(pool->count, (Bbox**) pool->members, node, sibling,

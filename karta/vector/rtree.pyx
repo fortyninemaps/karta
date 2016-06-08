@@ -1,39 +1,40 @@
 """ Cython wrapper for rtree """
 
-cdef enum Strategy:
-    LINEAR, QUADRATIC
-
-cdef enum NodeType:
-    LEAF, NONLEAF
-
-cdef struct BoundingBox:
-    float xmin
-    float ymin
-    float xmax
-    float ymax
-
-ctypedef BoundingBox Bbox
-
-cdef struct RTreeNode:
-    NodeType type
-    Strategy strategy
-    int count
-    int maxchildren
-    RTreeNode* parent
-    char** children
-    int* indices
-    Bbox* bbox
-
-ctypedef RTreeNode Node
-
-cdef struct PointerPool:
-    int size
-    char **members
-    int count
-
-ctypedef PointerPool Pool
-
 cdef extern from "rtree.h":
+
+    cdef enum Strategy:
+        LINEAR, QUADRATIC
+
+    cdef enum NodeType:
+        LEAF, NONLEAF
+
+    cdef struct BoundingBox:
+        float xmin
+        float ymin
+        float xmax
+        float ymax
+
+    ctypedef BoundingBox Bbox
+
+    cdef struct RTreeNode:
+        NodeType type
+        Strategy strategy
+        int count
+        int maxchildren
+        RTreeNode* parent
+        char** children
+        int* indices
+        Bbox* bbox
+
+    ctypedef RTreeNode Node
+
+    cdef struct PointerPool:
+        int size
+        char **members
+        int count
+
+    ctypedef PointerPool Pool
+
     Node* rt_new_node(NodeType, Strategy, int, Node*)
     Node* rt_insert(Node*, Bbox*, int)
     Bbox* rt_new_bbox()
@@ -47,7 +48,6 @@ cdef extern from "rtree.h":
 
 cdef class RTree:
     cdef int count
-    cdef list geometries
     cdef Node* root
 
     def __init__(self, list geometries, maxchildren=50):
