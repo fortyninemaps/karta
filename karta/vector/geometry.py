@@ -18,7 +18,7 @@ from .table import Table, Indexer
 from .utilities import _reproject, _reproject_nested, _flatten, _as_nested_lists
 from .coordstring import CoordString
 from .rtree import RTree
-from . import quadtree
+from .quadtree import QuadTree
 from . import vectorgeo as _cvectorgeo
 from . import dateline as _cdateline
 from . import intersection as _cintersection
@@ -251,7 +251,7 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
 
 class MultiVertexBase(Geometry):
 
-    #__slots__ = ["vertices", "data", "quadtree"]
+    #__slots__ = ["vertices", "data"]
 
     def __init__(self, vertices, **kwargs):
         super(MultiVertexBase, self).__init__(**kwargs)
@@ -426,7 +426,6 @@ class MultiVertexMixin(object):
 
         if inplace:
             self.vertices = CoordString(self.vertices.asarray() + shift_vector)
-            self.quadtree = None
             self._cache = {}
             return self
         else:
@@ -458,7 +457,6 @@ class MultiVertexMixin(object):
 
         # Shift back
         self.shift(origin)
-        self.quadtree = None
         self._cache = {}
         return self
 
@@ -1168,7 +1166,7 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
 
     #__slots__ = []
 
-    def __init__(self, vertices, **kwargs):
+    def __init__(self, vertices, build_index=True, **kwargs):
         if hasattr(vertices, "__next__"):
             vertices = list(vertices)
 
@@ -1182,7 +1180,8 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
                 self.crs = vertices[0].crs
 
         super(Multipoint, self).__init__(vertices, **kwargs)
-        self.quadtree = None
+        if build_index:
+            self.quadtree = QuadTree(self.vertices)
         self._geotype = "Multipoint"
         return
 
@@ -1286,28 +1285,6 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
             indices = [p.properties["idx"] for p in possible_points
                        if poly.contains(p)]
         return self._subset(indices)
-
-    def build_quadtree(self, buff=1e-8):
-        """ Construct an internal quadtree with the current geometry data.
-
-        Parameters
-        ----------
-        buff : float or 4-tuple of floats, optional
-            specifies a spatial buffer to create around the current point
-            bounding box, permitting the geometry to grow after the quadtree
-            has been initialized. *buff* may be a scalar or a sequence of
-            (left, right, bottom, top). (default 1e-8)
-        """
-        try:
-            bf = (buff[0], buff[1], buff[2], buff[3])
-        except TypeError:
-            bf = (buff, buff, buff, buff)
-
-        x0, y0, x1, y1 = self.bbox
-        self.quadtree = quadtree.QuadTree((x0-bf[0], y0-bf[1], x1+bf[2], y1+bf[3]))
-        for i, pt in enumerate(self):
-            self.quadtree.addpt((pt.x, pt.y, i))
-        return
 
 class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     """ Collection of lines with associated attributes.

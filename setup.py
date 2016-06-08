@@ -57,6 +57,8 @@ extensions = [Extension("karta.raster.crfuncs", ["karta/raster/crfuncs.pyx"]),
               Extension("karta.vector.vectorgeo", ["karta/vector/vectorgeo.pyx"]),
               Extension("karta.vector.dateline", ["karta/vector/dateline.pyx"]),
               Extension("karta.vector.intersection", ["karta/vector/intersection.pyx"]),
+              Extension("karta.vector.quadtree", ["karta/vector/quadtree.pyx"],
+                        extra_compile_args=["-std=c99"]),
               Extension("karta.vector.rtree", ["karta/vector/rtree.pyx"],
                         extra_compile_args=["-std=c99"])]
 

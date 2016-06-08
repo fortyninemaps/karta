@@ -47,6 +47,13 @@ void qt_free_node(NodePtrUnion);
 NonleafNode *qt_split(LeafNode*);
 Quadrant get_quadrant(Bbox*, Position*);
 
+Position* qt_new_position(double x, double y) {
+    Position *p = (Position*) malloc(sizeof(Position));
+    p->x = x;
+    p->y = y;
+    return p;
+}
+
 LeafNode* qt_new_leaf(int max_positions, Bbox *bbox) {
     LeafNode *node = malloc(sizeof(LeafNode));
     node->type = LEAF;
@@ -78,8 +85,8 @@ Bbox* qt_new_bbox(double xmin, double ymin, double xmax, double ymax) {
 // insert a position into a node. returns NULL or a pointer to a new root node
 NonleafNode *qt_insert(NodePtrUnion node_union, Position position) {
     NonleafNode *retnode = NULL;
-    NonleafNode *nonleaf;
-    LeafNode *leaf;
+    NonleafNode *nonleaf = NULL;
+    LeafNode *leaf = NULL;
     Quadrant quad;
     NodeType type = node_union.leafnode->type;
     int loops = 0;
@@ -252,7 +259,12 @@ NonleafNode *qt_split(LeafNode *node) {
 }
 
 Pool *qt_search_within(NodePtrUnion node_union, Bbox *bbox) {
+    Pool *pool = pool_new(sizeof(int), 16);
+    return pool;
+}
 
+void qt_free_position(Position *pos) {
+    free(pos);
 }
 
 void qt_free_node(NodePtrUnion node_union) {
