@@ -123,6 +123,9 @@ cdef class CoordString:
         cdef int i = 0
         cdef int offset = 0
 
+        if len(self) == 0:
+            return (np.nan, np.nan, np.nan, np.nan)
+
         xmin = self.coords[0]
         xmax = self.coords[0]
         ymin = self.coords[1]

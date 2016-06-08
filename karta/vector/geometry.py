@@ -1244,10 +1244,7 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
         -------
         Multipoint
         """
-        if self.quadtree is None:
-            confirmed_indices = [i for i,d in enumerate(self.distances_to(point))
-                                   if d < radius]
-        else:
+        if hasattr(self, "quadtree"):
             search_bbox = (point.x-radius, point.y-radius,
                            point.x+radius, point.y+radius)
             candidate_indices = self.quadtree.search_within(point.x-radius,
@@ -1258,35 +1255,38 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
             for i in candidate_indices:
                 if point.distance(self[i]) < radius:
                     confirmed_indices.append(i)
-        confirmed_indices.sort()
+            confirmed_indices.sort()
+        else:
+            confirmed_indices = [i for i,d in enumerate(self.distances_to(point))
+                                   if d < radius]
         return self._subset(confirmed_indices)
 
     def within_bbox(self, bbox):
         """ Return Multipoint subset that is within a square bounding box
         given by (xmin, xymin, xmax, ymax).
         """
-        if self.quadtree is None:
-            indices = [i for (i, pt) in enumerate(self)
-                         if (bbox[0] < pt.x < bbox[2]) and (bbox[1] < pt.y < bbox[3])]
-        else:
+        if hasattr(self, "quadtree"):
             indices = self.quadtree.search_within(*bbox)
             indices.sort()
+        else:
+            indices = [i for (i, pt) in enumerate(self)
+                         if (bbox[0] < pt.x < bbox[2]) and (bbox[1] < pt.y < bbox[3])]
         return self._subset(indices)
 
     def within_polygon(self, poly):
         """ Return Multipoint subset that is within a polygon.
         """
-        if self.quadtree is None:
-            confirmed_indices = [i for (i, point) in enumerate(self)
-                                   if poly.contains(point)]
-        else:
+        if hasattr(self, "quadtree"):
             bbox = poly.get_bbox(crs=self.crs)
             candidate_indices = self.quadtree.search_within(*bbox)
             confirmed_indices = []
             for i in candidate_indices:
                 if poly.contains(self[i]):
                     confirmed_indices.append(i)
-        confirmed_indices.sort()
+            confirmed_indices.sort()
+        else:
+            confirmed_indices = [i for (i, point) in enumerate(self)
+                                   if poly.contains(point)]
         return self._subset(confirmed_indices)
 
 class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
