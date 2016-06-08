@@ -133,16 +133,12 @@ Pool *rt_search_within(Node *node, Bbox *bbox, int max_results) {
     Node *child_node = NULL;
     Bbox *child_bbox = NULL;
     int nfound = 0;
-    int debug_iter = 0;
     int j;
     while (nfound != max_results) {
         active_node = (Node*) pool_pop(node_pool, node_pool->count-1);
         if (active_node->type == LEAF) {
             for (j=0; j!=active_node->count; j++){
                 child_bbox = ((Bbox**) active_node->children)[j];
-                printf("  child %d\n", active_node->indices[j]);
-                printf("  child %p\n", child_bbox);
-                print_bbox(child_bbox);
                 if (is_within(bbox, child_bbox) == 1) {
                     pool_add(index_pool, (char*) &(active_node->indices[j]));
                     nfound++;
@@ -157,8 +153,6 @@ Pool *rt_search_within(Node *node, Bbox *bbox, int max_results) {
             }
         }
 
-        debug_iter++;
-        printf("search iter %d, pool count %d\n", debug_iter, node_pool->count);
         if (node_pool->count == 0) {
             break;
         }

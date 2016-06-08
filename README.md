@@ -125,7 +125,7 @@ Then, clone the repository and install:
 - gdal
 - pyproj
 - blosc
-- C-compiler
+- C99-compliant compiler
 
 ## LICENSE
 
