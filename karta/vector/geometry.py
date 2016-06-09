@@ -379,8 +379,11 @@ class MultiVertexMixin(object):
         tuple
             (xmin, ymin, xmax, ymax)
         """
-        x, y = self.get_coordinate_lists(crs=crs)
-        return (min(x), min(y), max(x), max(y))
+        if len(self) != 0:
+            x, y = self.get_coordinate_lists(crs=crs)
+            return (min(x), min(y), max(x), max(y))
+        else:
+            return (np.nan, np.nan, np.nan, np.nan)
 
     @property
     def extent(self):
@@ -421,9 +424,9 @@ class MultiVertexMixin(object):
             whether shift should be in place (default False)
         """
         if len(self.vertices) == 0:
-            raise GGeoError('Cannot shift zero length geometry')
+            raise GGeoError('cannot shift zero length geometry')
         if len(shift_vector) != len(self.vertices[0]):
-            raise GGeoError('Shift vector length must equal geometry rank')
+            raise GGeoError('shift vector length must equal geometry rank')
 
         if inplace:
             self.vertices = CoordString(self.vertices.asarray() + shift_vector)
@@ -471,8 +474,6 @@ class MultiVertexMixin(object):
 
     def _subset(self, idxs):
         """ Return a subset defined by indices. """
-        if len(idxs) == 0:
-            raise ValueError("attempted to extract a zero-length subset")
         vertices = [self.vertices[i] for i in idxs]
         if hasattr(self, "data"):
             data = Table(data=[self.data._data[i] for i in idxs], fields=self.data.fields)
@@ -1112,7 +1113,7 @@ class Multipart(Geometry):
     def __init__(self, vertices, data=None, **kwargs):
         super(Multipart, self).__init__(**kwargs)
 
-        if (data is None) or (len(data) == 0):
+        if (data is None):
             self.data = Table(size=len(self.vertices))
         else:
             self.data = Table(data)

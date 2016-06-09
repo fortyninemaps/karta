@@ -34,6 +34,10 @@ class Table(Sequence):
                 # Data is Table-like
                 self._fields = data._fields
                 self._data = data._data
+            elif len(data) == 0:
+                # Data is empty dict or empty iterable
+                self._fields = ()
+                self._data = []
             elif hasattr(data, "keys"):
                 # Data is dict-like
                 self._fields = tuple(data.keys())
@@ -53,9 +57,9 @@ class Table(Sequence):
                 else:
                     self._data = [(data,)]
         else:
-            if hasattr(data[0], "__len__") and not isinstance(data[0], str):
-                if len(data[0]) != len(fields):
-                    raise ValueError("Length of data entries and fields don't match")
+            if ((len(data) != 0) and hasattr(data[0], "__len__") and
+                    not isinstance(data[0], str) and (len(data[0]) != len(fields))):
+                raise ValueError("Length of data entries and fields don't match")
             self._fields = tuple(fields)
             self._data = data
 
