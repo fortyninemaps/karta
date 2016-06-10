@@ -72,10 +72,9 @@ setup(
     packages = ["karta", "karta.vector", "karta.raster"],
     url = "http://www.fortyninemaps.com/karta.html",
     description = "Geospatial analysis in Python",
-    long_description = """
-*Karta* is a package for spatial analysis in Python. It streamlines data
-processing by providing generic geographical types for vector and raster sources
-as well as a selection of analysis functions.
+    long_description = """*Karta* is a package for spatial analysis in Python. It streamlines data
+processing by providing classes for coordinate-system aware geographical vector
+and raster data.
 
 Create vector geometries:
 
@@ -135,13 +134,11 @@ documentation requires `Sphinx <http://sphinx-doc.org/>`__, `alabaster
 DEPENDENCIES
 ------------
 
-Required
-~~~~~~~~
-
 - numpy
-- blosc
-- GDAL
+- gdal
 - pyproj
+- blosc
+- C99-compliant compiler
 
 When installing from PyPI, C source code is provided. When building from
 sources, Cython is required.
@@ -149,7 +146,6 @@ sources, Cython is required.
     classifiers = ["Programming Language :: Python :: 2",
                    "Programming Language :: Python :: 2.7",
                    "Programming Language :: Python :: 3",
-                   "Programming Language :: Python :: 3.3",
                    "Programming Language :: Python :: 3.4",
                    "Programming Language :: Python :: 3.5",
                    "Topic :: Scientific/Engineering",
