@@ -88,6 +88,9 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         hc = hash(str(self.crs))
         return ht + (hd << 1) + hd + hc
 
+    def __add__(self, other):
+        return Multipoint([self.vertex, other.get_vertex(self.crs)], crs=self.crs)
+
     @property
     def __geo_interface__(self):
         p = self.properties.copy()
@@ -787,6 +790,10 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
         self._geotype = "Line"
         return
 
+    def __add__(self, other):
+        return Multiline([self.vertices, other.get_vertices(self.crs)],
+                         crs=self.crs)
+
     @property
     def __geo_interface__(self):
         p = self.properties.copy()
@@ -943,6 +950,10 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
                             properties=self.properties,
                             crs=self.crs)
         return super(Polygon, self).__getitem__(key)
+
+    def __add__(self, other):
+        return Multipolygon([[self.vertices], [other.get_vertices(self.crs)]],
+                            crs=self.crs)
 
     @property
     def __geo_interface__(self):

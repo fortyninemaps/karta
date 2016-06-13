@@ -62,6 +62,33 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(self.point[1], 2.0)
         return
 
+    def test_point_add(self):
+        ptA = Point((1, 2), crs=SphericalEarth)
+        ptB = Point((3, 4), crs=LonLatWGS84)
+        res = ptA + ptB
+        self.assertTrue(isinstance(res, Multipoint))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res.crs, SphericalEarth)
+        return
+
+    def test_line_add(self):
+        lineA = Line([(1, 2), (2, 3)], crs=SphericalEarth)
+        lineB = Line([(3, 4), (4, 5)], crs=LonLatWGS84)
+        res = lineA + lineB
+        self.assertTrue(isinstance(res, Multiline))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res.crs, SphericalEarth)
+        return
+
+    def test_polygon_add(self):
+        polyA = Polygon([(1, 2), (2, 3), (5, 4)], crs=SphericalEarth)
+        polyB = Polygon([(3, 4), (4, 5), (6, 5)], crs=LonLatWGS84)
+        res = polyA + polyB
+        self.assertTrue(isinstance(res, Multipolygon))
+        self.assertEqual(len(res), 2)
+        self.assertEqual(res.crs, SphericalEarth)
+        return
+
     def test_empty_multipoint(self):
         mp = Multipoint([], crs=LonLatWGS84)
         self.assertEqual(mp.vertices.rank, 0)
