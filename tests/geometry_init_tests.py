@@ -119,6 +119,21 @@ class TestMultipartGeometry(unittest.TestCase):
         self.assertEqual(g.d["d"], [0, 4, 8, 12, 16])
         return
 
+    def test_empty_multpoint(self):
+        mp = Multipoint([])
+        self.assertEqual(len(mp), 0)
+        return
+
+    def test_empty_multiline(self):
+        ml = Multiline([])
+        self.assertEqual(len(ml), 0)
+        return
+
+    def test_empty_multipolygon(self):
+        mp = Multipolygon([])
+        self.assertEqual(len(mp), 0)
+        return
+
 
 if __name__ == "__main__":
     unittest.main()

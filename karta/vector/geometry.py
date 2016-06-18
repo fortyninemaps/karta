@@ -1317,7 +1317,9 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     """
 
     def __init__(self, vertices, build_index=True, **kwargs):
-        if isinstance(vertices[0], Line):
+        if len(vertices) == 0:
+            self.vertices = []
+        elif isinstance(vertices[0], Line):
             self.vertices = [line.vertices for line in vertices]
         else:
             self.vertices = [CoordString(part) for part in vertices]
@@ -1414,7 +1416,9 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     """
 
     def __init__(self, vertices, build_index=True, **kwargs):
-        if isinstance(vertices[0], Polygon):
+        if len(vertices) == 0:
+            self.vertices = []
+        elif isinstance(vertices[0], Polygon):
             self.vertices = []
             for polygon in vertices:
                 rings = [polygon.vertices]
