@@ -83,17 +83,20 @@ cdef class CoordString:
     def __richcmp__(self, other, int op):
         if op == 2:
             return self._ceq(other)
+        elif op == 3:
+            return not self._ceq(other)
+        else:
+            raise NotImplementedError("coordstring comparison")
 
-    cdef bool _ceq(self, CoordString other):
+    def _ceq(self, CoordString other):
         """ Tests equality """
-        cdef int len1 = len(self.coords), len2 = len(other.coords)
         cdef int i = 0
-        if len1 == len2:
-            for i in range(len1):
-                if self.coords[i] != other.coords[i]:
-                    return False
-            return True
-        return False
+        if len(self.coords) != len(other.coords):
+            return False
+        for i in range(len(self.coords)):
+            if self.coords[i] != other.coords[i]:
+                return False
+        return True
 
     cpdef np.ndarray slice(self, int start, int stop=0, int step=1):
         """ Slice coordinate string, returning an <n x rank> numpy array. """

@@ -1190,8 +1190,7 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
             self.vertices = CoordString(vertices)
         else:
             self.vertices = CoordString([point.vertex for point in vertices])
-            if "crs" not in kwargs:
-                self.crs = vertices[0].crs
+            kwargs.setdefault("crs", vertices[0].crs)
 
         super(Multipoint, self).__init__(vertices, **kwargs)
         if build_index:
@@ -1321,6 +1320,7 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
             self.vertices = []
         elif isinstance(vertices[0], Line):
             self.vertices = [line.vertices for line in vertices]
+            kwargs.setdefault("crs", vertices[0].crs)
         else:
             self.vertices = [CoordString(part) for part in vertices]
         super(Multiline, self).__init__(vertices, **kwargs)
@@ -1425,6 +1425,7 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
                 for sub in polygon.subs:
                     rings.append(sub)
                 self.vertices.append(rings)
+            kwargs.setdefault("crs", vertices[0].crs)
         else:
             self.vertices = []
             for part in vertices:

@@ -1,6 +1,7 @@
 """ Test constructing geometry instances """
 
 import unittest
+import numpy as np
 from karta import Point, Line, Polygon, Multipoint, Multiline, Multipolygon
 from karta.vector.geometry import multipart_from_singleparts
 from karta.crs import LonLatWGS84
@@ -82,16 +83,31 @@ class TestMultipartGeometry(unittest.TestCase):
         Multiline(vertices, data=data)
         return
 
+    def test_multiline_from_lines_constructor(self):
+        lines = []
+        for i in range(5):
+            sub = []
+            for j in range(5):
+                sub.append((2*j+i, -1.5*j+2*i))
+            lines.append(Line(sub, crs=LonLatWGS84))
+
+        g = Multiline(lines)
+        for l, l_ in zip(g, lines):
+            self.assertTrue(np.all(l.vertices == l_.vertices))
+        self.assertEqual(g.crs, LonLatWGS84)
+        return
+
     def test_multiline_from_lines(self):
         lines = []
         for i in range(5):
             sub = []
             for j in range(5):
                 sub.append((2*j+i, -1.5*j+2*i))
-            lines.append(Line(sub, properties={"d": i*j}))
+            lines.append(Line(sub, properties={"d": i*j}, crs=LonLatWGS84))
 
         g = multipart_from_singleparts(lines)
         self.assertEqual(g.d["d"], [0, 4, 8, 12, 16])
+        self.assertEqual(g.crs, LonLatWGS84)
         return
 
     def test_multipolygon(self):
@@ -107,16 +123,31 @@ class TestMultipartGeometry(unittest.TestCase):
         Multipolygon(vertices, data=data)
         return
 
+    def test_multipolygon_from_polygons_constructor(self):
+        polys = []
+        for i in range(5):
+            sub = []
+            for j in range(5):
+                sub.append((2*j+i, -1.5*j+2*i))
+            polys.append(Polygon(sub, crs=LonLatWGS84))
+
+        g = Multipolygon(polys)
+        for p, p_ in zip(g, polys):
+            self.assertEqual(p.vertices, p_.vertices)
+        self.assertEqual(g.crs, LonLatWGS84)
+        return
+
     def test_multipolygon_from_polygons(self):
         polys = []
         for i in range(5):
             sub = []
             for j in range(5):
                 sub.append((2*j+i, -1.5*j+2*i))
-            polys.append(Polygon(sub, properties={"d": i*j}))
+            polys.append(Polygon(sub, properties={"d": i*j}, crs=LonLatWGS84))
 
         g = multipart_from_singleparts(polys)
         self.assertEqual(g.d["d"], [0, 4, 8, 12, 16])
+        self.assertEqual(g.crs, LonLatWGS84)
         return
 
     def test_empty_multpoint(self):
