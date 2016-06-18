@@ -1395,7 +1395,7 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
         return type(self)([self[i] for i in indices])
 
     def touching(self, bbox, max_results=-1):
-        indices = self.rtree.search_within(bbox, max_results=max_results)
+        indices = self.rtree.search_overlapping(bbox, max_results=max_results)
         return type(self)([self[i] for i in indices])
 
 class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
