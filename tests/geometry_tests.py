@@ -199,37 +199,6 @@ class TestGeometry(unittest.TestCase):
             self.assertTrue(np.all(np.equal(seg.vertices[1], self.vertices[i+1])))
         return
 
-class TestDateline(unittest.TestCase):
-
-    def test_azimuth(self):
-        for crs in (SphericalEarth, LonLatWGS84):
-            pt0 = Point((0.0, 0.0), crs=crs)
-            pt1 = Point((-1.0, 1.0), crs=crs)
-
-            pt2 = Point((-179.5, 0.0), crs=crs)
-            pt3 = Point((179.5, 1.0), crs=crs)
-            self.assertAlmostEqual(pt0.azimuth(pt1), pt2.azimuth(pt3), places=8)
-
-    def test_distance(self):
-        for crs in (SphericalEarth, LonLatWGS84):
-            pt0 = Point((0.0, 0.0), crs=crs)
-            pt1 = Point((-1.0, 1.0), crs=crs)
-
-            pt2 = Point((-179.5, 0.0), crs=crs)
-            pt3 = Point((179.5, 1.0), crs=crs)
-            self.assertAlmostEqual(pt0.distance(pt1), pt2.distance(pt3), places=8)
-
-    def test_area(self):
-        for crs in (SphericalEarth, LonLatWGS84):
-            poly0 = Polygon([(-1, -1), (1, -1), (1, 1), (-1, 1)], crs=crs)
-            poly1 = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
-            self.assertAlmostEqual(poly0.area, poly1.area)
-
-    def test_bbox_geographical(self):
-        for crs in (SphericalEarth, LonLatWGS84):
-            poly = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
-            self.assertEqual(poly.bbox, (179, -1, -179, 1))
-
 class TestGeometryAnalysis(unittest.TestCase):
     """ Tests for analysis methods of geometrical objects """
 
@@ -839,25 +808,6 @@ class TestGeometryProj(unittest.TestCase):
         return
 
 
-class TestGeometryOutput(unittest.TestCase):
-
-    def setUp(self):
-
-        vertices = [(2.0, 9.0, 9.0), (4.0, 1.0, 9.0), (4.0, 1.0, 5.0),
-                    (2.0, 8.0, 0.0), (9.0, 8.0, 4.0), (1.0, 4.0, 6.0),
-                    (7.0, 3.0, 4.0), (2.0, 5.0, 3.0), (1.0, 6.0, 6.0),
-                    (8.0, 1.0, 0.0), (5.0, 5.0, 1.0), (4.0, 5.0, 7.0),
-                    (3.0, 3.0, 5.0), (9.0, 0.0, 9.0), (6.0, 3.0, 8.0),
-                    (4.0, 5.0, 7.0), (9.0, 9.0, 4.0), (1.0, 4.0, 7.0),
-                    (1.0, 7.0, 8.0), (9.0, 1.0, 6.0)]
-
-        data0 = [99.0, 2.0, 60.0, 75.0, 71.0, 34.0, 1.0, 49.0, 4.0, 36.0, 47.0,
-                 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]
-
-        data1 = [54.0, 40.0, 77.0, 18.0, 84.0, 91.0, 61.0, 92.0, 19.0, 42.0,
-                 50.0, 25.0, 11.0, 80.0, 59.0, 56.0, 32.0, 8.0, 88.0, 76.0]
-        self.mp = Multipoint(vertices, data={'d0':data0, 'd1':data1})
-
 class TestAffineTransforms(unittest.TestCase):
 
     def setUp(self):
@@ -908,8 +858,7 @@ class VectorCRSTests(unittest.TestCase):
 
     def test_vertices_in_crs(self):
         point = Point((-123.0, 49.0), crs=SphericalEarth)
-        self.assertEqual(point.get_vertex(SphericalEarth),
-                         (-123.0, 49.0))
+        self.assertEqual(point.get_vertex(SphericalEarth), (-123.0, 49.0))
 
     def test_vertices_in_crs2(self):
         point = Point((-123.0, 49.0), crs=LonLatWGS84)
