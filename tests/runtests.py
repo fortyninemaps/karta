@@ -9,6 +9,7 @@ from test_helper import TMPDATA
 
 # Core geometry tests
 from crs_tests import *
+from coordstring_tests import *
 from geometry_init_tests import *
 from geometry_tests import *
 from quadtree_tests import *

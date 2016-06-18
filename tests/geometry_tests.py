@@ -91,7 +91,7 @@ class TestGeometry(unittest.TestCase):
 
     def test_empty_multipoint(self):
         mp = Multipoint([], crs=LonLatWGS84)
-        self.assertEqual(mp.vertices.rank, 0)
+        self.assertEqual(mp.vertices.rank, -1)
         return
 
     def test_multipoint_zip_init(self):

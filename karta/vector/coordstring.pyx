@@ -24,19 +24,32 @@ cdef int ceild(double a):
 cdef array template_dbl = array("d", [])
 
 cdef class CoordString:
+    """ A CoordString is a datastructure for coordinate data. Initialize a
+    CoordString with 2 or 3 iterable objects, corresponding to x, y, and
+    optionally z coordinates.
+
+    Parameters
+    ----------
+    coords : iterable
+        list of coordinates, with items of length 2 or 3
+    """
 
     cdef readonly double[:] coords
     cdef readonly int rank
 
     def __cinit__(self, object coords):
-        cdef int length = len(coords)
-        if length == 0:
-            self.rank = 0
-        else:
-            self.rank = len(coords[0])
+        cdef int length = -1
+        try:
+            length = len(coords)
+            if length == 0:
+                self.rank = -1
+            else:
+                self.rank = len(coords[0])
+        except TypeError:
+            raise ValueError("coords argument must be an iterable of iterables")
 
-        if self.rank not in (0, 2, 3):
-            raise ValueError("non-empty Geometry rank must be 2 or 3")
+        if self.rank not in (-1, 2, 3):
+            raise ValueError("CoordString rank must be 2 or 3")
 
         cdef array coords_array = clone(template_dbl, length*self.rank, False)
         self.coords = coords_array
@@ -51,7 +64,7 @@ cdef class CoordString:
         return
 
     def __len__(self):
-        if self.rank == 0:
+        if self.rank == -1:
             return 0
         else:
             return int(len(self.coords)/self.rank)
@@ -65,6 +78,8 @@ cdef class CoordString:
     def __getitem__(self, int index):
         cdef double x, y, z
         cdef int pos = index*self.rank
+        if self.rank == -1:
+            raise IndexError("CoordString empty")
         x = self.coords[pos]
         y = self.coords[pos+1]
         if self.rank == 2:
@@ -75,6 +90,8 @@ cdef class CoordString:
 
     def __setitem__(self, int key, double[:] value):
         cdef int idx = key*self.rank
+        if self.rank == -1:
+            raise IndexError("CoordString empty")
         self.coords[key*self.rank:(key+1)*self.rank] = value
 
     def __hash__(self):
@@ -86,7 +103,7 @@ cdef class CoordString:
         elif op == 3:
             return not self._ceq(other)
         else:
-            raise NotImplementedError("coordstring comparison")
+            raise NotImplementedError("CoordString comparison")
 
     def _ceq(self, CoordString other):
         """ Tests equality """
@@ -110,6 +127,9 @@ cdef class CoordString:
             outlength = ceild(<double> (abs(stop) - abs(start)) / abs(step))
         else:
             raise ValueError("step cannot equal zero")
+
+        if self.rank == -1:
+            return ValueError("CoordString empty")
 
         cdef np.ndarray result = np.empty([outlength, self.rank], dtype=np.float64)
         cdef int i = 0, pos = start
