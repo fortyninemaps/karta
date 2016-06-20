@@ -612,28 +612,24 @@ class RegularGrid(Grid):
         dy : float
             cell dimension 2
         method : str, optional
-            interpolation method, currently only 'nearest' supported
+            interpolation method, currently 'nearest' and 'linear' supported
         """
-        ny, nx = self.bands[0].size
-        dx0, dy0 = self._transform[2:4]
-        xllcenter, yllcenter = self.center_llref()
-
+        xmin, xmax, ymin, ymax = self.get_extent()
         if method == 'nearest':
-            rx, ry = dx / dx0, dy / dy0
-            I = np.around(np.arange(ry/2, ny, ry)-0.5).astype(int)
-            J = np.around(np.arange(rx/2, nx, rx)-0.5).astype(int)
-            if I[-1] == ny:
-                I = I[:-1]
-            if J[-1] == nx:
-                J = J[:-1]
-            JJ, II = np.meshgrid(J, I)
-            values = self[:,:][II, JJ]
+            X, Y = np.meshgrid(np.arange(xmin, xmax, dx),
+                               np.arange(ymin, ymax, dy))
+            Z = self.sample_nearest(X.ravel(), Y.ravel())
+            values = Z.reshape(X.shape)
+        elif method == 'linear':
+            X, Y = np.meshgrid(np.arange(xmin, xmax, dx),
+                               np.arange(ymin, ymax, dy))
+            Z = self.sample_bilinear(X.ravel(), Y.ravel())
+            values = Z.reshape(X.shape)
         else:
-            raise NotImplementedError('method "{0}" not '
-                                      'implemented'.format(method))
+            raise NotImplementedError('method "{0}" unavailable'.format(method))
 
         t = self._transform
-        tnew = (t[0], t[1], dx, dy, t[4], t[5])
+        tnew = (xmin-0.5*dx-0.5*t[4], ymin-0.5*dy-0.5*t[5], dx, dy, t[4], t[5])
         return RegularGrid(tnew, values=values, crs=self.crs,
                            nodata_value=self.nodata)
 
