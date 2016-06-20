@@ -12,12 +12,6 @@ from .band import SimpleBand, CompressedBand, BandIndexer
 from .. import errors
 from ..crs import Cartesian
 
-try:
-    from scipy import interpolate
-    HASSCIPY = True
-except ImportError:
-    HASSCIPY = False
-
 BAND_CLASS_DEFAULT = CompressedBand
 CRS_DEFAULT = Cartesian
 
@@ -606,42 +600,6 @@ class RegularGrid(Grid):
             return RegularGrid(self.transform,
                                values=np.where(msk, val, self.nodata),
                                crs=self.crs, nodata_value=self.nodata)
-
-    def resample_griddata(self, dx, dy, method='nearest'):
-        """ Resample array to have spacing `dx`, `dy' using *scipy.griddata*
-
-        Warning: This method is likely to be removed in the future, once
-        the built-in `resample` method matures.
-
-        Parameters
-        ----------
-        dx : float
-            cell dimension 1
-        dy : float
-            cell dimension 2
-        method : str, optional
-            interpolation method, one of 'nearest', 'linear'
-        """
-        if not HASSCIPY:
-            raise errors.MissingDependencyError("resample_griddata requires scipy")
-        ny0, nx0 = self.band[0].size
-        dx0, dy0 = self._transform[2:4]
-        xllcenter, yllcenter = self.center_llref()
-        xurcenter = xllcenter + dx0*nx0
-        yurcenter = yllcenter + dy0*ny0
-        nx = int((xurcenter - xllcenter) // dx)
-        ny = int((yurcenter - yllcenter) // dy)
-
-        xx0, yy0 = self.coordmesh()
-        xx, yy = np.meshgrid(np.linspace(xllcenter, xurcenter, nx),
-                             np.linspace(yllcenter, yurcenter, ny))
-        idata = interpolate.griddata((xx0.flatten(), yy0.flatten()), self[:,:].flatten(),
-                                     (xx.flatten(), yy.flatten()), method=method)
-        values = idata.reshape(ny, nx)
-        t = self._transform
-        tnew = (t[0], t[1], dx, dy, t[4], t[5])
-        return RegularGrid(tnew, values=values, crs=self.crs,
-                           nodata_value=self.nodata)
 
     def resample(self, dx, dy, method='nearest'):
         """ Resample array to have spacing `dx`, `dy'. The grid origin remains
