@@ -1,5 +1,6 @@
 import numpy as np
 cimport numpy as np
+from coordstring cimport CoordString
 from cpython cimport bool
 
 cdef inline double dbl_max(double a, double b): return a if a >= b else b
@@ -16,59 +17,51 @@ cdef bool isbetween_incr(double a, double b, double c):
 
 ctypedef bool (*isbetween_t)(double, double, double)
 
-def intersection(double x0, double x1, double x2, double x3,
-                 double y0, double y1, double y2, double y3):
-    """ Return the point of intersection between two line segments on a plane.
-    Returns (NaN, NaN) if the lines do not intersect. """
-    cdef double m0, m1
-    cdef double x, y
+cdef inline double cross_prod2(double u0, double u1, double v0, double v1):
+    return u0*v1 - u1*v0
 
-    if x1 != x0:
-        m0 = float(y1-y0) / float(x1-x0)
+def all_intersections(CoordString a, CoordString b):
+    cdef int na = len(a)
+    cdef int nb = len(b)
+    cdef int i = 0, j = 0
+    cdef double x0, x1, x2, x3, y0, y1, y2, y3
+    cdef xi, yi
+    cdef list intersections = []
+    for i in range(na-1):
+        x0 = a.coords[i*a.rank]
+        x1 = a.coords[(i+1)*a.rank]
+        y0 = a.coords[i*a.rank+1]
+        y1 = a.coords[(i+1)*a.rank+1]
+        for j in range(nb-1):
+            x2 = b.coords[j*b.rank]
+            x3 = b.coords[(j+1)*b.rank]
+            y2 = b.coords[j*b.rank+1]
+            y3 = b.coords[(j+1)*b.rank+1]
+            xi, yi = intersection(x0, x1, x2, x3, y0, y1, y2, y3)
+            if not np.isnan(xi):
+                intersections.append((xi, yi))
+    return intersections
+
+cpdef intersection(double x0, double x1, double x2, double x3,
+                   double y0, double y1, double y2, double y3):
+    """ Returns coordinates of intersection point, or (NaN, NaN) if lines don't
+    intersect.
+
+    Line1 consists of point pairs 0, 1
+    Line2 consists of point pairs 2, 3
+    """
+    cdef double rxs = cross_prod2(x1-x0, y1-y0, x3-x2, y3-y2)
+    if rxs == 0:
+        # parallel or collinear
+        return np.nan, np.nan
+
+    cdef double t = cross_prod2(x2-x0, y2-y0, x3-x2, y3-y2) / rxs
+    cdef double u = cross_prod2(x2-x0, y2-y0, x1-x0, y1-y0) / rxs
+    if (1e-14 <= t <= 1) and (1e-14 <= u <= 1):
+        return x0 + t*(x1-x0), y0 + t*(y1-y0)
     else:
-        m0 = 1e37
-    if x3 != x2:
-        m1 = float(y3-y2) / float(x3-x2)
-    else:
-        m1 = 1e37
-    if m0 == m1:
-        return (np.nan, np.nan)
-    x = float(m0*x0 - m1*x2 + y2 - y0) / float(m0 - m1)
-
-    cdef bool iswithinx
-    cdef bool iswithiny
-    iswithinx = False
-    iswithiny = False
-
-    if abs(x1 - x0) >= 1e-15:
-        if abs(x3 - x2) >= 1e-15:
-            if isbetween_inc(x0, x, x1) and isbetween_inc(x2, x, x3):
-                iswithinx = True
-        else:
-            if abs(x - x2) < 1e-15 and isbetween_inc(x0, x, x1):
-                iswithinx = True
-    else:
-        if abs(x - x0) < 1e-15 and isbetween_inc(x2, x, x3):
-            iswithinx = True
-
-    if iswithinx:
-        if abs(x-x0) >= 1e-15:
-            y = m0 * (x-x0) + y0
-        else:
-            y = m1 * (x-x2) + y2
-        if abs(y1 - y0) >= 1e-15:
-            if abs(y3 - y2) >= 1e-15:
-                if isbetween_inc(y0, y, y1) and isbetween_inc(y2, y, y3):
-                    iswithiny = True
-            elif abs(y - y2) < 1e-15 and isbetween_inc(y0, y, y1):
-                iswithiny = True
-        elif abs(y - y0) < 1e-15 and isbetween_inc(y2, y, y3):
-            iswithiny = True
-
-    if iswithinx and iswithiny:
-        return (x, y)
-    else:
-        return (np.nan, np.nan)
+        # non-intersecting
+        return np.nan, np.nan
 
 def intersects_cn(double xp, double yp, double x0, double x1, double y0, double y1):
     """ Test whether a vertical ray emanating up from a point (xp, yp) crosses

@@ -33,10 +33,6 @@ cdef class CoordString:
     coords : iterable
         list of coordinates, with items of length 2 or 3
     """
-
-    cdef readonly double[:] coords
-    cdef readonly int rank
-
     def __cinit__(self, object coords):
         cdef int length = -1
         try:

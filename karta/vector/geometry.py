@@ -635,17 +635,10 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
         if isinstance(self.crs, CartesianCRS):
-            interxbool = (np.nan in
-                    _cintersection.intersection(a[0][0], a[1][0],
-                                                b[0][0], b[1][0],
-                                                a[0][1], a[1][1],
-                                                b[0][1], b[1][1])
-                            for a in self.segment_tuples
-                            for b in other.segment_tuples)
-            if self._bbox_overlap(other) and (False in interxbool):
-                return True
-            else:
+            if not self._bbox_overlap(other):
                 return False
+            interx = _cintersection.all_intersections(self.vertices, other.vertices)
+            return len(interx) != 0
         else:
             for a in self.segment_tuples:
                 for b in other.segment_tuples:
@@ -659,34 +652,18 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
         if isinstance(self.crs, CartesianCRS):
-            interx = (_cintersection.intersection(a[0][0], a[1][0],
-                                                  b[0][0], b[1][0],
-                                                  a[0][1], a[1][1],
-                                                  b[0][1], b[1][1])
-                            for a in self.segment_tuples
-                            for b in other.segment_tuples)
+            interx = _cintersection.all_intersections(self.vertices, other.vertices)
             if not keep_duplicates:
-                interx = set(interx)
-            interx_points = []
-            for vertex in interx:
-                if np.nan not in vertex:
-                    interx_points.append(Point(vertex, properties=self.properties,
-                                               crs=self.crs))
-            return Multipoint(interx_points)
+                interx = list(set(interx))
+            return Multipoint(interx, crs=self.crs)
         else:
             # FIXME: implement for ellipsoidal coordinate systems
             interx = (geodesy.intersection_spherical(a, b)
                             for a in self.segment_tuples
                             for b in other.segment_tuples)
             if not keep_duplicates:
-                interx = set(interx)
-            interx_points = []
-            for vertex in interx:
-                if np.nan not in vertex:
-                    interx_points.append(Point(vertex, properties=self.properties,
-                                               crs=self.crs))
-            return Multipoint(interx_points)
-
+                interx = list(set(interx))
+            return Multipoint(interx, crs=self.crs)
 
     def _nearest_to_point(self, point):
         """ Return a tuple of the shortest distance on the geometry boundary to
