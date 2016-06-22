@@ -8,3 +8,4 @@ cdef class CoordString:
     cpdef np.ndarray slice(self, int start, int stop=?, int step=?)
     cdef double getX(self, int index)
     cdef double getY(self, int index)
+    cdef double getZ(self, int index)
