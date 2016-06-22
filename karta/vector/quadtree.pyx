@@ -3,7 +3,6 @@
 # from .coordstring import Coordstring
 # from .coordstring cimport Coordstring
 
-
 cdef extern from "quadtree.h":
 
     ctypedef enum NodeType:
@@ -51,7 +50,7 @@ cdef extern from "quadtree.h":
 
     LeafNode *qt_new_leaf(int, Bbox*)
     NonleafNode *qt_new_nonleaf(Bbox*)
-    NonleafNode *qt_insert(NodePtrUnion, Position)
+    NonleafNode *qt_insert(NodePtrUnion, Position, int*)
     void qt_free_node(NodePtrUnion)
     Pool *qt_search_within(NodePtrUnion, Bbox*)
     char *pool_pop(Pool*, int)
@@ -59,29 +58,38 @@ cdef extern from "quadtree.h":
 cdef class QuadTree:
     cdef int count
     cdef NodePtrUnion root
+    cdef readonly dict duplicates
 
-    def __cinit__(self, points):
+    def __cinit__(self, points, int leaf_capacity=50):
         cdef NonleafNode *retnode
         cdef Position *pos
         cdef Bbox *bbox
         cdef double x, y
         cdef double xmin, ymin, xmax, ymax
         cdef int i = 0
+        cdef int idup = 0
+        cdef dict duplicates = {}
 
         xmin, ymin, xmax, ymax = points.bbox
         bbox = qt_new_bbox(xmin, ymin, xmax, ymax)
-        self.root.leafnode = qt_new_leaf(50, bbox)
+        self.root.leafnode = qt_new_leaf(leaf_capacity, bbox)
 
         while i != len(points):
             x, y = points[i][:2]
             pos = qt_new_position(i, x, y)
-            retnode = qt_insert(self.root, pos[0])
-            if (retnode != NULL):
+            retnode = qt_insert(self.root, pos[0], &idup)
+            if idup != -1:
+                if idup in duplicates:
+                    duplicates[idup].append(i)
+                else:
+                    duplicates[idup] = [i]
+            elif (retnode != NULL):
                 self.root.nonleafnode = retnode
             qt_free_position(pos)
             i += 1
 
         self.count = i
+        self.duplicates = duplicates
         return
 
     def __dealloc__(self):
@@ -109,6 +117,8 @@ cdef class QuadTree:
 
         while results.count != 0:
             idx = <int*> pool_pop(results, results.count-1)
+            if idx[0] in self.duplicates:
+                out.extend(self.duplicates[idx[0]])
             out.append(idx[0])
         qt_free_bbox(bbox)
         return out

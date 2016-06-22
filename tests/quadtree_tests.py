@@ -31,6 +31,17 @@ class TestQuadTree(unittest.TestCase):
         self.assertEqual(max(indices_within), 749)
         return
 
+    def test_quadtree_duplicates(self):
+        # a naive quadtree with enter an infinite loop when there are
+        # duplicates exceeding leaf node capacity. this test ensures that this
+        # doesn't happen, and that the duplicate points can be retrieved
+        vertices = [(3.0, 4.0) for _ in range(11)]
+        cs = CoordString(vertices)
+        quadtree = QuadTree(cs, leaf_capacity=10)
+        indices_within = quadtree.search_within(2, 3, 4, 5)
+        self.assertEqual(len(indices_within), 11)
+        return
+
 class TestGeometryWithQuadTree(unittest.TestCase):
 
     def test_within_radius(self):

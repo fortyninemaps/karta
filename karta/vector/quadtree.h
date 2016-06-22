@@ -47,6 +47,7 @@ typedef struct QuadTreeNonleafNode {
 void qt_free_node(NodePtrUnion);
 NonleafNode *qt_split(LeafNode*);
 Quadrant get_quadrant(Bbox*, Position*);
+int isduplicate(LeafNode*, Position*);
 int iswithin(Bbox*, Position*);
 int overlaps(Bbox*, Bbox*);
 
@@ -86,8 +87,11 @@ Bbox* qt_new_bbox(double xmin, double ymin, double xmax, double ymax) {
     return bb;
 }
 
-// insert a position into a node. returns NULL or a pointer to a new root node
-NonleafNode *qt_insert(NodePtrUnion node_union, Position position) {
+// Insert a position into a node. *dup* is a pointer to an integer that is set to
+// a value in the range [0, max_positions) if a position is duplicated.
+// Duplicate positions are not inserted, so the caller must keep track.
+// returns NULL or a pointer to a new root node
+NonleafNode *qt_insert(NodePtrUnion node_union, Position position, int *dup) {
     NonleafNode *retnode = NULL;
     NonleafNode *nonleaf = NULL;
     LeafNode *leaf = NULL;
@@ -102,6 +106,13 @@ NonleafNode *qt_insert(NodePtrUnion node_union, Position position) {
 
     while (1) {
         if (type == LEAF) {
+
+            // check for duplicates - if so, break and return
+            *dup = isduplicate(leaf, &position);
+            if (*dup != -1) {
+                break;
+            }
+
             leaf->positions[leaf->count] = position;
             leaf->count++;
             if (leaf->count >= leaf->max_positions) {
@@ -352,6 +363,16 @@ Quadrant get_quadrant(Bbox *bbox, Position *position) {
             return UPPERRIGHT;
         }
     }
+}
+
+int isduplicate(LeafNode *node, Position *pos) {
+    for (int i=0; i!=node->count; i++) {
+        if ((pos->x == node->positions[i].x) &&
+            (pos->y == node->positions[i].y)) {
+            return node->positions[i].id;
+        }
+    }
+    return -1;
 }
 
 double mind(double a, double b) {
