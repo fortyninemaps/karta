@@ -256,18 +256,18 @@ class MultiVertexBase(Geometry):
 
     #__slots__ = ["vertices", "data"]
 
-    def __init__(self, vertices, **kwargs):
+    def __init__(self, vertices, ring=False, **kwargs):
         super(MultiVertexBase, self).__init__(**kwargs)
 
         if hasattr(vertices, "__next__"):
             vertices = list(vertices)
 
         if len(vertices) == 0:
-            self.vertices = CoordString([])
+            self.vertices = CoordString([], ring=ring)
         elif not isinstance(vertices[0], Point):
-            self.vertices = CoordString(_flatten(vertices))
+            self.vertices = CoordString(_flatten(vertices), ring=ring)
         else:
-            self.vertices = CoordString([point.vertex for point in vertices])
+            self.vertices = CoordString([point.vertex for point in vertices], ring=ring)
             if "crs" not in kwargs:
                 self.crs = vertices[0].crs
 
@@ -911,7 +911,7 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
     def __init__(self, vertices, subs=None, **kwargs):
         """ Partial init function that creates a metadata attribute.
         """
-        super(Polygon, self).__init__(vertices, **kwargs)
+        super(Polygon, self).__init__(vertices, ring=True, **kwargs)
         self._geotype = "Polygon"
         if subs is not None:
             self.subs = list(subs)

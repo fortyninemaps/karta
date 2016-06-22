@@ -27,16 +27,22 @@ def all_intersections(CoordString a, CoordString b):
     cdef double x0, x1, x2, x3, y0, y1, y2, y3
     cdef xi, yi
     cdef list intersections = []
-    for i in range(na-1):
-        x0 = a.coords[i*a.rank]
-        x1 = a.coords[(i+1)*a.rank]
-        y0 = a.coords[i*a.rank+1]
-        y1 = a.coords[(i+1)*a.rank+1]
-        for j in range(nb-1):
-            x2 = b.coords[j*b.rank]
-            x3 = b.coords[(j+1)*b.rank]
-            y2 = b.coords[j*b.rank+1]
-            y3 = b.coords[(j+1)*b.rank+1]
+
+    if not a.ring:
+        na -= 1
+    if not b.ring:
+        nb -= 1
+
+    for i in range(na):
+        x0 = a.getX(i)
+        x1 = a.getX(i+1)
+        y0 = a.getY(i)
+        y1 = a.getY(i+1)
+        for j in range(nb):
+            x2 = b.getX(j)
+            x3 = b.getX(j+1)
+            y2 = b.getY(j)
+            y3 = b.getY(j+1)
             xi, yi = intersection(x0, x1, x2, x3, y0, y1, y2, y3)
             if not np.isnan(xi):
                 intersections.append((xi, yi))

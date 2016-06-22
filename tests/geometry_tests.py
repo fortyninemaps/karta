@@ -469,6 +469,32 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertEqual(line0.intersections(line1), Multipoint([(1.5, 1.5)]))
         return
 
+    def test_line_intersection2(self):
+        # test lines that have overlapping bounding boxes, but don't cross
+        #   -----
+        #   | -----
+        #   |     |
+        #   ----- |
+        #     -----
+        line0 = Line([(0.0, 0.0), (3.0, 0.0), (3.0, 3.0), (0.0, 3.0)])
+        line1 = Line([(1.0, 4.0), (-2.0, 4.0), (-2.0, 1.0), (1.0, 1.0)])
+        self.assertFalse(line0.intersects(line1))
+        return
+
+    def test_poly_intersection(self):
+        # test polygons formed exactly as in test_line_intersection2, except
+        # the rings are implicitly closed
+        #   -----
+        #   | --x--
+        #   | . . |
+        #   --x-- |
+        #     -----
+        poly0 = Polygon([(0.0, 0.0), (3.0, 0.0), (3.0, 3.0), (0.0, 3.0)])
+        poly1 = Polygon([(1.0, 4.0), (-2.0, 4.0), (-2.0, 1.0), (1.0, 1.0)])
+        self.assertTrue(poly0.intersects(poly1))
+        self.assertEqual(poly0.intersections(poly1), Multipoint([(0.0, 1.0), (1.0, 3.0)]))
+        return
+
     def test_line_intersection_horizontal(self):
         line0 = Line([(-2.5, 2.5), (2.5, 2.5)])
         line1 = Line([(0.0, 0.0), (1.0, 5.0)])

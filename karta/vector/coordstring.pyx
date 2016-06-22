@@ -33,7 +33,7 @@ cdef class CoordString:
     coords : iterable
         list of coordinates, with items of length 2 or 3
     """
-    def __cinit__(self, object coords):
+    def __cinit__(self, object coords, bool ring=False):
         cdef int length = -1
         try:
             length = len(coords)
@@ -46,6 +46,8 @@ cdef class CoordString:
 
         if self.rank not in (-1, 2, 3):
             raise ValueError("CoordString rank must be 2 or 3")
+
+        self.ring = ring
 
         cdef array coords_array = clone(template_dbl, length*self.rank, False)
         self.coords = coords_array
@@ -110,6 +112,16 @@ cdef class CoordString:
             if self.coords[i] != other.coords[i]:
                 return False
         return True
+
+    cdef double getX(self, int index):
+        if self.ring and index == len(self):
+            index = 0
+        return self.coords[index*self.rank]
+
+    cdef double getY(self, int index):
+        if self.ring and index == len(self):
+            index = 0
+        return self.coords[index*self.rank+1]
 
     cpdef np.ndarray slice(self, int start, int stop=0, int step=1):
         """ Slice coordinate string, returning an <n x rank> numpy array. """
