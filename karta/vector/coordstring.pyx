@@ -37,6 +37,7 @@ cdef class CoordString:
         cdef int length = -1
         try:
             length = len(coords)
+            self.length = length
             if length == 0:
                 self.rank = -1
             else:
@@ -52,9 +53,8 @@ cdef class CoordString:
         cdef array coords_array = clone(template_dbl, length*self.rank, False)
         self.coords = coords_array
 
-        cdef int i, j
+        cdef int i = 0, j
         cdef object xy
-        i = 0
         for xy in coords:
             for j in range(self.rank):
                 self.coords[i+j] = xy[j]
@@ -65,11 +65,11 @@ cdef class CoordString:
         if self.rank == -1:
             return 0
         else:
-            return int(len(self.coords)/self.rank)
+            return self.length
 
     def __iter__(self):
-        cdef int i = 0, n = len(self)
-        while i < n:
+        cdef int i = 0
+        while i < self.length:
             yield self[i]
             i += 1
 
@@ -106,36 +106,36 @@ cdef class CoordString:
     def _ceq(self, CoordString other):
         """ Tests equality """
         cdef int i = 0
-        if len(self.coords) != len(other.coords):
+        if self.length != other.length:
             return False
-        for i in range(len(self.coords)):
+        for i in range(self.length):
             if self.coords[i] != other.coords[i]:
                 return False
         return True
 
     cdef double getX(self, int index):
-        if self.ring and index == len(self):
+        if self.ring and index == self.length:
             index = 0
         return self.coords[index*self.rank]
 
     cdef double getY(self, int index):
-        if self.ring and index == len(self):
+        if self.ring and index == self.length:
             index = 0
         return self.coords[index*self.rank+1]
 
     cdef double getZ(self, int index):
         if self.rank != 3:
             raise TypeError("Z only exists in rank-3 coordinates")
-        if self.ring and index == len(self):
+        if self.ring and index == self.length:
             index = 0
         return self.coords[index*self.rank+2]
 
     cpdef np.ndarray slice(self, int start, int stop=0, int step=1):
         """ Slice coordinate string, returning an <n x rank> numpy array. """
         while start < 0:
-            start += len(self)
+            start += self.length
         while stop <= 0:
-            stop += len(self)
+            stop += self.length
 
         cdef int outlength
         if step != 0:
@@ -161,14 +161,14 @@ cdef class CoordString:
         cdef int i = 0
         cdef int offset = 0
 
-        if len(self) == 0:
+        if self.length == 0:
             return (np.nan, np.nan, np.nan, np.nan)
 
         xmin = self.coords[0]
         xmax = self.coords[0]
         ymin = self.coords[1]
         ymax = self.coords[1]
-        while i != len(self)-1:
+        while i != self.length-1:
             offset += self.rank
             xmin = mind(xmin, self.coords[offset])
             xmax = maxd(xmax, self.coords[offset])
@@ -178,11 +178,11 @@ cdef class CoordString:
         return (xmin, ymin, xmax, ymax)
 
     def vectors(self):
-        cdef int i = 0, pos = 0, n = len(self)
+        cdef int i = 0, pos = 0
         cdef np.ndarray x, y, z
-        x = np.empty(n, dtype=np.float64)
-        y = np.empty(n, dtype=np.float64)
-        while i < n:
+        x = np.empty(self.length, dtype=np.float64)
+        y = np.empty(self.length, dtype=np.float64)
+        while i < self.length:
             x[i] = self.coords[pos]
             y[i] = self.coords[pos+1]
             i += 1
@@ -190,10 +190,10 @@ cdef class CoordString:
         if self.rank == 2:
             return x, y
         else:
-            z = np.empty(n, dtype=np.float64)
+            z = np.empty(self.length, dtype=np.float64)
             pos = 0
             i = 0
-            while i < n:
+            while i < self.length:
                 z[i] = self.coords[pos+2]
                 i += 1
                 pos += self.rank

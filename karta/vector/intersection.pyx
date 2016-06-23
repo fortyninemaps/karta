@@ -77,9 +77,16 @@ def count_crossings(double xp, double yp, CoordString coords):
     cdef int i, cnt = 0
     if not coords.ring:
         n -= 1
-    for i in range(n):
-        if intersects_cn(xp, yp, coords.getX(i), coords.getX(i+1), coords.getY(i), coords.getY(i+1)) == 1:
+    cdef double x0 = coords.getX(0)
+    cdef double y0 = coords.getY(0)
+    cdef double x1, y1
+    for i in range(1, n):
+        x1 = coords.getX(i)
+        y1 = coords.getY(i)
+        if intersects_cn(xp, yp, x0, x1, y0, y1) == 1:
             cnt += 1
+        x0 = x1
+        y0 = y1
     return cnt
 
 cdef int intersects_cn(double xp, double yp, double x0, double x1, double y0, double y1):
