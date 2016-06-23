@@ -1082,12 +1082,8 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
                     "implemented. As a workaround, transform to an appropriate "
                     "ProjectedCRS first.")
 
-        x, y = point.get_vertex(crs=self.crs)[:2]
-        cnt = 0
-        for seg in self.segment_tuples:
-            (a, b) = seg
-            if _cintersection.intersects_cn(x, y, a[0], b[0], a[1], b[1]):
-                cnt += 1
+        x, y, = point.get_vertex(crs=self.crs)
+        cnt = _cintersection.count_crossings(x, y, self.vertices)
         return cnt % 2 == 1 and not any(p.contains(point) for p in self.subs)
 
     def to_line(self):
