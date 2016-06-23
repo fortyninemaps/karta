@@ -30,10 +30,10 @@ cdef struct vector:
     double x
     double y
 
-cdef double cdot2(vector u, vector v):
+cdef double cdot2(vector u, vector v) nogil:
     return u.x * v.x + u.y * v.y
 
-cdef double cross2(vector u, vector v):
+cdef double cross2(vector u, vector v) nogil:
     return u.x * v.y - u.y * v.x
 
 cdef point cproj2(vector u, vector v):
@@ -42,8 +42,26 @@ cdef point cproj2(vector u, vector v):
     vv = cdot2(v, v)
     return point(uv/vv*v.x, uv/vv*v.y)
 
-cdef double dist2(point pt0, point pt1):
+cdef double dist2(point pt0, point pt1) nogil:
     return sqrt((pt0.x-pt1.x)**2 + (pt0.y-pt1.y)**2)
+
+cdef double mind(double a, double b) nogil:
+    if a <= b:
+        return a
+    else:
+        return b
+
+cdef double maxd(double a, double b) nogil:
+    if a >= b:
+        return a
+    else:
+        return b
+
+cdef double absd(double a) nogil:
+    if a < 0:
+        return -a
+    else:
+        return a
 
 def pt_nearest_planar(double x, double y,
                       double endpt0_0, double endpt0_1,
@@ -68,14 +86,14 @@ def pt_nearest_planar(double x, double y,
 
     # Determine whether u_int is inside the segment
     # Otherwise return the nearest endpoint
-    if abs(pt0.x - pt1.x) < 1e-4:  # Segment is near vertical
-        if u_int.y > max(pt0.y, pt1.y):
+    if absd(pt0.x - pt1.x) < 1e-4:  # Segment is near vertical
+        if u_int.y > maxd(pt0.y, pt1.y):
             if pt0.y > pt1.y:
                 return ((pt0.x, pt0.y), dist2(pt0, pt))
             else:
                 return ((pt1.x, pt1.y), dist2(pt1, pt))
 
-        elif u_int.y < min(pt0.y, pt1.y):
+        elif u_int.y < mind(pt0.y, pt1.y):
             if pt0.y < pt1.y:
                 return ((pt0.x, pt0.y), dist2(pt0, pt))
             else:
@@ -86,13 +104,13 @@ def pt_nearest_planar(double x, double y,
 
     else:
 
-        if u_int.x > max(pt0.x, pt1.x):
+        if u_int.x > maxd(pt0.x, pt1.x):
             if pt0.x > pt1.x:
                 return ((pt0.x, pt0.y), dist2(pt0, pt))
             else:
                 return ((pt1.x, pt1.y), dist2(pt1, pt))
 
-        elif u_int.x < min(pt0.x, pt1.x):
+        elif u_int.x < mind(pt0.x, pt1.x):
             if pt0.x < pt1.x:
                 return ((pt0.x, pt0.y), dist2(pt0, pt))
             else:
@@ -158,10 +176,10 @@ def pt_nearest_proj(object fwd, object inv, tuple pt, double[:] endpt0, double[:
         xm = 0.5 * (x0 + x1)
         grad = _along_distance_gradient(fwd, inv, endpt0[0], endpt0[1], pt[0], pt[1], az, xm*L, 1e-7*L)
         if grad > 0:
-            dx = abs(x1-xm) * L
+            dx = absd(x1-xm) * L
             x1 = xm
         else:
-            dx = abs(x0-xm) * L
+            dx = absd(x0-xm) * L
             x0 = xm
         i += 1
     (xn, yn, _) = fwd(endpt0[0], endpt0[1], az, xm*L)
@@ -177,8 +195,8 @@ class ConvergenceError(Exception):
 # Tree functions
 def bbox_intersection_area(tuple bb0, tuple bb1):
     cdef float dx, dy
-    dx = max(min(bb0[2], bb1[2]) - max(bb0[0], bb1[0]), 0.0)
-    dy = max(min(bb0[3], bb1[3]) - max(bb0[1], bb1[1]), 0.0)
+    dx = maxd(mind(bb0[2], bb1[2]) - maxd(bb0[0], bb1[0]), 0.0)
+    dy = maxd(mind(bb0[3], bb1[3]) - maxd(bb0[1], bb1[1]), 0.0)
     return dx*dy
 
 def iswithin(tuple bbox, tuple pt):

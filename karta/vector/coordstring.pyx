@@ -3,19 +3,19 @@ cimport numpy as np
 from cpython cimport bool
 from cpython.array cimport array, clone
 
-cdef double mind(double a, double b):
+cdef double mind(double a, double b) nogil:
     return a if a<= b else b
 
-cdef double maxd(double a, double b):
+cdef double maxd(double a, double b) nogil:
     return a if a>= b else b
 
-cdef int floord(double a):
+cdef int floord(double a) nogil:
     if (a % 1) == 0:
         return <int> a
     else:
         return <int> (a // 1)
 
-cdef int ceild(double a):
+cdef int ceild(double a) nogil:
     if (a % 1) == 0:
         return <int> a
     else:

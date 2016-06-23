@@ -219,8 +219,8 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         float
         """
         if projected and not isinstance(self.crs, GeographicalCRS):
-            (x0, y0) = self.vertex[:2]
-            (x1, y1) = other.get_vertex(self.crs)[:2]
+            x0, y0 = self.vertex[:2]
+            x1, y1 = other.get_vertex(self.crs)[:2]
             dist = math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
         else:
             lon0, lat0 = self.crs.project(self.x, self.y, inverse=True)
