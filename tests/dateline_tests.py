@@ -1,8 +1,16 @@
 import unittest
 from karta import Point, Polygon
 from karta.crs import LonLatWGS84, SphericalEarth
+from karta.vector.dateline import crosses_dateline
 
 class TestDateline(unittest.TestCase):
+
+    def test_crosses_dateline(self):
+        self.assertTrue(crosses_dateline(179, -179))
+        self.assertTrue(crosses_dateline(-150, 140))
+        self.assertFalse(crosses_dateline(160, 10))
+        self.assertFalse(crosses_dateline(-20, 30))
+        return
 
     def test_azimuth(self):
         for crs in (SphericalEarth, LonLatWGS84):
