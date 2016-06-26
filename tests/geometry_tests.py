@@ -609,12 +609,12 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertFalse(diamond.contains(Point((2, -1))))
         return
 
-    #def test_poly_contains3(self):
-    #    # case where point is on an edge (should return true)
-    #    square = Polygon([(0,0), (1,0), (1,1), (0,1)])
-    #    self.assertTrue(square.contains(Point([0.5, 0])))
-    #    self.assertTrue(square.contains(Point([0, 0.5])))
-    #    return
+    def test_poly_contains3(self):
+        # case where point is on an edge (should return true)
+        square = Polygon([(0,0), (1,0), (1,1), (0,1)])
+        self.assertTrue(square.contains(Point([0.5, 0])))
+        self.assertTrue(square.contains(Point([0, 0.5])))
+        return
 
     def test_poly_contains4(self):
         # hippie star
@@ -626,6 +626,14 @@ class TestGeometryAnalysis(unittest.TestCase):
         # causes naive cross-product methods to fail
         pt = Point((28.75, 25.625))
         self.assertTrue(polygon.contains(pt))
+        return
+
+    def test_poly_contains_polar(self):
+        p = Polygon([(0, 80), (45, 80), (90, 80), (135, 80), (180, 80),
+                     (225, 80), (270, 80), (315, 80)],
+                    crs=SphericalEarth)
+        self.assertTrue(p.contains(Point((45, 85), crs=SphericalEarth)))
+        self.assertFalse(p.contains(Point((45, 75), crs=SphericalEarth)))
         return
 
     def test_poly_centroid(self):

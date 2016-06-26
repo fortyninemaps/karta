@@ -3,46 +3,36 @@
 import numpy as np
 cimport numpy as np
 from cpython cimport bool
-from libc.math cimport atan, sqrt
+from libc.math cimport sqrt, atan2
 
 def isleft(tuple pt0, tuple pt1, tuple pt2):
     return (pt1[0]-pt0[0])*(pt2[1]-pt0[1]) - (pt1[1]-pt0[1])*(pt2[0]-pt0[0]) > 0.0
 
 def polarangle(tuple pt0, tuple pt1):
-    """ Return the polar angle from pt0 to pt1, where we assume pt0.y
-    <= pt1.y """
-    cdef double pi
-    cdef double dx
-    pi = 3.141592653589793
-    dx = pt1[0] - pt0[0]
-    if dx > 0:
-        return atan((pt1[1] - pt0[1]) / dx)
-    elif dx < 0:
-        return atan((pt1[1] - pt0[1]) / dx) + pi
-    else:
-        return 0.5*pi
+    """ Return the polar angle from pt0 to pt1 """
+    return atan2(pt1[1]-pt0[1], pt1[0]-pt0[0])
 
-cdef struct point:
+cdef struct Point:
     double x
     double y
 
-cdef struct vector:
+cdef struct Vector2:
     double x
     double y
 
-cdef double cdot2(vector u, vector v) nogil:
+cdef double cdot2(Vector2 u, Vector2 v) nogil:
     return u.x * v.x + u.y * v.y
 
-cdef double cross2(vector u, vector v) nogil:
+cdef double cross2(Vector2 u, Vector2 v) nogil:
     return u.x * v.y - u.y * v.x
 
-cdef point cproj2(vector u, vector v):
+cdef Point cproj2(Vector2 u, Vector2 v):
     cdef double uv, vv
     uv = cdot2(u, v)
     vv = cdot2(v, v)
-    return point(uv/vv*v.x, uv/vv*v.y)
+    return Point(uv/vv*v.x, uv/vv*v.y)
 
-cdef double dist2(point pt0, point pt1) nogil:
+cdef double dist2(Point pt0, Point pt1) nogil:
     return sqrt((pt0.x-pt1.x)**2 + (pt0.y-pt1.y)**2)
 
 cdef double mind(double a, double b) nogil:
@@ -72,17 +62,17 @@ def pt_nearest_planar(double x, double y,
     """
 
     cdef double u0, u1, v0, v1
-    cdef point u_on_v, u_int, pt, pt0, pt1
-    cdef vector u, v
+    cdef Point u_on_v, u_int, pt, pt0, pt1
+    cdef Vector2 u, v
 
-    pt = point(x, y)
-    pt0 = point(endpt0_0, endpt0_1)
-    pt1 = point(endpt1_0, endpt1_1)
+    pt = Point(x, y)
+    pt0 = Point(endpt0_0, endpt0_1)
+    pt1 = Point(endpt1_0, endpt1_1)
 
-    u = vector(x - pt0.x, y - pt0.y)
-    v = vector(pt1.x - pt0.x, pt1.y - pt0.y)
+    u = Vector2(x - pt0.x, y - pt0.y)
+    v = Vector2(pt1.x - pt0.x, pt1.y - pt0.y)
     u_on_v = cproj2(u, v)
-    u_int = point(u_on_v.x + pt0.x, u_on_v.y + pt0.y)
+    u_int = Point(u_on_v.x + pt0.x, u_on_v.y + pt0.y)
 
     # Determine whether u_int is inside the segment
     # Otherwise return the nearest endpoint

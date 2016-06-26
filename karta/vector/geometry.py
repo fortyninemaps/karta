@@ -22,6 +22,7 @@ from .quadtree import QuadTree
 from . import vectorgeo as _cvectorgeo
 from . import dateline as _cdateline
 from . import intersection as _cintersection
+from . import contains as _ccontains
 from .. import geodesy
 from ..crs import Cartesian, CartesianCRS, GeographicalCRS, LonLatWGS84
 from ..crs import SphericalEarth
@@ -986,18 +987,12 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
 
         lon0 = geodesy.reduce_deg(self[-1].vertex[0])
         sum_angle = 0.0
-
         for vertex in self.vertices:
-
             lon1 = geodesy.reduce_deg(vertex[0])
-
-            if (_sign(lon0) == -_sign(lon1)) and \
-                ((min(abs(lon0-180), abs(lon0+180)) + min(abs(lon1-180), abs(lon1+180))) < (abs(lon0) + abs(lon1))):
-                # Longitudes span the dateline
+            if _cdateline.crosses_dateline(lon0, lon1):
                 sum_angle += 360.0 + lon1 - lon0
             else:
                 sum_angle += lon1 - lon0
-
             lon0 = lon1
 
         return True if abs(sum_angle) > 1e-4 else False
@@ -1073,18 +1068,18 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
         """ Returns True if point is inside or on the boundary of the polygon, and
         False otherwise. Uses a crossing number scheme.
 
-        Behaviour may not be defined for polar geographical polygons.
+        Note: When the polygon is polar in a geographical coordinate system, a
+        less efficient algorithm is used. For better performance, consider
+        projecting to an appropriate coordinate system such as NSIDCNorth or
+        NSIDCSouth beforehand.
         """
-        if isinstance(self.crs, GeographicalCRS):
-            if self.ispolar():
-                raise NotImplementedError(
-                    "Membership tests on polar geographical polygons not "
-                    "implemented. As a workaround, transform to an appropriate "
-                    "ProjectedCRS first.")
-
-        x, y, = point.get_vertex(crs=self.crs)
-        cnt = _cintersection.count_crossings(x, y, self.vertices)
-        return cnt % 2 == 1 and not any(p.contains(point) for p in self.subs)
+        x, y = point.get_vertex(crs=self.crs)[:2]
+        if isinstance(self.crs, GeographicalCRS) and self.ispolar():
+            return _ccontains.contains_proj(x, y, self.vertices, self.crs) \
+                    and not any(p.contains(point) for p in self.subs)
+        else:
+            return _ccontains.contains(x, y, self.vertices) \
+                    and not any(p.contains(point) for p in self.subs)
 
     def to_line(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
