@@ -21,6 +21,7 @@ cdef inline double cross_prod2(double u0, double u1, double v0, double v1):
     return u0*v1 - u1*v0
 
 def all_intersections(CoordString a, CoordString b):
+    """ brute-force intersection search """
     cdef int na = len(a)
     cdef int nb = len(b)
     cdef int i = 0, j = 0

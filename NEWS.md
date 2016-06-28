@@ -16,6 +16,8 @@
 - `projected` keyword argument added to `Point.distance`, `Point.azimuth`, and
   `Point.walk` to control whether geodetic or planar algorithms are used with
   the CRS is not geographical
+- replaced polygon membership testing algorithm with a winding number-based test
+- implemented fallback algorithm for polygon membership testing in polar regions
 
 ## changes with 0.6
 

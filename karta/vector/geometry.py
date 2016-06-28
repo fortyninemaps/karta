@@ -559,9 +559,9 @@ class MultiVertexMixin(object):
 
         # initialize convex hull
         if len(points) == 2:
-            return [pt0, points[0], points[1]]
+            return Polygon([pt0, points[0], points[1]])
         elif len(points) == 1:
-            return [pt0, points[0]]
+            raise GeometryError("convex polygon not defined for two points")
         else:
 
             S = [pt0, points[0], points[1]]
