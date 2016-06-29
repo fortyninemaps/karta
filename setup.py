@@ -74,17 +74,15 @@ setup(
     url = "http://www.fortyninemaps.com/karta.html",
     description = "Geospatial analysis in Python",
     long_description = """*Karta* is a package for spatial analysis in Python. It streamlines data
-processing by providing classes for coordinate-system aware geographical vector
-and raster data.
+processing by providing efficient generic geographical types for vector
+and raster sources as well as a selection of analysis functions.
 
-Create vector geometries:
+For example, read or create vector geometries:
 
 .. code:: python
 
     point = Point((-130.0, 52.0), crs=LonLatWGS84)
-
     line = read_geojson("linedata.json")
-
     polygon = Polygon([(-515005.78, -1301130.53),
                        (-579174.89, -1282271.94),
                        (-542977.83, -1221147.82),
@@ -99,50 +97,116 @@ Perform simple queries:
 
     point2 = Point((-25.0, 48.0), crs=LonLatWGS84)
     point.distance(point2)          # Distance in geographical units
-
     line.intersects(polygon)        # True or False
-
     ch = polygon.convex_hull()      # Returns a new polygon
     ch.to_shapefile("poly.shp")
 
-Work with raster data:
+Load and manipulate raster data:
 
 .. code:: python
 
     grid = read_gtiff("landsat_scene.tif")  # Leverages GDAL
-
     grid.profile(line)              # Collect data along a line
-
     grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
 
-*Karta* works with Python 2 and 3. Suggestions, bug reports, test cases, and
-pull requests are welcome.
-
-DOCUMENTATION
+Documentation
 -------------
 
-See the `webpage <http://www.fortyninemaps.com/karta.html>`__ and the `manual
-<http://www.fortyninemaps.com/kartadocs/karta-manual.html>`__.
+See the `online
+manual <http://www.fortyninemaps.com/kartadocs/introduction.html>`__,
+the
+`tutorial <http://www.fortyninemaps.com/kartadocs/_static/tutorial.html>`__,
+or read the `API
+documentation <http://www.fortyninemaps.com/kartadocs/reference.html>`__.
 
-The manual can also be built offline using Sphinx by running ``make`` from the
-``doc/`` subdirectory. The documentation is built from source code docstrings
-and the example IPython notebooks, which are also reproduced in the `Wiki
-<https://github.com/fortyninemaps/karta/wiki/Tutorial>`__. Building the
-documentation requires `Sphinx <http://sphinx-doc.org/>`__, `alabaster
-<https://github.com/bitprophet/alabaster>`__ and `numpydoc
-<https://github.com/numpy/numpydoc>`__.
+The manual can be built offline using
+`Sphinx <http://sphinx-doc.org/>`__. Building the documentation requires
+`numpydoc <https://github.com/numpy/numpydoc>`__.
 
-DEPENDENCIES
+Package Overview
+----------------
+
+-  **karta.crs**: framework for coordinate reference systems and
+   geodetic calculations
+
+-  **karta.vector.geometry**: geometry classes ``Point``,
+   ``Multipoint``, ``Line``, and ``Polygon`` with associated methods
+   such as length, area, intersections, membership testing, convex
+   hulls, and affine transformations
+
+-  **karta.raster.grid**: ``Grid`` classes including ``RegularGrid``
+   class (supporting CRS-aware clipping, sampling, profiling along
+   vector tracks), and experimental ``WarpedGrid``
+
+-  **tests**: unit tests, to be run with ``python tests/runtests.py``
+
+Formats
+-------
+
+*Karta* provides a basic working interface to several of common file
+formats. Currently implemented are:
+
+-  vector
+
+   -  GeoJSON (r,w)
+   -  ESRI Shapefiles (via GDAL) (r,w)
+   -  GPS eXchange (GPX) (r,w)
+
+-  raster
+
+   -  GeoTiff (via GDAL) (r,w)
+   -  ESRI ASCII Grid (r,w)
+
+*Karta* implements the Python ```__geo_interface__``
+attribute <https://gist.github.com/sgillies/2217756>`__ for vector
+geometries. This permits data to be exchanged between *Karta* and
+external modules that also implement ``__geo_interface__`` (e.g.
+`shapely <https://github.com/Toblerity/Shapely>`__,
+`fastkml <https://fastkml.readthedocs.org/en/latest/>`__).
+
+Installation
 ------------
 
-- numpy
-- gdal
-- pyproj
-- blosc
-- C99-compliant compiler
+The easiest way to install in production is via ``pip``. Installation
+requires a recent version of ``setuptools``:
 
-When installing from PyPI, C source code is provided. When building from
-sources, Cython is required.
+::
+
+    pip install -U setuptools
+
+Then, to install the latest release from PyPI:
+
+::
+
+    pip install karta
+
+Building from source
+~~~~~~~~~~~~~~~~~~~~
+
+Building from source requires Cython:
+
+::
+
+    pip install Cython
+
+Then, clone the repository and install:
+
+::
+
+    git clone https://github.com/fortyninemaps/karta.git karta
+    pip install -r karta/requirements.txt
+    pip install karta/
+
+Dependencies
+------------
+
+-  numpy >= >1.7
+-  gdal >= 1.10
+-  pyproj >= 1.9
+-  blosc >= 1.2
+-  C99-compliant compiler
+
+*Karta* supports Python 2.7 and Python 3.4+.
 """,
     classifiers = ["Programming Language :: Python :: 2",
                    "Programming Language :: Python :: 2.7",

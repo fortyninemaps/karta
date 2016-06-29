@@ -3,16 +3,14 @@
 [![Build Status](https://travis-ci.org/fortyninemaps/karta.svg?branch=master)](https://travis-ci.org/fortyninemaps/karta)
 
 *Karta* is a package for spatial analysis in Python. It streamlines data
-processing by providing generic geographical types for vector and raster sources
-as well as a selection of analysis functions.
+processing by providing efficient generic geographical types for vector and
+raster sources as well as a selection of analysis functions.
 
 For example, read or create vector geometries:
 
 ```python
 point = Point((-130.0, 52.0), crs=LonLatWGS84)
-
 line = read_geojson("linedata.json")
-
 polygon = Polygon([(-515005.78, -1301130.53),
                    (-579174.89, -1282271.94),
                    (-542977.83, -1221147.82),
@@ -25,42 +23,33 @@ Perform simple queries:
 ```python
 point2 = Point((-25.0, 48.0), crs=LonLatWGS84)
 point.distance(point2)          # Distance in geographical units
-
 line.intersects(polygon)        # True or False
-
 ch = polygon.convex_hull()      # Returns a new polygon
 ch.to_shapefile("poly.shp")
 ```
 Load and manipulate raster data:
 ```python
 grid = read_gtiff("landsat_scene.tif")  # Leverages GDAL
-
 grid.profile(line)              # Collect data along a line
-
 grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
 ```
 
-The latest release is on PyPI (see [Installation](#installation)). *Karta* is
-tested with Python 2.7 and Python 3.4+. Suggestions, bug reports, test cases,
-and pull requests are welcome.
+The latest release is on PyPI (see [Installation](#installation)). Suggestions,
+bug reports, test cases, and pull requests are welcome.
 
-The latest stable release is 0.6.1. The repository master branch is considered
-an moderately-unstable development version.
+The latest stable release is 0.7. The repository master branch is considered a
+moderately-unstable development branch.
 
-## DOCUMENTATION
+## Documentation
 
 See the [online manual](http://www.fortyninemaps.com/kartadocs/introduction.html),
 the [tutorial](http://www.fortyninemaps.com/kartadocs/_static/tutorial.html), or read the
 [API documentation](http://www.fortyninemaps.com/kartadocs/reference.html).
 
-The manual can also be built offline using Sphinx by running `make` from the
-`doc/` subdirectory. The documentation is built from source code docstrings and
-the example IPython notebooks, which are also reproduced in the
-[Wiki](https://github.com/fortyninemaps/karta/wiki/Tutorial). Building the
-documentation requires [Sphinx](http://sphinx-doc.org/) and
-[numpydoc](https://github.com/numpy/numpydoc).
+The manual can be built offline using [Sphinx](http://sphinx-doc.org/). Building
+the documentation requires [numpydoc](https://github.com/numpy/numpydoc).
 
-## PACKAGE OVERVIEW
+## Package Overview
 
 - **karta.crs**: framework for coordinate reference systems and geodetic
   calculations
@@ -75,7 +64,7 @@ documentation requires [Sphinx](http://sphinx-doc.org/) and
 
 - **tests**: unit tests, to be run with `python tests/runtests.py`
 
-## FORMATS
+## Formats
 
 *Karta* provides a basic working interface to several of common file formats.
 Currently implemented are:
@@ -95,10 +84,10 @@ implement `__geo_interface__` (e.g.
 [shapely](https://github.com/Toblerity/Shapely),
 [fastkml](https://fastkml.readthedocs.org/en/latest/)).
 
-## INSTALLATION
+## Installation
 
-The easiest way to install in production is to use `pip`. Installation requires
-a version of `setuptools>=17.0`:
+The easiest way to install in production is via `pip`. Installation requires a
+recent version of `setuptools`:
 
     pip install -U setuptools
 
@@ -118,16 +107,17 @@ Then, clone the repository and install:
     pip install -r karta/requirements.txt
     pip install karta/
 
-## DEPENDENCIES
+## Dependencies
 
-- Python 2.7 or Python 3.4+
-- numpy
-- gdal
-- pyproj
-- blosc
+- numpy >= >1.7
+- gdal >= 1.10
+- pyproj >= 1.9
+- blosc >= 1.2
 - C99-compliant compiler
 
-## LICENSE
+*Karta* supports Python 2.7 and Python 3.4+.
+
+## License
 
 This software is provided under the MIT license.
 
