@@ -2,6 +2,8 @@
 
 [![Build Status](https://travis-ci.org/njwilson23/karta.svg?branch=master)](https://travis-ci.org/njwilson23/karta)
 
+![Karta](https://raw.githubusercontent.com/fortyninemaps/karta/gh-pages/figures/karta_logo.png)
+
 *Karta* is a Leatherman for geographic analyses. *Karta* provides an lightweight
 interface for solving problems in Python/Python3. It presents a simple and clean
 vector and raster data types, a small selection of geographical analysis
