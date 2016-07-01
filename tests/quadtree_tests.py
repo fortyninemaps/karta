@@ -1,15 +1,53 @@
 """ Unit tests for vector functions """
 
 import unittest
+import ctypes
+from ctypes import c_int, c_double, c_char_p, c_bool
 import numpy as np
 
 import karta
 from karta.vector.coordstring import CoordString
 from karta.vector.quadtree import QuadTree
-#from karta.vector.quadtree import QuadTree, Node
-#from karta.vector.quadtree import addpt, split, hashpt
-#from karta.vector.quadtree import querypt_recursion, querypt_hash
-#from karta.vector.quadtree import iswithin, overlaps
+
+class BBOX(ctypes.Structure):
+    _fields_ = [("xmin", c_double), ("ymin", c_double),
+                ("xmax", c_double), ("ymax", c_double)]
+
+class POSITION(ctypes.Structure):
+    _fields_ = [("id", c_int), ("x", c_double), ("y", c_double)]
+
+class TestCQuadTree(unittest.TestCase):
+
+    def setUp(self):
+        self.qt = ctypes.CDLL(karta.vector.quadtree.__file__)
+
+    def test_mind(self):
+        self.qt.mind.restype = c_double
+        self.assertEqual(self.qt.mind(c_double(3.0), c_double(4.0)), 3.0)
+        self.assertEqual(self.qt.mind(c_double(3.0), c_double(-2.0)), -2.0)
+        return
+
+    def test_maxd(self):
+        self.qt.maxd.restype = c_double
+        self.assertEqual(self.qt.maxd(c_double(3.0), c_double(4.0)), 4.0)
+        self.assertEqual(self.qt.maxd(c_double(-3.0), c_double(-4.0)), -3.0)
+        return
+
+    def test_iswithin(self):
+        self.qt.iswithin.restype = c_bool
+        self.qt.qt_new_bbox.restype = ctypes.POINTER(BBOX)
+        self.qt.qt_new_position.restype = ctypes.POINTER(POSITION)
+        bboxPtr = self.qt.qt_new_bbox(c_double(-1.0), c_double(-1.0),
+                                      c_double(1.0), c_double(1.0))
+        ptPtr = self.qt.qt_new_position(c_int(0), c_double(0.5), c_double(0.5))
+        self.assertTrue(self.qt.iswithin(bboxPtr, ptPtr))
+
+        ptPtr = self.qt.qt_new_position(c_int(1), c_double(-1.5), c_double(0.5))
+        self.assertFalse(self.qt.iswithin(bboxPtr, ptPtr))
+
+        ptPtr = self.qt.qt_new_position(c_int(1), c_double(0.5), c_double(1.5))
+        self.assertFalse(self.qt.iswithin(bboxPtr, ptPtr))
+        return
 
 class TestQuadTree(unittest.TestCase):
 
