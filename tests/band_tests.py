@@ -82,5 +82,40 @@ class BandIndexerTests(unittest.TestCase):
         indexer[mask] = -1
         self.assertEqual(np.sum(indexer[:,:]), 32)
 
+    def test_get_multibanded(self):
+        values = np.ones([16, 16])
+        bands = [CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32)]
+        bands[0][:,:] = values
+        bands[1][:,:] = 2*values
+        bands[2][:,:] = 3*values
+
+        indexer = BandIndexer(bands)
+        result = indexer[4:7,2:8,:]
+        self.assertEqual(result.shape, (3, 6, 3))
+        self.assertTrue(np.all(result[0,0,:] == np.array([1.0, 2.0, 3.0])))
+
+        # make sure it works with a scalar band index
+        result = indexer[4:7,2:8,1]
+        self.assertEqual(result.shape, (3, 6))
+        self.assertTrue(np.all(result == 2.0))
+        return
+
+    def test_set_multibanded(self):
+        values = np.ones([16, 16])
+        bands = [CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32)]
+
+        indexer = BandIndexer(bands)
+        indexer[:,:,0] = values
+        indexer[:,:,1:] = 2*values
+
+        self.assertTrue(np.all(bands[0][:,:] == 1.0))
+        self.assertTrue(np.all(bands[1][:,:] == 2.0))
+        self.assertTrue(np.all(bands[2][:,:] == 2.0))
+        return
+
 if __name__ == "__main__":
     unittest.main()

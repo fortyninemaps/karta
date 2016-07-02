@@ -30,7 +30,14 @@ class BandIndexer(object):
             if isinstance(key, np.ndarray):
                 return np.dstack([b[:,:][key] for b in self.bands])
             else:
-                return np.dstack([b[key] for b in self.bands])
+                if len(key) not in (2, 3):
+                    raise IndexError("indexing tuple must have length 2 or 3")
+                sr, sc = key[:2]
+                sb = slice(None, None, None) if len(key) == 2 else key[2]
+                if isinstance(sb, slice):
+                    return np.dstack([b[sr,sc] for b in self.bands[sb]])
+                else:
+                    return self.bands[sb][sr,sc]
 
     def __setitem__(self, key, value):
         if len(self.bands) == 1:
@@ -47,8 +54,19 @@ class BandIndexer(object):
                     tmp[key] = v
                     b[:,:] = tmp
             else:
-                for b, v in zip(self.bands, value):
-                    b[key] = v
+                if len(key) not in (2, 3):
+                    raise IndexError("indexing tuple must have length 2 or 3")
+                sr, sc = key[:2]
+                sb = slice(None, None, None) if len(key) == 2 else key[2]
+                if isinstance(sb, slice):
+                    if len(value.shape) == 3:
+                        for i in range(len(self.bands)):
+                            self.bands[i][sr,sc] = value[:,:,i]
+                    else:
+                        for b in self.bands[sb]:
+                            b[sr,sc] = value
+                else:
+                    self.bands[sb][sr,sc] = value
         return
 
     def __iter__(self):
