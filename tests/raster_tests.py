@@ -326,8 +326,6 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_mask_poly_partial(self):
-        # test case where polygon is partly outside the grid extents
-        # simply ensures that it doesn't crash for now
         t = -np.linspace(0, 2*np.pi, 200)
         xp = ((2+np.cos(7*t)) * np.cos(t+0.3) + 2) * 12
         yp = ((2+np.cos(7*t)) * np.sin(t+0.2) + 2) * 12
@@ -336,6 +334,16 @@ class RegularGridTests(unittest.TestCase):
                                  values=np.arange(1e6).reshape(1000, 1000),
                                  crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
+        self.assertEqual(masked_grid.data_mask.sum(), 181424)
+        return
+
+    def test_mask_poly_partial2(self):
+        # this case has the first transect begin off-grid, which has caused
+        # problems in the past
+        g = karta.RegularGrid([0, 0, 1, 1, 0, 0], values=np.ones((7, 7)))
+        p = karta.Polygon([(-2, 3), (8, -5), (8, -1), (-2, 7)])
+        gc = g.mask_by_poly(p)
+        self.assertEqual(gc.data_mask.sum(), 20)
         return
 
     def test_mask_poly_multipl(self):

@@ -573,15 +573,12 @@ class RegularGrid(Grid):
         msk = None
         for poly in polys:
 
+            x, y = poly.get_coordinate_lists(self.crs)[:2]
             if not poly.isclockwise():
-                vertices = poly.get_vertices(self.crs)[::-1]
-            else:
-                vertices = poly.get_vertices(self.crs)
-            x = [a[0] for a in vertices]
-            y = [a[1] for a in vertices]
+                x = x[::-1]
+                y = y[::-1]
 
             ny, nx = self.size
-
             _msk = mask_poly(x, y, nx, ny, self.transform)
 
             if msk is None:
@@ -596,9 +593,8 @@ class RegularGrid(Grid):
                 band[:,:] = data
             return self
         else:
-            val = self[:,:]
             return RegularGrid(self.transform,
-                               values=np.where(msk, val, self.nodata),
+                               values=np.where(msk, self[:,:], self.nodata),
                                crs=self.crs, nodata_value=self.nodata)
 
     def resample(self, dx, dy, method='nearest'):
@@ -1136,7 +1132,7 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
 
     Parameters
     ----------
-    xpoly, ypoly : list of floats
+    xpoly, ypoly : lists of floats
         sequences of points representing polygon
     nx : int
     ny : int
@@ -1158,9 +1154,10 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
     x0 = xpoly[i_bot]
     y0 = ypoly[i_bot]
 
+    # compute the grid indices of the starting point
     ta, tb, tc, td, te, tf = transform
-    i0 = int(round((y0 - min(y0, tb) - tf/tc*(x0 - min(x0, ta))) / (td - tf*te/tc)))
-    j0 = int(round((x0 - min(x0, ta) - te/td*(y0 - min(y0, tb))) / (tc - te*tf/td)))
+    i0 = int(round((y0-tb - tf/tc*(x0-ta)) / (td - tf*te/tc)))
+    j0 = int(round((x0-ta - te/td*(y0-tb)) / (tc - te*tf/td)))
 
     for el in range(1, len(xpoly)+1):
         idx = (el + i_bot) % len(xpoly)
@@ -1174,7 +1171,7 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
         # If segment is horizontal or off-grid, ignore
         if ((0 <= i0 < ny) and (0 <= i1 < ny)) or (y1 != y0):
 
-            if y1 > y0:     # mark grid cells to the right
+            if y1 > y0:     # upward - mark grid cells to the right
 
                 for i in range(i0, i1):
                     if (0 <= i < ny):
@@ -1182,7 +1179,7 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
                         if j < nx:
                             mask[i, max(0, j):] += 1
 
-            else:           # unmark grid cells to the right
+            else:           # downward - unmark grid cells to the right
 
                 for i in range(i1, i0):
                     if (0 <= i < ny):
