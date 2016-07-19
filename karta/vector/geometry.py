@@ -1338,6 +1338,13 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
                 vertices.append(np.array(line_vertices))
             return vertices
 
+    def get_coordinate_lists(self, crs=None):
+        """ Returns a list of 2xn arrays representing lists of coordinates """
+        ret = []
+        for line_vertices in self.get_vertices(crs=crs):
+            ret.append(line_vertices.T)
+        return ret
+
     @cache_decorator("bbox")
     def get_bbox(self, crs=None):
         vertices = self.get_vertices(crs=crs)
@@ -1468,6 +1475,16 @@ class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
                                           for v in ring_vertices]))
                 vertices.append(poly)
             return vertices
+
+    def get_coordinate_lists(self, crs=None):
+        """ Returns a list of 2xn arrays representing lists of coordinates """
+        ret = []
+        for poly_vertices in self.get_vertices(crs=crs):
+            poly = []
+            for ring_vertices in poly_vertices:
+                poly.append(ring_vertices.T)
+            ret.append(poly)
+        return ret
 
     @cache_decorator("bbox")
     def get_bbox(self, crs=None):
