@@ -413,7 +413,10 @@ class RegularGrid(Grid):
         else:
             def isdata(a):
                 return a != self.nodata
-        return isdata(self[:,:])
+        if len(self.bands) == 1:
+            return isdata(self[:,:])
+        else:
+            return np.all(isdata(self[:,:]), axis=-1)
 
     def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
         """ Generator for grid chunks, useful for parallel or memory-controlled
