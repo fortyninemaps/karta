@@ -425,7 +425,7 @@ class RegularGrid(Grid):
         Parameters
         ----------
         size : tuple of two integers, optional
-            size of the chunks ot return (default approximately one-quarter of
+            size of the chunks to return (default approximately one-quarter of
             each dimension)
         overlap : tuple of two integers, optional
             number of pixels of overlap (default (0, 0))
@@ -745,6 +745,11 @@ class RegularGrid(Grid):
         ----------
         x, y : float or vector
             vertices of points to compute indices for
+
+        Returns
+        -------
+        float or vector
+            sample values
         """
         i, j = self.get_positions(x, y)
         i0 = np.floor(i).astype(int)
