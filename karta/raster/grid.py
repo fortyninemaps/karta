@@ -798,6 +798,7 @@ class RegularGrid(Grid):
         """
         crs = kwargs.get("crs", None)
         method = kwargs.get("method", "bilinear")
+        sz_orig = None
 
         argerror = TypeError("`grid` takes a Point, a Multipoint, or x, y coordinate lists")
         if hasattr(args[0], "_geotype"):
@@ -812,6 +813,12 @@ class RegularGrid(Grid):
             try:
                 x = args[0]
                 y = args[1]
+
+                if getattr(x, "ndim", 1) > 1:
+                    sz_orig = x.shape
+                    x = x.ravel()
+                    y = y.ravel()
+
                 if crs is None:
                     crs = self.crs
                 else:
@@ -822,11 +829,14 @@ class RegularGrid(Grid):
                 raise argerror
 
         if method == "nearest":
-            return self.sample_nearest(x, y)
+            z = self.sample_nearest(x, y)
         elif method == "bilinear":
-            return self.sample_bilinear(x, y)
+            z = self.sample_bilinear(x, y)
         else:
             raise ValueError("method '{0}' not available".format(method))
+        if sz_orig is not None:
+            z = z.reshape(sz_orig)
+        return z
 
     def profile(self, line, resolution=None, **kw):
         """ Sample along a *line* at *resolution*.

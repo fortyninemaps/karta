@@ -171,6 +171,15 @@ class RegularGridTests(unittest.TestCase):
                           0.63265306122448983, 0.74052478134110788])
         return
 
+    def test_sample_2d_array(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        xi = np.array([[0.7, 1.3], [0.7, 1.3]])
+        yi = np.array([[0.7, 0.7], [1.3, 1.3]])
+        z = grid.sample(xi, yi, method="nearest")
+        self.assertTrue(np.all(z == np.array([[0, 1], [1, 0.5]])))
+        return
+
     def test_vertex_coords(self):
         grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
                                  values=np.zeros([49, 49]))
