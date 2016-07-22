@@ -48,7 +48,7 @@ class Grid(object):
 
     def apply(self, func, copy=False):
         """ Apply a function *func* to grid values """
-        msk = self.data_mask
+        msk = self.data_mask_full
         if copy:
             newgrid = self.copy()
             newgrid[:,:] = np.where(msk, func(self[:,:]), self._nodata)
@@ -209,7 +209,7 @@ class RegularGrid(Grid):
         ----------
         val : number
         """
-        self[:,:] = np.where(self.data_mask, self[:,:], val)
+        self[:,:] = np.where(self.data_mask_full, self[:,:], val)
         self._nodata = val
         return
 
@@ -406,17 +406,22 @@ class RegularGrid(Grid):
         return (lx, rx, by, ty)
 
     @property
-    def data_mask(self):
-        """ 8-bit mask of valid data cells """
+    def data_mask_full(self):
+        """ 8-bit mask of valid data cells by band """
         if np.isnan(self.nodata):
             isdata = lambda a: ~np.isnan(a)
         else:
             def isdata(a):
                 return a != self.nodata
+        return isdata(self[:,:])
+
+    @property
+    def data_mask(self):
+        """ 8-bit mask of valid data cells, collapsed across bands """
         if len(self.bands) == 1:
-            return isdata(self[:,:])
+            return self.data_mask_full
         else:
-            return np.all(isdata(self[:,:]), axis=-1)
+            return np.all(self.data_mask_full, axis=-1)
 
     def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
         """ Generator for grid chunks, useful for parallel or memory-controlled

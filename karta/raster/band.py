@@ -49,10 +49,16 @@ class BandIndexer(object):
                 self.bands[0][key] = value
         else:
             if isinstance(key, np.ndarray):
-                for b, v in zip(self.bands, value):
-                    tmp = b[:,:]
-                    tmp[key] = v
-                    b[:,:] = tmp
+                if isinstance(value, np.ndarray):
+                    for b, v in zip(self.bands, value):
+                        tmp = b[:,:]
+                        tmp[key] = v
+                        b[:,:] = tmp
+                else:
+                    for b in self.bands:
+                        tmp = b[:,:]
+                        tmp[key] = value
+                        b[:,:] = tmp
             else:
                 if len(key) not in (2, 3):
                     raise IndexError("indexing tuple must have length 2 or 3")

@@ -117,5 +117,21 @@ class BandIndexerTests(unittest.TestCase):
         self.assertTrue(np.all(bands[2][:,:] == 2.0))
         return
 
+    def test_set_multibanded_masked(self):
+        values = np.ones([16, 16])
+        bands = [CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32)]
+
+        mask = np.zeros([16, 16], dtype=np.bool)
+        mask[8:, 2:] = True
+
+        indexer = BandIndexer(bands)
+        indexer[:,:] = np.zeros([16, 16])
+        indexer[mask] = 1.0
+
+        self.assertEqual(np.sum(indexer[:,:]), 336)
+        return
+
 if __name__ == "__main__":
     unittest.main()
