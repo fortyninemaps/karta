@@ -12,13 +12,15 @@ from crs_tests import *
 from coordstring_tests import *
 from new_geometry_tests import *
 from geometry_tests import *
-from quadtree_tests import *
-from rtree_tests import *
 from dateline_tests import *
 from table_tests import *
 
 from grid_tests import *
 from band_tests import *
+
+from quadtree_tests import *
+from rtree_tests import *
+#from redblack_tests import *
 
 # Vector IO
 from shapefile_tests import *

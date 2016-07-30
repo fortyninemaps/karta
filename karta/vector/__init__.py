@@ -15,6 +15,7 @@ from . import geojson
 from . import gpx
 from . import quadtree
 from . import rtree
+#from . import redblack
 
 from .geometry import (Geometry, Point, Line, Polygon,
                        Multipoint, Multiline, Multipolygon,

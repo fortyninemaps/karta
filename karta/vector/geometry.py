@@ -635,12 +635,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
 
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
-        if isinstance(self.crs, CartesianCRS):
-            if not self._bbox_overlap(other):
-                return False
-            interx = _cintersection.all_intersections(self.vertices, other.vertices)
-            return len(interx) != 0
-        else:
+        if isinstance(self.crs, GeographicalCRS):
             for a in self.segment_tuples:
                 for b in other.segment_tuples:
                     try:
@@ -649,6 +644,8 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
                         continue
                     return True
             return False
+        else:
+            return _cintersection.intersects(self.vertices, other.vertices)
 
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint. """
