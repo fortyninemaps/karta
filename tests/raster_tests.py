@@ -88,6 +88,17 @@ class RegularGridTests(unittest.TestCase):
         self.assertAlmostEqual(grid_combined[4,5], 2.33333333333)
         return
 
+    def test_merge_multiband(self):
+        grid3a = karta.RegularGrid([0, 0, 1, 1, 0, 0],
+                values=np.array([1,2,3]) * np.ones((16, 16, 3)))
+        grid3b = karta.RegularGrid([4, 4, 1, 1, 0, 0],
+                values=np.array([2,3,4]) * np.ones((16, 16, 3)))
+        grid3_mosaic = karta.raster.merge([grid3a, grid3b])
+        self.assertEqual(np.nansum(grid3_mosaic[:,:,0]), 552)
+        self.assertEqual(np.nansum(grid3_mosaic[:,:,1]), 920)
+        self.assertEqual(np.nansum(grid3_mosaic[:,:,2]), 1288)
+        return
+
     def test_resample_nearest(self):
         # use linear function so that nearest neighbour and linear interp are
         # exact

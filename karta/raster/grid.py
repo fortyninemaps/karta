@@ -1020,8 +1020,8 @@ class WarpedGrid(Grid):
         raise NotImplementedError
 
 def merge(grids, weights=None):
-    """ Perform a basic grid merge. Currently limited to grids whose sampling
-    is an integer translation from each other.
+    """ Construct a grid mosiac by averaging multiple grids. Currently limited
+    to grids whose sampling is an integer translation from each other.
 
     Parameters
     ----------
@@ -1033,7 +1033,7 @@ def merge(grids, weights=None):
 
     # Check grid class
     if not all(isinstance(grid, RegularGrid) for grid in grids):
-        raise NotImplementedError("All grids must by type RegularGrid")
+        raise NotImplementedError("all grids must by type RegularGrid")
 
     T = grids[0].transform
     # Check grid stretch and skew
@@ -1046,9 +1046,13 @@ def merge(grids, weights=None):
     excmsg = "grid %d not an integer translation from grid 1"
     for i, grid in enumerate(grids[1:]):
         if ((grid.transform[0]-T[0]) / float(T[2])) % 1 > 1e-15:
-            raise NotImplementedError(excmsg % (i+2,))
+            raise ValueError(excmsg % (i+2,))
         if ((grid.transform[1]-T[1]) / float(T[3])) % 1 > 1e-15:
-            raise NotImplementedError(excmsg % (i+2,))
+            raise ValueError(excmsg % (i+2,))
+
+    # Check number of grid bands
+    if len(set([len(grid.bands) for grid in grids])) != 1:
+        raise ValueError("all grids to mosaic must have the same number of bands")
 
     # Compute weighting coefficients by normalizing *weights*
     if weights is None:
@@ -1072,24 +1076,34 @@ def merge(grids, weights=None):
 
     # Allocate data array and copy each grid's data
     typ = grids[0].bands[0].dtype
-    values = np.zeros([ny, nx], dtype=typ)
-    counts = np.zeros([ny, nx], dtype=np.float32)
-    for grid, w in zip(grids, normalizedweights):
-        _xmin, _xmax, _ymin, _ymax = grid.get_extent(reference='edge')
-        offx = int((_xmin-xmin) / T[2])
-        offy = int((_ymin-ymin) / T[3])
-        _ny, _nx = grid.size
+    outbands = []
 
-        mask = grid.data_mask
-        counts[offy:offy+_ny,offx:offx+_nx][mask] += w
-        values[offy:offy+_ny,offx:offx+_nx][mask] += typ(grid[mask]*w)
-        del mask
+    for iband in range(len(grids[0].bands)):
+        values = np.zeros([ny, nx], dtype=typ)
+        counts = np.zeros([ny, nx], dtype=np.float32)
 
-    validcountmask = (counts!=0.0)
-    values[validcountmask] = values[validcountmask] / counts[validcountmask]
-    values[~validcountmask] = grids[0].nodata
+        for grid, weight in zip(grids, normalizedweights):
+            _xmin, _xmax, _ymin, _ymax = grid.get_extent(reference='edge')
+            offx = int((_xmin-xmin) / T[2])
+            offy = int((_ymin-ymin) / T[3])
+            _ny, _nx = grid.size
+
+            mask = grid.data_mask
+            counts[offy:offy+_ny,offx:offx+_nx][mask] += weight
+            _bnd = grid.bands[iband]
+            values[offy:offy+_ny,offx:offx+_nx][mask] += typ(_bnd[:,:][mask]) * weight
+            del mask
+
+        validcountmask = (counts!=0.0)
+        values[validcountmask] = values[validcountmask] / counts[validcountmask]
+        values[~validcountmask] = grids[0].nodata
+
+        band = CompressedBand((ny, nx), typ)
+        band[:,:] = values
+        outbands.append(band)
+
     Tmerge = [xmin, ymin] + list(T[2:])
-    return RegularGrid(Tmerge, values=values, crs=grids[0].crs,
+    return RegularGrid(Tmerge, bands=outbands, crs=grids[0].crs,
                        nodata_value=grids[0].nodata)
 
 def get_nodata(T):
