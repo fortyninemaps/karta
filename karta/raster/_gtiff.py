@@ -3,7 +3,7 @@
 import struct
 import sys
 import numpy as np
-from .band import SimpleBand, CompressedBand
+from .band import CompressedBand
 from .. import errors
 
 try:
@@ -253,7 +253,6 @@ def read(fnm, in_memory, ibands=ALL, bandclass=CompressedBand):
 
     finally:
         if in_memory:
-            rasterband = None
             dataset = None
     return bands, hdr
 
@@ -297,7 +296,7 @@ def write(fnm, grid, compress=None, tiled=False, **kw):
         sys.stderr.write("Writing GeoTiff failed:\n\t{0}\n".format(e))
         return
     dataset.SetProjection(srs.ExportToWkt())
-    for i, kband in enumerate(grid.bands):
+    for i, _ in enumerate(grid.bands):
         band = dataset.GetRasterBand(i+1)
         band.SetNoDataValue(grid.nodata)
         band.WriteArray(grid.bands[i][::-1])
