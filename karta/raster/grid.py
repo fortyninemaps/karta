@@ -780,8 +780,8 @@ class RegularGrid(Grid):
 
         dx, dy = self._transform[2:4]
         values = self[:,:]
-        z = (values[i0,j0]*(i1-i)*(j1-j) + values[i1,j0]*(i-i0)*(j1-j) + \
-             values[i0,j1]*(i1-i)*(j-j0) + values[i1,j1]*(i-i0)*(j-j0))
+        z = (values[i0,j0].T*(i1-i)*(j1-j) + values[i1,j0].T*(i-i0)*(j1-j) + \
+             values[i0,j1].T*(i1-i)*(j-j0) + values[i1,j1].T*(i-i0)*(j-j0))
         return z
 
     def sample(self, *args, **kwargs):
@@ -858,7 +858,7 @@ class RegularGrid(Grid):
 
         Returns
         -------
-        list of (x, y) tuples
+        Multipoint
             sample points
         ndarray
             grid value at sample points
@@ -867,6 +867,11 @@ class RegularGrid(Grid):
             resolution = min(self.transform[2:4])
         points = line.to_points(resolution)
         z = self.sample(*points.coordinates, **kw)
+        if len(self.bands) != 1:
+            for i, _ in enumerate(self.bands):
+                points.data.setfield("band_{0}".format(i), z[i])
+        else:
+            points.data.setfield("band_0", z)
         return points, z
 
     def as_warpedgrid(self):
