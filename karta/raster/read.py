@@ -4,7 +4,7 @@ from .grid import RegularGrid
 from ..crs import ProjectedCRS, GeographicalCRS
 from . import _gtiff
 from . import _aai
-# from . import _dem
+from ..errors import GridError
 
 def read_aai(fnm):
     """ Convenience function to open a ESRI ASCII grid and return a RegularGrid
@@ -43,6 +43,48 @@ def read_gtiff(fnm, in_memory=True, ibands=_gtiff.ALL, **kw):
     """
     bands, hdr = _gtiff.read(fnm, in_memory, ibands, **kw)
 
+    t = {'xllcorner': hdr['xulcorner'] - hdr['ny'] * hdr['sx'],
+         'yllcorner': hdr['yulcorner'] + hdr['ny'] * hdr['dy'],
+         'dx'       : hdr['dx'],
+         'dy'       : -hdr['dy'],
+         'sx'       : hdr['sx'],
+         'sy'       : -hdr['sy']}
+
+    if proj4_isgeodetic(hdr["srs"]["proj4"]):
+        geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
+                                         f=hdr["srs"]["flattening"])
+        crs = GeographicalCRS(geodstr, name=hdr["srs"]["name"])
+    else:
+        crs = ProjectedCRS(hdr["srs"]["proj4"], name=hdr["srs"]["name"])
+    return RegularGrid(t, bands=bands, crs=crs, nodata_value=hdr["nodata"])
+
+def read_gtiffs(*fnms, in_memory=True, **kw):
+    """ Read multiple GeoTiff files as bands within a single grid. Reads the
+    first band within each GeoTiff, and checks that grids share the same
+    spatial transform and coordinate system.
+
+    Parameters
+    ----------
+    fnm : list of str
+        GeoTiff file paths
+    in_memory : bool
+        if True (default), read entire dataset into memory
+    bandclass : Band class, optional
+        class of band used by returned grid (default karta.band.CompressedBand)
+        if in_memory is True, this parameter is ignored and the returned grid
+        will have bands of type karta.raster._gtiff.GdalFileBand
+    """
+    bands = []
+    hdrs = []
+    for fnm in fnms:
+        _b, _h = _gtiff.read(fnm, in_memory, 1, **kw)
+        if len(hdrs) != 0:
+            if _h != hdrs[-1]:
+                raise GridError("geotransform in {0} not equivalent to a previous GeoTiff".format(fnm))
+        bands.append(_b[0])
+        hdrs.append(_h)
+
+    hdr = hdrs[0]
     t = {'xllcorner': hdr['xulcorner'] - hdr['ny'] * hdr['sx'],
          'yllcorner': hdr['yulcorner'] + hdr['ny'] * hdr['dy'],
          'dx'       : hdr['dx'],

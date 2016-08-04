@@ -13,13 +13,13 @@ from . import misc
 
 from .grid import RegularGrid, WarpedGrid, merge, gridpoints, mask_poly
 from .band import SimpleBand, CompressedBand
-from .read import read_aai, read_gtiff, aairead, gtiffread
+from .read import read_aai, read_gtiff, read_gtiffs, aairead, gtiffread
 from .misc import (witch_of_agnesi, pad, normed_potential_vectors,
                    slope, aspect, gradient, divergence, hillshade)
 
 __all__ = ["grid", "misc",
            "RegularGrid", "WarpedGrid",
-           "aairead", "gtiffread", "read_aai", "read_gtiff",
+           "aairead", "gtiffread", "read_aai", "read_gtiff", "read_gtiffs",
            "slope", "aspect", "gradient", "divergence", "hillshade",
            "normed_potential_vectors"]
 
