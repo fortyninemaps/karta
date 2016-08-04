@@ -642,7 +642,7 @@ class RegularGrid(Grid):
                            nodata_value=self.nodata)
 
     def get_positions(self, x, y):
-        """ Return the float column and row indices for the point nearest
+        """ Return the float row and column indices for the point nearest
         geographical coordinates.
 
         Parameters
@@ -650,58 +650,18 @@ class RegularGrid(Grid):
         x, y : float or vector
             vertices of points to compute indices for
         """
-        # Calculate this by forming block matrices
-        #       | dx sy          |
-        #       | sx dy          |
-        #   T = |      ....      |
-        #       |          dx sy |
-        #       |          sx dy |
-        #
-        #       | x0 + (dx+dy)/2 |
-        #       | y0 + (dx+dy)/2 |
-        #   S = |    .......     |
-        #       | x0 + (dx+dy)/2 |
-        #       | y0 + (dx+dy)/2 |
-        #
-        # where the grid transform is t = (x0, y0, dx, dy, sy, sx)
-        #
-        # Then the nearest indices J come from solving the system
-        # T J = X - S
-        try:
-            npts = len(x)
-            if npts == 1:
-                x = x[0]
-                y = y[0]
-        except TypeError:
-            npts = 1
-
-        n = min(70, npts)    # number to process at once
-        t = self._transform
-        T = (np.diag(np.tile([t[2], t[3]], n)) +
-             np.diag(np.tile([t[4], 0], n)[:-1], 1) +
-             np.diag(np.tile([t[5], 0], n)[:-1], -1))
-        S = np.tile([t[0]+0.5*(t[2]+t[4]), t[1]+0.5*(t[3]+t[5])], n)
-
-        if npts == 1:
-            ind = np.linalg.solve(T, np.array([x, y]) - S)
+        if hasattr(x, "__iter__"):
+            x = np.array(x, dtype=np.float64)
+            y = np.array(y, dtype=np.float64)
         else:
-            ind = np.empty(2*npts, dtype=np.float64)
-            i = 0
-            while i != npts:
-                ip = min(i + n, npts)
-                xy = np.zeros(2*n, dtype=np.float64)
-                xy[:2*(ip-i)] = np.vstack([x[i:ip], y[i:ip]]).T.ravel()
-                ind_ = np.linalg.solve(T, xy - S)
-                ind[2*i:2*ip] = ind_[:2*(ip-i)]
-                i = ip
-
-        ny, nx = self.size
-        j = ind[::2]
-        i = ind[1::2]
-        return i, j
+            x = np.array([x], dtype=np.float64)
+            y = np.array([y], dtype=np.float64)
+        if len(x) != len(y):
+            raise ValueError("inputs must have equal size")
+        return crfuncs.get_positions_vec(self.transform, x, y)
 
     def get_indices(self, x, y):
-        """ Return the integer column and row indices for the point nearest
+        """ Return the integer row and column indices for the point nearest
         geographical coordinates. Compared to get_positions, this method raises
         and exception when points are out of range.
 
@@ -719,13 +679,15 @@ class RegularGrid(Grid):
         i, j = self.get_positions(x, y)
 
         if len(i) != 1:
-            i, j = np.round(i).astype(int), np.round(j).astype(int)
-            if min(i) < 0 or max(i) > ny-1 or min(j) < 0 or max(j) > nx-1:
-                raise errors.GridError("Coordinates outside grid region ({0})".format(self.bbox))
+            i = np.round(i).astype(np.int32)
+            j = np.round(j).astype(np.int32)
+            if i.min() < 0 or i.max() > ny-1 or j.min() < 0 or j.max() > nx-1:
+                raise errors.GridError("coordinates outside grid region ({0})".format(self.bbox))
         else:
-            i, j = int(round(i[0])), int(round(j[0]))
+            i = int(round(i[0]))
+            j = int(round(j[0]))
             if not (0 <= i <= ny-1) or not(0 <= j <= nx-1):
-                raise errors.GridError("Coordinates outside grid region ({0})".format(self.bbox))
+                raise errors.GridError("coordinates outside grid region ({0})".format(self.bbox))
 
         return i,j
 
