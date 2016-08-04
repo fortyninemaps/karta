@@ -100,8 +100,10 @@ def slope(grid):
     """ Return the scalar slope at each pixel using the neighbourhood method.
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works
     """
-    if grid.transform[4:] != (0, 0):
-        raise NotImplementedError("slope calculations no implemented on skewed grids")
+    if grid.skew != (0, 0):
+        raise NotImplementedError("slope calculations not implemented on skewed grids")
+    if grid.nbands != 1:
+        raise ValueError("input grid must be single-banded")
     D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     return RegularGrid(grid.transform, _slope(D, grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
@@ -120,8 +122,10 @@ def _aspect(D, res=(1.0, 1.0)):
     return pad(np.arctan2(Ddy, -Ddx), value=np.nan)
 
 def aspect(grid):
-    if grid.transform[4:] != (0, 0):
-        raise NotImplementedError("aspect calculations no implemented on skewed grids")
+    if grid.skew != (0, 0):
+        raise NotImplementedError("aspect calculations not implemented on skewed grids")
+    if grid.nbands != 1:
+        raise ValueError("input grid must be single-banded")
     D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     return RegularGrid(grid.transform, _aspect(D, grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
@@ -139,8 +143,10 @@ def _grad(D, res=(1.0, 1.0)):
             pad(Ddy, width=1, edges='all', value=np.nan))
 
 def gradient(grid):
-    if grid.transform[4:] != (0, 0):
-        raise NotImplementedError("gradient calculations no implemented on skewed grids")
+    if grid.skew != (0, 0):
+        raise NotImplementedError("gradient calculations not implemented on skewed grids")
+    if grid.nbands != 1:
+        raise ValueError("input grid must be single-banded")
     D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     dDdx, dDdy = _grad(D, grid.resolution)
     return (RegularGrid(grid.transform, dDdx, crs=grid.crs, nodata_value=np.nan),
@@ -155,8 +161,10 @@ def _div(U, V, res=(1.0, 1.0)):
     return divergence
 
 def divergence(grid):
-    if grid.transform[4:] != (0, 0):
-        raise NotImplementedError("divergence calculations no implemented on skewed grids")
+    if grid.skew != (0, 0):
+        raise NotImplementedError("divergence calculations not implemented on skewed grids")
+    if grid.nbands != 1:
+        raise ValueError("input grid must be single-banded")
     D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     return RegularGrid(grid.transform, _div(D, grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
@@ -176,8 +184,10 @@ def _normed_potential_vectors(D, res=(1.0, 1.0)):
     return pad(U, value=np.nan), pad(V, value=np.nan)
 
 def normed_potential_vectors(grid):
-    if grid.transform[4:] != (0, 0):
-        raise NotImplementedError("vector field calculations no implemented on skewed grids")
+    if grid.skew != (0, 0):
+        raise NotImplementedError("potential vector calculations not implemented on skewed grids")
+    if grid.nbands != 1:
+        raise ValueError("input grid must be single-banded")
     D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
     u, v = _normed_potential_vectors(D, res=grid.resolution)
     return (RegularGrid(grid.transform, u, crs=grid.crs, nodata_value=np.nan),
@@ -196,6 +206,8 @@ def hillshade(grid, azimuth=330.0, elevation=60.0):
 
     Note: Currently assumes orthogonal coordinates.
     """
+    if grid.nbands != 1:
+        raise ValueError("input grid must be single-banded")
     dxgrid, dygrid = gradient(grid)
     dx = dxgrid[:,:]
     dy = dygrid[:,:]
@@ -216,7 +228,3 @@ def hillshade(grid, azimuth=330.0, elevation=60.0):
 
     return RegularGrid(grid.transform, values=dprod, crs=grid.crs)
 
-def viewshed(D, i, j, r=-1):
-    """ Return the viewshed on *D* at (i,j).
-    """
-    raise NotImplementedError()

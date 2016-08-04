@@ -202,6 +202,10 @@ class RegularGrid(Grid):
     def size(self):
         return self.bands[0].size
 
+    @property
+    def nbands(self):
+        return len(self.bands)
+
     def set_nodata_value(self, val):
         """ Redefine value used to indicate nodata.
 
