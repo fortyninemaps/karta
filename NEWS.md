@@ -1,5 +1,18 @@
 # Highlights
 
+## changes with 0.7.2
+
+- new `read_gtiffs` function for reading multiple files as bands
+- implement `RegularGrid.coordinates()` method returning a `CoordGenerator` object
+- implement `get_coordinate_lists` for Multiline and Multipolygon
+- `merge` now works with multiband grids
+- performance optimizations and fixes
+
+## changes with 0.7.1
+
+- better support multiband arrays for `BandIndexer`
+- fix to `mask_poly` function
+
 ## changes with 0.7
 
 - major refactor of geometry hierarchy

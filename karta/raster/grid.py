@@ -9,6 +9,7 @@ import numpy as np
 from . import _gtiff
 from . import crfuncs
 from .band import SimpleBand, CompressedBand, BandIndexer
+from .coordgen import CoordinateGenerator
 from .. import errors
 from ..crs import Cartesian
 
@@ -233,6 +234,30 @@ class RegularGrid(Grid):
     def coordmesh(self, *args, **kwargs):
         """ Alias for center_coords() """
         return self.center_coords(*args, **kwargs)
+
+    def coordinates(self, crs=None):
+        """ Return a CoordinateGenerator instance for computing the coordinates
+        of indices in *crs*. This behaves like the array returned by
+        `center_coords()`, but computes coordinates on demand rather than at
+        once.
+
+        Parameters
+        ----------
+        crs : CRS, optional
+            Coordinate system of output coordinates. If None (default), output
+            coordinates are not transformed from *self.crs*.
+
+        Returns
+        -------
+        CoordinateGenerator
+
+        Note
+        ----
+        This is an experimental replacement for coordmesh() and center_coords().
+        """
+        if crs is None:
+            crs = self.crs
+        return CoordinateGenerator(self.transform, self.size, self.crs, crs)
 
     def center_coords(self):
         t = self._transform
