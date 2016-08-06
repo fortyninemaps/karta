@@ -160,15 +160,15 @@ class CompressedBand(object):
             if len(key) != 2:
                 raise IndexError("band can only be indexed along two dimensions")
 
-            k0, k1 = key
+            kr, kc = key
 
-            if isinstance(k0, int):
-                yoff = k0
+            if isinstance(kr, int):
+                yoff = kr
                 ny = 1
                 ystride = 1
 
-            elif isinstance(k0, slice):
-                ystart, ystop, ystride = k0.indices(self.size[0])
+            elif isinstance(kr, slice):
+                ystart, ystop, ystride = kr.indices(self.size[0])
                 yoff = min(ystart, ystop)
                 ny = abs(ystop-ystart)
                 if ystride < 0:
@@ -176,15 +176,15 @@ class CompressedBand(object):
 
             else:
                 raise IndexError("slicing with instances of '{0}' not "
-                                 "supported".format(type(k0)))
+                                 "supported".format(type(kr)))
 
-            if isinstance(k1, int):
-                xoff = k1
+            if isinstance(kc, int):
+                xoff = kc
                 nx = 1
                 xstride = 1
 
-            elif isinstance(k1, slice):
-                xstart, xstop, xstride = k1.indices(self.size[1])
+            elif isinstance(kc, slice):
+                xstart, xstop, xstride = kc.indices(self.size[1])
                 xoff = min(xstart, xstop)
                 nx = abs(xstop-xstart)
                 if xstride < 0:
@@ -192,9 +192,9 @@ class CompressedBand(object):
 
             else:
                 raise IndexError("slicing with instances of '{0}' not "
-                                 "supported".format(type(k1)))
+                                 "supported".format(type(kc)))
 
-            if nx == ny == 1:
+            if isinstance(kr, int) and isinstance(kc, int):
                 return self._getblock(yoff, xoff, (ny, nx))[0,0]
             else:
                 return self._getblock(yoff, xoff, (ny, nx))[::ystride,::xstride]
@@ -223,53 +223,53 @@ class CompressedBand(object):
             if len(key) != 2:
                 raise IndexError("band can only be indexed along two dimensions")
 
-            k0, k1 = key
+            kr, kc = key
 
-            if isinstance(k0, int):
-                yoff = k0
+            if isinstance(kr, int):
+                yoff = kr
                 ny = 1
                 sy = 1
 
-            elif isinstance(k0, slice):
-                if k0.start is None:
+            elif isinstance(kr, slice):
+                if kr.start is None:
                     yoff = 0
                 else:
-                    yoff = k0.start
-                if k0.stop is None:
+                    yoff = kr.start
+                if kr.stop is None:
                     ny = self.size[0]-yoff
                 else:
-                    ny = k0.stop-yoff
-                if k0.step is None:
+                    ny = kr.stop-yoff
+                if kr.step is None:
                     sy = 1
                 else:
-                    sy = k0.step
+                    sy = kr.step
 
             else:
                 raise IndexError("slicing with instances of '{0}' not "
-                                 "supported".format(type(k0)))
+                                 "supported".format(type(kr)))
 
-            if isinstance(k1, int):
-                xoff = k1
+            if isinstance(kc, int):
+                xoff = kc
                 nx = 1
                 sx = 1
 
-            elif isinstance(k1, slice):
-                if k1.start is None:
+            elif isinstance(kc, slice):
+                if kc.start is None:
                     xoff = 0
                 else:
-                    xoff = k1.start
-                if k1.stop is None:
+                    xoff = kc.start
+                if kc.stop is None:
                     nx = self.size[1]-xoff
                 else:
-                    nx = k1.stop-xoff
-                if k1.step is None:
+                    nx = kc.stop-xoff
+                if kc.step is None:
                     sx = 1
                 else:
-                    sx = k1.step
+                    sx = kc.step
 
             else:
                 raise IndexError("slicing with instances of '{0}' not "
-                                 "supported".format(type(k1)))
+                                 "supported".format(type(kc)))
 
             vny, vnx = value.shape[:2]
             if (ceil(float(ny)/sy) != vny) or (ceil(float(nx)/sx) != vnx):
