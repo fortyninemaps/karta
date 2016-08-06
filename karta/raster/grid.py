@@ -17,14 +17,14 @@ BAND_CLASS_DEFAULT = CompressedBand
 CRS_DEFAULT = Cartesian
 
 class Grid(object):
-    """ Grid base class. """
+    """ Grid base class """
 
     @property
     def nodata(self):
         return self._nodata
 
     def max(self):
-        """ Return the maximum non-nan in self.data. """
+        """ Return the maximum non-nan in self.data """
         tmp = self[self.data_mask]
         if len(tmp) != 0:
             return tmp.max()
@@ -32,7 +32,7 @@ class Grid(object):
             return np.nan
 
     def min(self):
-        """ Return the minimum non-nan in self.data. """
+        """ Return the minimum non-nan in self.data """
         tmp = self[self.data_mask]
         if len(tmp) != 0:
             return tmp.min()
@@ -40,7 +40,7 @@ class Grid(object):
             return np.nan
 
     def minmax(self):
-        """ Return the minimum and maximum value of data array. """
+        """ Return the minimum and maximum value of data array """
         tmp = self[self.data_mask]
         if len(tmp) != 0:
             return (tmp.min(), tmp.max())
@@ -59,28 +59,38 @@ class Grid(object):
             return self
 
     def copy(self):
-        """ Return a copy. """
+        """ Return a deep copy """
         return copy.deepcopy(self)
 
 
 class RegularGrid(Grid):
-    """ Regular (structured) grid class. A RegularGrid contains a fixed number
+    """ Regular  structured grid class. A RegularGrid contains a fixed number
     of rows and columns with a constant spacing and a list of bands
     representing scalar fields.
 
-    Positions on a RegularGrid are referenced to their array indices *(i,j)*
+    Positions on a RegularGrid are referenced to their array indices (i,j)
     using an affine transform *T* such that
 
-    (a, b, c, d, e, f) = T
+        T = (a, b, c, d, e, f)
 
-    X = a + j * c + i * e
-    Y = b + i * d + j * f
+        x = a + j*c + i*e
+        y = b + i*d + j*f
 
-    in which *(a,b)* defines the lower-left grid cell corner, *(c,d)* defines
-    the resolution in the horizontal and vertical directions, and *(e,f)* can
-    be used to define a rotation. In the common case of a "north-up" grid,
+    or as a matrix transformation,
 
-    e = f = 0
+        |e  c  a|   |i|   |x|
+        |       | * |j| = | |
+        |d  f  b|   |1|   |y|
+
+    where (x,y) are the coordinates of the lower left corner of each pixel.
+
+    Meaning:
+
+    - (a,b) defines the lower-left grid cell corner
+    - (c,d) defines the resolution in the horizontal and vertical directions
+    - (e,f) can be used to define a rotation
+
+    In the common case of a "east-right, north-up" grid, e = f = 0.
     """
     def __init__(self, transform, values=None, bands=None, crs=None,
             nodata_value=None, bandclass=None):
@@ -94,14 +104,14 @@ class RegularGrid(Grid):
         values : ndarray (nrows x ncols), optional
             grid data from which raster bands will be formed. A two-dimensional
             array will be transformed into a single band, while a
-            three-dimension MxNxP array will become P MxN bands. The class used
-            to represent bands can be controlled by the *bandclass* keyword
-            argument.
+            three-dimension MxNxP array will become P MxN bands. The structure
+            used to store band data internally can be controlled by the
+            *bandclass* keyword argument.
         bands : list of band types, optional
             list of allocated Band-like objects. If provided, they are assumed
             to be of a single type, which overrides *bandclass*.
         crs : karta.crs.CRS subclass, optional
-            Grid coordinate reference system, default CRS_DEFAULT
+            Grid coordinate reference system. default CRS_DEFAULT
         nodata_value : number, optional
             specifies a value to represent NoData or null pixels. The default
             is chosen depending on the input type of *values* or *bands*. If
@@ -260,6 +270,7 @@ class RegularGrid(Grid):
         return CoordinateGenerator(self.transform, self.size, self.crs, crs)
 
     def center_coords(self):
+        """ Return the coordinates of cell centers. """
         t = self._transform
         xcoords = np.empty(self.size)
         ycoords = np.empty(self.size)
@@ -453,8 +464,8 @@ class RegularGrid(Grid):
             return np.all(self.data_mask_full, axis=-1)
 
     def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
-        """ Generator for grid chunks, useful for parallel or memory-controlled
-        grid processing.
+        """ Generator for grid chunks. This may be useful for parallel or
+        memory-controlled grid processing.
 
         Parameters
         ----------
@@ -595,14 +606,14 @@ class RegularGrid(Grid):
 
     def mask_by_poly(self, polys, inplace=False):
         """ Return a grid with all elements outside the bounds of a polygon
-        masked by nodata
+        masked as nodata.
 
         Parameters
         ----------
         polys : Polygon, Multipolygon or list of Polygon instances
-            region(s) defining clibing boundary
+            region(s) defining masking boundary
         inplace : bool, optional
-            whether or not to perform masking in place (default False)
+            if True, perform masking in-place (default False)
         """
         if getattr(polys, "_geotype", "") == "Polygon":
             polys = [polys]
@@ -635,7 +646,7 @@ class RegularGrid(Grid):
                                crs=self.crs, nodata_value=self.nodata)
 
     def resample(self, dx, dy, method='nearest'):
-        """ Resample array to have spacing `dx`, `dy'. The grid origin remains
+        """ Resample array to have spacing *dx*, *dy*. The grid origin remains
         in the same position.
 
         Parameters
@@ -674,6 +685,11 @@ class RegularGrid(Grid):
         ----------
         x, y : float or vector
             vertices of points to compute indices for
+
+        Raises
+        ------
+        ValueError
+            if inputs have unequal size
         """
         if hasattr(x, "__iter__"):
             x = np.array(x, dtype=np.float64)
@@ -687,7 +703,7 @@ class RegularGrid(Grid):
 
     def get_indices(self, x, y):
         """ Return the integer row and column indices for the point nearest
-        geographical coordinates. Compared to get_positions, this method raises
+        geographical coordinates. Unlike `get_positions()`, this method raises
         and exception when points are out of range.
 
         Parameters
@@ -717,13 +733,18 @@ class RegularGrid(Grid):
         return i,j
 
     def sample_nearest(self, x, y):
-        """ Return the value nearest to coordinates. Nearest grid center
+        """ Return the value nearest to coordinates using a nearest grid center
         sampling scheme.
 
         Parameters
         ----------
         x, y : float or vector
             vertices of points to compute indices for
+
+        Returns
+        -------
+        float or vector
+            sample values
 
         Raises
         ------
@@ -735,7 +756,8 @@ class RegularGrid(Grid):
         return self[:,:][i, j]
 
     def sample_bilinear(self, x, y):
-        """ Return the value nearest to coordinates. Bilinear sampling scheme.
+        """ Return the value nearest to coordinates using a bi-linear sampling
+        scheme.
 
         Parameters
         ----------
@@ -746,6 +768,11 @@ class RegularGrid(Grid):
         -------
         float or vector
             sample values
+
+        Raises
+        ------
+        GridError
+            points outside of Grid bbox
         """
         i, j = self.get_positions(x, y)
         i0 = np.floor(i).astype(int)
@@ -766,7 +793,7 @@ class RegularGrid(Grid):
 
         ny, nx = self.size
         if np.any(i1>=ny) or np.any(j1>=nx) or np.any(i0<0) or np.any(j0<0):
-            raise errors.GridError("Coordinates outside grid extent({0})"
+            raise errors.GridError("coordinates outside grid extent({0})"
                     .format(self.get_extent()))
 
         dx, dy = self._transform[2:4]
@@ -835,7 +862,7 @@ class RegularGrid(Grid):
         return z
 
     def profile(self, line, resolution=None, **kw):
-        """ Sample along a *line* at *resolution*.
+        """ Sample along a *Line* at a specified interval.
 
         Parameters
         ----------
@@ -887,8 +914,7 @@ class RegularGrid(Grid):
 
     def to_aai(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
-        only isometric grids (i.e. `hdr['dx'] == hdr['dy']` can be saved,
-        otherwise `GridIOError` is thrown.
+        only isometric grids (i.e. `hdr['dx'] == hdr['dy']` can be saved.
 
         Parameters
         ----------
@@ -898,6 +924,11 @@ class RegularGrid(Grid):
             specify a header reference ('center' | 'corner')
         nodata_value : number
             specify how NaNs should be represented
+
+        Raises
+        ------
+        GridIOError
+            input grid is not isometric and can therefore not be saved
         """
         if reference not in ('center', 'corner'):
             raise errors.GridIOError("reference in AAIGrid.tofile() must be 'center' or "
@@ -1007,7 +1038,7 @@ class WarpedGrid(Grid):
         raise NotImplementedError
 
     def resample(self, X, Y):
-        """ Resample internal grid to the points defined by *X*, *Y*. """
+        """ Resample internal grid to the points defined by X, Y. """
         raise NotImplementedError
 
 def merge(grids, weights=None):
@@ -1020,17 +1051,22 @@ def merge(grids, weights=None):
         grids to combine
     weights : iterable of floats, optional
         weighting factors for computing grid averages
+
+    Raises
+    ------
+    GridError, ValueError
+        input grids have inconsistent transform properties
     """
 
     # Check grid class
     if not all(isinstance(grid, RegularGrid) for grid in grids):
-        raise NotImplementedError("all grids must by type RegularGrid")
+        raise TypeError("all grids must be type RegularGrid")
 
     T = grids[0].transform
     # Check grid stretch and skew
     for i, grid in enumerate(grids[1:]):
         if grid.transform[2:6] != T[2:6]:
-            raise NotImplementedError("grid %d transform stretch and skew "
+            raise errors.GridError("grid %d transform stretch and skew "
                     "does not match grid 1" % (i+2,))
 
     # Check grid offset
@@ -1103,7 +1139,16 @@ def get_nodata(T):
     For unsigned integer types, returns largest representable value.
     For signed integer types, returns smallest negative representable value.
     For floating point types (incl. complex), returns NaN.
-    Otherwise, raises ValeError.
+
+    Parameters
+    ----------
+    T : type
+        numeric type to choose NODATA for
+
+    Raises
+    ------
+    ValueError
+        input is not an integer, real, or complex numeric type
     """
     if T in (np.uint8, np.uint16, np.uint32, np.uint64):
         return np.iinfo(T).max

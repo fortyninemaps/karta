@@ -12,17 +12,6 @@ ctypedef np.int32_t DTYPE_int32_t
 def get_positions_vec(tuple T, double[:] x not None, double[:] y not None):
     """ Return the row and column indices according to grid transform T for
     points in vectors x and y. """
-    # (a, b, c, d, e, f) = T
-    # X = a + jc + ie
-    # Y = b + id + jf
-
-    # i = (X - a - jc) / e
-    # i = (Y - b - jf) / d
-    # e(Y - b - jf) = d(X - a - jc)
-    # ey - eb - ejf = dx - da - djc
-    # djc - ejf = dx - da + eb - ey
-    # j ( dc - ef ) = dx - da + eb - ey
-    # j = (dx - da + eb - ey) / (dc - ef)
     cdef int i = 0
     cdef int n = len(x)
     cdef double x0, y0, dx, dy, sx, sy
@@ -79,21 +68,4 @@ def fillarray_double(double[:,:] array not None,
             else:
                 array[i,j] = nodata_value
     return 0
-
-cdef float interpolate1(float x, float y, float a, float b, float c, float d):
-    """ Return a value *v(x,y)* in the regular structured stencil
-
-            a --- b
-            |  v  |
-            c --- d
-
-    using linear interpolation. The coordinates (x, y) must be normalized by
-    the horizontal and vertical grid spacings, respectively.
-    """
-    cdef float left, right, res
-
-    left = (c-a)*y + a
-    right = (d-b)*y + b
-    res = (right - left) * x + left
-    return res
 
