@@ -56,7 +56,8 @@ class CoordinateGenerator(object):
             ikey = np.arange(*ikey.indices(self.size[0]))
         if isinstance(jkey, slice):
             jkey = np.arange(*jkey.indices(self.size[1]))
-        if (len(ikey) > 1) and (len(jkey) > 1):
+        if hasattr(ikey, "__len__") and hasattr(jkey, "__len__") and \
+                (len(ikey) > 1) and (len(jkey) > 1):
             ikey, jkey = np.meshgrid(ikey, jkey)
         T = self.transform
         x_ = T[0] + jkey*T[2] + ikey*T[4] + 0.5*T[2] + 0.5*T[4]

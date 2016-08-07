@@ -225,7 +225,7 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
             dist = math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
         else:
             lon0, lat0 = self.crs.project(self.x, self.y, inverse=True)
-            lon1, lat1 = self.crs.project(other.x, other.y, inverse=True)
+            lon1, lat1 = other.crs.project(other.x, other.y, inverse=True)
             _, _, dist = self.crs.inverse(lon0, lat0, lon1, lat1)
 
         if 2 == len(self.vertex) == len(other.vertex):

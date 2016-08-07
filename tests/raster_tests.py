@@ -181,9 +181,31 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 0.625)
         return
 
+    def test_sample_bilinear_vector(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.arange(64, dtype=np.float64).reshape([8,8]))
+        res = grid.sample_bilinear(np.arange(1,7,0.5), np.arange(2,5,0.25))
+        self.assertEqual(res.shape, (1, 12))
+        return
+
+    def test_sample_bilinear_array(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.arange(64, dtype=np.float64).reshape([8,8]))
+        X, Y = np.meshgrid(np.arange(1, 7, 0.5), np.arange(2, 5, 0.25))
+        res = grid.sample_bilinear(X, Y)
+        self.assertEqual(res.shape, (1, 12, 12))
+        return
+
+
     def test_sample_bilinear_int(self):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.array([[0, 2], [2, 1]], dtype=np.int32))
+        self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
+        return
+
+    def test_sample_bilinear_uint(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.array([[0, 2], [2, 1]], dtype=np.uint16))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
         return
 

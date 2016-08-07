@@ -756,7 +756,7 @@ class RegularGrid(Grid):
         """
         if not hasattr(x, "__iter__"):
             i, j = self.get_indices(x, y)
-            return np.atleast_2d(self[i,j])
+            return np.atleast_1d(self[i,j])
 
         if not isinstance(x, np.ndarray):
             x = np.array(x)
@@ -844,10 +844,12 @@ class RegularGrid(Grid):
         data = []
         for i, band in enumerate(self.bands):
             v = self[Imn:Imx,Jmn:Jmx,i]
-            if band.dtype == np.float64:
+            if band.dtype in (np.float32, np.float64):
                 data.append(crfuncs.sample_bilinear_double(I, J, v.astype(np.float64)))
-            elif band.dtype == np.int32:
-                data.append(crfuncs.sample_bilinear_long(I, J, v.astype(np.int32)))
+            elif band.dtype in (np.int16, np.int32, np.int64):
+                data.append(crfuncs.sample_bilinear_int(I, J, v.astype(np.int32)))
+            elif band.dtype in (np.uint16, np.uint32):
+                data.append(crfuncs.sample_bilinear_uint(I, J, v.astype(np.uint16)))
             else:
                 raise NotImplementedError("no sample_bilinear method for dtype:"
                                           " {0}".format(band.dtype))
@@ -855,7 +857,7 @@ class RegularGrid(Grid):
         if dim == 0:
             return np.array(data)
         elif dim == 1:
-            return np.concatenate(np.atleast_2d(data), axis=0)
+            return np.atleast_2d(data)
         elif dim == 2:
             m, n = x.shape
             return np.concatenate([d.reshape((1, m, n)) for d in data], axis=0)
