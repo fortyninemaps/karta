@@ -142,6 +142,21 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid.sample_nearest(1.6, 1.3), 0.5)
         return
 
+    def test_sample_nearest_vector(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.arange(64).reshape([8,8]))
+        res = grid.sample_nearest(np.arange(1,7,0.5), np.arange(2,5,0.25))
+        self.assertEqual(res.shape, (1, 12))
+        return
+
+    def test_sample_nearest_array(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.arange(64).reshape([8,8]))
+        X, Y = np.meshgrid(np.arange(1, 7, 0.5), np.arange(2, 5, 0.25))
+        res = grid.sample_nearest(X, Y)
+        self.assertEqual(res.shape, (1, 12, 12))
+        return
+
     def test_sample_multipoint(self):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.array([[0, 1], [1, 0.5]]))
@@ -166,6 +181,20 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 0.625)
         return
 
+    def test_sample_bilinear_int(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.array([[0, 2], [2, 1]], dtype=np.int32))
+        self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
+        return
+
+    def test_sample_bilinear_multiband(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.dstack([[[0, 1], [1, 0.5]],
+                                                   [[1, 2], [2, 1.5]]]))
+        res = grid.sample_bilinear(1.0, 1.0)
+        self.assertTrue(np.all(res == np.array([[0.625], [1.625]])))
+        return
+
     def test_sample_bilinear_skewed(self):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
                                  values=np.array([[0, 1], [1, 0.5]]))
@@ -176,7 +205,7 @@ class RegularGridTests(unittest.TestCase):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.array([[0, 1], [1, 0.5]]))
         xi, yi = np.meshgrid(np.linspace(0.5, 1.5), np.linspace(0.5, 1.5))
-        z = grid.sample_bilinear(xi.ravel(), yi.ravel())
+        z = grid.sample_bilinear(xi, yi).ravel()
         self.assertEqual([z[400], z[1200], z[1550], z[2120]],
                          [0.16326530612244894, 0.48979591836734693,
                           0.63265306122448983, 0.74052478134110788])

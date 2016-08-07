@@ -150,7 +150,7 @@ class CompressedBand(object):
 
     def __getitem__(self, key):
 
-        if isinstance(key, int):
+        if isinstance(key, (int, np.int32)):
             irow = key // self.size[1]
             icol = key % self.size[1]
             return self._getblock(irow, icol, (1, 1))[0]
@@ -162,7 +162,7 @@ class CompressedBand(object):
 
             kr, kc = key
 
-            if isinstance(kr, int):
+            if isinstance(kr, (int, np.int32)):
                 yoff = kr
                 ny = 1
                 ystride = 1
@@ -178,7 +178,7 @@ class CompressedBand(object):
                 raise IndexError("slicing with instances of '{0}' not "
                                  "supported".format(type(kr)))
 
-            if isinstance(kc, int):
+            if isinstance(kc, (int, np.int32)):
                 xoff = kc
                 nx = 1
                 xstride = 1
@@ -194,7 +194,7 @@ class CompressedBand(object):
                 raise IndexError("slicing with instances of '{0}' not "
                                  "supported".format(type(kc)))
 
-            if isinstance(kr, int) and isinstance(kc, int):
+            if isinstance(kr, (int, np.int32)) and isinstance(kc, (int, np.int32)):
                 return self._getblock(yoff, xoff, (ny, nx))[0,0]
             else:
                 return self._getblock(yoff, xoff, (ny, nx))[::ystride,::xstride]

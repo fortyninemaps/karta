@@ -32,6 +32,84 @@ def get_positions_vec(tuple T, double[:] x not None, double[:] y not None):
         i += 1
     return I, J
 
+def sample_bilinear_long(double[:] I not None, double[:] J not None,
+                         np.int32_t[:,:] Z not None):
+    cdef int cnt = 0
+    cdef int L = len(I)
+    cdef double i = 0.0, j = 0.0
+    cdef double i0 = 0.0, i1 = 0.0, j0 = 0.0, j1 = 0.0
+    cdef int m, n
+    m = Z.shape[0]
+    n = Z.shape[1]
+    cdef np.ndarray[np.int32_t] out = np.empty(L, dtype=np.int32)
+
+    for cnt in range(L):
+        i = I[cnt]
+        j = J[cnt]
+        if (i % 1 != 0):
+            i0 = i // 1.0
+            i1 = i0 + 1
+        elif (i != 0):
+            i0 = i - 1.0
+            i1 = i
+        else:
+            i0 = i
+            i1 = i + 1.0
+
+        if (j % 1 != 0):
+            j0 = j // 1.0
+            j1 = j0 + 1
+        elif (j != 0):
+            j0 = j - 1.0
+            j1 = j
+        else:
+            j0 = j
+            j1 = j + 1.0
+
+        out[cnt] = int(float(Z[int(i0),int(j0)])*(i1-i)*(j1-j)
+                     + float(Z[int(i1),int(j0)])*(i-i0)*(j1-j) \
+                     + float(Z[int(i0),int(j1)])*(i1-i)*(j-j0) \
+                     + float(Z[int(i1),int(j1)])*(i-i0)*(j-j0))
+    return out
+
+def sample_bilinear_double(double[:] I not None, double[:] J not None,
+                           np.float64_t[:,:] Z not None):
+    cdef int cnt = 0
+    cdef int L = len(I)
+    cdef double i = 0.0, j = 0.0
+    cdef double i0 = 0.0, i1 = 0.0, j0 = 0.0, j1 = 0.0
+    cdef int m, n
+    m = Z.shape[0]
+    n = Z.shape[1]
+    cdef np.ndarray[np.float64_t] out = np.empty(L)
+
+    for cnt in range(L):
+        i = I[cnt]
+        j = J[cnt]
+        if (i % 1 != 0):
+            i0 = i // 1.0
+            i1 = i0 + 1
+        elif (i != 0):
+            i0 = i - 1.0
+            i1 = i
+        else:
+            i0 = i
+            i1 = i + 1.0
+
+        if (j % 1 != 0):
+            j0 = j // 1.0
+            j1 = j0 + 1
+        elif (j != 0):
+            j0 = j - 1.0
+            j1 = j
+        else:
+            j0 = j
+            j1 = j + 1.0
+
+        out[cnt] = Z[int(i0),int(j0)]*(i1-i)*(j1-j) + Z[int(i1),int(j0)]*(i-i0)*(j1-j) \
+                 + Z[int(i0),int(j1)]*(i1-i)*(j-j0) + Z[int(i1),int(j1)]*(i-i0)*(j-j0)
+    return out
+
 @cython.wraparound(False)
 def fillarray_double(double[:,:] array not None,
                      int[:] I not None,

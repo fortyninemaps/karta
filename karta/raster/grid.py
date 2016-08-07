@@ -667,8 +667,7 @@ class RegularGrid(Grid):
         elif method == 'linear':
             X, Y = np.meshgrid(np.arange(xmin, xmax, dx),
                                np.arange(ymin, ymax, dy))
-            Z = self.sample_bilinear(X.ravel(), Y.ravel())
-            values = Z.reshape(X.shape)
+            values = self.sample_bilinear(X, Y)
         else:
             raise NotImplementedError('method "{0}" unavailable'.format(method))
 
@@ -694,12 +693,14 @@ class RegularGrid(Grid):
         if hasattr(x, "__iter__"):
             x = np.array(x, dtype=np.float64)
             y = np.array(y, dtype=np.float64)
+            if len(x) != len(y):
+                raise ValueError("inputs must have equal size")
+            return crfuncs.get_positions_vec(self.transform, x, y)
         else:
             x = np.array([x], dtype=np.float64)
             y = np.array([y], dtype=np.float64)
-        if len(x) != len(y):
-            raise ValueError("inputs must have equal size")
-        return crfuncs.get_positions_vec(self.transform, x, y)
+            I, J = crfuncs.get_positions_vec(self.transform, x, y)
+            return I[0], J[0]
 
     def get_indices(self, x, y):
         """ Return the integer row and column indices for the point nearest
@@ -718,18 +719,17 @@ class RegularGrid(Grid):
         """
         ny, nx = self.size
         i, j = self.get_positions(x, y)
+        i = np.round(i).astype(np.int32)
+        j = np.round(j).astype(np.int32)
 
-        if len(i) != 1:
-            i = np.round(i).astype(np.int32)
-            j = np.round(j).astype(np.int32)
+        if hasattr(i, "__iter__"):
             if i.min() < 0 or i.max() > ny-1 or j.min() < 0 or j.max() > nx-1:
-                raise errors.GridError("coordinates outside grid region ({0})".format(self.bbox))
+                raise errors.GridError("coordinates outside grid region "
+                                       "({0})".format(self.bbox))
         else:
-            i = int(round(i[0]))
-            j = int(round(j[0]))
-            if not (0 <= i <= ny-1) or not(0 <= j <= nx-1):
-                raise errors.GridError("coordinates outside grid region ({0})".format(self.bbox))
-
+            if i < 0 or i > ny-1 or j < 0 or j > nx-1:
+                raise errors.GridError("coordinate outside grid region "
+                                       "({0})".format(self.bbox))
         return i,j
 
     def sample_nearest(self, x, y):
@@ -744,16 +744,46 @@ class RegularGrid(Grid):
         Returns
         -------
         float or vector
-            sample values
+            The size of the output has one more dimension than the input. If
+            the input are scalar, the output is a p-vector representing band
+            values. If the input is a n-vector, the ouput is p x n. If the
+            input is an m x n array, the output is p x m x n.
 
         Raises
         ------
         GridError
             points outside of Grid bbox
         """
-        i, j = self.get_indices(x, y)
-        ny, nx = self.bands[0].size
-        return self[:,:][i, j]
+        if not hasattr(x, "__iter__"):
+            i, j = self.get_indices(x, y)
+            return np.atleast_2d(self[i,j])
+
+        if not isinstance(x, np.ndarray):
+            x = np.array(x)
+            y = np.array(y)
+
+        dim = x.ndim
+        I, J = self.get_indices(x.ravel(), y.ravel())
+
+        Imn = int(np.floor(I.min())-1)
+        Imx = int(np.ceil(I.max()+1))
+        Jmn = int(np.floor(J.min())-1)
+        Jmx = int(np.ceil(J.max()+1))
+
+        Imn = max(Imn, 0)
+        Jmn = max(Jmn, 0)
+        Imx = min(Imx, self.size[0])
+        Jmx = min(Jmx, self.size[1])
+
+        I -= Imn
+        J -= Jmn
+
+        data = np.atleast_3d(self[Imn:Imx,Jmn:Jmx][I,J])
+        if dim == 1:
+            return data[:,:,0]
+        elif dim == 2:
+            m, n = x.shape
+            return np.concatenate([d.reshape((1, m, n)) for d in data], axis=0)
 
     def sample_bilinear(self, x, y):
         """ Return the value nearest to coordinates using a bi-linear sampling
@@ -767,47 +797,75 @@ class RegularGrid(Grid):
         Returns
         -------
         float or vector
-            sample values
+            The size of the output has one more dimension than the input. If
+            the input are scalar, the output is a p-vector representing band
+            values. If the input is a n-vector, the ouput is p x n. If the
+            input is an m x n array, the output is p x m x n.
 
         Raises
         ------
         GridError
             points outside of Grid bbox
         """
-        i, j = self.get_positions(x, y)
-        i0 = np.floor(i).astype(int)
-        i1 = np.ceil(i).astype(int)
-        j0 = np.floor(j).astype(int)
-        j1 = np.ceil(j).astype(int)
+        if not hasattr(x, "__iter__"):
+            dim = 0
+            x = np.array([x])
+            y = np.array([y])
+        elif not isinstance(x, np.ndarray):
+            x = np.array(x)
+            y = np.array(y)
+            dim = x.ndim
+        else:
+            dim = x.ndim
 
-        # Handle case where interpolation point is exactly on a grid point
-        mska = i0==i1
-        mskb = i0==0
-        i0[mska&~mskb] -= 1
-        i1[mska&mskb] += 1
+        I, J = self.get_positions(x.ravel(), y.ravel())
 
-        mska = j0==j1
-        mskb = j0==0
-        j0[mska&~mskb] -= 1
-        j1[mska&mskb] += 1
+        # If the grid is large, decompressing everthing is expensive, so
+        # compute only the region necessary
+        if len(I) != 1:
+            Imn = int(np.floor(I.min())-1)
+            Imx = int(np.ceil(I.max()+1))
+            Jmn = int(np.floor(J.min())-1)
+            Jmx = int(np.ceil(J.max()+1))
 
-        ny, nx = self.size
-        if np.any(i1>=ny) or np.any(j1>=nx) or np.any(i0<0) or np.any(j0<0):
-            raise errors.GridError("coordinates outside grid extent({0})"
-                    .format(self.get_extent()))
+            Imn = max(Imn, 0)
+            Jmn = max(Jmn, 0)
+            Imx = min(Imx, self.size[0])
+            Jmx = min(Jmx, self.size[1])
 
-        dx, dy = self._transform[2:4]
-        values = self[:,:]
-        z = (values[i0,j0].T*(i1-i)*(j1-j) + values[i1,j0].T*(i-i0)*(j1-j) + \
-             values[i0,j1].T*(i1-i)*(j-j0) + values[i1,j1].T*(i-i0)*(j-j0))
-        return z
+            I -= Imn
+            J -= Jmn
+        else:
+            Imn = None
+            Imx = None
+            Jmn = None
+            Jmx = None
+
+        data = []
+        for i, band in enumerate(self.bands):
+            v = self[Imn:Imx,Jmn:Jmx,i]
+            if band.dtype == np.float64:
+                data.append(crfuncs.sample_bilinear_double(I, J, v.astype(np.float64)))
+            elif band.dtype == np.int32:
+                data.append(crfuncs.sample_bilinear_long(I, J, v.astype(np.int32)))
+            else:
+                raise NotImplementedError("no sample_bilinear method for dtype:"
+                                          " {0}".format(band.dtype))
+
+        if dim == 0:
+            return np.array(data)
+        elif dim == 1:
+            return np.concatenate(np.atleast_2d(data), axis=0)
+        elif dim == 2:
+            m, n = x.shape
+            return np.concatenate([d.reshape((1, m, n)) for d in data], axis=0)
 
     def sample(self, *args, **kwargs):
         """ Return the values nearest positions. Positions may be:
 
         - a karta.Point instance
         - a karta.Multipoint instance, or
-        - a pair of x, y coordinate lists
+        - a pair of x, y coordinate arrays
 
         Parameters
         ----------
@@ -818,10 +876,22 @@ class RegularGrid(Grid):
             system is taken from the crs attribute of the geometry
         method : string, optional
             may be one of 'nearest', 'bilinear' (default).
+
+        Returns
+        -------
+        float or vector
+            The size of the output has one more dimension than the input. If
+            the input are scalar, the output is a p-vector representing band
+            values. If the input is a n-vector, the ouput is p x n. If the
+            input is an m x n array, the output is p x m x n.
+
+        Raises
+        ------
+        GridError
+            points outside of Grid bbox
         """
         crs = kwargs.get("crs", None)
         method = kwargs.get("method", "bilinear")
-        sz_orig = None
 
         argerror = TypeError("`grid` takes a Point, a Multipoint, or x, y coordinate lists")
         if hasattr(args[0], "_geotype"):
@@ -837,11 +907,6 @@ class RegularGrid(Grid):
                 x = args[0]
                 y = args[1]
 
-                if getattr(x, "ndim", 1) > 1:
-                    sz_orig = x.shape
-                    x = x.ravel()
-                    y = y.ravel()
-
                 if crs is None:
                     crs = self.crs
                 else:
@@ -852,14 +917,12 @@ class RegularGrid(Grid):
                 raise argerror
 
         if method == "nearest":
-            z = self.sample_nearest(x, y)
+            v = self.sample_nearest(x, y)
         elif method == "bilinear":
-            z = self.sample_bilinear(x, y)
+            v = self.sample_bilinear(x, y)
         else:
             raise ValueError("method '{0}' not available".format(method))
-        if sz_orig is not None:
-            z = z.reshape(sz_orig)
-        return z
+        return v
 
     def profile(self, line, resolution=None, **kw):
         """ Sample along a *Line* at a specified interval.
@@ -886,10 +949,10 @@ class RegularGrid(Grid):
         points = line.to_points(resolution)
         z = self.sample(*points.coordinates, **kw)
         if len(self.bands) != 1:
-            for i, _ in enumerate(self.bands):
+            for i in range(self.nbands):
                 points.data.setfield("band_{0}".format(i), z[i])
         else:
-            points.data.setfield("band_0", z)
+            points.data.setfield("band_0", z[0])
         return points, z
 
     def as_warpedgrid(self):
