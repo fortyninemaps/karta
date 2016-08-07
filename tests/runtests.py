@@ -15,10 +15,10 @@ from geometry_tests import *
 from quadtree_tests import *
 from rtree_tests import *
 from dateline_tests import *
-
-from band_tests import *
-from raster_tests import *
 from table_tests import *
+
+from grid_tests import *
+from band_tests import *
 
 # Vector IO
 from shapefile_tests import *
