@@ -154,11 +154,11 @@ def pt_nearest_proj(object fwd, object inv, tuple pt, double[:] endpt0, double[:
         return endpt1, d
 
     # Bisection iteration
-    cdef double x0, x1, xm, xn, yn
+    cdef double x0 = 0.0, x1 = 1.0, xm = 0.0, xn = 0.0, yn = 0.0
     cdef int i = 0
     cdef double dx = tol + 1.0
     cdef double grad
-    x0, x1 = 0.0, 1.0
+
     while dx > tol:
         if i == maxiter:
             raise ConvergenceError("Maximum iterations exhausted in bisection "
@@ -172,6 +172,7 @@ def pt_nearest_proj(object fwd, object inv, tuple pt, double[:] endpt0, double[:
             dx = absd(x0-xm) * L
             x0 = xm
         i += 1
+
     (xn, yn, _) = fwd(endpt0[0], endpt0[1], az, xm*L)
     d = _along_distance(fwd, inv, endpt0[0], endpt0[1], pt[0], pt[1], az, xm*L)
     return (xn, yn), d
@@ -182,51 +183,3 @@ class ConvergenceError(Exception):
     def __str__(self):
         return self.message
 
-# Tree functions
-def bbox_intersection_area(tuple bb0, tuple bb1):
-    cdef float dx, dy
-    dx = maxd(mind(bb0[2], bb1[2]) - maxd(bb0[0], bb1[0]), 0.0)
-    dy = maxd(mind(bb0[3], bb1[3]) - maxd(bb0[1], bb1[1]), 0.0)
-    return dx*dy
-
-def iswithin(tuple bbox, tuple pt):
-    """ Return whether a point is within a bounding box (planar approximation). """
-    return (bbox[0] <= pt[0] < bbox[2] and bbox[1] <= pt[1] < bbox[3])
-
-# QuadTree-specific
-def hashpt(float xmin, float ymin, float xmax, float ymax, float x, float y):
-    """ Returns a generator that returns successive quadrants [0-3] that
-    constitute a geohash for *pt* in a global *bbox*. """
-    cdef float xm, ym
-    cdef int geohash
-    while True:
-        xm = 0.5 * (xmin + xmax)
-        ym = 0.5 * (ymin + ymax)
-        if x < xm:
-            if y < ym:
-                geohash = 0
-                xmax = xm
-                ymax = ym
-            elif y >= ym:
-                geohash = 2
-                xmax = xm
-                ymin = ym
-            else:
-                raise HashError
-        elif x >= xm:
-            if y < ym:
-                geohash = 1
-                xmin = xm
-                ymax = ym
-            elif y >= ym:
-                geohash = 3
-                xmin = xm
-                ymin = ym
-            else:
-                raise HashError
-        else:
-            raise HashError
-        yield geohash
-
-class HashError(Exception):
-    pass

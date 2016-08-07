@@ -37,7 +37,7 @@ def sample_bilinear_uint(double[:] I not None, double[:] J not None,
     cdef int cnt = 0
     cdef int L = len(I)
     cdef double i = 0.0, j = 0.0
-    cdef double i0 = 0.0, i1 = 0.0, j0 = 0.0, j1 = 0.0
+    cdef int i0 = 0, i1 = 0, j0 = 0, j1 = 0
     cdef int m, n
     m = Z.shape[0]
     n = Z.shape[1]
@@ -47,29 +47,29 @@ def sample_bilinear_uint(double[:] I not None, double[:] J not None,
         i = I[cnt]
         j = J[cnt]
         if (i % 1 != 0):
-            i0 = i // 1.0
-            i1 = i0 + 1
+            i0 = int(i // 1.0)
+            i1 = int(i0 + 1)
         elif (i != 0):
-            i0 = i - 1.0
-            i1 = i
+            i0 = int(i - 1.0)
+            i1 = int(i)
         else:
-            i0 = i
-            i1 = i + 1.0
+            i0 = int(i)
+            i1 = int(i + 1.0)
 
         if (j % 1 != 0):
-            j0 = j // 1.0
-            j1 = j0 + 1
+            j0 = int(j // 1.0)
+            j1 = int(j0 + 1)
         elif (j != 0):
-            j0 = j - 1.0
-            j1 = j
+            j0 = int(j - 1.0)
+            j1 = int(j)
         else:
-            j0 = j
-            j1 = j + 1.0
+            j0 = int(j)
+            j1 = int(j + 1.0)
 
-        out[cnt] = int(float(Z[int(i0),int(j0)])*(i1-i)*(j1-j)
-                     + float(Z[int(i1),int(j0)])*(i-i0)*(j1-j) \
-                     + float(Z[int(i0),int(j1)])*(i1-i)*(j-j0) \
-                     + float(Z[int(i1),int(j1)])*(i-i0)*(j-j0))
+        out[cnt] = int(float(Z[i0,j0]) * (i1-i) * (j1-j)
+                     + float(Z[i1,j0]) * (i-i0) * (j1-j) \
+                     + float(Z[i0,j1]) * (i1-i) * (j-j0) \
+                     + float(Z[i1,j1]) * (i-i0) * (j-j0))
     return out
 
 def sample_bilinear_int(double[:] I not None, double[:] J not None,
@@ -77,7 +77,7 @@ def sample_bilinear_int(double[:] I not None, double[:] J not None,
     cdef int cnt = 0
     cdef int L = len(I)
     cdef double i = 0.0, j = 0.0
-    cdef double i0 = 0.0, i1 = 0.0, j0 = 0.0, j1 = 0.0
+    cdef int i0 = 0, i1 = 0, j0 = 0, j1 = 0
     cdef int m, n
     m = Z.shape[0]
     n = Z.shape[1]
@@ -87,29 +87,29 @@ def sample_bilinear_int(double[:] I not None, double[:] J not None,
         i = I[cnt]
         j = J[cnt]
         if (i % 1 != 0):
-            i0 = i // 1.0
-            i1 = i0 + 1
+            i0 = int(i // 1.0)
+            i1 = int(i0 + 1)
         elif (i != 0):
-            i0 = i - 1.0
-            i1 = i
+            i0 = int(i - 1.0)
+            i1 = int(i)
         else:
-            i0 = i
-            i1 = i + 1.0
+            i0 = int(i)
+            i1 = int(i + 1.0)
 
         if (j % 1 != 0):
-            j0 = j // 1.0
-            j1 = j0 + 1
+            j0 = int(j // 1.0)
+            j1 = int(j0 + 1)
         elif (j != 0):
-            j0 = j - 1.0
-            j1 = j
+            j0 = int(j - 1.0)
+            j1 = int(j)
         else:
-            j0 = j
-            j1 = j + 1.0
+            j0 = int(j)
+            j1 = int(j + 1.0)
 
-        out[cnt] = int(float(Z[int(i0),int(j0)])*(i1-i)*(j1-j)
-                     + float(Z[int(i1),int(j0)])*(i-i0)*(j1-j) \
-                     + float(Z[int(i0),int(j1)])*(i1-i)*(j-j0) \
-                     + float(Z[int(i1),int(j1)])*(i-i0)*(j-j0))
+        out[cnt] = int(float(Z[i0,j0]) * (i1-i) * (j1-j)
+                     + float(Z[i1,j0]) * (i-i0) * (j1-j) \
+                     + float(Z[i0,j1]) * (i1-i) * (j-j0) \
+                     + float(Z[i1,j1]) * (i-i0) * (j-j0))
     return out
 
 def sample_bilinear_double(double[:] I not None, double[:] J not None,
@@ -117,7 +117,7 @@ def sample_bilinear_double(double[:] I not None, double[:] J not None,
     cdef int cnt = 0
     cdef int L = len(I)
     cdef double i = 0.0, j = 0.0
-    cdef double i0 = 0.0, i1 = 0.0, j0 = 0.0, j1 = 0.0
+    cdef int i0 = 0, i1 = 0, j0 = 0, j1 = 0
     cdef int m, n
     m = Z.shape[0]
     n = Z.shape[1]
@@ -127,27 +127,27 @@ def sample_bilinear_double(double[:] I not None, double[:] J not None,
         i = I[cnt]
         j = J[cnt]
         if (i % 1 != 0):
-            i0 = i // 1.0
-            i1 = i0 + 1
+            i0 = int(i // 1.0)
+            i1 = int(i0 + 1)
         elif (i != 0):
-            i0 = i - 1.0
-            i1 = i
+            i0 = int(i - 1.0)
+            i1 = int(i)
         else:
-            i0 = i
-            i1 = i + 1.0
+            i0 = int(i)
+            i1 = int(i + 1.0)
 
         if (j % 1 != 0):
-            j0 = j // 1.0
-            j1 = j0 + 1
+            j0 = int(j // 1.0)
+            j1 = int(j0 + 1)
         elif (j != 0):
-            j0 = j - 1.0
-            j1 = j
+            j0 = int(j - 1.0)
+            j1 = int(j)
         else:
-            j0 = j
-            j1 = j + 1.0
+            j0 = int(j)
+            j1 = int(j + 1.0)
 
-        out[cnt] = Z[int(i0),int(j0)]*(i1-i)*(j1-j) + Z[int(i1),int(j0)]*(i-i0)*(j1-j) \
-                 + Z[int(i0),int(j1)]*(i1-i)*(j-j0) + Z[int(i1),int(j1)]*(i-i0)*(j-j0)
+        out[cnt] = Z[i0,j0]*(i1-i)*(j1-j) + Z[i1,j0]*(i-i0)*(j1-j) \
+                 + Z[i0,j1]*(i1-i)*(j-j0) + Z[i1,j1]*(i-i0)*(j-j0)
     return out
 
 @cython.wraparound(False)

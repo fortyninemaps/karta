@@ -45,7 +45,7 @@ def contains_proj(double x, double y, CoordString poly, crs):
     """ contains implementation for geographical coordinates.
     calls crs.inverse n times, making this relatively inefficient.
     """
-    cdef double sum_az, az0, az1
+    cdef double sum_az = 0.0, az0, az1
     cdef double x0, y0, x1, y1
     cdef int i
 
