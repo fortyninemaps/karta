@@ -2,6 +2,9 @@
 
 ## changes with 0.7.2
 
+- fix: CompressedBand now always returns array when indexed with a slice
+- fix: output dimension of grid sampling methods is now always one larger than
+  the input
 - new `read_gtiffs` function for reading multiple files as bands
 - implement `RegularGrid.coordinates()` method returning a `CoordGenerator` object
 - implement `get_coordinate_lists` for Multiline and Multipolygon

@@ -133,6 +133,18 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return
 
+    def test_resample_multiband(self):
+        grid = karta.RegularGrid((0, 0, 1, 1, 0, 0),
+                values=np.dstack([np.ones((64, 64)),
+                                  2*np.ones((64, 64)),
+                                  3*np.ones((64, 64))]))
+
+        grid2 = grid.resample(0.5, 0.5)
+        self.assertEqual(grid2[0,0,0], 1.0)
+        self.assertEqual(grid2[0,0,1], 2.0)
+        self.assertEqual(grid2[0,0,2], 3.0)
+        return
+
     def test_sample_nearest(self):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.array([[0, 1], [1, 0.5]]))
@@ -157,13 +169,17 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(res.shape, (1, 12, 12))
         return
 
-    def test_sample_multipoint(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 1], [1, 0.5]]))
-        mp = karta.Multipoint([(0.6, 0.7), (0.6, 1.3), (1.4, 0.3), (1.6, 1.3)],
-                              crs=grid.crs)
-        self.assertTrue(np.all(np.allclose(grid.sample(mp, method="nearest"),
-                                           np.array([0.0, 1.0, 1.0, 0.5]))))
+    def test_sample_nearest_array_order(self):
+        grid = karta.RegularGrid((0, 0, 1, 1, 0, 0),
+                                 values=np.dstack([np.ones((64, 64)),
+                                                   2*np.ones((64,64)),
+                                                   3*np.ones((64,64))]))
+
+        X, Y = np.meshgrid(np.arange(2, 10), np.arange(5, 13))
+        val = grid.sample_nearest(X, Y)
+        self.assertEqual(val[0,0,0], 1.0)
+        self.assertEqual(val[1,0,0], 2.0)
+        self.assertEqual(val[2,0,0], 3.0)
         return
 
     def test_sample_nearest_skewed(self):
@@ -214,7 +230,7 @@ class RegularGridTests(unittest.TestCase):
                                  values=np.dstack([[[0, 1], [1, 0.5]],
                                                    [[1, 2], [2, 1.5]]]))
         res = grid.sample_bilinear(1.0, 1.0)
-        self.assertTrue(np.all(res == np.array([[0.625], [1.625]])))
+        self.assertTrue(np.all(res == np.array([0.625, 1.625])))
         return
 
     def test_sample_bilinear_skewed(self):
@@ -231,6 +247,15 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual([z[400], z[1200], z[1550], z[2120]],
                          [0.16326530612244894, 0.48979591836734693,
                           0.63265306122448983, 0.74052478134110788])
+        return
+
+    def test_sample_multipoint(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.array([[0, 1], [1, 0.5]]))
+        mp = karta.Multipoint([(0.6, 0.7), (0.6, 1.3), (1.4, 0.3), (1.6, 1.3)],
+                              crs=grid.crs)
+        self.assertTrue(np.all(np.allclose(grid.sample(mp, method="nearest"),
+                                           np.array([0.0, 1.0, 1.0, 0.5]))))
         return
 
     def test_sample_2d_array(self):

@@ -662,8 +662,7 @@ class RegularGrid(Grid):
         if method == 'nearest':
             X, Y = np.meshgrid(np.arange(xmin, xmax, dx),
                                np.arange(ymin, ymax, dy))
-            Z = self.sample_nearest(X.ravel(), Y.ravel())
-            values = Z.reshape(X.shape)
+            values = self.sample_nearest(X, Y)
         elif method == 'linear':
             X, Y = np.meshgrid(np.arange(xmin, xmax, dx),
                                np.arange(ymin, ymax, dy))
@@ -671,6 +670,8 @@ class RegularGrid(Grid):
         else:
             raise NotImplementedError('method "{0}" unavailable'.format(method))
 
+        if values.ndim == 3:
+            values = values.transpose(1, 2, 0)
         t = self._transform
         tnew = (xmin-0.5*dx-0.5*t[4], ymin-0.5*dy-0.5*t[5], dx, dy, t[4], t[5])
         return RegularGrid(tnew, values=values, crs=self.crs,
@@ -783,7 +784,7 @@ class RegularGrid(Grid):
             return data[:,:,0]
         elif dim == 2:
             m, n = x.shape
-            return np.concatenate([d.reshape((1, m, n)) for d in data], axis=0)
+            return data.T.reshape((self.nbands, m, n))
 
     def sample_bilinear(self, x, y):
         """ Return the value nearest to coordinates using a bi-linear sampling
@@ -855,7 +856,7 @@ class RegularGrid(Grid):
                                           " {0}".format(band.dtype))
 
         if dim == 0:
-            return np.array(data)
+            return np.array([d[0] for d in data])
         elif dim == 1:
             return np.atleast_2d(data)
         elif dim == 2:
