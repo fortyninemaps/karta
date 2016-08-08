@@ -49,26 +49,43 @@ def all_intersections(CoordString a, CoordString b):
                 intersections.append((xi, yi))
     return intersections
 
-class Event(object):
-    def __init__(self, seg, kind, color):
+cdef class Event(object):
+    """ An Event represents an event in a sweep-line algorithm that signals a
+    change in the sweep-line datastructure. This event signals the entrance and
+    exits of line segments and segment intersections.
+    """
+    cdef public tuple seg
+    cdef public int kind
+    cdef public int color
+    cdef public tuple left
+    cdef public tuple right
+
+    def __init__(self, tuple seg, int kind, int color):
         self.seg = seg
         self.kind = kind
         self.color = color
         self.left = None
         self.right = None
-    def __lt__(self, other):
-        return self.seg < other.seg
+
+    def __richcmp__(self, Event other, int op):
+        if op == 0:
+            return self.seg < other.seg
+        elif op == 2:
+            return self.seg == other.seg
+        elif op == 3:
+            return self.seg != other.seg
 
 class EventQueuePlaceholder(object):
     """ This is a placeholder for an event-queue class. It's not efficient, but
     it works. """
+
     def __init__(self):
         self.queue = []
 
     def __len__(self):
         return len(self.queue)
 
-    def insert(self, double x, object event):
+    def insert(self, double x, Event event):
         self.queue.append((x, event))
         self.queue.sort()
         return
@@ -78,7 +95,7 @@ class EventQueuePlaceholder(object):
         next item in the queue happens at the same time. """
         cdef int flag = 0
         cdef double x
-        cdef object event
+        cdef Event event
         x, event = self.queue[0]
         self.queue = self.queue[1:]
         if (len(self.queue) != 0) and (x == self.queue[0][0]):
@@ -214,7 +231,7 @@ def intersects(CoordString a, CoordString b):
     cdef double yA
     cdef int event_type, segcolor
     cdef object sweepline = SweepLinePlaceholder()
-    cdef object event = None, ev = None
+    cdef Event event = None, ev = None
     cdef tuple segA, segB
     cdef list current_events = [], neighbours = []
 
