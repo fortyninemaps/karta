@@ -2,23 +2,22 @@ import numpy as np
 cimport numpy as np
 from coordstring cimport CoordString
 from cpython cimport bool
-
-cdef inline double dbl_max(double a, double b): return a if a >= b else b
-cdef inline double dbl_min(double a, double b): return a if a <= b else b
+from vectorgeo cimport (cross2, cross3,
+                        Vector2, Vector3, mind, maxd,
+                        azimuth_sph,
+                        cart2sph, sph2cart,
+                        eulerpole, eulerpole_cart)
 
 cdef bool isbetween_inc(double a, double b, double c):
-    return dbl_min(a, c) <= b <= dbl_max(a, c)
+    return mind(a, c) <= b <= maxd(a, c)
 
 cdef bool isbetween_incl(double a, double b, double c):
-    return dbl_min(a, c) <= b < dbl_max(a, c)
+    return mind(a, c) <= b < maxd(a, c)
 
 cdef bool isbetween_incr(double a, double b, double c):
-    return dbl_min(a, c) < b <= dbl_max(a, c)
+    return mind(a, c) < b <= maxd(a, c)
 
 ctypedef bool (*isbetween_t)(double, double, double)
-
-cdef inline double cross2(double u0, double u1, double v0, double v1):
-    return u0*v1 - u1*v0
 
 def all_intersections(CoordString a, CoordString b):
     """ Brute-force intersection search with len(a)*len(b) complexity """
@@ -70,10 +69,18 @@ cdef class Event(object):
     def __richcmp__(self, Event other, int op):
         if op == 0:
             return self.seg < other.seg
+        elif op == 1:
+            return self.seg <= other.seg
         elif op == 2:
             return self.seg == other.seg
         elif op == 3:
             return self.seg != other.seg
+        elif op == 4:
+            return self.seg > other.seg
+        elif op == 5:
+            return self.seg >= other.seg
+        else:
+            raise ValueError("no __richcmp__ operation for op == %d" % op)
 
 class EventQueuePlaceholder(object):
     """ This is a placeholder for an event-queue class. It's not efficient, but
@@ -104,8 +111,9 @@ class EventQueuePlaceholder(object):
 
 class SweepLinePlaceholder(object):
     """ This is a placeholder for a sweep-line class. """
-    def __init__(self):
+    def __init__(self, spherical=False):
         self.queue = []
+        self.spherical = spherical
 
     def __iter__(self):
         cdef tuple item
@@ -113,11 +121,19 @@ class SweepLinePlaceholder(object):
             yield item
 
     def _get_slope_height(self, tuple seg, double x):
-        cdef double m = 0.0
-        if seg[3] == seg[1]:
-            return m, seg[1]
-        m = (seg[3]-seg[1]) / (seg[2]-seg[0])
-        return m, m*(x-seg[0]) + seg[1]
+        cdef double m = 0.0, h = 0.0
+        cdef tuple interx
+        if self.spherical:
+            m = -(azimuth_sph(Vector2(seg[0], seg[1]), Vector2(seg[2], seg[3])) - 90)
+            # compute intersection between seg and a meridional geodesic passing through x
+            interx = intersection_sph(seg[0], seg[2], x, x, seg[1], seg[3], -90, 90)
+            h = interx[1]
+        else:
+            if seg[3] == seg[1]:
+                return m, seg[1]
+            m = (seg[3]-seg[1]) / (seg[2]-seg[0])
+            h = m*(x-seg[0]) + seg[1]
+        return m, h
 
     def insert(self, tuple item, double x):
         if len(self.queue) == 0:
@@ -307,7 +323,168 @@ def intersects(CoordString a, CoordString b):
 
     return False
 
+def intersects_sph(CoordString a, CoordString b):
+    """ Shamos-Hoey intersection detection algorithm with adaptations for
+    spherical coordinates. """
+
+   # corner cases:
+   # - simultaneous events          handled
+   # - parallel overlapping lines   handled
+   # - triple intersections         handled(?)
+   # - vertical lines               handled
+   # - self-intersections           handled
+   #
+   # all of the above need tests to verify
+
+    cdef int na = len(a), nb = len(b)
+    if a.ring:
+        na = na + 1
+    if b.ring:
+        nb = nb + 1
+
+    # initialize event queue
+    #
+    # event kind may be:
+    # 0 : left point
+    # 1 : right point
+    # 2 : bottom point on vertical segment
+    # 3 : top point on vertical segment
+    # 4 : intersection (unused)
+    cdef int i = 0
+    cdef object event_queue = EventQueuePlaceholder()
+    cdef double x0, x1, y0, y1
+    cdef tuple seg
+
+    for i in range(na-1):
+        x0 = a.getX(i)
+        x1 = a.getX(i+1)
+        y0 = a.getY(i)
+        y1 = a.getY(i+1)
+        seg = (x0, y0, x1, y1, 0)
+        if x0 == x1:
+            if y0 < y1:
+                event_queue.insert(x0, Event(seg, 2, 0))
+                event_queue.insert(x0, Event(seg, 3, 0))
+            else:
+                event_queue.insert(x0, Event(seg, 3, 0))
+                event_queue.insert(x0, Event(seg, 2, 0))
+        elif x0 < x1:
+            event_queue.insert(x0, Event(seg, 0, 0))
+            event_queue.insert(x1, Event(seg, 1, 0))
+        else:
+            event_queue.insert(x1, Event(seg, 0, 0))
+            event_queue.insert(x0, Event(seg, 1, 0))
+
+    for i in range(nb-1):
+        x0 = b.getX(i)
+        x1 = b.getX(i+1)
+        y0 = b.getY(i)
+        y1 = b.getY(i+1)
+        seg = (x0, y0, x1, y1, 1)
+        if x0 == x1:
+            if y0 < y1:
+                event_queue.insert(x0, Event(seg, 2, 1))
+                event_queue.insert(x0, Event(seg, 3, 1))
+            else:
+                event_queue.insert(x0, Event(seg, 3, 1))
+                event_queue.insert(x0, Event(seg, 2, 1))
+        elif x0 < x1:
+            event_queue.insert(x0, Event(seg, 0, 1))
+            event_queue.insert(x1, Event(seg, 1, 1))
+        else:
+            event_queue.insert(x1, Event(seg, 0, 1))
+            event_queue.insert(x0, Event(seg, 1, 1))
+
+    # begin sweep search
+    cdef double x
+    cdef double yA
+    cdef int event_type, segcolor
+    cdef object sweepline = SweepLinePlaceholder(spherical=True)
+    cdef Event event = None, ev = None
+    cdef tuple segA, segB
+    cdef list current_events = [], neighbours = []
+
+    while len(event_queue) != 0:
+
+        # get all simultaneous events
+        current_events = []
+        flag = 1
+        while flag == 1:
+            flag, x, event = event_queue.takefirst()
+            current_events.append((x, event))
+
+        # for all segments that begin, insert into sweepline
+        for x, event in current_events:
+            if event.kind == 0:
+                sweepline.insert(event.seg, x)
+
+        # for all segments that end, get the neighbours that are not also
+        # ending and remove from sweepline
+        for _, event in current_events:
+            if event.kind == 1:
+                segA = event.seg
+                segB = event.seg
+                while segA is not None and \
+                        segA in (ev.seg for x, ev in current_events if ev.kind==1):
+                    segA = sweepline.leftof(segA)
+                while segB is not None and \
+                        segB in (ev.seg for x, ev in current_events if ev.kind==1):
+                    segB = sweepline.rightof(segB)
+                event.left = segA
+                event.right = segB
+                sweepline.remove(event.seg)
+
+        # check for intersections due to last set of events
+        for x, event in current_events:
+
+            seg = event.seg
+
+            if (event.kind == 2):
+                # vertical segment - check whether span crosses any segments
+                for segA in sweepline:
+
+                    if seg[4] == segA[4]:
+                        continue
+
+                    yA = intersection_sph(segA[0], segA[2], x, x, segA[1], segA[3], -90, 90)[1]
+                    if (seg[1] <= yA) and (seg[3] >= yA):
+                        return True
+
+                    if (seg[3] <= yA) and (seg[1] >= yA):
+                        return True
+
+                # can skip kind == 3 because it's covered by kind == 2
+
+            elif event.kind == 0:
+                # starting point
+                segA = sweepline.leftof(seg)
+                segB = sweepline.rightof(seg)
+                if segA is not None and _intersects_sph(segA[0], segA[2],
+                                                        seg[0], seg[2],
+                                                        segA[1], segA[3],
+                                                        seg[1], seg[3]):
+                    return True
+                if segB is not None and _intersects_sph(segB[0], segB[2],
+                                                        seg[0], seg[2],
+                                                        segB[1], segB[3],
+                                                        seg[1], seg[3]):
+                    return True
+
+            elif event.kind == 1:
+                # ending point
+                segA = event.left
+                segB = event.right
+                if segA is not None and segB is not None \
+                        and _intersects_sph(segB[0][0], segB[1][0],
+                                            seg[0][0], seg[1][0],
+                                            segB[0][1], segB[1][1],
+                                            seg[0][1], seg[1][1]):
+                    return True
+
+    return False
+
 cdef inline bool _intersects(tuple seg1, tuple seg2):
+    """ Test whether two segments have an intersection. """
     cdef tuple interx
     if seg1[4] == seg2[4]:
         # same geometry
@@ -321,6 +498,14 @@ cdef inline bool _intersects(tuple seg1, tuple seg2):
         return False
     return True
 
+#cdef inline Vector2 _project_gnomonic(Vector2 lonlat, lon0, R):
+#    cdef double x = R*tan(lonlat.x - lon0)
+#    cdef double y = R*tan(lonlat.y)/cos(lonlat.x-lon0)
+#    return Vector2(x, y)
+#
+#cdef inline Vector2 _invproject_gnomonic(Vector2 xy, lon0, R):
+#    return
+
 cdef inline bool overlaps(double a0, double a1, double b0, double b1):
     if (a0 <= b0 <= a1) or (a0 <= b1 <= a1) or (b0 <= a0 <= b1) or (b0 <= a1 <= b1):
         return True
@@ -329,10 +514,10 @@ cdef inline bool overlaps(double a0, double a1, double b0, double b1):
 
 cdef bool iscollinear(double x0, double x1, double x2, double x3,
                       double y0, double y1, double y2, double y3):
-    cdef double rxs = cross2(x1-x0, y1-y0, x3-x2, y3-y2)
+    cdef double rxs = cross2(Vector2(x1-x0, y1-y0), Vector2(x3-x2, y3-y2))
     cdef double rxt = -1.0
     if rxs == 0:
-        rxt = cross2(x1-x0, y1-y0, x3-x0, y3-y0)
+        rxt = cross2(Vector2(x1-x0, y1-y0), Vector2(x3-x0, y3-y0))
         if rxt == 0:
             if (x1-x0) != 0 and overlaps(x0, x1, x2, x3):
                 return True
@@ -340,25 +525,65 @@ cdef bool iscollinear(double x0, double x1, double x2, double x3,
                 return True
     return False
 
-cpdef intersection(double x0, double x1, double x2, double x3,
-                   double y0, double y1, double y2, double y3):
-    """ Returns coordinates of intersection point, or (NaN, NaN) if lines don't
-    intersect.
+cdef bool iscollinear_sph(double x0, double x1, double x2, double x3,
+                          double y0, double y1, double y2, double y3):
+    cdef Vector3 ep1 = eulerpole(Vector2(x0, y0), Vector2(x1, y1))
+    cdef Vector3 ep2 = eulerpole(Vector2(x2, y2), Vector2(x3, y3))
+    # TODO: check overlap?
+    if ((ep1.x == ep2.x) and (ep1.y == ep2.y) and (ep1.z == ep2.z)) \
+            or ((ep1.x == -ep2.x) and (ep1.y == -ep2.y) and (ep1.z == -ep2.z)):
+        return True
+    else:
+        return False
 
-    Line1 consists of point pairs 0, 1
-    Line2 consists of point pairs 2, 3
+cpdef bool _intersects_sph(double x0, double x1, double x2, double x3,
+                           double y0, double y1, double y2, double y3):
+    cdef Vector3 ep1 = eulerpole_cart(sph2cart(Vector2(x0, y0)), sph2cart(Vector2(x1, y1)))
+    cdef Vector3 ep2 = eulerpole_cart(sph2cart(Vector2(x2, y2)), sph2cart(Vector2(x3, y3)))
+    cdef Vector2 normal = cart2sph(cross3(ep1, ep2))
+    cdef double antipodal_lon = (normal.x + 360) % 360 - 180.0
+    if isbetween_inc(x0, normal.x, x1) and isbetween_inc(x2, normal.x, x3):
+        return True
+    elif isbetween_inc(x0, antipodal_lon, x1) and isbetween_inc(x2, antipodal_lon, x3):
+        return True
+    else:
+        return False
+
+cpdef intersection_sph(double x0, double x1, double x2, double x3,
+                       double y0, double y1, double y2, double y3):
+    """ Compute the spherical intersection between two segments,
+    ((x0,y0), (x1,y1)) and ((x2,y2), (x3,y3)).
+
+    Returns (NaN, NaN) if no intersection exists.
     """
-    cdef double rxs = cross2(x1-x0, y1-y0, x3-x2, y3-y2)
-    if rxs == 0:
-        # parallel or collinear
+    cdef Vector3 ep1 = eulerpole_cart(sph2cart(Vector2(x0, y0)), sph2cart(Vector2(x1, y1)))
+    cdef Vector3 ep2 = eulerpole_cart(sph2cart(Vector2(x2, y2)), sph2cart(Vector2(x3, y3)))
+    cdef Vector2 normal = cart2sph(cross3(ep1, ep2))
+    cdef antipodal_lon = (normal.x + 360) % 360 - 180.0
+    cdef Vector2 antipode = Vector2(antipodal_lon, -normal.y)
+    if isbetween_inc(x0, normal.x, x1) and isbetween_inc(x2, normal.x, x3):
+        return normal.x, normal.y
+    elif isbetween_inc(x0, antipode.x, x1) and isbetween_inc(x2, antipode.x, x3):
+        return antipode.x, antipode.y
+    else:
         return np.nan, np.nan
 
-    cdef double t = cross2(x2-x0, y2-y0, x3-x2, y3-y2) / rxs
-    cdef double u = cross2(x2-x0, y2-y0, x1-x0, y1-y0) / rxs
+cpdef intersection(double x0, double x1, double x2, double x3,
+                   double y0, double y1, double y2, double y3):
+    """ Compute the planar intersection between two segments,
+    ((x0,y0), (x1,y1)) and ((x2,y2), (x3,y3)).
+
+    Returns (NaN, NaN) if no intersection exists.
+    """
+    cdef double rxs = cross2(Vector2(x1-x0, y1-y0), Vector2(x3-x2, y3-y2))
+    if rxs == 0:
+        return np.nan, np.nan
+
+    cdef double t = cross2(Vector2(x2-x0, y2-y0), Vector2(x3-x2, y3-y2)) / rxs
+    cdef double u = cross2(Vector2(x2-x0, y2-y0), Vector2(x1-x0, y1-y0)) / rxs
     if (0 < t <= 1) and (0 < u <= 1):
         return x0 + t*(x1-x0), y0 + t*(y1-y0)
     else:
-        # non-intersecting
         return np.nan, np.nan
 
 def count_crossings(double xp, double yp, CoordString coords):

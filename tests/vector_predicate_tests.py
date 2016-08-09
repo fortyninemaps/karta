@@ -112,6 +112,20 @@ class TestBinaryPredicates(unittest.TestCase):
         self.assertFalse(line1.intersects(line2))
         return
 
+    def test_line_intersects_geographical3(self):
+        # checks to make sure geodesics are handled
+        line1 = Line([(-50.0, 70.0), (50.0, 70.0)], crs=SphericalEarth)
+        line2 = Line([(0.0, 71.0), (1.0, 89.0)], crs=SphericalEarth)
+        self.assertTrue(line1.intersects(line2))
+        return
+
+    def test_line_intersects_geographical4(self):
+        # catches possible bugs in handling vertical segments on sweepline
+        line1 = Line([(-50.0, 70.0), (50.0, 70.0)], crs=SphericalEarth)
+        line2 = Line([(0.0, 71.0), (0.0, 89.0)], crs=SphericalEarth)
+        self.assertTrue(line1.intersects(line2))
+        return
+
     def test_poly_contains1(self):
         # trivial cases
         pt0 = Point((-0.5, 0.92))
@@ -259,3 +273,5 @@ class TestBinaryPredicates(unittest.TestCase):
         self.assertEqual(len(within), 8)
         return
 
+if __name__ == "__main__":
+    unittest.main()

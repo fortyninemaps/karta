@@ -2,15 +2,19 @@
 
 ## changes with 0.7.2
 
+- performance: planar length calculations are much faster (~700 x) and geodetic
+  length calculations are somewhat faster (~1.8 x)
 - fix: CompressedBand now always returns array when indexed with a slice
 - fix: output dimension of grid sampling methods is now always one larger than
   the input
-- `merge` now works with multiband grids
-- use more efficient algorithm for intersection detection
+- `raster.merge` now works with multiband grids
+- efficient algorithm for intersection detection in planar and spherical
+  coordinates
 - new `read_gtiffs` function for reading multiple files as bands
-- implement `RegularGrid.coordinates()` method returning a `CoordGenerator` object
+- implement experimental `RegularGrid.coordinates()` method returning a
+  `CoordGenerator` object
 - implement `get_coordinate_lists` for Multiline and Multipolygon
-- performance optimizations and fixes
+- other performance optimizations and fixes
 
 ## changes with 0.7.1
 

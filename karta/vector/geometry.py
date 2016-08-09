@@ -661,14 +661,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry. """
         if isinstance(self.crs, GeographicalCRS):
-            for a in self.segment_tuples:
-                for b in other.segment_tuples:
-                    try:
-                        geodesy.intersection_spherical(a, b)
-                    except geodesy.NoIntersection:
-                        continue
-                    return True
-            return False
+            return _cintersection.intersects_sph(self.vertices, other.vertices)
         else:
             return _cintersection.intersects(self.vertices, other.vertices)
 
