@@ -1265,7 +1265,90 @@ class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin
                                    if poly.contains(point)]
         return self._subset(confirmed_indices)
 
-class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
+class MultiVertexMultipartMixin(object):
+    """ Mix-in class for multipart classes for which it is reasonable to ask
+    whether member geometries are within or touching a multi-vertex geometry.
+
+    E.g.
+    - "which members touch this Line/Polygon?"
+    - "which members are contained by this Polygon?"
+    """
+    def within_bbox(self, bbox, max_results=-1):
+        """ Return Multipart geometry representing member geometries that are
+        contained by a bounding box.
+
+        Parameters
+        ----------
+        bbox : tuple
+            (xmin, ymin, xmax, ymax)
+        """
+        indices = self.rtree.search_within(bbox, max_results=max_results)
+        return type(self)([self[i] for i in indices])
+
+    def touching_bbox(self, bbox, max_results=-1):
+        """ Return Multipart geometry representing member geometries that touch
+        a bounding box.
+
+        Parameters
+        ----------
+        bbox : tuple
+            (xmin, ymin, xmax, ymax)
+        """
+        indices = self.rtree.search_overlapping(bbox, max_results=max_results)
+        return type(self)([self[i] for i in indices])
+
+    def touching(self, geom):
+        """ Return a Multipart geometry representing member geometries that
+        touch a Line or Polygon.
+
+        Touching is defined as intersecting a Line or Polygon boundary, or
+        being contained within a Polygon.
+
+        Parameters
+        ----------
+        geom : Line or Polygon
+
+        Returns
+        -------
+        """
+        indices = self.rtree.search_overlapping(geom.bbox)
+        results = []
+        if isinstance(geom, Line):
+            for i in indices:
+                test_geom = self[i]
+                if geom.intersects(test_geom):
+                    results.append(test_geom)
+        elif isinstance(geom, Polygon):
+            for i in indices:
+                test_geom = self[i]
+                pt = test_geom[0]
+                if geom.contains(pt) or geom.intersects(test_geom):
+                    results.append(test_geom)
+        else:
+            raise TypeError("argument must be Line or Polygon")
+        return type(self)(results)
+
+    def within(self, geom):
+        """ Return a Multipart geometry representing member geometries
+        contained within a Polygon.
+
+        Parameters
+        ----------
+        geom : Polygon
+        """
+        if not isinstance(geom, Polygon):
+            raise TypeError("argument must be Polygon")
+        indices = self.rtree.search_overlapping(geom.bbox)
+        results = []
+        for i in indices:
+            test_geom = self[i]
+            pt = test_geom[0]
+            if geom.contains(pt) and not geom.intersects(test_geom):
+                results.append(test_geom)
+        return type(self)(results)
+
+class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
+                ShapefileOutMixin):
     """ Collection of lines with associated attributes.
 
     Parameters
@@ -1364,15 +1447,8 @@ class Multiline(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
     def extent(self):
         return self.get_extent()
 
-    def within(self, bbox, max_results=-1):
-        indices = self.rtree.search_within(bbox, max_results=max_results)
-        return type(self)([self[i] for i in indices])
-
-    def touching(self, bbox, max_results=-1):
-        indices = self.rtree.search_overlapping(bbox, max_results=max_results)
-        return type(self)([self[i] for i in indices])
-
-class Multipolygon(Multipart, GeoJSONOutMixin, ShapefileOutMixin):
+class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
+                   ShapefileOutMixin):
     """ Collection of polygons with associated attributes.
 
     Parameters

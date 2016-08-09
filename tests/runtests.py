@@ -18,6 +18,8 @@ from table_tests import *
 from grid_tests import *
 from band_tests import *
 
+# Vector operations
+from vector_predicate_tests import *
 from quadtree_tests import *
 from rtree_tests import *
 #from redblack_tests import *

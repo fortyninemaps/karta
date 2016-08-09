@@ -165,6 +165,11 @@ class TestMultipartGeometry(unittest.TestCase):
         self.assertEqual(len(mp), 0)
         return
 
+    def test_multipoint_zip_init(self):
+        x = range(-10, 10)
+        y = [_x**2 for _x in x]
+        Line(zip(x, y))
+        return
 
 if __name__ == "__main__":
     unittest.main()
