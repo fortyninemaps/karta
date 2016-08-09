@@ -112,12 +112,29 @@ class SweepLinePlaceholder(object):
         for item in self.queue:
             yield item
 
-    def _get_height(self, tuple seg, double x):
-        if seg[2] == seg[1]:
-            return seg[1]
-        cdef double m
+    def _get_slope_height(self, tuple seg, double x):
+        cdef double m = 0.0
+        if seg[3] == seg[1]:
+            return m, seg[1]
         m = (seg[3]-seg[1]) / (seg[2]-seg[0])
-        return m*(x-seg[0]) + seg[1]
+        return m, m*(x-seg[0]) + seg[1]
+
+    def insert(self, tuple item, double x):
+        if len(self.queue) == 0:
+            self.queue.append(item)
+            return
+
+        cdef double m, y, m_, y_
+        cdef int i = 0
+        m, y = self._get_slope_height(item, x)
+        m_, y_ = self._get_slope_height(self.queue[i], x)
+        while (y_ < y) or ((y_ == y) and (m_ < m)):
+            i += 1
+            if i == len(self.queue):
+                break
+            m_, y_ = self._get_slope_height(self.queue[i], x)
+        self.queue.insert(i, item)
+        return
 
     def leftof(self, tuple item):
         cdef int idx
@@ -135,21 +152,8 @@ class SweepLinePlaceholder(object):
         else:
             return self.queue[idx+1]
 
-    def insert(self, tuple item, double x):
-        if len(self.queue) == 0:
-            self.queue.append(item)
-            return
-
-        y = self._get_height(item, x)
-        i = 0
-        while self._get_height(self.queue[i], x) < y:
-            i += 1
-            if i == len(self.queue):
-                break
-        self.queue.insert(i, item)
-        return
-
     def remove(self, item):
+        cdef int idx
         idx = self.queue.index(item)
         self.queue.pop(idx)
         return
@@ -166,13 +170,11 @@ def intersects(CoordString a, CoordString b):
    #
    # all of the above need tests to verify
 
-    cdef int na, nb, i = 0
-    na = len(a)
-    nb = len(b)
+    cdef int na = len(a), nb = len(b)
     if a.ring:
-        na += 1
+        na = na + 1
     if b.ring:
-        nb += 1
+        nb = nb + 1
 
     # initialize event queue
     #
@@ -182,6 +184,7 @@ def intersects(CoordString a, CoordString b):
     # 2 : bottom point on vertical segment
     # 3 : top point on vertical segment
     # 4 : intersection (unused)
+    cdef int i = 0
     cdef object event_queue = EventQueuePlaceholder()
     cdef double x0, x1, y0, y1
     cdef tuple seg
@@ -195,16 +198,16 @@ def intersects(CoordString a, CoordString b):
         if x0 == x1:
             if y0 < y1:
                 event_queue.insert(x0, Event(seg, 2, 0))
-                event_queue.insert(x1, Event(seg, 3, 0))
+                event_queue.insert(x0, Event(seg, 3, 0))
             else:
                 event_queue.insert(x0, Event(seg, 3, 0))
-                event_queue.insert(x1, Event(seg, 2, 0))
+                event_queue.insert(x0, Event(seg, 2, 0))
         elif x0 < x1:
             event_queue.insert(x0, Event(seg, 0, 0))
             event_queue.insert(x1, Event(seg, 1, 0))
         else:
-            event_queue.insert(x0, Event(seg, 1, 0))
             event_queue.insert(x1, Event(seg, 0, 0))
+            event_queue.insert(x0, Event(seg, 1, 0))
 
     for i in range(nb-1):
         x0 = b.getX(i)
@@ -215,16 +218,16 @@ def intersects(CoordString a, CoordString b):
         if x0 == x1:
             if y0 < y1:
                 event_queue.insert(x0, Event(seg, 2, 1))
-                event_queue.insert(x1, Event(seg, 3, 1))
+                event_queue.insert(x0, Event(seg, 3, 1))
             else:
                 event_queue.insert(x0, Event(seg, 3, 1))
-                event_queue.insert(x1, Event(seg, 2, 1))
+                event_queue.insert(x0, Event(seg, 2, 1))
         elif x0 < x1:
             event_queue.insert(x0, Event(seg, 0, 1))
             event_queue.insert(x1, Event(seg, 1, 1))
         else:
-            event_queue.insert(x0, Event(seg, 1, 1))
             event_queue.insert(x1, Event(seg, 0, 1))
+            event_queue.insert(x0, Event(seg, 1, 1))
 
     # begin sweep search
     cdef double x
@@ -317,112 +320,6 @@ cdef inline bool _intersects(tuple seg1, tuple seg2):
     if np.isnan(interx[0]):
         return False
     return True
-
-# def all_intersections_(CoordString a, CoordString b):
-#     """ Bentley-Ottman intersection sweep with (n+k) log n complexity, where n
-#     = len(a)+len(b) and k is the number of intersections. """
-# 
-#     # There are various corner cases to handle:
-#     #
-#     # - multiple events at the same place in the event queue
-#     # - parallel overlapping lines
-#     # - triple intersections
-#     # - vertical lines
-#     # - segment vertices
-# 
-#     cdef list event_queue, output
-#     cdef int na, nb, segnum
-#     cdef int i
-# 
-#     na = len(a)
-#     nb = len(b)
-#     if a.ring:
-#         a += 1
-#     if b.ring:
-#         b += 1
-# 
-#     # initialize event queue
-#     # values are tuple of (x, y, LINE, SEGA, SEGB)
-#     # if LINE == 0, event is on line A
-#     # if LINE == 1, event is on line B
-#     # if LINE == -1, event is an intersection between SEGA, SEGB
-#     event_queue = EventQueue()
-#     segnum = 0
-#     for i in range(na-1):
-#         event_queue.insert((a.getX(i), a.getY(i), 0, segnum, 0))
-#         event_queue.insert((a.getX(i+1), a.getY(i+1), 0, segnum, 0))
-#         segnum += 1
-# 
-#     for i in range(nb-1):
-#         event_queue.insert((b.getX(i), b.getY(i), 1, segnum, 0))
-#         event_queue.insert((b.getX(i+1), b.getY(i+1), 1, segnum, 0))
-#         segnum += 1
-# 
-#     sweepline = SweepTree()
-#     output = []
-# 
-#     cdef tuple seg1, seg2, event, interx
-#     cdef int segAbove, segBelow
-#     cdef Node N1, N2, NAbove, NBelow
-# 
-#     while len(event_queue) != 0:
-# 
-#         event = event.pop()
-#         if event[2] != -1:
-#             seg1 = segments[event[3]]
-#             if (event[0] == seg1[0]) and (event[1] == seg1[1]):
-#                 # entering point
-#                 N1 = sweepline.insert(seg1, event[0])
-#                 NAbove = N1.one_right
-#                 NBelow = N1.one_left
-#                 _intersection_to_queue(seg1, NAbove.seg, event_queue)
-#                 _intersection_to_queue(seg1, NBelow.seg, event_queue)
-# 
-#             else:
-#                 # leaving point
-#                 N1 = sweepline.find(seg1, event[0])
-#                 NAbove = N1.one_right
-#                 NBelow = N1.one_left
-#                 sweepline.delete(seg1, event[0])
-#                 _intersection_to_queue(NAbove.seg, NBelow.seg, event_queue)
-# 
-#         else:
-#             # intersection point
-#             seg1 = segments[event[3]]
-#             seg2 = segments[event[4]]
-#             N1 = sweepline.find(seg1, event[0])
-#             N2 = sweepline.find(seg2, event[0])
-# 
-#             # swap segment ordering
-#             N1.segment, N2.segment = N2.segment, N1.segment
-# 
-#             # establish which segment is above the other
-#             if slope(N1.segment) > slope(N2.segment):
-#                 # N1 is above (right)
-#                 NAbove = N1.one_right
-#                 NBelow = N2.one_left
-# 
-#                 _intersection_to_queue(N1.seg, NAbove.seg, event_queue)
-#                 _intersection_to_queue(N2.seg, NBelow.seg, event_queue)
-# 
-#             else:
-#                 # N1 is below (left)
-#                 NBelow = N1.one_left
-#                 NAbove = N2.one_right
-# 
-#                 _intersection_to_queue(N1.seg, NBelow.seg, event_queue)
-#                 _intersection_to_queue(N2.seg, NAbove.seg, event_queue)
-
-# cdef _intersection_to_queue(tuple seg1, tuple seg2, RedBlackTree queue):
-#     """ Check whether seg1 and seg2 intersect. If so, attempt to add them to a
-#     queue, returning the result. If not, return -1. """
-#     cdef tuple interx, event
-#     interx = intersection(seg1[0], seg1[2], seg2[0], seg2[2],
-#                           seg1[1], seg1[3], seg2[1], seg2[3])
-#     if not np.isnan(interx[0]):
-#         event = (interx[0], interx[1], -1, N1.index, NBelow.index)
-#         return queue.insert(event)
-#     return -1
 
 cdef inline bool overlaps(double a0, double a1, double b0, double b1):
     if (a0 <= b0 <= a1) or (a0 <= b1 <= a1) or (b0 <= a0 <= b1) or (b0 <= a1 <= b1):

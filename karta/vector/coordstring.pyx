@@ -125,7 +125,7 @@ cdef class CoordString:
 
     cdef double getZ(self, int index):
         if self.rank != 3:
-            raise TypeError("Z only exists in rank-3 coordinates")
+            return np.nan
         if self.ring and index == self.length:
             index = 0
         return self.coords[index*self.rank+2]

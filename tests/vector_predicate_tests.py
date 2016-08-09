@@ -112,30 +112,6 @@ class TestBinaryPredicates(unittest.TestCase):
         self.assertFalse(line1.intersects(line2))
         return
 
-    def test_multipoint_within_bbox(self):
-        vertices = [(float(x),float(y)) for x in range(-10,11)
-                                        for y in range(-10,11)]
-        ans = [v for v in vertices if (-5.0<v[0]<5.0) and (-4.0<v[1]<6.0)]
-        mp = Multipoint(vertices)
-        sub = mp.within_bbox((-5.0, -4.0, 5.0, 6.0))
-        self.assertEqual(sub, Multipoint(ans))
-        return
-
-    def test_multipoint_within_polygon(self):
-        np.random.seed(42)
-        x = (np.random.random(100) - 0.5) * 180.0
-        y = (np.random.random(100) - 0.5) * 30.0
-        xp = [-80, -50, 20, 35, 55, -45, -60]
-        yp = [0, -10, -8, -17, 15, 18, 12]
-        poly = Polygon(zip(xp, yp), crs=LonLatWGS84)
-        mp = Multipoint(zip(x, y), crs=LonLatWGS84)
-
-        subset = mp.within_polygon(poly)
-        excluded = [pt for pt in mp if pt not in subset]
-        self.assertTrue(all(poly.contains(pt) for pt in subset))
-        self.assertFalse(any(poly.contains(pt) for pt in excluded))
-        return
-
     def test_poly_contains1(self):
         # trivial cases
         pt0 = Point((-0.5, 0.92))
@@ -197,5 +173,89 @@ class TestBinaryPredicates(unittest.TestCase):
         pt = Point((1,1.5))
         self.assertTrue(line.within_distance(pt, 0.6))
         self.assertFalse(line.within_distance(pt, 0.4))
+        return
+
+    def test_multipoint_within_bbox(self):
+        vertices = [(float(x),float(y)) for x in range(-10,11)
+                                        for y in range(-10,11)]
+        ans = [v for v in vertices if (-5.0<v[0]<5.0) and (-4.0<v[1]<6.0)]
+        mp = Multipoint(vertices)
+        sub = mp.within_bbox((-5.0, -4.0, 5.0, 6.0))
+        self.assertEqual(sub, Multipoint(ans))
+        return
+
+    def test_multipoint_within_polygon(self):
+        np.random.seed(42)
+        x = (np.random.random(100) - 0.5) * 180.0
+        y = (np.random.random(100) - 0.5) * 30.0
+        xp = [-80, -50, 20, 35, 55, -45, -60]
+        yp = [0, -10, -8, -17, 15, 18, 12]
+        poly = Polygon(zip(xp, yp), crs=LonLatWGS84)
+        mp = Multipoint(zip(x, y), crs=LonLatWGS84)
+
+        subset = mp.within_polygon(poly)
+        excluded = [pt for pt in mp if pt not in subset]
+        self.assertTrue(all(poly.contains(pt) for pt in subset))
+        self.assertFalse(any(poly.contains(pt) for pt in excluded))
+        return
+
+    def test_multiline_touching_line(self):
+        np.random.seed(49)
+        multiline = Multiline([10*np.random.rand(10, 2)
+                               + np.random.randint(-50, 50, (1, 2)) for _ in range(50)])
+        line = Line([(-30, -40), (11, -30), (10, 22), (-10, 50)])
+        touching = multiline.touching(line)
+        self.assertEqual(len(touching), 4)
+        return
+
+    def test_multipolygon_touching_line(self):
+        np.random.seed(49)
+        multipolygon = \
+            Multipolygon([[np.array([[0,0],[10,0],[10,10],[0,10]])
+                           + np.random.randint(-50, 50, (1, 2))]
+                          for _ in range(50)])
+        line = Line([(-40, -35), (-15, -30), (30, 5), (10, 32), (-15, 17)])
+        touching = multipolygon.touching(line)
+        self.assertEqual(len(touching), 10)
+        return
+
+    def test_multiline_touching_poly(self):
+        np.random.seed(49)
+        multiline = Multiline([10*np.random.rand(10, 2)
+                               + np.random.randint(-50, 50, (1, 2)) for _ in range(50)])
+        poly = Polygon([(-30, -40), (12, -30), (8, 22), (-10, 50)])
+        touching = multiline.touching(poly)
+        self.assertEqual(len(touching), 12)
+        return
+
+    def test_multipolygon_touching_poly(self):
+        np.random.seed(49)
+        multipolygon = \
+            Multipolygon([[np.array([[0,0],[3,0],[3,3],[0,3]])
+                           + np.random.randint(-50, 50, (1, 2))]
+                          for _ in range(50)])
+        poly = Polygon([(-30, -40), (12, -30), (8, 22), (-10, 50)])
+        touching = multipolygon.touching(poly)
+        self.assertEqual(len(touching), 14)
+        return
+
+    def test_multiline_within_poly(self):
+        np.random.seed(49)
+        multiline = Multiline([10*np.random.rand(10, 2)
+                               + np.random.randint(-50, 50, (1, 2)) for _ in range(50)])
+        poly = Polygon([(-30, -40), (12, -30), (8, 22), (-10, 50)])
+        within = multiline.within(poly)
+        self.assertEqual(len(within), 8)
+        return
+
+    def test_multipolygon_within_poly(self):
+        np.random.seed(49)
+        multipolygon = \
+            Multipolygon([[np.array([[0,0],[3,0],[3,3],[0,3]])
+                           + np.random.randint(-50, 50, (1, 2))]
+                          for _ in range(50)])
+        poly = Polygon([(-30, -40), (12, -30), (8, 22), (-10, 50)])
+        within = multipolygon.within(poly)
+        self.assertEqual(len(within), 8)
         return
 
