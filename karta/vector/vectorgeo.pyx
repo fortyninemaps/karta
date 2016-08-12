@@ -13,10 +13,6 @@ def polarangle(tuple pt0, tuple pt1):
     """ Return the polar angle from pt0 to pt1 """
     return atan2(pt1[1]-pt0[1], pt1[0]-pt0[0])
 
-cdef struct Point:
-    double x
-    double y
-
 cdef struct Vector2:
     double x
     double y
@@ -39,10 +35,9 @@ cdef inline Vector3 cross3(Vector3 u, Vector3 v):
     return Vector3(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x)
 
 cdef Vector2 proj2(Vector2 u, Vector2 v):
-    cdef double uv, vv
-    uv = dot2(u, v)
-    vv = dot2(v, v)
-    return Vector2(uv/vv*v.x, uv/vv*v.y)
+    cdef double uv_vv
+    uv_vv = dot2(u, v) / dot2(v, v)
+    return Vector2(uv_vv*v.x, uv_vv*v.y)
 
 cdef inline double dist2(Vector2 pt0, Vector2 pt1) nogil:
     return sqrt((pt0.x-pt1.x)**2 + (pt0.y-pt1.y)**2)
@@ -140,7 +135,7 @@ def pt_nearest_planar(double x, double y,
         else:
             return ((u_int.x, u_int.y), dist2(u_int, pt))
 
-# These types could be used for Cython-wrapped Python functions in the future
+# Currently unused, but could be employed to optimize pyproj function calls
 ctypedef tuple (*fwd_t)(double, double, double, double)
 ctypedef tuple (*inv_t)(double, double, double, double)
 
