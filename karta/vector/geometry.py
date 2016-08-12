@@ -201,25 +201,43 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         return Point((x, y), properties=self.properties, crs=self.crs)
 
     def distance(self, other, projected=True):
-        """ Returns a distance to another Point. If the coordinate system is
-        geographical and a third (z) coordinate exists, it is assumed to have
-        the same units as the real-world horizontal distance (i.e. meters).
+        """ Returns a distance to another Point. Distances is computed in one
+        of three ways:
+
+        1. If *self* is in a geographical coordinate system, *other* is inverse
+        projected to geographical coordinates if necessary, and the geodetic
+        distance is computed on the ellipsoid of *self*.
+
+        2. If *projected* is `True`, *other* is projected to the same
+        coordinate system as *self* and flat-earth distance is computed.
+
+        3. If *projected is `False`, both *self* and *other* are inverse
+        projected to geographical coordinates, and the geodetic distance is
+        computed on the ellipsoid of *self*.
+
+        If the coordinate system is geographical and a third (z) coordinate
+        exists, it is assumed to have the same units as the real-world
+        horizontal distance (i.e. meters).
 
         Parameters
         ----------
         other : Point
             point to compute distance to
         projected : bool, optional
-            If True and self.crs is a ProjectedCRS, return the distance in the
-            projected cooridnate system. If False, return the geodetic distance.
-            if self.crs is a GeographicalCRS, result is always geodetic and this
-            option has no effect.
+            If True and self.crs is a ProjectedCRS, return the flat distance in
+            the projected coordinate system. If False, return the ellipsoidal
+            distance. if self.crs is a GeographicalCRS, result is always
+            ellipsoidal/geodetic and this switch is ignored.
 
         Returns
         -------
         float
         """
-        if projected and not isinstance(self.crs, GeographicalCRS):
+        if isinstance(self.crs, GeographicalCRS):
+            lon0, lat0 = self.x, self.y
+            lon1, lat1 = other.crs.project(other.x, other.y, inverse=True)
+            _, _, dist = self.crs.inverse(lon0, lat0, lon1, lat1)
+        elif projected:
             x0, y0 = self.vertex[:2]
             x1, y1 = other.get_vertex(self.crs)[:2]
             dist = math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
@@ -603,7 +621,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         Returns
         -------
         tuple
- )           (xmin, ymin, xmax, ymax)
+             (xmin, ymin, xmax, ymax)
         """
         if (isinstance(self.crs, GeographicalCRS) and
                 (crs is None or isinstance(crs, GeographicalCRS))):
@@ -619,9 +637,13 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     def length(self):
         """ Returns the length of the line/boundary. """
         if isinstance(self.crs, GeographicalCRS):
-            points = [Point(v, crs=self.crs) for v in self.vertices]
-            distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
-            return sum(distances)
+            lon, lat = self.get_vertices()[0][:2]
+            d = 0.0
+            for xy in self.get_vertices()[1:]:
+                d += self.crs.inverse(lon, lat, xy[0], xy[1])[2]
+                lon = xy[0]
+                lat = xy[1]
+            return d
         else:
             return _cvectorgeo.length(self.vertices)
 
