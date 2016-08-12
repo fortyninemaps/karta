@@ -26,7 +26,12 @@ class build_ext(_build_ext):
         for extension in self.extensions:
             extension.include_dirs = self.include_dirs
 
-        # Attempt to compile with Cython - or fallback on local C sources
+        # Attempt to compile with Cython. Fallback on local C sources.
+        #
+        # Check that sources exist for each extension, either from Cython for
+        # from having the C-code sitting around.
+        #
+        # Add a _needs_stub attribute to each extension for setuptools.
         try:
             from Cython.Build import cythonize
             _needs_stub = [ext._needs_stub for ext in self.extensions]
@@ -41,9 +46,6 @@ class build_ext(_build_ext):
             for ext in self.extensions:
                 ext.sources = [f.replace(".pyx", ".c") for f in ext.sources]
 
-        # Check that sources exist for each extension, either from Cython for
-        # from having the C-code sitting around. Also, add a _needs_stub
-        # attribute to each extension for setuptools.
         for ext in self.extensions:
             for src in ext.sources:
                 if not exists(src):

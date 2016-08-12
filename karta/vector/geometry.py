@@ -618,9 +618,12 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     @cache_decorator("length")
     def length(self):
         """ Returns the length of the line/boundary. """
-        points = [Point(v, crs=self.crs) for v in self.vertices]
-        distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
-        return sum(distances)
+        if isinstance(self.crs, GeographicalCRS):
+            points = [Point(v, crs=self.crs) for v in self.vertices]
+            distances = [a.distance(b) for a, b in zip(points[:-1], points[1:])]
+            return sum(distances)
+        else:
+            return _cvectorgeo.length(self.vertices)
 
     @property
     def segments(self):

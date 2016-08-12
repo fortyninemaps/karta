@@ -4,6 +4,7 @@ import numpy as np
 cimport numpy as np
 from cpython cimport bool
 from libc.math cimport sqrt, atan2
+from coordstring cimport CoordString
 
 def isleft(tuple pt0, tuple pt1, tuple pt2):
     return (pt1[0]-pt0[0])*(pt2[1]-pt0[1]) - (pt1[1]-pt0[1])*(pt2[0]-pt0[0]) > 0.0
@@ -20,19 +21,30 @@ cdef struct Vector2:
     double x
     double y
 
-cdef double cdot2(Vector2 u, Vector2 v) nogil:
-    return u.x * v.x + u.y * v.y
+cdef struct Vector3:
+    double x
+    double y
+    double z
 
-cdef double cross2(Vector2 u, Vector2 v) nogil:
-    return u.x * v.y - u.y * v.x
+cdef inline double dot2(Vector2 u, Vector2 v) nogil:
+    return u.x*v.x + u.y*v.y
 
-cdef Point cproj2(Vector2 u, Vector2 v):
+cdef inline double dot3(Vector3 u, Vector3 v) nogil:
+    return u.x*v.x + u.y*v.y + u.z*v.z
+
+cdef inline double cross2(Vector2 u, Vector2 v) nogil:
+    return u.x*v.y - u.y*v.x
+
+cdef inline Vector3 cross3(Vector3 u, Vector3 v):
+    return Vector3(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x)
+
+cdef Vector2 proj2(Vector2 u, Vector2 v):
     cdef double uv, vv
-    uv = cdot2(u, v)
-    vv = cdot2(v, v)
-    return Point(uv/vv*v.x, uv/vv*v.y)
+    uv = dot2(u, v)
+    vv = dot2(v, v)
+    return Vector2(uv/vv*v.x, uv/vv*v.y)
 
-cdef double dist2(Point pt0, Point pt1) nogil:
+cdef inline double dist2(Vector2 pt0, Vector2 pt1) nogil:
     return sqrt((pt0.x-pt1.x)**2 + (pt0.y-pt1.y)**2)
 
 cdef double mind(double a, double b) nogil:
@@ -53,6 +65,25 @@ cdef double absd(double a) nogil:
     else:
         return a
 
+def length(CoordString cs):
+    """ Compute planar length of CoordString """
+    cdef int n = len(cs)
+    if cs.ring:
+        n += 1
+    cdef int i = 0
+    cdef double d = 0.0
+    cdef double x0, y0, x1, y1
+    x0 = cs.getX(i)
+    y0 = cs.getY(i)
+    while i != (n-1):
+        x1 = cs.getX(i+1)
+        y1 = cs.getY(i+1)
+        d += sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
+        x0 = x1
+        y0 = y1
+        i += 1
+    return d
+
 def pt_nearest_planar(double x, double y,
                       double endpt0_0, double endpt0_1,
                       double endpt1_0, double endpt1_1):
@@ -62,17 +93,17 @@ def pt_nearest_planar(double x, double y,
     """
 
     cdef double u0, u1, v0, v1
-    cdef Point u_on_v, u_int, pt, pt0, pt1
+    cdef Vector2 u_on_v, u_int, pt, pt0, pt1
     cdef Vector2 u, v
 
-    pt = Point(x, y)
-    pt0 = Point(endpt0_0, endpt0_1)
-    pt1 = Point(endpt1_0, endpt1_1)
+    pt = Vector2(x, y)
+    pt0 = Vector2(endpt0_0, endpt0_1)
+    pt1 = Vector2(endpt1_0, endpt1_1)
 
     u = Vector2(x - pt0.x, y - pt0.y)
     v = Vector2(pt1.x - pt0.x, pt1.y - pt0.y)
-    u_on_v = cproj2(u, v)
-    u_int = Point(u_on_v.x + pt0.x, u_on_v.y + pt0.y)
+    u_on_v = proj2(u, v)
+    u_int = Vector2(u_on_v.x + pt0.x, u_on_v.y + pt0.y)
 
     # Determine whether u_int is inside the segment
     # Otherwise return the nearest endpoint
@@ -132,7 +163,7 @@ cdef double _along_distance_gradient(object fwd, object inv, double x0, double y
 
 def pt_nearest_proj(object fwd, object inv, tuple pt, double[:] endpt0, double[:] endpt1,
         float tol=0.1, int maxiter=100):
-    """ Given geodetic functions *fwd* and *inv*, a Point *pt*, and an arc from
+    """ Given geodetic functions *fwd* and *inv*, a *pt*, and an arc from
     *endpt1* to *endpt2*, return the point on the arc that is nearest *pt*.
 
     Scheme employs a bisection minimization method. Iteration continues until a

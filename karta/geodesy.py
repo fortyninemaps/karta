@@ -131,7 +131,7 @@ def spherical_area(r, x1, y1, x2, y2):
     phi1 = _radians(y1)
     phi2 = _radians(y2)
     lambda12 = (x2-x1)*pi/180.0
-    alpha1, alpha2, _ = solve_vicenty(r, 0, lambda12, phi1, phi2)
+    alpha1, alpha2, _ = solve_vincenty(r, 0, lambda12, phi1, phi2)
     return r**2 * (alpha2-alpha1)
 
 def isbetween_circular(x, x0, x1):
@@ -143,6 +143,7 @@ def isbetween_circular(x, x0, x1):
     return 0 <= x <= x1
 
 def greatcircle_vec(pt1, pt2):
+    """ Return the Euler pole of a geodesic passing through two points. """
     v1 = sph2cart(*pt1)
     v2 = sph2cart(*pt2)
     return cross(v1, v2)
@@ -227,7 +228,7 @@ def solve_astroid(a, f, lambda12, phi1, phi2):
     alpha1 = atan2(-x / (1+mu), y/mu)
     return alpha1
 
-def solve_vicenty(a, f, lambda12, phi1, phi2):
+def solve_vincenty(a, f, lambda12, phi1, phi2):
     """ Used to provide an initial guess to the inverse problem by solving the
     corresponding problem on a sphere.
 
@@ -524,7 +525,7 @@ def ellipsoidal_inverse(a, b, x1, y1, x2, y2, tol=None):
         # Guess the azimuth
         if (abs(lambda12-pi) > 0.0087) and (abs(phi1+phi2) > 0.0087):
             # not nearly antipodal
-            alpha1, _, _ = solve_vicenty(a, f, lambda12, phi1, phi2)
+            alpha1, _, _ = solve_vincenty(a, f, lambda12, phi1, phi2)
         else:
             alpha1 = solve_astroid(a, f, lambda12, phi1, phi2)
 
