@@ -142,7 +142,7 @@ def isbetween_circular(x, x0, x1):
     x1 = reduce_deg(x1-x0)
     return 0 <= x <= x1
 
-def greatcircle_vec(pt1, pt2):
+def eulerpole(pt1, pt2):
     """ Return the Euler pole of a geodesic passing through two points. """
     v1 = sph2cart(*pt1)
     v2 = sph2cart(*pt2)
@@ -172,8 +172,8 @@ def intersection_spherical(segment1, segment2):
     segment1, segment2 : tuple of tuples
         Tuples of the form ((x1, y1), (x2, y2)) describing line segements
     """
-    gc1 = greatcircle_vec(*segment1)
-    gc2 = greatcircle_vec(*segment2)
+    gc1 = eulerpole(*segment1)
+    gc2 = eulerpole(*segment2)
     n = cross(gc1, gc2)
     lon, lat = cart2sph(*n)
     lon_antipodal = (lon+360)%360-180

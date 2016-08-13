@@ -22,6 +22,7 @@ from .quadtree import QuadTree
 from . import vectorgeo as _cvectorgeo
 from . import dateline as _cdateline
 from . import intersection as _cintersection
+from . import convexhull as _cconvexhull
 from . import contains as _ccontains
 from .. import geodesy
 from ..crs import Cartesian, CartesianCRS, GeographicalCRS, LonLatWGS84
@@ -540,55 +541,12 @@ class MultiVertexMixin(object):
         return False
 
     def convex_hull(self):
-        """ Return a Polygon representing the convex hull.
-
-        Not implemented for geographical coordinate systems.
-        """
+        """ Return a Polygon representing the convex hull. """
         if isinstance(self.crs, GeographicalCRS):
-            raise CRSError("not implemented for geographical coordinate "
-                           "systems. Project to a projected coordinate system.")
-
-        points = [pt for pt in self]
-
-        # Find the lowermost (left?) point
-        pt0 = points[0]
-        idx = 0
-        for i, pt in enumerate(points[1:]):
-            if (pt.y < pt0.y) or ((pt.y == pt0.y) and (pt.x < pt0.x)):
-                pt0 = pt
-                idx = i+1
-        points.pop(idx)
-
-        # Sort CCW relative to pt0, and drop all but farthest of any duplicates
-        points.sort(key=lambda pt: pt0.distance(pt))
-        points.sort(key=lambda pt: _cvectorgeo.polarangle(pt0.vertex, pt.vertex))
-        alpha = -1
-        drop = []
-        for i,pt in enumerate(points):
-            a = _cvectorgeo.polarangle(pt0.vertex, pt.vertex)
-            if a == alpha:
-                drop.append(i)
-            else:
-                alpha = a
-
-        if len(drop) != 0:
-            for i in drop[::-1]:
-                points.pop(i)
-
-        # initialize convex hull
-        if len(points) == 2:
-            return Polygon([pt0, points[0], points[1]])
-        elif len(points) == 1:
-            raise GeometryError("convex polygon not defined for two points")
+            indices = _cconvexhull.convexhull_sph(self.vertices)
         else:
-
-            S = [pt0, points[0], points[1]]
-            for pt in points[2:]:
-                while not _cvectorgeo.isleft(S[-2].vertex, S[-1].vertex, pt.vertex):
-                    S.pop()
-                S.append(pt)
-
-        return Polygon(S, crs=self.crs)
+            indices = _cconvexhull.convexhull(self.vertices)
+        return Polygon([self.vertices[i] for i in indices], crs=self.crs)
 
     def to_xyfile(self, fnm, fields=None, delimiter=' ', header=None):
         """ Write data to a delimited ASCII table.

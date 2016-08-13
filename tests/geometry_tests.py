@@ -331,8 +331,8 @@ class TestGeometryAnalysis(unittest.TestCase):
                 (286, 352), (436, 205), (88, 254), (187, 85)]
         mp = Multipoint(vertices)
         ch = mp.convex_hull()
-        hull_vertices = [(187, 85), (953, 198), (986, 271), (965, 704), (863,
-            979), (27, 990), (88, 254)]
+        hull_vertices = [(27, 990), (88, 254), (187, 85), (953, 198),
+                         (986, 271), (965, 704), (863, 979)]
         self.assertTrue(np.all(np.equal(ch.vertices, hull_vertices)))
         return
 
@@ -343,8 +343,9 @@ class TestGeometryAnalysis(unittest.TestCase):
                 -256), (314, 331), (431, -492), (325, -415), (-400, -491)]
         mp = Multipoint(vertices)
         ch = mp.convex_hull()
-        hull_vertices = [(2, -499), (431, -492), (476, 235), (402, 301), (314,
-            331), (-59, 355), (-421, 172), (-482, 26), (-400, -491)]
+        hull_vertices = [(-482, 26), (-400, -491), (2, -499), (431, -492),
+                         (476, 235), (402, 301), (314, 331), (-59, 355),
+                         (-421, 172)]
         self.assertTrue(np.all(np.equal(ch.vertices, hull_vertices)))
         return
 

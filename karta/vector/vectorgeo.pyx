@@ -92,6 +92,9 @@ cdef Vector3 eulerpole(Vector2 a, Vector2 b):
     cdef ep = cross3(ac, bc)
     return ep
 
+cdef double azimuth(Vector2 pt1, Vector2 pt2):
+    return atan2(pt2.x-pt1.x, pt2.y-pt1.y)
+
 cdef double azimuth_sph(Vector2 pt1, Vector2 pt2):
     cdef double dlon = pt2.x - pt1.x
     cdef az = 0.0
