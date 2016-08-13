@@ -69,12 +69,12 @@ cdef inline Vector3 sph2cart(Vector2 a):
                    cos(np.pi*theta/180.0))
 
 cdef inline Vector2 cart2sph(Vector3 a):
-    """ Convert an (x, y, z) cooridinate to a (lambda, phi) coordinate on a
+    """ Convert an (x, y, z) coordinate to a (lambda, phi) coordinate on a
     sphere with an origin at (0, 0, 0). """
     cdef double lon = 0.0
     cdef double lat = 0.0
     if absd(a.x) > 1e-8:
-        lon = atan(a.y/a.x)
+        lon = atan2(a.y, a.x)
     else:
         lon = asin(a.y / sqrt(a.x*a.x + a.y*a.y))
     if absd(a.z) > 1e-8:
