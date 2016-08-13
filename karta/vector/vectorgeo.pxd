@@ -23,6 +23,7 @@ cdef double azimuth_sph(Vector2, Vector2)
 cdef inline double mind(double, double) nogil
 cdef inline double maxd(double, double) nogil
 cdef inline double absd(double) nogil
+cdef int signd(double)
 
 cdef Vector3 eulerpole(Vector2, Vector2)
 cdef Vector3 eulerpole_cart(Vector3, Vector3)

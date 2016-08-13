@@ -583,9 +583,17 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         """
         if (isinstance(self.crs, GeographicalCRS) and
                 (crs is None or isinstance(crs, GeographicalCRS))):
-            x, y = self.get_coordinate_lists(crs=crs)
-            return _cdateline.dateline_bbox(np.array(x, dtype=np.float64),
-                                            np.array(y, dtype=np.float64))
+            xmin, ymin, xmax, ymax = _cdateline.dateline_bbox(self.vertices)
+            if crs is not None:
+                ll = crs.transform(crs, xmin, ymin)
+                lr = crs.transform(crs, xmax, ymin)
+                ul = crs.transform(crs, xmin, ymax)
+                ur = crs.transform(crs, xmax, ymax)
+                xmin = min(ll[0], lr[0], ul[0], ur[0])
+                xmax = max(ll[0], lr[0], ul[0], ur[0])
+                ymin = min(ll[1], lr[1], ul[1], ur[1])
+                ymax = max(ll[1], lr[1], ul[1], ur[1])
+            bbox = (xmin, ymin, xmax, ymax)
         else:
             bbox = super(ConnectedMultiVertexMixin, self).get_bbox(crs=crs)
         return bbox

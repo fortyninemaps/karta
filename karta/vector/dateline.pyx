@@ -1,22 +1,5 @@
-
-cdef double mind(double a, double b):
-    if a > b:
-        return b
-    else:
-        return a
-
-cdef double maxd(double a, double b):
-    if a > b:
-        return a
-    else:
-        return b
-
-cdef int signd(double a):
-    """ Return the sign of *a* """
-    if a == 0.0:
-        return 1
-    else:
-        return int(a/abs(a))
+from coordstring cimport CoordString
+from vectorgeo cimport mind, maxd, signd
 
 cpdef int crosses_dateline(double x0, double x1):
     """ check whether geodesic with longitudes x0, x1 [-180, 180) crosses the dateline.
@@ -32,21 +15,24 @@ cpdef int crosses_dateline(double x0, double x1):
     else:
         return 0
 
-def dateline_bbox(double[:] x, double[:] y):
+def dateline_bbox(CoordString cs):
     """ Return a dateline-aware bbox for geographical coordinates. """
     cdef double xmin, ymin, xmax, ymax
+    cdef double x0, x1, y1
     cdef double rot
-    cdef long i
+    cdef int i
     cdef int xdateline
 
-    xmin = xmax = x[0]
-    ymin = ymax = y[0]
+    xmin = xmax = cs.getX(0)
+    ymin = ymax = cs.getY(0)
     rot = 0
 
-    for i in range(len(x)-1):
-        x0, x1 = x[i], x[i+1]
-        ymin = mind(ymin, y[i+1])
-        ymax = maxd(ymax, y[i+1])
+    for i in range(len(cs)-1):
+        x0 = cs.getX(i)
+        x1 = cs.getX(i+1)
+        y1 = cs.getY(i+1)
+        ymin = mind(ymin, y1)
+        ymax = maxd(ymax, y1)
         xdateline = crosses_dateline(x0, x1)
         if xdateline != 0:
             rot -= xdateline * 360.0
@@ -61,5 +47,3 @@ def dateline_bbox(double[:] x, double[:] y):
     xmin = (xmin+180) % 360 - 180
     xmax = (xmax+180) % 360 - 180
     return (xmin, ymin, xmax, ymax)
-
-

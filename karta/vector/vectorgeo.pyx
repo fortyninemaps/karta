@@ -60,6 +60,13 @@ cdef inline double absd(double a) nogil:
     else:
         return a
 
+cdef int signd(double a):
+    """ Return the sign of *a* """
+    if a == 0.0:
+        return 1
+    else:
+        return int(a/absd(a))
+
 cdef inline Vector3 sph2cart(Vector2 a):
     """ Convert a (lambda, phi) coordinate on a sphere with an origin at
     (0, 0, 0) to an (x, y, z) coordinate. """
