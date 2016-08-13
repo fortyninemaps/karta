@@ -32,7 +32,7 @@ cdef inline double cross2(Vector2 u, Vector2 v) nogil:
     return u.x*v.y - u.y*v.x
 
 cdef inline Vector3 cross3(Vector3 u, Vector3 v):
-    return Vector3(u.y*v.z - u.z*v.y, u.z*v.x - u.x*v.z, u.x*v.y - u.y*v.x)
+    return Vector3(u.y*v.z - u.z*v.y, u.x*v.z - u.z*v.x, u.x*v.y - u.y*v.x)
 
 cdef Vector2 proj2(Vector2 u, Vector2 v):
     cdef double uv_vv

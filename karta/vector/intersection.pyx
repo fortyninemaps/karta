@@ -1,7 +1,8 @@
 import numpy as np
 cimport numpy as np
-from coordstring cimport CoordString
+from libc.math cimport sin, cos
 from cpython cimport bool
+from coordstring cimport CoordString
 from vectorgeo cimport (cross2, cross3,
                         Vector2, Vector3, mind, maxd,
                         azimuth_sph,
@@ -356,8 +357,8 @@ def intersects_sph(CoordString a, CoordString b):
     cdef tuple seg
 
     for i in range(na-1):
-        x0 = a.getX(i)
-        x1 = a.getX(i+1)
+        x0 = (a.getX(i) + 180.0) % 360.0 - 180.0
+        x1 = (a.getX(i+1) + 180.0) % 360.0 - 180.0
         y0 = a.getY(i)
         y1 = a.getY(i+1)
         seg = (x0, y0, x1, y1, 0)
@@ -376,8 +377,8 @@ def intersects_sph(CoordString a, CoordString b):
             event_queue.insert(x0, Event(seg, 1, 0))
 
     for i in range(nb-1):
-        x0 = b.getX(i)
-        x1 = b.getX(i+1)
+        x0 = (b.getX(i) + 180.0) % 360.0 - 180.0
+        x1 = (b.getX(i+1) + 180.0) % 360.0 - 180.0
         y0 = b.getY(i)
         y1 = b.getY(i+1)
         seg = (x0, y0, x1, y1, 1)
@@ -446,7 +447,7 @@ def intersects_sph(CoordString a, CoordString b):
                     if seg[4] == segA[4]:
                         continue
 
-                    yA = intersection_sph(segA[0], segA[2], x, x, segA[1], segA[3], -90, 90)[1]
+                    yA = intersection_meridian(segA[0], segA[2], segA[1], segA[3], x)
                     if (seg[1] <= yA) and (seg[3] >= yA):
                         return True
 
@@ -538,8 +539,8 @@ cdef bool iscollinear_sph(double x0, double x1, double x2, double x3,
 
 cpdef bool _intersects_sph(double x0, double x1, double x2, double x3,
                            double y0, double y1, double y2, double y3):
-    cdef Vector3 ep1 = eulerpole_cart(sph2cart(Vector2(x0, y0)), sph2cart(Vector2(x1, y1)))
-    cdef Vector3 ep2 = eulerpole_cart(sph2cart(Vector2(x2, y2)), sph2cart(Vector2(x3, y3)))
+    cdef Vector3 ep1 = eulerpole(Vector2(x0, y0), Vector2(x1, y1))
+    cdef Vector3 ep2 = eulerpole(Vector2(x2, y2), Vector2(x3, y3))
     cdef Vector2 normal = cart2sph(cross3(ep1, ep2))
     cdef double antipodal_lon = (normal.x + 360) % 360 - 180.0
     if isbetween_inc(x0, normal.x, x1) and isbetween_inc(x2, normal.x, x3):
@@ -549,16 +550,37 @@ cpdef bool _intersects_sph(double x0, double x1, double x2, double x3,
     else:
         return False
 
-cpdef intersection_sph(double x0, double x1, double x2, double x3,
-                       double y0, double y1, double y2, double y3):
+cdef double intersection_meridian(double x0, double x1, double y0, double y1,
+                                  double xmeridian):
+    """ Return the latitude of intersection of a spherical geodesic across a
+    meridian. """
+    cdef Vector3 ep1 = eulerpole(Vector2(x0, y0), Vector2(x1, y1))
+    cdef Vector3 ep2 = Vector3(sin(np.pi*xmeridian/180.0),
+                               cos(np.pi*xmeridian/180.0),
+                               0.0)
+    cdef Vector2 normal = cart2sph(cross3(ep1, ep2))
+    normal.x = (normal.x + 180.0) % 360.0 - 180.0
+    normal.y = (normal.y + 90.0) % 180.0 - 90.0
+    cdef antipodal_lon = (normal.x + 360) % 360 - 180.0
+    if isbetween_inc(x0, normal.x, x1):
+        return normal.y
+    elif isbetween_inc(x0, antipodal_lon, x1):
+        return -normal.y
+    else:
+        return np.nan
+
+cpdef tuple intersection_sph(double x0, double x1, double x2, double x3,
+                             double y0, double y1, double y2, double y3):
     """ Compute the spherical intersection between two segments,
     ((x0,y0), (x1,y1)) and ((x2,y2), (x3,y3)).
 
     Returns (NaN, NaN) if no intersection exists.
     """
-    cdef Vector3 ep1 = eulerpole_cart(sph2cart(Vector2(x0, y0)), sph2cart(Vector2(x1, y1)))
-    cdef Vector3 ep2 = eulerpole_cart(sph2cart(Vector2(x2, y2)), sph2cart(Vector2(x3, y3)))
+    cdef Vector3 ep1 = eulerpole(Vector2(x0, y0), Vector2(x1, y1))
+    cdef Vector3 ep2 = eulerpole(Vector2(x2, y2), Vector2(x3, y3))
     cdef Vector2 normal = cart2sph(cross3(ep1, ep2))
+    normal.x = (normal.x + 180.0) % 360.0 - 180.0
+    normal.y = (normal.y + 90.0) % 180.0 - 90.0
     cdef antipodal_lon = (normal.x + 360) % 360 - 180.0
     cdef Vector2 antipode = Vector2(antipodal_lon, -normal.y)
     if isbetween_inc(x0, normal.x, x1) and isbetween_inc(x2, normal.x, x3):
@@ -568,8 +590,8 @@ cpdef intersection_sph(double x0, double x1, double x2, double x3,
     else:
         return np.nan, np.nan
 
-cpdef intersection(double x0, double x1, double x2, double x3,
-                   double y0, double y1, double y2, double y3):
+cpdef tuple intersection(double x0, double x1, double x2, double x3,
+                         double y0, double y1, double y2, double y3):
     """ Compute the planar intersection between two segments,
     ((x0,y0), (x1,y1)) and ((x2,y2), (x3,y3)).
 

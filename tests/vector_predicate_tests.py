@@ -126,6 +126,13 @@ class TestBinaryPredicates(unittest.TestCase):
         self.assertTrue(line1.intersects(line2))
         return
 
+    def test_line_intersects_geographical4(self):
+        # checks that coordinates are normalized
+        line1 = Line([(-10.0, 20.0), (-30.0, 20.0)], crs=SphericalEarth)
+        line2 = Line([(340.0, 10.0), (340.0, 30.0)], crs=SphericalEarth)
+        self.assertTrue(line1.intersects(line2))
+        return
+
     def test_poly_contains1(self):
         # trivial cases
         pt0 = Point((-0.5, 0.92))
