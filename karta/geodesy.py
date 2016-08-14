@@ -43,7 +43,7 @@ def cart2sph(x, y, z):
     else:
         theta = acos(z / sqrt(x**2+y**2+z**2))
     if abs(x) > 1e-4:
-        lon = atan(y/x)
+        lon = atan2(y, x)
     else:
         lon = asin(y/sqrt(x**2+y**2))
     lat = 0.5*pi - theta

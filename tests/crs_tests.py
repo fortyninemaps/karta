@@ -366,10 +366,10 @@ class TestGeodesyFuncs(unittest.TestCase):
 
     def assertTuplesAlmostEqual(self, a, b, tol=1e-8):
         if len(a) != len(b):
-            unittest.fail()
+            self.fail()
         for _a, _b in zip(a, b):
             if abs(_a-_b) > tol:
-                unittest.fail()
+                self.fail()
         return
 
     def test_isbetween_circular(self):
@@ -392,7 +392,7 @@ class TestGeodesyFuncs(unittest.TestCase):
         self.assertTuplesAlmostEqual(geodesy.cart2sph(1, 1, 1),
                                     (45.0, 35.2643896827))
         self.assertTuplesAlmostEqual(geodesy.cart2sph(1, 0, 1), (0.0, 45.0))
-        self.assertTuplesAlmostEqual(geodesy.cart2sph(-1, 1, 0), (-45.0, 0.0))
+        self.assertTuplesAlmostEqual(geodesy.cart2sph(-1, 1, 0), (135.0, 0.0))
         return
 
 if __name__ == "__main__":
