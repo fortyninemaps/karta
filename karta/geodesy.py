@@ -110,20 +110,7 @@ def sphere_distance(lons1, lats1, lons2, lats2, radius=1.0):
 @recurse_iterables
 def sphere_azimuth(lon1, lat1, lon2, lat2):
     dlon = lon2 - lon1
-    if (cos(lat1) * tan(lat2) - sin(lat1) * cos(dlon)) == 0:
-        az = 0.5*pi
-    else:
-        az = atan(sin(dlon) / (cos(lat1) * tan(lat2) - sin(lat1) * cos(dlon)))
-
-    if unroll_rad(dlon) <= pi:
-        if lat2 < lat1:
-            az = az + pi
-    else:
-        if lat1 < lat2:
-            az = az + 2*pi
-        else:
-            az = az + pi
-    return unroll_rad(az)
+    return atan2(sin(_radians(dlon)), cos(_radians(lat1)) * tan(_radians(lat2)) - sin(_radians(lat1)) * cos(_radians(dlon)))
 
 def spherical_area(r, x1, y1, x2, y2):
     """ Area between a geodesic and the equator on a sphere """

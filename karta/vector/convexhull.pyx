@@ -10,19 +10,11 @@ cdef bool isleft(Vector2 pt0, Vector2 pt1, Vector2 pt2):
 
 def convexhull(CoordString cs):
     """ Return the convex hull for coordinates on a plane. """
-    # # Find the lowermost (left?) point
-    # pt0 = points[0]
-    # idx = 0
-    # for i, pt in enumerate(points[1:]):
-    #     if (pt.y < pt0.y) or ((pt.y == pt0.y) and (pt.x < pt0.x)):
-    #         pt0 = pt
-    #         idx = i+1
-    # points.pop(idx)
-
+    # Find the leftmost (upper) point
     cdef int n = len(cs)
     if cs.ring:
         n += 1
-    cdef int ileftmost = -1
+    cdef int ileftmost = 0
     cdef double x, xleftmost = cs.getX(0)
     cdef int i = 1
 
@@ -31,26 +23,11 @@ def convexhull(CoordString cs):
         if x < xleftmost:
             xleftmost = x
             ileftmost = i
-        elif x == xleftmost and (cs.getY(i) < cs.getY(ileftmost)):
+        elif x == xleftmost and (cs.getY(i) > cs.getY(ileftmost)):
             ileftmost = i
         i += 1
 
     # Sort CCW relative to pt0
-    # points.sort(key=lambda pt: pt0.distance(pt))
-    # points.sort(key=lambda pt: _cvectorgeo.polarangle(pt0.vertex, pt.vertex))
-    # alpha = -1
-    # drop = []
-    # for i,pt in enumerate(points):
-    #     a = _cvectorgeo.polarangle(pt0.vertex, pt.vertex)
-    #     if a == alpha:
-    #         drop.append(i)
-    #     else:
-    #         alpha = a
-
-    # if len(drop) != 0:
-    #     for i in drop[::-1]:
-    #         points.pop(i)
-
     cdef list azimuth_indices = []
     cdef double az, y
     cdef Vector2 leftmost = Vector2(xleftmost, cs.getY(ileftmost))
