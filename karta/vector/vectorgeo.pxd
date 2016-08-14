@@ -16,7 +16,7 @@ cdef inline Vector3 cross3(Vector3, Vector3)
 
 cdef Vector2 proj2(Vector2, Vector2)
 cdef inline double dist2(Vector2, Vector2) nogil
-# cdef double distsph(Vector2, Vector2)       # TODO
+cdef double dist_sph(Vector2, Vector2) nogil
 cdef double azimuth(Vector2, Vector2)
 cdef double azimuth_sph(Vector2, Vector2)
 

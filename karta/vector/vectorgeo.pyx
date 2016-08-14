@@ -42,6 +42,23 @@ cdef Vector2 proj2(Vector2 u, Vector2 v):
 cdef inline double dist2(Vector2 pt0, Vector2 pt1) nogil:
     return sqrt((pt0.x-pt1.x)**2 + (pt0.y-pt1.y)**2)
 
+cdef double dist_sph(Vector2 pt0, Vector2 pt1) nogil:
+    """ Returns distance on a sphere of radius 1 """
+    cdef double dx = absd(pt0.x - pt1.x) * PI / 180.0
+    cdef double dy = absd(pt0.y - pt1.y) * PI / 180.0
+    cdef double y0 = pt0.y * PI / 180.0
+    cdef double y1 = pt1.y * PI / 180.0
+    cdef double d_ = 0.0
+
+    if (dx > 0.01) or (dy > 0.01):
+        # use spherical law of cosines
+        d_ = acos(sin(y0)*sin(y1) + cos(y0)*cos(y1)*cos(dx))
+
+    else:
+        # use haversine
+        d_ = (2 * asin(sqrt(sin(0.5*dy)**2 + cos(y0)*cos(y1)*sin(0.5*dx)**2)))
+    return d_
+
 cdef inline double mind(double a, double b) nogil:
     if a <= b:
         return a

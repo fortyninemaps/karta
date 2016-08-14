@@ -349,6 +349,14 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertTrue(np.all(np.equal(ch.vertices, hull_vertices)))
         return
 
+    def test_multipoint_convex_hull_sph(self):
+        # include a point which is in the planar convex hull but not the spherical one
+        vertices = [(-50, 70), (0, 71), (50, 70), (0, 50)]
+        mp = Multipoint(vertices, crs=SphericalEarth)
+        ch = mp.convex_hull()
+        self.assertTrue(np.all(np.equal(ch.vertices, [(-50, 70), (0, 50), (50, 70)])))
+        return
+
     def test_connected_multipoint_shortest_distance_to(self):
         line = Line([(0.0, 0.0), (2.0, 2.0), (5.0, 4.0)])
         dist = line.shortest_distance_to(Point((0.0, 2.0)))
