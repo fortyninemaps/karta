@@ -9,6 +9,8 @@ cdef struct Vector3:
     double y
     double z
 
+cdef double PI
+
 cdef inline double dot2(Vector2, Vector2) nogil
 cdef inline double dot3(Vector3, Vector3) nogil
 cdef inline double cross2(Vector2, Vector2) nogil

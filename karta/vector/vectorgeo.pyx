@@ -117,13 +117,16 @@ cdef Vector3 eulerpole(Vector2 a, Vector2 b):
     return ep
 
 cdef double azimuth(Vector2 pt1, Vector2 pt2):
-    return atan2(pt2.x-pt1.x, pt2.y-pt1.y) * 180.0 / PI
+    """ Return azimuth in radians between two points on a plane. """
+    return atan2(pt2.x-pt1.x, pt2.y-pt1.y)
 
 cdef double azimuth_sph(Vector2 pt1, Vector2 pt2):
+    """ Return azimuth in radians between two points on a sphere. Inputs taken
+    as degrees of (lon, lat). """
     cdef double dlon = (pt2.x - pt1.x) * PI / 180.0
     cdef double y1 = pt1.y * PI / 180.0
     cdef double y2 = pt2.y * PI / 180.0
-    return atan2(sin(dlon), cos(y1) * tan(y2) - sin(y1) * cos(dlon)) * 180.0 / PI
+    return atan2(sin(dlon), cos(y1) * tan(y2) - sin(y1) * cos(dlon))
 
 def length(CoordString cs):
     """ Compute planar length of CoordString """

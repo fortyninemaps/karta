@@ -1,7 +1,4 @@
-import numpy as np
-cimport numpy as np
 from coordstring cimport CoordString
-from cpython cimport bool
 
 cdef struct Point:
     double x

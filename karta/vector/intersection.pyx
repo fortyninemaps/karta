@@ -1,12 +1,9 @@
-import numpy as np
-cimport numpy as np
-from libc.math cimport sin, cos
+from libc.math cimport sin, cos, NAN, isnan
 from cpython cimport bool
 from coordstring cimport CoordString
-from vectorgeo cimport (cross2, cross3,
-                        Vector2, Vector3, mind, maxd,
-                        azimuth_sph,
-                        cart2sph, sph2cart,
+from vectorgeo cimport (Vector2, Vector3, cross2, cross3,
+                        PI, mind, maxd,
+                        azimuth_sph, cart2sph, sph2cart,
                         eulerpole, eulerpole_cart)
 
 cdef bool isbetween_inc(double a, double b, double c):
@@ -45,7 +42,7 @@ def all_intersections(CoordString a, CoordString b):
             y2 = b.getY(j)
             y3 = b.getY(j+1)
             xi, yi = intersection(x0, x1, x2, x3, y0, y1, y2, y3)
-            if not np.isnan(xi):
+            if not isnan(xi):
                 intersections.append((xi, yi))
     return intersections
 
@@ -125,7 +122,7 @@ class SweepLinePlaceholder(object):
         cdef double m = 0.0, h = 0.0
         cdef tuple interx
         if self.spherical:
-            m = -(azimuth_sph(Vector2(seg[0], seg[1]), Vector2(seg[2], seg[3])) - 90)
+            m = -(azimuth_sph(Vector2(seg[0], seg[1]), Vector2(seg[2], seg[3]))*180/PI - 90)
             # compute intersection between seg and a meridional geodesic passing through x
             interx = intersection_sph(seg[0], seg[2], x, x, seg[1], seg[3], -90, 90)
             h = interx[1]
@@ -495,7 +492,7 @@ cdef inline bool _intersects(tuple seg1, tuple seg2):
         return True
     interx = intersection(seg1[0], seg1[2], seg2[0], seg2[2],
                           seg1[1], seg1[3], seg2[1], seg2[3])
-    if np.isnan(interx[0]):
+    if isnan(interx[0]):
         return False
     return True
 
@@ -555,8 +552,8 @@ cdef double intersection_meridian(double x0, double x1, double y0, double y1,
     """ Return the latitude of intersection of a spherical geodesic across a
     meridian. """
     cdef Vector3 ep1 = eulerpole(Vector2(x0, y0), Vector2(x1, y1))
-    cdef Vector3 ep2 = Vector3(sin(np.pi*xmeridian/180.0),
-                               cos(np.pi*xmeridian/180.0),
+    cdef Vector3 ep2 = Vector3(sin(PI*xmeridian/180.0),
+                               cos(PI*xmeridian/180.0),
                                0.0)
     cdef Vector2 normal = cart2sph(cross3(ep1, ep2))
     normal.x = (normal.x + 180.0) % 360.0 - 180.0
@@ -567,7 +564,7 @@ cdef double intersection_meridian(double x0, double x1, double y0, double y1,
     elif isbetween_inc(x0, antipodal_lon, x1):
         return -normal.y
     else:
-        return np.nan
+        return NAN
 
 cpdef tuple intersection_sph(double x0, double x1, double x2, double x3,
                              double y0, double y1, double y2, double y3):
@@ -588,7 +585,7 @@ cpdef tuple intersection_sph(double x0, double x1, double x2, double x3,
     elif isbetween_inc(x0, antipode.x, x1) and isbetween_inc(x2, antipode.x, x3):
         return antipode.x, antipode.y
     else:
-        return np.nan, np.nan
+        return NAN, NAN
 
 cpdef tuple intersection(double x0, double x1, double x2, double x3,
                          double y0, double y1, double y2, double y3):
@@ -599,14 +596,14 @@ cpdef tuple intersection(double x0, double x1, double x2, double x3,
     """
     cdef double rxs = cross2(Vector2(x1-x0, y1-y0), Vector2(x3-x2, y3-y2))
     if rxs == 0:
-        return np.nan, np.nan
+        return NAN, NAN
 
     cdef double t = cross2(Vector2(x2-x0, y2-y0), Vector2(x3-x2, y3-y2)) / rxs
     cdef double u = cross2(Vector2(x2-x0, y2-y0), Vector2(x1-x0, y1-y0)) / rxs
     if (0 < t <= 1) and (0 < u <= 1):
         return x0 + t*(x1-x0), y0 + t*(y1-y0)
     else:
-        return np.nan, np.nan
+        return NAN, NAN
 
 def count_crossings(double xp, double yp, CoordString coords):
     """ Count the number of times a vertical ray from (xp, yp) crosses a
