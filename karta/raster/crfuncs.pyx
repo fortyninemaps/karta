@@ -1,4 +1,3 @@
-from math import ceil, sqrt
 import numpy as np
 cimport numpy as np
 cimport cython
@@ -9,6 +8,7 @@ ctypedef np.float64_t DTYPE_float64_t
 DTYPE_int32 = np.int32
 ctypedef np.int32_t DTYPE_int32_t
 
+@cython.cdivision(True)
 def get_positions_vec(tuple T, double[:] x not None, double[:] y not None):
     """ Return the row and column indices according to grid transform T for
     points in vectors x and y. """
@@ -150,6 +150,7 @@ def sample_bilinear_double(double[:] I not None, double[:] J not None,
                  + Z[i0,j1]*(i1-i)*(j-j0) + Z[i1,j1]*(i-i0)*(j-j0)
     return out
 
+@cython.cdivision(True)
 @cython.wraparound(False)
 def fillarray_double(double[:,:] array not None,
                      int[:] I not None,

@@ -1,6 +1,7 @@
+from libc.math cimport M_PI, M_PI_2
 from cpython cimport bool
 from coordstring cimport CoordString
-from vectorgeo cimport Vector2, azimuth, azimuth_sph, dist2, dist_sph, PI
+from vectorgeo cimport Vector2, azimuth, azimuth_sph, dist2, dist_sph
 
 cdef bool isleft(Vector2 pt0, Vector2 pt1, Vector2 pt2):
     """ Indicate whether pt0 is to the left of a segment between pt1 and pt2.
@@ -11,7 +12,7 @@ cdef bool isleft_sph(Vector2 pt0, Vector2 pt1, Vector2 pt2):
     cdef double az, az_pt, daz
     az = azimuth_sph(pt1, pt2)
     az_pt = azimuth_sph(pt1, pt0)
-    daz = ((az-az_pt) + PI) % (2*PI) - PI
+    daz = ((az-az_pt) + M_PI) % (2*M_PI) - M_PI
     return daz > 0
 
 def convexhull(CoordString cs):
@@ -42,7 +43,7 @@ def convexhull(CoordString cs):
         if i == ileftmost:
             i += 1
             continue
-        az = 0.5*PI - azimuth(leftmost, Vector2(cs.getX(i), cs.getY(i)))
+        az = M_PI_2 - azimuth(leftmost, Vector2(cs.getX(i), cs.getY(i)))
         azimuth_indices.append((az, i))
         i += 1
     azimuth_indices.sort()
@@ -108,7 +109,7 @@ def convexhull_sph(CoordString cs):
         if i == ileftmost:
             i += 1
             continue
-        az = 0.5*PI - azimuth_sph(leftmost, Vector2(cs.getX(i), cs.getY(i)))
+        az = M_PI_2 - azimuth_sph(leftmost, Vector2(cs.getX(i), cs.getY(i)))
         azimuth_indices.append((az, i))
         i += 1
     azimuth_indices.sort()

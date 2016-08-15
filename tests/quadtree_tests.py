@@ -21,18 +21,6 @@ class TestCQuadTree(unittest.TestCase):
     def setUp(self):
         self.qt = ctypes.CDLL(karta.vector.quadtree.__file__)
 
-    def test_mind(self):
-        self.qt.mind.restype = c_double
-        self.assertEqual(self.qt.mind(c_double(3.0), c_double(4.0)), 3.0)
-        self.assertEqual(self.qt.mind(c_double(3.0), c_double(-2.0)), -2.0)
-        return
-
-    def test_maxd(self):
-        self.qt.maxd.restype = c_double
-        self.assertEqual(self.qt.maxd(c_double(3.0), c_double(4.0)), 4.0)
-        self.assertEqual(self.qt.maxd(c_double(-3.0), c_double(-4.0)), -3.0)
-        return
-
     def test_iswithin(self):
         self.qt.iswithin.restype = c_bool
         self.qt.qt_new_bbox.restype = ctypes.POINTER(BBOX)

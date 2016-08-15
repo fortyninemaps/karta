@@ -1,17 +1,11 @@
 """ Cython versions of low-level functions for computing vector geometry. """
 
+from libc.math cimport (M_PI, sqrt,
+                        sin, cos, tan, asin, acos, atan, atan2,
+                        fmin, fmax, fabs)
 from cpython cimport bool
-from libc.math cimport sqrt, sin, cos, tan, asin, acos, atan, atan2
+cimport cython
 from coordstring cimport CoordString
-
-cdef double PI = 3.141592653589793
-
-def isleft(tuple pt0, tuple pt1, tuple pt2):
-    return (pt1[0]-pt0[0])*(pt2[1]-pt0[1]) - (pt1[1]-pt0[1])*(pt2[0]-pt0[0]) > 0.0
-
-def polarangle(tuple pt0, tuple pt1):
-    """ Return the polar angle from pt0 to pt1 """
-    return atan2(pt1[1]-pt0[1], pt1[0]-pt0[0])
 
 cdef struct Vector2:
     double x
@@ -42,12 +36,13 @@ cdef Vector2 proj2(Vector2 u, Vector2 v):
 cdef inline double dist2(Vector2 pt0, Vector2 pt1) nogil:
     return sqrt((pt0.x-pt1.x)**2 + (pt0.y-pt1.y)**2)
 
+@cython.cdivision(True)
 cdef double dist_sph(Vector2 pt0, Vector2 pt1) nogil:
     """ Returns distance on a sphere of radius 1 """
-    cdef double dx = absd(pt0.x - pt1.x) * PI / 180.0
-    cdef double dy = absd(pt0.y - pt1.y) * PI / 180.0
-    cdef double y0 = pt0.y * PI / 180.0
-    cdef double y1 = pt1.y * PI / 180.0
+    cdef double dx = fabs(pt0.x - pt1.x) * M_PI / 180.0
+    cdef double dy = fabs(pt0.y - pt1.y) * M_PI / 180.0
+    cdef double y0 = pt0.y * M_PI / 180.0
+    cdef double y1 = pt1.y * M_PI / 180.0
     cdef double d_ = 0.0
 
     if (dx > 0.01) or (dy > 0.01):
@@ -59,53 +54,37 @@ cdef double dist_sph(Vector2 pt0, Vector2 pt1) nogil:
         d_ = (2 * asin(sqrt(sin(0.5*dy)**2 + cos(y0)*cos(y1)*sin(0.5*dx)**2)))
     return d_
 
-cdef inline double mind(double a, double b) nogil:
-    if a <= b:
-        return a
-    else:
-        return b
-
-cdef inline double maxd(double a, double b) nogil:
-    if a >= b:
-        return a
-    else:
-        return b
-
-cdef inline double absd(double a) nogil:
-    if a < 0:
-        return -a
-    else:
-        return a
-
-cdef int signd(double a):
+cdef int fsign(double a):
     """ Return the sign of *a* """
     if a == 0.0:
         return 1
     else:
-        return int(a/absd(a))
+        return int(a/fabs(a))
 
+@cython.cdivision(True)
 cdef inline Vector3 sph2cart(Vector2 a):
     """ Convert a (lambda, phi) coordinate on a sphere with an origin at
     (0, 0, 0) to an (x, y, z) coordinate. """
     cdef double theta = 90.0 - a.y
-    return Vector3(sin(PI*theta/180.0)*cos(PI*a.x/180.0),
-                   sin(PI*theta/180.0)*sin(PI*a.x/180.0),
-                   cos(PI*theta/180.0))
+    return Vector3(sin(M_PI*theta/180.0)*cos(M_PI*a.x/180.0),
+                   sin(M_PI*theta/180.0)*sin(M_PI*a.x/180.0),
+                   cos(M_PI*theta/180.0))
 
+@cython.cdivision(True)
 cdef inline Vector2 cart2sph(Vector3 a):
     """ Convert an (x, y, z) coordinate to a (lambda, phi) coordinate on a
     sphere with an origin at (0, 0, 0). """
     cdef double lon = 0.0
     cdef double lat = 0.0
-    if absd(a.x) > 1e-8:
+    if fabs(a.x) > 1e-8:
         lon = atan2(a.y, a.x)
     else:
         lon = asin(a.y / sqrt(a.x*a.x + a.y*a.y))
-    if absd(a.z) > 1e-8:
-        lat = 0.5*PI - atan(sqrt(a.x*a.x + a.y*a.y)/a.z)
+    if fabs(a.z) > 1e-8:
+        lat = 0.5*M_PI - atan(sqrt(a.x*a.x + a.y*a.y)/a.z)
     else:
-        lat = 0.5*PI - acos(a.z / sqrt(a.x*a.x + a.y*a.y + a.z*a.z))
-    return Vector2(lon*180.0/PI, lat*180.0/PI)
+        lat = 0.5*M_PI - acos(a.z / sqrt(a.x*a.x + a.y*a.y + a.z*a.z))
+    return Vector2(lon*180.0/M_PI, lat*180.0/M_PI)
 
 cdef Vector3 eulerpole_cart(Vector3 a, Vector3 b):
     return cross3(a, b)
@@ -120,12 +99,13 @@ cdef double azimuth(Vector2 pt1, Vector2 pt2):
     """ Return azimuth in radians between two points on a plane. """
     return atan2(pt2.x-pt1.x, pt2.y-pt1.y)
 
+@cython.cdivision(True)
 cdef double azimuth_sph(Vector2 pt1, Vector2 pt2):
     """ Return azimuth in radians between two points on a sphere. Inputs taken
     as degrees of (lon, lat). """
-    cdef double dlon = (pt2.x - pt1.x) * PI / 180.0
-    cdef double y1 = pt1.y * PI / 180.0
-    cdef double y2 = pt2.y * PI / 180.0
+    cdef double dlon = (pt2.x - pt1.x) * M_PI / 180.0
+    cdef double y1 = pt1.y * M_PI / 180.0
+    cdef double y2 = pt2.y * M_PI / 180.0
     return atan2(sin(dlon), cos(y1) * tan(y2) - sin(y1) * cos(dlon))
 
 def length(CoordString cs):
@@ -170,14 +150,14 @@ def pt_nearest_planar(double x, double y,
 
     # Determine whether u_int is inside the segment
     # Otherwise return the nearest endpoint
-    if absd(pt0.x - pt1.x) < 1e-4:  # Segment is near vertical
-        if u_int.y > maxd(pt0.y, pt1.y):
+    if fabs(pt0.x - pt1.x) < 1e-4:  # Segment is near vertical
+        if u_int.y > fmax(pt0.y, pt1.y):
             if pt0.y > pt1.y:
                 return ((pt0.x, pt0.y), dist2(pt0, pt))
             else:
                 return ((pt1.x, pt1.y), dist2(pt1, pt))
 
-        elif u_int.y < mind(pt0.y, pt1.y):
+        elif u_int.y < fmin(pt0.y, pt1.y):
             if pt0.y < pt1.y:
                 return ((pt0.x, pt0.y), dist2(pt0, pt))
             else:
@@ -188,13 +168,13 @@ def pt_nearest_planar(double x, double y,
 
     else:
 
-        if u_int.x > maxd(pt0.x, pt1.x):
+        if u_int.x > fmax(pt0.x, pt1.x):
             if pt0.x > pt1.x:
                 return ((pt0.x, pt0.y), dist2(pt0, pt))
             else:
                 return ((pt1.x, pt1.y), dist2(pt1, pt))
 
-        elif u_int.x < mind(pt0.x, pt1.x):
+        elif u_int.x < fmin(pt0.x, pt1.x):
             if pt0.x < pt1.x:
                 return ((pt0.x, pt0.y), dist2(pt0, pt))
             else:
@@ -255,15 +235,14 @@ def pt_nearest_proj(object fwd, object inv, tuple pt, double[:] endpt0, double[:
 
     while dx > tol:
         if i == maxiter:
-            raise ConvergenceError("Maximum iterations exhausted in bisection "
-                                   "method.")
+            raise ConvergenceError("Maximum iterations exceeded")
         xm = 0.5 * (x0 + x1)
         grad = _along_distance_gradient(fwd, inv, endpt0[0], endpt0[1], pt[0], pt[1], az, xm*L, 1e-7*L)
         if grad > 0:
-            dx = absd(x1-xm) * L
+            dx = fabs(x1-xm) * L
             x1 = xm
         else:
-            dx = absd(x0-xm) * L
+            dx = fabs(x0-xm) * L
             x0 = xm
         i += 1
 

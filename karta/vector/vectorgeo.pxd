@@ -9,7 +9,7 @@ cdef struct Vector3:
     double y
     double z
 
-cdef double PI
+cdef int fsign(double)
 
 cdef inline double dot2(Vector2, Vector2) nogil
 cdef inline double dot3(Vector3, Vector3) nogil
@@ -21,11 +21,6 @@ cdef inline double dist2(Vector2, Vector2) nogil
 cdef double dist_sph(Vector2, Vector2) nogil
 cdef double azimuth(Vector2, Vector2)
 cdef double azimuth_sph(Vector2, Vector2)
-
-cdef inline double mind(double, double) nogil
-cdef inline double maxd(double, double) nogil
-cdef inline double absd(double) nogil
-cdef int signd(double)
 
 cdef Vector3 eulerpole(Vector2, Vector2)
 cdef Vector3 eulerpole_cart(Vector3, Vector3)

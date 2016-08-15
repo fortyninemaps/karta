@@ -2,7 +2,8 @@
 
 ## changes with 0.7.2
 
-- performance: convex hull calculation cythonized
+- performance: convex hull calculation cythonized and extended for spherical
+  coordinates
 - performance: planar length calculations are much faster (~700 x) and geodetic
   length calculations are somewhat faster (~1.8 x)
 - fix: CompressedBand now always returns array when indexed with a slice

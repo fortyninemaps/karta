@@ -1,19 +1,19 @@
-from libc.math cimport sin, cos, NAN, isnan
+from libc.math cimport NAN, M_PI, sin, cos, fmin, fmax, isnan
 from cpython cimport bool
 from coordstring cimport CoordString
-from vectorgeo cimport (Vector2, Vector3, cross2, cross3,
-                        PI, mind, maxd,
+from vectorgeo cimport (Vector2, Vector3,
+                        cross2, cross3,
                         azimuth_sph, cart2sph, sph2cart,
                         eulerpole, eulerpole_cart)
 
 cdef bool isbetween_inc(double a, double b, double c):
-    return mind(a, c) <= b <= maxd(a, c)
+    return fmin(a, c) <= b <= fmax(a, c)
 
 cdef bool isbetween_incl(double a, double b, double c):
-    return mind(a, c) <= b < maxd(a, c)
+    return fmin(a, c) <= b < fmax(a, c)
 
 cdef bool isbetween_incr(double a, double b, double c):
-    return mind(a, c) < b <= maxd(a, c)
+    return fmin(a, c) < b <= fmax(a, c)
 
 ctypedef bool (*isbetween_t)(double, double, double)
 
@@ -122,7 +122,7 @@ class SweepLinePlaceholder(object):
         cdef double m = 0.0, h = 0.0
         cdef tuple interx
         if self.spherical:
-            m = -(azimuth_sph(Vector2(seg[0], seg[1]), Vector2(seg[2], seg[3]))*180/PI - 90)
+            m = -(azimuth_sph(Vector2(seg[0], seg[1]), Vector2(seg[2], seg[3]))*180/M_PI - 90)
             # compute intersection between seg and a meridional geodesic passing through x
             interx = intersection_sph(seg[0], seg[2], x, x, seg[1], seg[3], -90, 90)
             h = interx[1]
@@ -552,8 +552,8 @@ cdef double intersection_meridian(double x0, double x1, double y0, double y1,
     """ Return the latitude of intersection of a spherical geodesic across a
     meridian. """
     cdef Vector3 ep1 = eulerpole(Vector2(x0, y0), Vector2(x1, y1))
-    cdef Vector3 ep2 = Vector3(sin(PI*xmeridian/180.0),
-                               cos(PI*xmeridian/180.0),
+    cdef Vector3 ep2 = Vector3(sin(M_PI*xmeridian/180.0),
+                               cos(M_PI*xmeridian/180.0),
                                0.0)
     cdef Vector2 normal = cart2sph(cross3(ep1, ep2))
     normal.x = (normal.x + 180.0) % 360.0 - 180.0

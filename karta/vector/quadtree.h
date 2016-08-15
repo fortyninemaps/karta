@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <math.h>
 #include "pool.h"
 
 typedef enum {LEAF, NONLEAF} NodeType;
@@ -375,14 +376,6 @@ int isduplicate(LeafNode *node, Position *pos) {
     return -1;
 }
 
-double mind(double a, double b) {
-    return (a >= b) ? b : a;
-}
-
-double maxd(double a, double b) {
-    return (a >= b) ? a : b;
-}
-
 int iswithin(Bbox *bbox, Position *position) {
     if ((position->x > bbox->xmin) && (position->x < bbox->xmax) &&
         (position->y > bbox->ymin) && (position->y < bbox->ymax)) {
@@ -394,8 +387,8 @@ int iswithin(Bbox *bbox, Position *position) {
 }
 
 int overlaps(Bbox *bbox1, Bbox *bbox2) {
-    if ((mind(bbox1->xmax, bbox2->xmax) >= maxd(bbox1->xmin, bbox2->xmin)) &&
-        (mind(bbox1->ymax, bbox2->ymax) >= maxd(bbox1->ymin, bbox2->ymin))) {
+    if ((fmin(bbox1->xmax, bbox2->xmax) >= fmax(bbox1->xmin, bbox2->xmin)) &&
+        (fmin(bbox1->ymax, bbox2->ymax) >= fmax(bbox1->ymin, bbox2->ymin))) {
         return 1;
     }
     else {

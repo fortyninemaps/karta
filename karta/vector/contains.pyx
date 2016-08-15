@@ -1,10 +1,8 @@
+from libc.math cimport fabs
 from coordstring cimport CoordString
+from vectorgeo cimport Vector2
 
-cdef struct Point:
-    double x
-    double y
-
-cdef double isleft(Point pt, Point pt0, Point pt1):
+cdef double isleft(Vector2 pt, Vector2 pt0, Vector2 pt1):
     """ tests whether *pt* is left of segment (pt0, pt1).
 
     returns > 0 if left, < 0 if right, and = 0 if pt is on the segment
@@ -17,15 +15,15 @@ def contains(double x, double y, CoordString poly):
     cdef int cnt = 0
     cdef int i
     cdef int n = len(poly)
-    cdef Point pt, pt0, pt1
+    cdef Vector2 pt, pt0, pt1
 
     if not poly.ring:
         raise TypeError("no membership test for non-ring coordinate strings")
 
-    pt = Point(x, y)
-    pt0 = Point(poly.getX(0), poly.getY(0))
+    pt = Vector2(x, y)
+    pt0 = Vector2(poly.getX(0), poly.getY(0))
     for i in range(n):
-        pt1 = Point(poly.getX(i+1), poly.getY(i+1))
+        pt1 = Vector2(poly.getX(i+1), poly.getY(i+1))
         if (pt0.y <= pt.y < pt1.y):
             # crosses upward
             if isleft(pt, pt0, pt1) > 0:
@@ -74,7 +72,7 @@ def contains_proj(double x, double y, CoordString poly, crs):
         x0 = x1
         y0 = y1
 
-    if abs(sum_az) > 1e-4:
+    if fabs(sum_az) > 1e-4:
         return False
     else:
         return True
