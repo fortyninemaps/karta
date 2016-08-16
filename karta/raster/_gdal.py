@@ -2,6 +2,7 @@
 
 import struct
 import sys
+from math import ceil
 import numpy as np
 from .band import CompressedBand
 from .. import errors
@@ -18,17 +19,23 @@ except ImportError:
 ALL = -1
 
 class GdalFileBand(object):
-    """ Imitates an ndarray well-enough to back a Grid instance, but reads data
-    from an disk-bound datasource """
-
+    """ Read-only raster Band interface the reads data from a disk-bound
+    datasource.
+    """
     def __init__(self, band, dataset):
-        self.band = band
+        """
+        Parameters
+        ----------
+        band : osgeo.gdal.Band
+        dataset : osgeo.gdal.Dataset
+        """
+        self.gdalband = band
         self.dataset = dataset
         return
 
     def __del__(self):
         self.dataset = None
-        self.band = None
+        self.gdalband = None
 
     def __getitem__(self, idx):
         ny, nx = self.size
@@ -39,6 +46,7 @@ class GdalFileBand(object):
             iidx = idx
             jidx = slice(0, nx, 1)
 
+        # Calculate start, end, step ranges for rows and columns
         if isinstance(iidx, int):
             ystart = iidx
             yend = iidx+1
@@ -53,28 +61,27 @@ class GdalFileBand(object):
         else:
             xstart, xend, xstep = jidx.indices(nx)
 
-
+        # Extract ...
         if abs(yend-ystart) == 1:
-            # Extracting a row vector
+            # ... a row vector
             x0 = min(xstart, xend)
             y0 = min(ny-ystart, ny-yend)
-            ret = self.band.ReadAsArray(x0, y0, abs(xend-xstart), 1)[0,::xstep]
+            ret = self.gdalband.ReadAsArray(x0, y0, abs(xend-xstart), 1)[0,::xstep]
 
             if abs(xend-xstart) == 1:
                 ret = ret[0]
 
         elif abs(xend-xstart) == 1:
-            # Extracting a column vector
+            # ... a column vector
             x0 = min(xstart, xend)
             y0 = min(ny-ystart, ny-yend)
-            ret = self.band.ReadAsArray(x0, y0, 1, abs(yend-ystart))[::ystep].ravel()
+            ret = self.gdalband.ReadAsArray(x0, y0, 1, abs(yend-ystart))[::ystep].ravel()
 
         elif (abs(xstep) == 1) and (abs(ystep) == 1):
-            # Fast path for contiguous blocks
+            # ... contiguous blocks (fast path)
             x0 = min(xstart, xend)
             y0 = min(ny-ystart, ny-yend)
-            ret = self.band.ReadAsArray(x0, y0,
-                                        abs(xend-xstart), abs(yend-ystart))
+            ret = self.gdalband.ReadAsArray(x0, y0, abs(xend-xstart), abs(yend-ystart))
             if xstep < 0:
                 ret = ret[:,::-1]
 
@@ -83,19 +90,18 @@ class GdalFileBand(object):
 
         else:
             # Sparse extraction
-            t = self.band.DataType
-            values = map(lambda xy: self.band.ReadRaster(xy[0], ny-xy[1]-1, 1, 1, 1, 1, t),
-                         ((x, y) for y in range(ystart, yend, ystep)
-                                 for x in range(xstart, xend, xstep)))
+            t = self.gdalband.DataType
+            values = (self.gdalband.ReadRaster(x, ny-y-1, 1, 1, 1, 1, t)
+                        for y in range(ystart, yend, ystep)
+                        for x in range(xstart, xend, xstep))
 
-            # temporary
-            outnx = len(range(xstart, xend, xstep))
-            outny = len(range(ystart, yend, ystep))
+            # compute size of output
+            outnx = ceil(abs(xend - xstart) / abs(xstep))
+            outny = ceil(abs(yend - ystart) / abs(ystep))
 
-            pt = py_type(t)
-            values_py = [struct.unpack(pt, a) for a in values]
+            pyt = pytype(t)
+            values_py = [struct.unpack(pyt, a) for a in values]
             ret = np.array(values_py).reshape([outny, outnx])
-
         return ret
 
     def __iter__(self):
@@ -108,8 +114,7 @@ class GdalFileBand(object):
 
     @property
     def dtype(self):
-        return np.dtype(numpy_dtype(self.band.DataType))
-
+        return np.dtype(numpy_dtype(self.gdalband.DataType))
 
 def SRS_from_WKT(s):
     """ Return Proj.4 string, semimajor axis, and flattening """
@@ -117,7 +122,7 @@ def SRS_from_WKT(s):
     sr.ImportFromWkt(s)
     return sr
 
-def py_type(dt_int):
+def pytype(dt_int):
     """ Return a fmt character based on a gdal type integer. """
     if dt_int == 1:
         return "B"

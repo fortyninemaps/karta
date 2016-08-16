@@ -9,10 +9,26 @@ Overview
 `SimpleBand` use numpy arrays for data storage
 
 `CompressedBand` uses blosc compression to reduce in-memory footprint
+
+Implementation
+--------------
+
+Bands are expected to implement the following methods:
+    - `__getitem__(self, key)`, accepting as *key* any of
+        - an int
+        - a slice
+        - a 2-tuple of ints
+        - a 2-tuple of slices
+    - `__setitem__(self, key, value)`, accepting as *key* the same
+      possibilities as __getitem__
+
+Additionally, a Band should have a `dtype` attribute indicating the type of the
+stored data.
 """
 
 import blosc
 import numpy as np
+from numbers import Integral
 from math import ceil
 
 class BandIndexer(object):
@@ -127,11 +143,30 @@ class CompressedBand(object):
     CHUNKSET = 1
     CHUNKUNSET = 0
 
-    def __init__(self, size, dtype, chunksize=(256, 256), initval=None):
+    def __init__(self, size, dtype, chunksize=(256, 256), initval=0, unsetval=0):
+        """ Initialize a CompressedBand instance.
+
+        Parameters
+        ----------
+        size : tuple of two ints
+            size of band in pixels
+        dtype : type
+            data type of pixel values
+        chunksize : tuple of two ints, optional
+            size of compressed chunks, default (256, 256)
+        initval : value, optional
+            if set, the entire grid is initialized with this value, which should
+            be of *dtype*
+        unsetval : value, optional
+            value to fill with when an unset block is requested
+            default 0
+        """
         assert len(size) == 2
         self.size = size
         self.dtype = dtype
         self._chunksize = chunksize
+        self._initval = initval
+        self._unsetval = unsetval
 
         self.nchunkrows = int(ceil(float(size[0])/float(chunksize[0])))
         self.nchunkcols = int(ceil(float(size[1])/float(chunksize[1])))
@@ -143,14 +178,11 @@ class CompressedBand(object):
         # 0 => unset
         # 1 => set
         self.chunkstatus = np.zeros(nchunks, dtype=np.int8)
-
-        if initval is not None:
-            self[:,:] = initval*np.ones(size, dtype=dtype)
         return
 
     def __getitem__(self, key):
 
-        if isinstance(key, (int, np.int32)):
+        if isinstance(key, Integral):
             irow = key // self.size[1]
             icol = key % self.size[1]
             return self._getblock(irow, icol, (1, 1))[0]
@@ -162,7 +194,7 @@ class CompressedBand(object):
 
             kr, kc = key
 
-            if isinstance(kr, (int, np.int32)):
+            if isinstance(kr, Integral):
                 yoff = kr
                 ny = 1
                 ystride = 1
@@ -178,7 +210,7 @@ class CompressedBand(object):
                 raise IndexError("slicing with instances of '{0}' not "
                                  "supported".format(type(kr)))
 
-            if isinstance(kc, (int, np.int32)):
+            if isinstance(kc, Integral):
                 xoff = kc
                 nx = 1
                 xstride = 1
@@ -194,7 +226,7 @@ class CompressedBand(object):
                 raise IndexError("slicing with instances of '{0}' not "
                                  "supported".format(type(kc)))
 
-            if isinstance(kr, (int, np.int32)) and isinstance(kc, (int, np.int32)):
+            if isinstance(kr, Integral) and isinstance(kc, Integral):
                 return self._getblock(yoff, xoff, (ny, nx))[0,0]
             else:
                 return self._getblock(yoff, xoff, (ny, nx))[::ystride,::xstride]
@@ -344,7 +376,7 @@ class CompressedBand(object):
             if self.chunkstatus[i] != self.CHUNKUNSET:
                 chunkdata = self._retrieve(i)
             else:
-                chunkdata = np.zeros(self._chunksize, dtype=self.dtype)
+                chunkdata = self._initval * np.ones(self._chunksize, dtype=self.dtype)
 
             # Compute region within chunk to place data in
             cy0 = max(0, yoff-yst)
@@ -378,8 +410,8 @@ class CompressedBand(object):
             ox1 = min(size[1], xen-xoff)
 
             if self.chunkstatus[i] == self.CHUNKUNSET:
-                result[oy0:oy1, ox0:ox1] = np.zeros((oy1-oy0, ox1-ox0),
-                                                    dtype=self.dtype)
+                result[oy0:oy1, ox0:ox1] = self._unsetval + np.zeros((oy1-oy0, ox1-ox0),
+                                                                     dtype=self.dtype)
 
             else:
                 # Compute the extents from the chunk to retain
