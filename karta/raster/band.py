@@ -128,7 +128,7 @@ class SimpleBand(object):
         if initval is None:
             self.array = np.empty(size, dtype=dtype)
         else:
-            self.array = initval * np.ones(size, dtype=dtype)
+            self.array = np.full(size, initval, dtype-dtype)
         self.dtype = dtype
 
     def __getitem__(self, key):
@@ -376,7 +376,7 @@ class CompressedBand(object):
             if self.chunkstatus[i] != self.CHUNKUNSET:
                 chunkdata = self._retrieve(i)
             else:
-                chunkdata = self._initval * np.ones(self._chunksize, dtype=self.dtype)
+                chunkdata = np.full(self._chunksize, self._initval, dtype=self.dtype)
 
             # Compute region within chunk to place data in
             cy0 = max(0, yoff-yst)
@@ -410,8 +410,9 @@ class CompressedBand(object):
             ox1 = min(size[1], xen-xoff)
 
             if self.chunkstatus[i] == self.CHUNKUNSET:
-                result[oy0:oy1, ox0:ox1] = self._unsetval + np.zeros((oy1-oy0, ox1-ox0),
-                                                                     dtype=self.dtype)
+                result[oy0:oy1, ox0:ox1] = np.full((oy1-oy0, ox1-ox0),
+                                                   self._unsetval,
+                                                   dtype=self.dtype)
 
             else:
                 # Compute the extents from the chunk to retain

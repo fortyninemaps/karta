@@ -78,9 +78,8 @@ def pad(A, width=1, edges="all", value=0.0):
     else:
         xf = None
 
-    B = value * np.ones([ny, nx])
+    B = np.full((ny, nx), value, dtype=value.dtype)
     B[y0:yf, x0:xf] = A
-
     return B
 
 def _slope(D, res=(1.0, 1.0)):
@@ -212,15 +211,15 @@ def hillshade(grid, azimuth=330.0, elevation=60.0):
     dx = dxgrid[:,:]
     dy = dygrid[:,:]
     res = grid.resolution
-    u = np.array((res[0] * np.ones_like(dx), np.zeros_like(dx), dx))
-    v = np.array((np.zeros_like(dy), res[1] * np.ones_like(dy), dy))
+    u = np.array((np.full_like(dx, res[0]), np.zeros_like(dx), dx))
+    v = np.array((np.zeros_like(dy), np.full_like(dy, res[1]), dy))
     w = np.cross(u, v, axisa=0, axisb=0)
     wunit = w / np.atleast_3d(np.sqrt(np.sum(w**2, axis=-1)))
 
     s = np.array((np.cos(azimuth*np.pi/180.0),
                   np.sin(azimuth*np.pi/180.0),
                   np.sin(elevation*np.pi/180.0)))
-    smat = s*np.ones([wunit.shape[0], wunit.shape[1], 3])
+    smat = np.full((wunit.shape[0], wunit.shape[1], 3), s, dtype=np.float64)
     dprod = (wunit*smat).sum(axis=-1)
 
     q = np.percentile(dprod[~np.isnan(dprod)], [2, 98])

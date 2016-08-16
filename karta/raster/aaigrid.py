@@ -526,7 +526,7 @@ class AAIGrid(grid.RegularGrid):
             # The left side
             dx = int(np.floor((xmin2-xmin1) / float(self.aschdr['cellsize'])))
             if dx < 0:
-                data_a = np.hstack([np.nan*np.ones([ny, dx]), data_a])
+                data_a = np.hstack([np.full((ny, dx), np.nan), data_a])
             elif dx > 0:
                 data_a = data_a[:,dx:]
             self.aschdr['xllcenter'] = xmin1 + self.aschdr['cellsize'] * dx
@@ -534,7 +534,7 @@ class AAIGrid(grid.RegularGrid):
             # The right side
             dx = int(np.floor((xmax2-xmax1) / float(self.aschdr['cellsize'])))
             if dx > 0:
-                data_a = np.hstack([data_a, np.nan*np.ones([ny, dx])])
+                data_a = np.hstack([data_a, np.full((ny, dx), np.nan)])
             elif dx < 0:
                 data_a = data_a[:,:dx]
             self.aschdr['ncols'] = data_a.shape[1]
@@ -544,7 +544,7 @@ class AAIGrid(grid.RegularGrid):
             # The bottom
             dy = int(np.ceil((ymin2-ymin1) / float(self.aschdr['cellsize'])))
             if dy < 0:
-                data_a = np.vstack([data_a, np.nan*np.ones([dy, nx])])
+                data_a = np.vstack([data_a, np.full((dy, nx), np.nan)])
             elif dy > 0:
                 data_a = data_a[dy:,:]
             self.aschdr['yllcenter'] = ymin1 + self.aschdr['cellsize'] * dy
@@ -552,7 +552,7 @@ class AAIGrid(grid.RegularGrid):
             # The top
             dy = int(np.floor((ymax2-ymax1) / float(self.aschdr['cellsize'])))
             if dy > 0:
-                data_a = np.vstack([np.nan*np.ones([dy, nx]), data_a])
+                data_a = np.vstack([np.full((dy, nx), np.nan), data_a])
             elif dy < 0:
                 data_a = data_a[:dy,:]
             self.aschdr['nrows'] = data_a.shape[0]
