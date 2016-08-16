@@ -6,7 +6,7 @@ import math
 import numbers
 import warnings
 import numpy as np
-from . import _gtiff
+from . import _gdal
 from . import crfuncs
 from .band import SimpleBand, CompressedBand, BandIndexer
 from .coordgen import CoordinateGenerator
@@ -976,7 +976,7 @@ class RegularGrid(Grid):
         compress: str or None, optional
             "PACKBITS" (default), "DEFLATE", "LZW", "LZMA", or None
         """
-        return _gtiff.write(fnm, self, compress=compress, **kw)
+        return _gdal.write(fnm, self, compress=compress, **kw)
 
     def to_aai(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,

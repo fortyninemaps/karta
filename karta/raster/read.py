@@ -2,7 +2,7 @@
 import numpy as np
 from .grid import RegularGrid
 from ..crs import ProjectedCRS, GeographicalCRS
-from . import _gtiff
+from . import _gdal
 from . import _aai
 from ..errors import GridError
 
@@ -24,7 +24,7 @@ def proj4_isgeodetic(s):
     return ("lonlat" in s) or ("longlat" in s) or \
             ("latlon" in s) or ("latlong" in s)
 
-def read_gtiff(fnm, in_memory=True, ibands=_gtiff.ALL, **kw):
+def read_gtiff(fnm, in_memory=True, ibands=_gdal.ALL, **kw):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
     instance.
 
@@ -39,9 +39,9 @@ def read_gtiff(fnm, in_memory=True, ibands=_gtiff.ALL, **kw):
     bandclass : Band class, optional
         class of band used by returned grid (default karta.band.CompressedBand)
         if in_memory is True, this parameter is ignored and the returned grid
-        will have bands of type karta.raster._gtiff.GdalFileBand
+        will have bands of type karta.raster._gdal.GdalFileBand
     """
-    bands, hdr = _gtiff.read(fnm, in_memory, ibands, **kw)
+    bands, hdr = _gdal.read(fnm, in_memory, ibands, **kw)
 
     t = {'xllcorner': hdr['xulcorner'] - hdr['ny'] * hdr['sx'],
          'yllcorner': hdr['yulcorner'] + hdr['ny'] * hdr['dy'],
@@ -58,7 +58,7 @@ def read_gtiff(fnm, in_memory=True, ibands=_gtiff.ALL, **kw):
         crs = ProjectedCRS(hdr["srs"]["proj4"], name=hdr["srs"]["name"])
     return RegularGrid(t, bands=bands, crs=crs, nodata_value=hdr["nodata"])
 
-def read_gtiffs(*fnms, in_memory=True, **kw):
+def from_geotiffs(*fnms, in_memory=True, **kw):
     """ Read multiple GeoTiff files as bands within a single grid. Reads the
     first band within each GeoTiff, and checks that grids share the same
     spatial transform and coordinate system.
@@ -72,12 +72,12 @@ def read_gtiffs(*fnms, in_memory=True, **kw):
     bandclass : Band class, optional
         class of band used by returned grid (default karta.band.CompressedBand)
         if in_memory is True, this parameter is ignored and the returned grid
-        will have bands of type karta.raster._gtiff.GdalFileBand
+        will have bands of type karta.raster._gdal.GdalFileBand
     """
     bands = []
     hdrs = []
     for fnm in fnms:
-        _b, _h = _gtiff.read(fnm, in_memory, 1, **kw)
+        _b, _h = _gdal.read(fnm, in_memory, 1, **kw)
         if len(hdrs) != 0:
             if _h != hdrs[-1]:
                 raise GridError("geotransform in {0} not equivalent to a previous GeoTiff".format(fnm))
