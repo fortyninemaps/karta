@@ -473,10 +473,8 @@ def intersects_sph(CoordString a, CoordString b):
                 segA = event.left
                 segB = event.right
                 if segA is not None and segB is not None \
-                        and _intersects_sph(segB[0][0], segB[1][0],
-                                            seg[0][0], seg[1][0],
-                                            segB[0][1], segB[1][1],
-                                            seg[0][1], seg[1][1]):
+                        and _intersects_sph(segB[0], segB[2], seg[0], seg[2],
+                                            segB[1], segB[3], seg[1], seg[3]):
                     return True
 
     return False
