@@ -158,6 +158,10 @@ class CRS(object):
                 raise AttributeError("incomplete CRS definition (missing ref_proj4, ref_wkt attributes)")
             return srs.ExportToProj4()
 
+    @property
+    def proj4(self):
+        return self.get_proj4()
+
     def get_wkt(self):
         if hasattr(self, "ref_wkt"):
             return self.ref_wkt
@@ -172,6 +176,10 @@ class CRS(object):
             else:
                 raise AttributeError("incomplete CRS definition (missing ref_proj4, ref_wkt attributes)")
             return srs.ExportToWkt()
+
+    @property
+    def wkt(self):
+        return self.get_wkt()
 
 class CartesianCRS(CRS):
     """ Cartesian (flat-earth) reference systems with (x, y) coordinates """
