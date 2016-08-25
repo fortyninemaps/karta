@@ -78,7 +78,7 @@ def pad(A, width=1, edges="all", value=0.0):
     else:
         xf = None
 
-    B = np.full((ny, nx), value, dtype=value.dtype)
+    B = np.full((ny, nx), value, dtype=type(value))
     B[y0:yf, x0:xf] = A
     return B
 
