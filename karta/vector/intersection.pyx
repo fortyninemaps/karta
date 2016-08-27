@@ -18,6 +18,26 @@ cdef bool isbetween_incr(double a, double b, double c):
 
 ctypedef bool (*isbetween_t)(double, double, double)
 
+def bboxes_overlap(tuple bb0, tuple bb1):
+    """ Return whether planar bboxes overlap.
+    """
+    cdef float dx = 0.0
+    cdef float dy = 0.0
+    dx = fmin(bb0[2], bb1[2]) - fmax(bb0[0], bb1[0])
+    dy = fmin(bb0[3], bb1[3]) - fmax(bb0[1], bb1[1])
+    if dx == 0.0:
+        dx = 1.0
+    elif dx < 0.0:
+        dx = 0.0
+    if dy ==  0.0:
+        dy = 1.0
+    elif dy < 0.0:
+        dy = 0.0
+    if dx*dy == 0.0:
+        return False
+    else:
+        return True
+
 def all_intersections(CoordString a, CoordString b):
     """ Brute-force intersection search with len(a)*len(b) complexity """
     cdef int na = len(a)
