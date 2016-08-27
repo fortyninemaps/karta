@@ -1,5 +1,5 @@
 from libc.math cimport fmin, fmax
-from vectorgeo cimport fsign
+from vectorgeo cimport Vector2, fsign, bndlat_sph
 from coordstring cimport CoordString
 
 cpdef int crosses_dateline(double x0, double x1):
@@ -16,24 +16,29 @@ cpdef int crosses_dateline(double x0, double x1):
     else:
         return 0
 
-def dateline_bbox(CoordString cs):
+def bbox(CoordString cs):
     """ Return a dateline-aware bbox for geographical coordinates. """
-    cdef double xmin, ymin, xmax, ymax
-    cdef double x0, x1, y1
+    cdef double xmin, ymin, xmax, ymax, segymin, segymax
+    cdef double x0, y0, x1, y1
     cdef double rot
-    cdef int i
-    cdef int xdateline
+    cdef int i = 0, retint = 0, xdateline = 0, n = len(cs)
+
+    if cs.ring:
+        n += 1
 
     xmin = xmax = cs.getX(0)
     ymin = ymax = cs.getY(0)
     rot = 0
+    x0 = cs.getX(0)
+    y0 = cs.getY(0)
 
-    for i in range(len(cs)-1):
-        x0 = cs.getX(i)
-        x1 = cs.getX(i+1)
-        y1 = cs.getY(i+1)
-        ymin = fmin(ymin, y1)
-        ymax = fmax(ymax, y1)
+    while i != n:
+        x1 = cs.getX(i)
+        y1 = cs.getY(i)
+        retint = bndlat_sph(Vector2(x0, y0), Vector2(x1, y1), &segymin, &segymax)
+        if retint == 0:
+            ymin = fmin(ymin, segymin)
+            ymax = fmax(ymax, segymax)
         xdateline = crosses_dateline(x0, x1)
         if xdateline != 0:
             rot -= xdateline * 360.0
@@ -44,6 +49,9 @@ def dateline_bbox(CoordString cs):
                 xmin = fmin(xmin, x1)
             else:
                 xmax = fmax(xmax, x1)
+        x0 = x1
+        y0 = y1
+        i += 1
 
     xmin = (xmin+180) % 360 - 180
     xmax = (xmax+180) % 360 - 180

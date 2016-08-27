@@ -177,9 +177,9 @@ cdef class CoordString:
             i += 1
         return (xmin, ymin, xmax, ymax)
 
-    def vectors(self):
+    def vectors(self, bool drop_z=False):
         cdef int i = 0, pos = 0
-        cdef np.ndarray x, y, z
+        cdef np.ndarray x, y
         x = np.empty(self.length, dtype=np.float64)
         y = np.empty(self.length, dtype=np.float64)
         while i < self.length:
@@ -187,17 +187,18 @@ cdef class CoordString:
             y[i] = self.coords[pos+1]
             i += 1
             pos += self.rank
-        if self.rank == 2:
+        if (self.rank == 2) or drop_z:
             return x, y
-        else:
-            z = np.empty(self.length, dtype=np.float64)
-            pos = 0
-            i = 0
-            while i < self.length:
-                z[i] = self.coords[pos+2]
-                i += 1
-                pos += self.rank
-            return x, y, z
+
+        cdef np.ndarray z
+        z = np.empty(self.length, dtype=np.float64)
+        pos = 0
+        i = 0
+        while i < self.length:
+            z[i] = self.coords[pos+2]
+            i += 1
+            pos += self.rank
+        return x, y, z
 
     def asarray(self):
         return np.array(self.coords).reshape([-1, self.rank])

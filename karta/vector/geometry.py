@@ -402,11 +402,17 @@ class MultiVertexMixin(object):
         tuple
             (xmin, ymin, xmax, ymax)
         """
-        if len(self) != 0:
-            x, y = self.get_coordinate_lists(crs=crs)
-            return (min(x), min(y), max(x), max(y))
+        if crs is not None and (crs != self.crs):
+            cs = CoordString(list(zip(
+                *self.crs.transform(crs, *self.vertices.vectors(drop_z=True)))))
         else:
-            return (np.nan, np.nan, np.nan, np.nan)
+            cs = self.vertices
+            crs = self.crs
+
+        if isinstance(crs, GeographicalCRS):
+            return _cdateline.bbox(cs)
+        else:
+            return _cvectorgeo.bbox(cs)
 
     @property
     def extent(self):
@@ -581,19 +587,15 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         tuple
              (xmin, ymin, xmax, ymax)
         """
-        if (isinstance(self.crs, GeographicalCRS) and
-                (crs is None or isinstance(crs, GeographicalCRS))):
-            xmin, ymin, xmax, ymax = _cdateline.dateline_bbox(self.vertices)
-            if crs is not None:
-                ll = crs.transform(crs, xmin, ymin)
-                lr = crs.transform(crs, xmax, ymin)
-                ul = crs.transform(crs, xmin, ymax)
-                ur = crs.transform(crs, xmax, ymax)
-                xmin = min(ll[0], lr[0], ul[0], ur[0])
-                xmax = max(ll[0], lr[0], ul[0], ur[0])
-                ymin = min(ll[1], lr[1], ul[1], ur[1])
-                ymax = max(ll[1], lr[1], ul[1], ur[1])
-            bbox = (xmin, ymin, xmax, ymax)
+        if crs is not None and (crs != self.crs):
+            cs = CoordString(list(zip(
+                *self.crs.transform(crs, *self.vertices.vectors(drop_z=True)))))
+        else:
+            cs = self.vertices
+            crs = self.crs
+
+        if isinstance(crs, GeographicalCRS):
+            bbox = _cdateline.bbox(cs)
         else:
             bbox = super(ConnectedMultiVertexMixin, self).get_bbox(crs=crs)
         return bbox
@@ -1258,6 +1260,28 @@ class MultiVertexMultipartMixin(object):
     - "which members touch this Line/Polygon?"
     - "which members are contained by this Polygon?"
     """
+    @cache_decorator("bbox")
+    def get_bbox(self, crs=None):
+        bbs = [part.get_bbox(crs=crs) for part in self]
+        xmin = min([bb[0] for bb in bbs])
+        ymin = min([bb[1] for bb in bbs])
+        xmax = max([bb[2] for bb in bbs])
+        ymax = max([bb[3] for bb in bbs])
+        return (xmin, ymin, xmax, ymax)
+
+    @cache_decorator("extent")
+    def get_extent(self, crs=None):
+        bb = self.get_bbox(crs=crs)
+        return bb[0], bb[2], bb[1], bb[3]
+
+    @property
+    def bbox(self):
+        return self.get_bbox()
+
+    @property
+    def extent(self):
+        return self.get_extent()
+
     def within_bbox(self, bbox, max_results=-1):
         """ Return Multipart geometry representing member geometries that are
         contained by a bounding box.
@@ -1410,28 +1434,6 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
             ret.append(line_vertices.T)
         return ret
 
-    @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
-        vertices = self.get_vertices(crs=crs)
-        xmin = min(np.min(v[:,0]) for v in vertices)
-        xmax = max(np.max(v[:,0]) for v in vertices)
-        ymin = min(np.min(v[:,1]) for v in vertices)
-        ymax = max(np.max(v[:,1]) for v in vertices)
-        return (xmin, ymin, xmax, ymax)
-
-    @cache_decorator("extent")
-    def get_extent(self, crs=None):
-        bb = self.get_bbox(crs=crs)
-        return bb[0], bb[2], bb[1], bb[3]
-
-    @property
-    def bbox(self):
-        return self.get_bbox()
-
-    @property
-    def extent(self):
-        return self.get_extent()
-
 class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
                    ShapefileOutMixin):
     """ Collection of polygons with associated attributes.
@@ -1543,28 +1545,6 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
                 poly.append(ring_vertices.T)
             ret.append(poly)
         return ret
-
-    @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
-        vertices = self.get_vertices(crs=crs)
-        xmin = min(np.min(v[0][:,0]) for v in vertices)
-        xmax = max(np.max(v[0][:,0]) for v in vertices)
-        ymin = min(np.min(v[0][:,1]) for v in vertices)
-        ymax = max(np.max(v[0][:,1]) for v in vertices)
-        return (xmin, ymin, xmax, ymax)
-
-    @cache_decorator("extent")
-    def get_extent(self, crs=None):
-        bb = self.get_bbox(crs=crs)
-        return bb[0], bb[2], bb[1], bb[3]
-
-    @property
-    def bbox(self):
-        return self.get_bbox()
-
-    @property
-    def extent(self):
-        return self.get_extent()
 
 def _signcross(a, b):
     """ Return sign of 2D cross product a x b """

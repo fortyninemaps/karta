@@ -21,6 +21,7 @@ cdef inline double dist2(Vector2, Vector2) nogil
 cdef double dist_sph(Vector2, Vector2) nogil
 cdef double azimuth(Vector2, Vector2)
 cdef double azimuth_sph(Vector2, Vector2)
+cdef int bndlat_sph(Vector2, Vector2, double*, double*)
 
 cdef Vector3 eulerpole(Vector2, Vector2)
 cdef Vector3 eulerpole_cart(Vector3, Vector3)

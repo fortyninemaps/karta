@@ -61,44 +61,48 @@ cdef int fsign(double a):
     else:
         return int(a/fabs(a))
 
-cdef int bndlat_sph(double x0, double y0, double x1, double y1, double *ymin, double *ymax):
+cdef int bndlat_sph(Vector2 pt0, Vector2 pt1, double *ymin, double *ymax):
     """ Return the bounding latitudes of a great circle segment on a sphere.
     Returns 0 on success and 1 if the segment is degenerate. """
-    cdef int s0 = fsign(y0)
-    cdef int s1 = fsign(y1)
-    cdef double ytmp, ymid
-    cdef double initial_az
+    cdef int s0 = fsign(pt0.y)
+    cdef int s1 = fsign(pt1.y)
+    cdef double faz, baz
 
-    cdef double dlam = (x1-x0) * M_PI / 180.0
-    cdef double phi0 = y0 * M_PI / 180.0
-    cdef double phi1 = y1 * M_PI / 180.0
+    cdef double dlam = (pt1.x-pt0.x) * M_PI / 180.0
+    cdef double phi0 = pt0.y * M_PI / 180.0
+    cdef double phi1 = pt1.y * M_PI / 180.0
 
     if dlam != 0.0:
-        initial_az = atan2(sin(dlam)*cos(phi1),
-                           cos(phi0)*cos(phi1) - sin(phi0)*cos(phi1)*cos(dlam))
-        initial_az = azimuth_sph(Vector2(x0, y0), Vector2(x1, y1))
-    elif phi0 < phi1:
-        initial_az = 0.0
-    elif phi0 > phi1:
-        initial_az = M_PI
-    else:
+        faz = atan2(sin(dlam)*cos(phi1),
+                    cos(phi0)*sin(phi1) - sin(phi0)*cos(phi1)*cos(dlam))
+        baz = atan2(sin(-dlam)*cos(phi0),
+                    cos(phi1)*sin(phi0) - sin(phi1)*cos(phi0)*cos(-dlam))
+    elif phi0 == phi1:
         return 1
 
-    if s0 == s1:    # one hemisphere
+    if dlam == 0.0 or (s0 != s1):
+        ymin[0] = fmin(pt0.y, pt1.y)
+        ymax[0] = fmax(pt0.y, pt1.y)
+    else:
         if s0 == 1: # northern
             ymin[0] = fmin(phi0, phi1) * 180.0 / M_PI
-            ytmp = fmax(phi0, phi1)
-            ymax[0] = fmax(ytmp, acos(fabs(sin(initial_az)*cos(phi0)))) * 180.0 / M_PI
+
+            if ((fabs((faz + M_PI) % (2*M_PI) - M_PI) < 0.5*M_PI) and
+                (fabs((baz + M_PI) % (2*M_PI) - M_PI) < 0.5*M_PI)):
+                # both azimuths "point up"
+                ymax[0] = acos(fabs(sin(faz)*cos(phi0))) * 180.0 / M_PI
+            else:
+                ymax[0] = fmax(phi0, phi1) * 180.0 / M_PI
+
         else:
             ymax[0] = fmax(phi0, phi1) * 180.0 / M_PI
-            ytmp = fmin(phi0, phi1)
-            ymin[0] = fmin(ytmp, acos(fabs(sin(initial_az)*cos(phi0)))) * 180.0 / M_PI
-    else:
-        ymid = acos(fabs(sin(initial_az)*cos(phi0)))
-        ytmp = fmin(phi0, phi1)
-        ymin[0] = fmin(ytmp, ymid) * 180.0 / M_PI
-        ytmp = fmax(phi0, phi1)
-        ymax[0] = fmax(ytmp, ymid) * 180.0 / M_PI
+
+            if ((fabs((faz + M_PI) % (2*M_PI) - M_PI) > 0.5*M_PI) and
+                (fabs((baz + M_PI) % (2*M_PI) - M_PI) > 0.5*M_PI)):
+                # both azimuths "point down"
+                ymin[0] = -acos(fabs(sin(faz)*cos(phi0))) * 180.0 / M_PI
+            else:
+                ymin[0] = fmin(phi0, phi1) * 180.0 / M_PI
     return 0
 
 def bbox(CoordString cs):
@@ -117,33 +121,6 @@ def bbox(CoordString cs):
         xmax = fmax(xmax, x)
         ymin = fmin(ymin, y)
         ymax = fmax(ymax, y)
-        x0 = x
-        y0 = y
-        i += 1
-    return (xmin, ymin, xmax, ymax)
-
-def bbox_sph(CoordString cs):
-    cdef double xmin, xmax, ymin, ymax, x, y, x0, y0
-    cdef double segymin, segymax
-    cdef int i = 1, n = len(cs)
-    cdef int retint
-    x0 = cs.getX(0)
-    y0 = cs.getY(0)
-    xmin = x0
-    xmax = x0
-    ymin = y0
-    ymax = y0
-    segymin = y0
-    segymax = y0
-    while i != n:
-        x = cs.getX(i)
-        y = cs.getY(i)
-        xmin = fmin(xmin, x)
-        xmax = fmax(xmax, x)
-        retint = bndlat_sph(x0, y0, x, y, &segymin, &segymax)
-        if retint == 0:
-            ymin = fmin(ymin, segymin)
-            ymax = fmax(ymax, segymax)
         x0 = x
         y0 = y
         i += 1
