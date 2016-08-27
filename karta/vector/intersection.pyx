@@ -5,6 +5,7 @@ from vectorgeo cimport (Vector2, Vector3,
                         cross2, cross3,
                         azimuth_sph, cart2sph, sph2cart,
                         eulerpole, eulerpole_cart)
+import heapq
 
 cdef bool isbetween_inc(double a, double b, double c):
     return fmin(a, c) <= b <= fmax(a, c)
@@ -81,8 +82,7 @@ cdef class Event(object):
             raise ValueError("no __richcmp__ operation for op == %d" % op)
 
 class EventQueuePlaceholder(object):
-    """ This is a placeholder for an event-queue class. It's not efficient, but
-    it works. """
+    """ This is a placeholder for an event-queue class. """
 
     def __init__(self):
         self.queue = []
@@ -91,8 +91,7 @@ class EventQueuePlaceholder(object):
         return len(self.queue)
 
     def insert(self, double x, Event event):
-        self.queue.append((x, event))
-        self.queue.sort()
+        heapq.heappush(self.queue, (x, event))
         return
 
     def takefirst(self):
@@ -101,8 +100,7 @@ class EventQueuePlaceholder(object):
         cdef int flag = 0
         cdef double x
         cdef Event event
-        x, event = self.queue[0]
-        self.queue = self.queue[1:]
+        x, event = heapq.heappop(self.queue)
         if (len(self.queue) != 0) and (x == self.queue[0][0]):
             flag = 1
         return flag, x, event
