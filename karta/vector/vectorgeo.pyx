@@ -1,6 +1,6 @@
 """ Cython versions of low-level functions for computing vector geometry. """
 
-from libc.math cimport (M_PI, sqrt,
+from libc.math cimport (NAN, M_PI, sqrt,
                         sin, cos, tan, asin, acos, atan, atan2,
                         fmin, fmax, fabs)
 from cpython cimport bool
@@ -60,6 +60,94 @@ cdef int fsign(double a):
         return 1
     else:
         return int(a/fabs(a))
+
+cdef int bndlat_sph(double x0, double y0, double x1, double y1, double *ymin, double *ymax):
+    """ Return the bounding latitudes of a great circle segment on a sphere.
+    Returns 0 on success and 1 if the segment is degenerate. """
+    cdef int s0 = fsign(y0)
+    cdef int s1 = fsign(y1)
+    cdef double ytmp, ymid
+    cdef double initial_az
+
+    cdef double dlam = (x1-x0) * M_PI / 180.0
+    cdef double phi0 = y0 * M_PI / 180.0
+    cdef double phi1 = y1 * M_PI / 180.0
+
+    if dlam != 0.0:
+        initial_az = atan2(sin(dlam)*cos(phi1),
+                           cos(phi0)*cos(phi1) - sin(phi0)*cos(phi1)*cos(dlam))
+        initial_az = azimuth_sph(Vector2(x0, y0), Vector2(x1, y1))
+    elif phi0 < phi1:
+        initial_az = 0.0
+    elif phi0 > phi1:
+        initial_az = M_PI
+    else:
+        return 1
+
+    if s0 == s1:    # one hemisphere
+        if s0 == 1: # northern
+            ymin[0] = fmin(phi0, phi1) * 180.0 / M_PI
+            ytmp = fmax(phi0, phi1)
+            ymax[0] = fmax(ytmp, acos(fabs(sin(initial_az)*cos(phi0)))) * 180.0 / M_PI
+        else:
+            ymax[0] = fmax(phi0, phi1) * 180.0 / M_PI
+            ytmp = fmin(phi0, phi1)
+            ymin[0] = fmin(ytmp, acos(fabs(sin(initial_az)*cos(phi0)))) * 180.0 / M_PI
+    else:
+        ymid = acos(fabs(sin(initial_az)*cos(phi0)))
+        ytmp = fmin(phi0, phi1)
+        ymin[0] = fmin(ytmp, ymid) * 180.0 / M_PI
+        ytmp = fmax(phi0, phi1)
+        ymax[0] = fmax(ytmp, ymid) * 180.0 / M_PI
+    return 0
+
+def bbox(CoordString cs):
+    cdef double xmin, xmax, ymin, ymax, x, y, x0, y0
+    cdef int i = 1, n = len(cs)
+    x0 = cs.getX(0)
+    y0 = cs.getY(0)
+    xmin = x0
+    xmax = x0
+    ymin = y0
+    ymax = y0
+    while i != n:
+        x = cs.getX(i)
+        y = cs.getY(i)
+        xmin = fmin(xmin, x)
+        xmax = fmax(xmax, x)
+        ymin = fmin(ymin, y)
+        ymax = fmax(ymax, y)
+        x0 = x
+        y0 = y
+        i += 1
+    return (xmin, ymin, xmax, ymax)
+
+def bbox_sph(CoordString cs):
+    cdef double xmin, xmax, ymin, ymax, x, y, x0, y0
+    cdef double segymin, segymax
+    cdef int i = 1, n = len(cs)
+    cdef int retint
+    x0 = cs.getX(0)
+    y0 = cs.getY(0)
+    xmin = x0
+    xmax = x0
+    ymin = y0
+    ymax = y0
+    segymin = y0
+    segymax = y0
+    while i != n:
+        x = cs.getX(i)
+        y = cs.getY(i)
+        xmin = fmin(xmin, x)
+        xmax = fmax(xmax, x)
+        retint = bndlat_sph(x0, y0, x, y, &segymin, &segymax)
+        if retint == 0:
+            ymin = fmin(ymin, segymin)
+            ymax = fmax(ymax, segymax)
+        x0 = x
+        y0 = y
+        i += 1
+    return (xmin, ymin, xmax, ymax)
 
 @cython.cdivision(True)
 cdef inline Vector3 sph2cart(Vector2 a):
