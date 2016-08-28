@@ -154,7 +154,9 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
 
         Notes
         -----
-        return value is NaN if points are coincident
+        - Return value is NaN if points are coincident
+        - If CRS is geographical, returns azimuth as defined by the CRS
+          instance.
         """
         x0, y0 = self.x, self.y
         if self.crs != other.crs:
@@ -233,6 +235,11 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         Returns
         -------
         float
+
+        Notes
+        -----
+        - If CRS is Geographical, returns distance as computed by the CRS
+          instance (e.g. ellipsoidal or spherical).
         """
         if isinstance(self.crs, GeographicalCRS):
             lon0, lat0 = self.x, self.y
@@ -401,6 +408,11 @@ class MultiVertexMixin(object):
         -------
         tuple
             (xmin, ymin, xmax, ymax)
+
+        Notes
+        -----
+        - If CRS is Geographical, returns bbox computed using a spherical
+          approximation.
         """
         if crs is not None and (crs != self.crs):
             cs = CoordString(list(zip(
@@ -547,7 +559,14 @@ class MultiVertexMixin(object):
         return False
 
     def convex_hull(self):
-        """ Return a Polygon representing the convex hull. """
+        """ Return a Polygon representing the convex hull.
+
+        Notes
+        -----
+        - If CRS is Geographical, returns hull computed using a spherical
+          approximation. Failure may occur if the vertices are not in euclidian
+          position.
+        """
         if isinstance(self.crs, GeographicalCRS):
             indices = _cconvexhull.convexhull_sph(self.vertices)
         else:
@@ -603,7 +622,13 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     @property
     @cache_decorator("length")
     def length(self):
-        """ Returns the length of the line/boundary. """
+        """ Returns the length of the line/boundary.
+
+        Notes
+        -----
+        - If CRS is Geographical, returns length computed using distance
+          provided by the CRS instance.
+        """
         if isinstance(self.crs, GeographicalCRS):
             lon, lat = self.get_vertices()[0][:2]
             d = 0.0
@@ -627,7 +652,17 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
                 for i in range(len(self.vertices)-1))
 
     def intersects(self, other):
-        """ Return whether an intersection exists with another geometry. """
+        """ Return whether an intersection exists with another geometry.
+
+        Parameters
+        ----------
+        other : Geometry
+            another geometry with multipl connected vertices
+
+        Notes
+        -----
+        - If CRS is Geographical, uses a spherical approximation.
+        """
         if isinstance(self.crs, GeographicalCRS):
             return _cintersection.intersects_sph(self.vertices, other.vertices)
         else:
@@ -635,7 +670,19 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
                 return _cintersection.intersects(self.vertices, other.vertices)
 
     def intersections(self, other, keep_duplicates=False):
-        """ Return the intersections with another geometry as a Multipoint. """
+        """ Return the intersections with another geometry as a Multipoint.
+
+        Parameters
+        ----------
+        other : Geometry
+            another geometry with multipl connected vertices
+        keep_duplicates : bool, optional
+            whether to retain duplicate intersections [default False]
+
+        Notes
+        -----
+        - If CRS is Geographical, uses a spherical approximation.
+        """
         if isinstance(self.crs, CartesianCRS):
             interx = _cintersection.all_intersections(self.vertices, other.vertices)
             if not keep_duplicates:
@@ -659,6 +706,10 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         Parameters
         ----------
         point : Point
+
+        Notes
+        -----
+        - If CRS is Geographical, uses distance defined by the CRS instance.
         """
         ptvertex = point.get_vertex(crs=self.crs)
         segments = zip(self.vertices.slice(0, -1), self.vertices.slice(1, 0))
@@ -692,6 +743,10 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         Parameters
         ----------
         point : Point
+
+        Notes
+        -----
+        - If CRS is Geographical, uses distance defined by the CRS instance.
         """
         return self._nearest_to_point(pt)[0]
 
@@ -702,6 +757,10 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         Parameters
         ----------
         point : Point
+
+        Notes
+        -----
+        - If CRS is Geographical, uses distance defined by the CRS instance.
         """
         _, minpt = self._nearest_to_point(point)
         return Point(minpt, crs=self.crs)
@@ -713,23 +772,27 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         ----------
         point : Point
         distance : float
+
+        Notes
+        -----
+        - If CRS is Geographical, uses distance defined by the CRS instance.
         """
         return all(distance >= seg.shortest_distance_to(point)
                     for seg in self.segments)
 
-    @staticmethod
-    def _seg_crosses_dateline(seg):
-        a, b = seg[0], seg[1]
-        return (_sign(a.x) != _sign(b.x)) and (abs(a.x-b.x) > 180.0)
-
     def crosses_dateline(self):
         """ Return a boolean that indicates whether any segment crosses the
-        dateline """
+        dateline.
+        """
         if not isinstance(self.crs, GeographicalCRS):
             raise CRSError("Dateline detection only defined for geographical "
                            "coordinates")
 
-        return any(self._seg_crosses_dateline(seg) for seg in self.segments)
+        def _seg_crosses_dateline(seg):
+            a, b = seg[0], seg[1]
+            return (_sign(a.x) != _sign(b.x)) and (abs(a.x-b.x) > 180.0)
+
+        return any(_seg_crosses_dateline(seg) for seg in self.segments)
 
 class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
     """ Line composed of connected vertices.
@@ -786,7 +849,12 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
         return self
 
     def cumulength(self):
-        """ Returns the cumulative length by vertex. """
+        """ Returns the cumulative length by vertex.
+
+        Notes
+        -----
+        - If CRS is Geographical, uses distance defined by the CRS instance.
+        """
         d = [0.0]
         pta = self[0]
         for ptb in self[1:]:
@@ -871,7 +939,12 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
         return Multipoint(vertices, crs=self.crs)
 
     def displacement(self):
-        """ Returns the distance between the first and last vertex. """
+        """ Returns the distance between the first and last vertex.
+
+        Notes
+        -----
+        - If CRS is Geographical, uses distance defined by the CRS instance.
+        """
         return self[0].distance(self[-1])
 
     def to_polygon(self):
@@ -1003,14 +1076,25 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
     @property
     def perimeter(self):
         """ Return the perimeter of the polygon. If there are sub-polygons,
-        their perimeters are added recursively. """
+        their perimeters are added recursively.
+
+        Notes
+        -----
+        - If CRS is Geographical, uses distance defined by the CRS instance.
+        """
         return sum(seg.length for seg in self.segments) + \
                 sum([p.perimeter for p in self.subs])
 
     @property
     def area(self):
         """ Return the two-dimensional area of the polygon, excluding
-        sub-polygons. """
+        sub-polygons.
+
+        Notes
+        -----
+        - If CRS is Geographical, uses either a spherical or an ellipsoidal
+          calculation.
+        """
         if isinstance(self.crs, GeographicalCRS):
             major_axis = self.crs.ellipsoid.a
             minor_axis = self.crs.ellipsoid.b
@@ -1052,10 +1136,13 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
         """ Returns True if point is inside or on the boundary of the polygon, and
         False otherwise. Uses a crossing number scheme.
 
-        Note: When the polygon is polar in a geographical coordinate system, a
-        less efficient algorithm is used. For better performance, consider
-        projecting to an appropriate coordinate system such as NSIDCNorth or
-        NSIDCSouth beforehand.
+        Note
+        ----
+        - When the polygon is polar in a geographical coordinate system, a less
+          efficient algorithm is used. For better performance, consider
+          projecting to an appropriate coordinate system such as NSIDCNorth or
+          NSIDCSouth beforehand.
+        - Otherwise, a planar algorithm is used.
         """
         x, y = point.get_vertex(crs=self.crs)[:2]
         if isinstance(self.crs, GeographicalCRS) and self.ispolar():
