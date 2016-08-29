@@ -663,10 +663,10 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         -----
         - If CRS is Geographical, uses a spherical approximation.
         """
-        if isinstance(self.crs, GeographicalCRS):
-            return _cintersection.intersects_sph(self.vertices, other.vertices)
-        else:
-            if _cintersection.bboxes_overlap(self.bbox, other.bbox):
+        if _cintersection.bboxes_overlap(self.bbox, other.bbox):
+            if isinstance(self.crs, GeographicalCRS):
+                return _cintersection.intersects_sph(self.vertices, other.vertices)
+            else:
                 return _cintersection.intersects(self.vertices, other.vertices)
 
     def intersections(self, other, keep_duplicates=False):
@@ -689,7 +689,6 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
                 interx = list(set(interx))
             return Multipoint(interx, crs=self.crs)
         else:
-            # FIXME: implement for ellipsoidal coordinate systems
             interx = (geodesy.intersection_spherical(a, b)
                             for a in self.segment_tuples
                             for b in other.segment_tuples)
