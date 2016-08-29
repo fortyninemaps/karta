@@ -6,13 +6,7 @@ import numpy as np
 from .grid import RegularGrid
 
 def witch_of_agnesi(nx=100, ny=100, a=4.0):
-    """ Return a raster field defined by the equation
-
-    ::
-                    8 a^3
-            Z = --------------
-                 d^2 + 4 a*2
-
+    """ Return a raster field defined by the equation Z = 8a^3 / (d^2 + 2a^2)
     where d is the distance from the center.
 
     Parameters
@@ -203,7 +197,9 @@ def hillshade(grid, azimuth=330.0, elevation=60.0):
     elevation : float, optional
         height of light source (default 60.0)
 
-    Note: Currently assumes orthogonal coordinates.
+    Notes
+    -----
+    Currently assumes orthogonal coordinates.
     """
     if grid.nbands != 1:
         raise ValueError("input grid must be single-banded")

@@ -59,7 +59,7 @@ Raster IO modules
 GeoTiff (GDAL interface)
 ++++++++++++++++++++++++
 
-.. automodule:: karta.raster._gtiff
+.. automodule:: karta.raster._gdal
     :members:
 
 ESRI ASCII grids

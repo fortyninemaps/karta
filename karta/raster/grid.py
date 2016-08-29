@@ -71,12 +71,16 @@ class RegularGrid(Grid):
     Positions on a RegularGrid are referenced to their array indices (i,j)
     using an affine transform *T* such that
 
+    ::
+
         T = (a, b, c, d, e, f)
 
         x = a + j*c + i*e
         y = b + i*d + j*f
 
     or as a matrix transformation,
+
+    ::
 
         |e  c  a|   |i|   |x|
         |       | * |j| = | |
@@ -261,8 +265,8 @@ class RegularGrid(Grid):
         -------
         CoordinateGenerator
 
-        Note
-        ----
+        Notes
+        -----
         This is an experimental replacement for coordmesh() and center_coords().
         """
         if crs is None:

@@ -1132,11 +1132,11 @@ class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shape
         return Point((cx, cy), properties=self.properties, crs=self.crs)
 
     def contains(self, point):
-        """ Returns True if point is inside or on the boundary of the polygon, and
-        False otherwise. Uses a crossing number scheme.
+        """ Returns True if point is inside or on the boundary of the polygon,
+        and False otherwise. Uses a crossing number scheme.
 
-        Note
-        ----
+        Notes
+        -----
         - When the polygon is polar in a geographical coordinate system, a less
           efficient algorithm is used. For better performance, consider
           projecting to an appropriate coordinate system such as NSIDCNorth or
