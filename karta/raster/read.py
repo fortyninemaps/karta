@@ -58,7 +58,7 @@ def read_gtiff(fnm, in_memory=True, ibands=_gdal.ALL, **kw):
         crs = ProjectedCRS(hdr["srs"]["proj4"], name=hdr["srs"]["name"])
     return RegularGrid(t, bands=bands, crs=crs, nodata_value=hdr["nodata"])
 
-def from_geotiffs(*fnms, in_memory=True, **kw):
+def from_geotiffs(*fnms, **kw):
     """ Read multiple GeoTiff files as bands within a single grid. Reads the
     first band within each GeoTiff, and checks that grids share the same
     spatial transform and coordinate system.
@@ -74,6 +74,7 @@ def from_geotiffs(*fnms, in_memory=True, **kw):
         if in_memory is True, this parameter is ignored and the returned grid
         will have bands of type karta.raster._gdal.GdalFileBand
     """
+    in_memory = kw.get("in_memory", True)
     bands = []
     hdrs = []
     for fnm in fnms:
