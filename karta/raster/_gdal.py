@@ -96,8 +96,8 @@ class GdalFileBand(object):
                         for x in range(xstart, xend, xstep))
 
             # compute size of output
-            outnx = ceil(abs(xend - xstart) / abs(xstep))
-            outny = ceil(abs(yend - ystart) / abs(ystep))
+            outnx = ceil(float(abs(xend - xstart)) / abs(xstep))
+            outny = ceil(float(abs(yend - ystart)) / abs(ystep))
 
             pyt = pytype(t)
             values_py = [struct.unpack(pyt, a) for a in values]
