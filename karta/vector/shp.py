@@ -113,24 +113,30 @@ def ogr_read_geometry(geom):
     if geom is None:
         return None
     wkbtype = OGRGEOMTYPES[geom.GetGeometryType()]
-    if wkbtype in ('Point', 'Point25D', 'NDR', 'XDR'):
+    if wkbtype in ('Point', 'Point25D', 'PointZ', 'PointM', 'PointZM',
+                   'NDR', 'XDR'):
         jsontype = 'Point'
         pts = geom.GetPoint()
-    elif wkbtype in ('LineString', 'LineString25D'):
+    elif wkbtype in ('LineString', 'LineString25D', 'LineStringZ',
+                     'LineStringM', 'LineStringZM'):
         jsontype = 'LineString'
         pts = geom.GetPoints()
-    elif wkbtype in ('Polygon', 'Polygon25D'):
+    elif wkbtype in ('Polygon', 'Polygon25D', 'PolygonZ', 'PolygonM',
+                     'PolygonZM'):
         jsontype = 'Polygon'
         pts = ogr_get_polygon_points(geom)
-    elif wkbtype in ('MultiPoint', 'MultiPoint25D'):
+    elif wkbtype in ('MultiPoint', 'MultiPoint25D', 'MultiPointZ',
+                     'MultiPointM', 'MultiPointZM'):
         jsontype = 'MultiPoint'
         pts = [geom.GetGeometryRef(i).GetPoints()[0]
                for i in range(geom.GetGeometryCount())]
-    elif wkbtype in ('MultiLineString', 'MultiLineString25D'):
+    elif wkbtype in ('MultiLineString', 'MultiLineString25D', 'MultiLinStringZ', 
+                     'MultiLineStringM', 'MultiLineStringZM'):
         jsontype = 'MultiLineString'
         pts = [geom.GetGeometryRef(i).GetPoints()
                for i in range(geom.GetGeometryCount())]
-    elif wkbtype in ('MultiPolygon', 'MultiPolygon25D'):
+    elif wkbtype in ('MultiPolygon', 'MultiPolygon25D', 'MultiPolygonZ',
+                     'MultiPolygonM', 'MultiPolygonZM'):
         jsontype = 'MultiPolygon'
         pts = [ogr_get_polygon_points(geom.GetGeometryRef(i))
                for i in range(geom.GetGeometryCount())]
