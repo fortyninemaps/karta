@@ -22,12 +22,8 @@ import pyproj
 from . import geodesy
 from . import errors
 
-try:
-    import osgeo.osr
-    osgeo.osr.UseExceptions()
-    HASOSR = True
-except ImportError:
-    HASOSR = False
+import osgeo.osr
+osgeo.osr.UseExceptions()
 
 # proj.4 keys for ellipsoids used by named datum definitions
 DATUM_ELLIPSOIDS = {"WGS84": "WGS84", "GGRS87": "GRS80", "NAD83": "GRS80",
@@ -149,8 +145,6 @@ class CRS(object):
         if hasattr(self, "ref_proj4"):
             return self.ref_proj4
         else:
-            if not HASOSR:
-                raise RuntimeError("no ref_proj4 attribute and no conversion possible (osgeo.osr not installed)")
             srs = osgeo.osr.SpatialReference()
             if hasattr(self, "ref_wkt"):
                 srs.ImportFromWkt(self.ref_wkt)
@@ -166,8 +160,6 @@ class CRS(object):
         if hasattr(self, "ref_wkt"):
             return self.ref_wkt
         else:
-            if not HASOSR:
-                raise RuntimeError("no ref_wkt attribute and no conversion possible (osgeo.osr not installed)")
             srs = osgeo.osr.SpatialReference()
             if hasattr(self, "ref_proj4"):
                 _proj4 = self.ref_proj4.replace("latlon", "latlong")\

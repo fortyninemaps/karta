@@ -7,14 +7,10 @@ import numpy as np
 from .band import CompressedBand
 from .. import errors
 
-try:
-    import osgeo.gdal
-    import osgeo.osr
-    import osgeo.gdalconst as gc
-    osgeo.gdal.UseExceptions()
-    HASGDAL = True
-except ImportError:
-    HASGDAL = False
+import osgeo.gdal
+import osgeo.osr
+import osgeo.gdalconst as gc
+osgeo.gdal.UseExceptions()
 
 ALL = -1
 
@@ -207,9 +203,6 @@ def read(fnm, in_memory, ibands=ALL, bandclass=CompressedBand):
 
     Returns an band object and a dictionary of metadata
     """
-    if not HASGDAL:
-        raise errors.MissingDependencyError("requires osgeo.gdal")
-
     hdr = dict()
     dataset = osgeo.gdal.Open(fnm, gc.GA_ReadOnly)
 
@@ -270,9 +263,6 @@ def srs_from_crs(crs):
 
 def write(fnm, grid, compress=None, tiled=False, **kw):
     """ Write a grid-like object to *fnm* """
-    if not HASGDAL:
-        raise errors.MissingDependencyError("requires osgeo.gdal")
-
     co = []
     if compress == "LZW":
         co.append("COMPRESS=LZW")

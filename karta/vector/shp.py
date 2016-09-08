@@ -14,19 +14,13 @@ import os
 import datetime
 import numbers
 from .. import errors
+import osgeo
+from osgeo import ogr
 
-try:
-    import osgeo
-    from osgeo import ogr
-    HAS_OSGEO = True
-except ImportError:
-    HAS_OSGEO = False
-
-if HAS_OSGEO:
-    OGRGEOMTYPES = {}
-    for k in ogr.__dict__:
-        if k.startswith("wkb"):
-            OGRGEOMTYPES[ogr.__dict__[k]] = k[3:]
+OGRGEOMTYPES = {}
+for k in ogr.__dict__:
+    if k.startswith("wkb"):
+        OGRGEOMTYPES[ogr.__dict__[k]] = k[3:]
 
 OGRTYPES = {"Point": ogr.wkbPoint,
             "LineString": ogr.wkbLineString,
@@ -187,10 +181,6 @@ def ogr_read_attributes(lyr):
 def ogr_write(fnm, *objs):
     """ Write features to shapefile using OGR backend. Features are
     __geo_interface__ Feature mappings. """
-    if not HAS_OSGEO:
-        raise errors.MissingDependencyError("Writing shapefiles requires GDAL "
-                                            "bindings")
-
     driver = ogr.GetDriverByName("ESRI Shapefile")
     if driver is None:
         raise ValueError("failure loading OGR driver for 'ESRI Shapefile'")

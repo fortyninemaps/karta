@@ -5,6 +5,7 @@ Used available drivers to read input data and return Karta geometry objects.
 """
 import os
 from numbers import Number
+from osgeo import ogr
 from . import geometry
 from . import geojson
 from . import shp
@@ -12,12 +13,6 @@ from . import gpx
 from . import xyfile
 from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84
 from .. import errors
-
-try:
-    from osgeo import ogr
-    HAS_OSGEO = True
-except ImportError:
-    HAS_OSGEO = False
 
 ### GeoInterface functions ###
 
@@ -185,9 +180,6 @@ def get_filenames(stem, check=False):
     return {'shp':shp, 'shx':shx, 'dbf':dbf}
 
 def ogr_read_shapefile(stem):
-    if not HAS_OSGEO:
-        raise errors.MissingDependencyError("Reading shapefiles requires GDAL "
-                                            "bindings")
     fnms = get_filenames(stem)
     driver = ogr.GetDriverByName("ESRI Shapefile")
     ds = driver.Open(fnms["shp"], 0)
