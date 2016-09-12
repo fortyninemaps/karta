@@ -10,7 +10,6 @@ from . import geometry
 from . import geojson
 from . import shp
 from . import gpx
-from . import xyfile
 from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84
 from .. import errors
 
@@ -147,21 +146,6 @@ def _geojson_properties2karta(properties, n):
         else:
             props[key] = value
     return props, data
-
-def read_xyfile(f, delimiter='', header_rows=0, astype=geometry.Multipoint, coordrank=2):
-    """ Read an ASCII delimited table and return a geometry object given by *astype*.
-    """
-    dat = xyfile.load_xy(f, delimiter=delimiter, header_rows=header_rows)
-    ncols = dat.shape[1]
-    if ncols >= coordrank:
-        coords = dat[:,:coordrank]
-        if ncols > coordrank:
-            data = dat[:,coordrank:]
-        else:
-            data = None
-        return astype(coords, data=data)
-    else:
-        raise IOError('data table has insufficient number of columns')
 
 ### Shapefile functions ###
 

@@ -13,7 +13,6 @@ import numpy as np
 from .decorators import cache_decorator
 from .geojson import GeoJSONOutMixin
 from .shp import ShapefileOutMixin
-from . import xyfile
 from .table import Table, Indexer
 from .utilities import _reproject, _reproject_nested, _flatten, _as_nested_lists
 from .coordstring import CoordString
@@ -572,21 +571,6 @@ class MultiVertexMixin(object):
         else:
             indices = _cconvexhull.convexhull(self.vertices)
         return Polygon([self.vertices[i] for i in indices], crs=self.crs)
-
-    def to_xyfile(self, fnm, fields=None, delimiter=' ', header=None):
-        """ Write data to a delimited ASCII table.
-
-        Parameters
-        ----------
-        fnm : string
-            filename to write to
-        fields : list
-            specify the fields to be written (optional, default all)
-
-        Additional kwargs are passed to `xyfile.write_xy`.
-        """
-        xyfile.write_xy(self.get_vertices(), fnm, delimiter=delimiter, header=header)
-        return
 
 
 class ConnectedMultiVertexMixin(MultiVertexMixin):

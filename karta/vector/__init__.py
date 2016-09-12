@@ -10,7 +10,6 @@ numbers.Integral.register(numpy.integer)
 
 from . import geometry
 from . import table
-from . import xyfile
 from . import geojson
 from . import gpx
 from . import quadtree
@@ -25,7 +24,7 @@ from .read import (from_shape, read_geojson, read_shapefile,
 from .shp import write_shapefile
 from .table import Table
 
-__all__ = ["geometry", "xyfile", "geojson", "gpx",
+__all__ = ["geometry", "geojson", "gpx",
            "Point", "Line", "Polygon",
            "Multipoint", "Multiline", "Multipolygon",
            "multipart_from_singleparts",
