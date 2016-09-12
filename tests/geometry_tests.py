@@ -43,13 +43,6 @@ class TestGeometry(unittest.TestCase):
         self.assertEqual(point.get_vertex(), (1.0, 2.0, 3.0))
         return
 
-    def test_point_coordsxy(self):
-        point = Point((1.0, 2.0, 3.0), properties={"type": "apple", "color": (43,67,10)})
-        self.assertEqual(point.coordsxy(), (1.0, 2.0))
-        self.assertEqual(point[0], 1.0)
-        self.assertEqual(point[1], 2.0)
-        return
-
     def test_point_add(self):
         ptA = Point((1, 2), crs=SphericalEarth)
         ptB = Point((3, 4), crs=LonLatWGS84)

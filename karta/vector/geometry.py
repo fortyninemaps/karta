@@ -123,16 +123,6 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         else:
             return _reproject((self.x, self.y), self.crs, crs)
 
-    def coordsxy(self, convert_to=False):
-        """ Returns the x,y coordinates. Convert_to may be set to 'deg'
-        or 'rad' for convenience.  """
-        if convert_to == 'rad':
-            return (self.x*3.14159/180., self.y*3.14159/180.)
-        elif convert_to == 'deg':
-            return (self.x/3.14159*180., self.y/3.14159*180.)
-        else:
-            return (self.x, self.y)
-
     def azimuth(self, other, projected=True):
         """ Returns the compass azimuth from self to other in degrees, measured
         clockwise with north at 0.
