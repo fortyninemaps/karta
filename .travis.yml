@@ -19,14 +19,12 @@ before_install:
   - "conda info -a"
 
 install:
-  - "conda create --yes -n test-environment python=$TRAVIS_PYTHON_VERSION numpy pip gdal==2 libgdal==2"
-  - "source activate test-environment"
-    #- "pip install -U setuptools"
-  - "pip install coveralls"
-  - "pip install Cython"
+  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip numpy>=1.7 cython>=0.24 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 coverage"
+  - "source activate test-env"
   - "pip install -r requirements.txt"
   - "pip install shapely"   # used to verify __geo_interface__
-  - "pip install ."
+  - "pip install coveralls"
+  - "pip install . --no-deps"
 
 script:
   coverage run --source=karta tests/runtests.py
