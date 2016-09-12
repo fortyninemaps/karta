@@ -853,7 +853,7 @@ class RegularGrid(Grid):
                 data.append(crfuncs.sample_bilinear_double(I, J, v.astype(np.float64)))
             elif band.dtype in (np.int16, np.int32, np.int64):
                 data.append(crfuncs.sample_bilinear_int(I, J, v.astype(np.int32)))
-            elif band.dtype in (np.uint16, np.uint32):
+            elif band.dtype in (np.uint8, np.uint16, np.uint32):
                 data.append(crfuncs.sample_bilinear_uint(I, J, v.astype(np.uint16)))
             else:
                 raise NotImplementedError("no sample_bilinear method for dtype:"

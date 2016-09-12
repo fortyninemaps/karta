@@ -215,13 +215,22 @@ class RegularGridTests(unittest.TestCase):
 
     def test_sample_bilinear_int(self):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 2], [2, 1]], dtype=np.int32))
+                                 values=np.array([[0, 2], [2, 1]],
+                                                 dtype=np.int32))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
         return
 
     def test_sample_bilinear_uint(self):
         grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 2], [2, 1]], dtype=np.uint16))
+                                 values=np.array([[0, 2], [2, 1]],
+                                                 dtype=np.uint16))
+        self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
+        return
+
+    def test_sample_bilinear_uint8(self):
+        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                                 values=np.array([[0, 2], [2, 1]],
+                                                 dtype=np.uint8))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
         return
 
