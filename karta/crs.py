@@ -521,12 +521,12 @@ UPSSouth = ProjectedCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 "
 
 NSIDCNorth = ProjectedCRS(proj="+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 "
                                "+k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 "
-                               "+ellps=WGS84 +no_defs",
+                               "+no_defs",
                           name="NSIDC (North)")
 
 NSIDCSouth = ProjectedCRS(proj="+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 "
                                "+k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 "
-                               "+ellps=WGS84 +no_defs",
+                               "+no_defs",
                           name="NSIDC (South)")
 
 LambertEqualArea = ProjectedCRS(proj="+proj=laea +lat_0=0 +lon_0=0 +x_0=0 "
