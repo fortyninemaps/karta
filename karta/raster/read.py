@@ -24,7 +24,7 @@ def proj4_isgeodetic(s):
     return ("lonlat" in s) or ("longlat" in s) or \
             ("latlon" in s) or ("latlong" in s)
 
-def read_gtiff(fnm, in_memory=True, ibands=_gdal.ALL, **kw):
+def read_geotiff(fnm, in_memory=True, ibands=_gdal.ALL, **kw):
     """ Convenience function to open a GeoTIFF and return a RegularGrid
     instance.
 
@@ -101,7 +101,4 @@ def from_geotiffs(*fnms, **kw):
         crs = ProjectedCRS(hdr["srs"]["proj4"], name=hdr["srs"]["name"])
     return RegularGrid(t, bands=bands, crs=crs, nodata_value=hdr["nodata"])
 
-# Aliases for backwards compat.
-gtiffread = read_gtiff
-aairead = read_aai
-
+read_gtiff = read_geotiff
