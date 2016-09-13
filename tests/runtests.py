@@ -29,6 +29,7 @@ from shapefile_tests import *
 from geojson_tests import *
 from gpx_tests import *
 from geointerface_tests import *
+from tile_tests import *
 
 # Raster IO
 from crfuncs_tests import *

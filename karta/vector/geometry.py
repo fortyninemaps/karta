@@ -1728,3 +1728,18 @@ def get_tile_tuple(point, zoom):
     y = int(y0 // dlat)
     return z, x, y
 
+def tile_nw_corner(z, x, y):
+    """ Return the northwest corner point from the tile specified by a`
+    tuple.
+    """
+    n = 2**z
+    lon = float(x)/n * 360.0 - 180.0
+    lat = math.atan(math.sinh(math.pi * (1-2*y/n))) * 180.0 / math.pi
+    return Point((lon, lat), crs=LonLatWGS84)
+
+def tile_bbox(z, x, y):
+    """ Return a tuple representing the bounding box of a tile tuple.
+    """
+    pts = [tile_nw_corner(z, x, y), tile_nw_corner(z, x+1, y),
+           tile_nw_corner(z, x, y+1)]
+    return pts[0].x, pts[2].y, pts[1].x, pts[0].y

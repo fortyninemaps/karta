@@ -4,6 +4,9 @@
 *.png
 *.lprof
 
+test_*.py
+.vscode/*
+
 *.html
 *.ipynb_checkpoints
 *.ipynb
@@ -25,4 +28,5 @@ tests/reference_data/
 tests/htmlcov/
 
 karta.egg-info/
+.eggs/*
 
