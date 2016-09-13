@@ -11,14 +11,13 @@ numbers.Integral.register(numpy.integer)
 from . import grid
 from . import misc
 
-from .grid import RegularGrid, WarpedGrid, merge, gridpoints, mask_poly
+from .grid import RegularGrid, merge, gridpoints, mask_poly
 from .band import SimpleBand, CompressedBand
 from .read import read_aai, read_geotiff, read_gtiff, from_geotiffs
 from .misc import (witch_of_agnesi, pad, normed_potential_vectors,
                    slope, aspect, gradient, divergence, hillshade)
 
-__all__ = ["grid", "misc",
-           "RegularGrid", "WarpedGrid",
+__all__ = ["grid", "misc", "RegularGrid",
            "read_aai", "read_geotiff", "read_gtiff", "from_geotiffs",
            "slope", "aspect", "gradient", "divergence", "hillshade",
            "normed_potential_vectors"]

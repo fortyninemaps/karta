@@ -573,30 +573,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(np.sum(grid[:,:] == -1.0), 0)
         return
 
-class WarpedGridTests(unittest.TestCase):
-
-    def setUp(self):
-        ii = np.arange(50.0)
-        jj = np.arange(50.0)
-        X, Y = np.meshgrid(np.sin(ii/25.0 * 2*np.pi),
-                           np.sin(jj/50.0 * 2*np.pi))
-        values = karta.raster.witch_of_agnesi(50, 50)
-        self.rast = karta.WarpedGrid(X=X, Y=Y, values=values)
-
-    def test_add_sgrid(self):
-        rast2 = karta.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
-                                 values=np.random.random(self.rast.values.shape))
-        res = self.rast + rast2
-        self.assertTrue(np.all(res.values == self.rast.values+rast2.values))
-        return
-
-    def test_sub_sgrid(self):
-        rast2 = karta.WarpedGrid(X=self.rast.X, Y=self.rast.Y,
-                                 values=np.random.random(self.rast.values.shape))
-        res = self.rast - rast2
-        self.assertTrue(np.all(res.values == self.rast.values-rast2.values))
-        return
-
 #class TestInterpolation(unittest.TestCase):
 #
 #    def test_idw(self):

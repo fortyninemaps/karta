@@ -54,13 +54,11 @@ the documentation requires [numpydoc](https://github.com/numpy/numpydoc).
 - **karta.crs**: framework for coordinate reference systems and geodetic
   calculations
 
-- **karta.vector.geometry**: geometry classes `Point`, `Multipoint`, `Line`, and
-  `Polygon` with associated methods such as length, area, intersections,
-  membership testing, convex hulls, and affine transformations
+- **karta.vector.geometry**: geometry classes `Point`, `Line`, `Polygon` and their
+  corresponding `Multipart` types with associated methods such as length, area,
+  intersections, membership testing, convex hulls, and affine transformations
 
-- **karta.raster.grid**: `Grid` classes including `RegularGrid` class
-  (supporting CRS-aware clipping, sampling, profiling along vector tracks), and
-  experimental `WarpedGrid`
+- **karta.raster.grid**: `RegularGrid` class
 
 - **tests**: unit tests, to be run with `python tests/runtests.py`
 

@@ -26,12 +26,6 @@ RegularGrid
 .. autoclass:: karta.raster.grid.RegularGrid
     :members:
 
-WarpedGrid
-----------
-
-.. autoclass:: karta.raster.WarpedGrid
-    :members:
-
 SimpleBand
 ----------
 

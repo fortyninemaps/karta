@@ -962,14 +962,6 @@ class RegularGrid(Grid):
             points.data.setfield("band_0", z[0])
         return points, z
 
-    def as_warpedgrid(self):
-        """ Return a copy of grid as a `WarpedGrid`. This is a more general
-        grid class that has a larger memory footprint but can represent more
-        flexible data layouts.
-        """
-        Xc, Yc = self.center_coords()
-        return WarpedGrid(Xc, Yc, self[:,:].copy(), crs=self.crs)
-
     def to_gtiff(self, fnm, compress="PACKBITS", tiled=False, **kw):
         """ Write data to a GeoTiff file using GDAL.
 
@@ -1046,70 +1038,6 @@ class RegularGrid(Grid):
                 FutureWarning)
         return self.to_aai(*args, **kwargs)
 
-class WarpedGrid(Grid):
-
-    def __init__(self, X, Y, values, crs=None, nodata_value=None):
-        """ Warped Grid class. A WarpedGrid contains a fixed number of rows and
-        columns and a scalar or vector field defined on the z-axis. Grid
-        spacing is not necessarily constant.
-
-        Parameters
-        ----------
-        X : ndarray
-            first-dimension coordinates of grid centers
-        Y : ndarray
-            second-dimension coordinates of grid centers
-        values : ndarray
-            dependent m-dimensional quantity (nrows x ncols)
-        crs : karta.crs.CRS, optional
-        nodata_value : number
-        """
-
-        if any(a is None for a in (X, Y, values)):
-            raise errors.GridError('All of (X, Y, values) must be provided')
-
-        if not (X.shape == Y.shape == values.shape[:2]):
-            raise errors.GridError('All of (X, Y, values) must share the same '
-                            'size over the first two dimensions')
-
-        if crs is None:
-            self.crs = CRS_DEFAULT
-        else:
-            self.crs = crs
-
-        self.X = X
-        self.Y = Y
-        self.values = values
-
-        if nodata_value is None:
-            self._nodata = get_nodata(self.values.dtype.type)
-        else:
-            self._nodata = nodata_value
-        return
-
-    def __add__(self, other):
-        if self._equivalent_structure(other):
-            return WarpedGrid(self.X.copy(), self.Y.copy(), self.values+other.values)
-        else:
-            raise errors.NonEquivalentGridError(self, other)
-
-    def __sub__(self, other):
-        if self._equivalent_structure(other):
-            return WarpedGrid(self.X.copy(), self.Y.copy(), self.values-other.values)
-        else:
-            raise errors.NonEquivalentGridError(self, other)
-
-    def _equivalent_structure(self, other):
-        return np.all(self.X == other.X) and np.all(self.Y == other.Y) and \
-                np.all(self.values.shape == other.values.shape)
-
-    def rotate(self, deg, origin=(0.0, 0.0)):
-        """ Rotate grid by *deg* degrees counter-clockwise around *origin*. """
-        raise NotImplementedError
-
-    def resample(self, X, Y):
-        """ Resample internal grid to the points defined by X, Y. """
-        raise NotImplementedError
 
 def merge(grids, weights=None):
     """ Construct a grid mosiac by averaging multiple grids. Currently limited
