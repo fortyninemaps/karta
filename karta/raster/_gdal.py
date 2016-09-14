@@ -164,7 +164,12 @@ def numpy_dtype(dt_int):
         raise TypeError("GDAL data type {0} unknown to karta".format(dt_int))
 
 def gdal_type(dtype):
-    """ Return a GDAL type that matches numpy dtype """
+    """ Return a GDAL type that most closely matches numpy dtype
+
+    Note
+    ----
+    Returns GDT_Int32 for np.int64, which may result in overflow.
+    """
     if dtype == np.uint8:
         return osgeo.gdal.GDT_Byte
     elif dtype == np.uint16:
@@ -173,9 +178,7 @@ def gdal_type(dtype):
         return osgeo.gdal.GDT_Byte      # transform -127 -- 127 to 0 -- 255
     elif dtype == np.int16:
         return osgeo.gdal.GDT_Int16
-    elif dtype == np.int32:
-        return osgeo.gdal.GDT_Int32
-    elif dtype == np.int32:
+    elif (dtype == np.int32) or (dtype == np.int64):
         return osgeo.gdal.GDT_Int32
     elif dtype == np.float32:
         return osgeo.gdal.GDT_Float32
