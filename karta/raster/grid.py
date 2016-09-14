@@ -962,7 +962,7 @@ class RegularGrid(Grid):
             points.data.setfield("band_0", z[0])
         return points, z
 
-    def to_gtiff(self, fnm, compress="PACKBITS", tiled=False, **kw):
+    def to_geotiff(self, fnm, compress="PACKBITS", tiled=False, **kw):
         """ Write data to a GeoTiff file using GDAL.
 
         Parameters
@@ -973,6 +973,12 @@ class RegularGrid(Grid):
             "PACKBITS" (default), "DEFLATE", "LZW", "LZMA", or None
         """
         return _gdal.write(fnm, self, compress=compress, **kw)
+
+    def to_gtiff(self, *args, **kwargs):
+        """ Alias for to_geotiff """
+        warnings.warn("method `to_gtiff` has been renamed `to_geotiff`",
+                FutureWarning)
+        return self.to_geotiff(*args, **kwargs)
 
     def to_aai(self, f, reference='corner', nodata_value=-9999):
         """ Save internal data as an ASCII grid. Based on the ESRI standard,
@@ -1028,10 +1034,10 @@ class RegularGrid(Grid):
             f.close()
         return
 
-    def gtiffwrite(self, fnm):
-        warnings.warn("method `gtiffwrite` has been renamed `to_gtiff`",
+    def gtiffwrite(self, *args, **kwargs):
+        warnings.warn("method `gtiffwrite` has been renamed `to_geotiff`",
                 FutureWarning)
-        return self.to_gtiff(fnm)
+        return self.to_geotiff(*args, **kwargs)
 
     def aaiwrite(self, *args, **kwargs):
         warnings.warn("method `aaiwrite` has been renamed `to_aai`",
