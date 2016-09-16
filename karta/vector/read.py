@@ -7,9 +7,9 @@ import os
 from numbers import Number
 from osgeo import ogr
 from . import geometry
-from . import geojson
-from . import shp
-from . import gpx
+from . import _geojson as geojson
+from . import _shp as shp
+from . import _gpx as gpx
 from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84
 from .. import errors
 

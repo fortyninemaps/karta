@@ -11,8 +11,8 @@ import itertools
 import numbers
 import numpy as np
 from .decorators import cache_decorator
-from .geojson import GeoJSONOutMixin
-from .shp import ShapefileOutMixin
+from ._geojson import GeoJSONOutMixin
+from ._shp import ShapefileOutMixin
 from .table import Table, Indexer
 from .utilities import _reproject, _reproject_nested, _flatten, _as_nested_lists
 from .coordstring import CoordString

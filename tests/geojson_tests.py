@@ -10,8 +10,8 @@ import json
 from test_helper import TESTDATA
 
 import karta.vector as vector
-import karta.vector.geojson as geojson
-from karta.vector.geojson import GeoJSONReader, GeoJSONNamedCRS
+import karta.vector._geojson as geojson
+from karta.vector._geojson import GeoJSONReader, GeoJSONNamedCRS
 from karta.vector.geometry import Point, Line, Polygon, Multipoint, Multiline, Multipolygon
 from karta.crs import LonLatWGS84, WebMercator, Cartesian
 
