@@ -563,7 +563,6 @@ class RegularGrid(Grid):
         bboxnew : 4-tuple of floats
             (xmin, ymin, xmax, ymax).
         """
-
         # Define own rounding function so that half-values are treated consistently
         def _round(a):
             r = a%1
@@ -1129,7 +1128,7 @@ def merge(grids, weights=None):
         values[validcountmask] = values[validcountmask] / counts[validcountmask]
         values[~validcountmask] = grids[0].nodata
 
-        band = CompressedBand((ny, nx), typ)
+        band = CompressedBand((ny, nx), typ, initval=grids[0].nodata)
         band[:,:] = values
         outbands.append(band)
 

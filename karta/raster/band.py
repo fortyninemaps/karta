@@ -143,7 +143,7 @@ class CompressedBand(object):
     CHUNKSET = 1
     CHUNKUNSET = 0
 
-    def __init__(self, size, dtype, chunksize=(256, 256), initval=0, unsetval=0):
+    def __init__(self, size, dtype, chunksize=(256, 256), initval=0):
         """ Initialize a CompressedBand instance.
 
         Parameters
@@ -157,16 +157,12 @@ class CompressedBand(object):
         initval : value, optional
             if set, the entire grid is initialized with this value, which should
             be of *dtype*
-        unsetval : value, optional
-            value to fill with when an unset block is requested
-            default 0
         """
         assert len(size) == 2
         self.size = size
         self.dtype = dtype
         self._chunksize = chunksize
         self._initval = initval
-        self._unsetval = unsetval
 
         self.nchunkrows = int(ceil(float(size[0])/float(chunksize[0])))
         self.nchunkcols = int(ceil(float(size[1])/float(chunksize[1])))
@@ -373,7 +369,7 @@ class CompressedBand(object):
         for i, yst, yen, xst, xen in self._getchunks(yoff, xoff, *size):
 
             # Get from data store
-            if self.chunkstatus[i] != self.CHUNKUNSET:
+            if self.chunkstatus[i] == self.CHUNKSET:
                 chunkdata = self._retrieve(i)
             else:
                 chunkdata = np.full(self._chunksize, self._initval, dtype=self.dtype)
@@ -411,7 +407,7 @@ class CompressedBand(object):
 
             if self.chunkstatus[i] == self.CHUNKUNSET:
                 result[oy0:oy1, ox0:ox1] = np.full((oy1-oy0, ox1-ox0),
-                                                   self._unsetval,
+                                                   self._initval,
                                                    dtype=self.dtype)
 
             else:

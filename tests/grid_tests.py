@@ -374,6 +374,7 @@ class RegularGridTests(unittest.TestCase):
         newgrid = proto.resize([380, 320, 380+30*60, 320+30*62])
         self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid[6:56,4:54] == proto[:,:]))
+        self.assertTrue(np.isnan(newgrid[0,0]))
         return
 
     def test_resize_lower_left(self):
