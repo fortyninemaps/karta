@@ -29,8 +29,8 @@ class GdalTests(unittest.TestCase):
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TMPDATA, "test.tif")
-        g.to_gtiff(fpath, compress=None)
-        gnew = karta.read_gtiff(fpath)
+        g.to_geotiff(fpath, compress=None)
+        gnew = karta.read_geotiff(fpath)
 
         self.assertTrue("+proj=utm" in gnew.crs.get_proj4())
         self.assertTrue("+zone=7" in gnew.crs.get_proj4())
@@ -47,8 +47,8 @@ class GdalTests(unittest.TestCase):
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TMPDATA, "test.tif")
-        g.to_gtiff(fpath, compress=None)
-        gnew = karta.read_gtiff(fpath, in_memory=False)
+        g.to_geotiff(fpath, compress=None)
+        gnew = karta.read_geotiff(fpath, in_memory=False)
 
         self.assertEqual(g.transform, gnew.transform)
         self.assertEqual(g.values.dtype, gnew.values.dtype)
@@ -65,8 +65,8 @@ class GdalTests(unittest.TestCase):
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TMPDATA, "test.tif")
-        g.to_gtiff(fpath, compress="LZW")
-        g.to_gtiff(fpath, compress="PACKBITS")
+        g.to_geotiff(fpath, compress="LZW")
+        g.to_geotiff(fpath, compress="PACKBITS")
         return
 
 class GdalVirtualArrayTests(unittest.TestCase):
@@ -78,8 +78,8 @@ class GdalVirtualArrayTests(unittest.TestCase):
         g = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
 
         fpath = os.path.join(TMPDATA, "test.tif")
-        g.to_gtiff(fpath, compress=None)
-        self.grid = karta.read_gtiff(fpath, in_memory=False)
+        g.to_geotiff(fpath, compress=None)
+        self.grid = karta.read_geotiff(fpath, in_memory=False)
 
     def test_slicing_virtual(self):
         self.grid[5:10, 7:15]
