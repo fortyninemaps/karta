@@ -103,5 +103,6 @@ def from_geotiffs(*fnms, **kw):
 
 # Aliases for backwards compat.
 gtiffread = read_gtiff
+read_geotiff = read_gtiff
 aairead = read_aai
 

@@ -1036,10 +1036,13 @@ class RegularGrid(Grid):
             f.close()
         return
 
-    def gtiffwrite(self, fnm):
+    def to_geotiff(self, *args, **kwargs):
+        return self.to_gtiff(*args, **kwargs)
+
+    def gtiffwrite(self, *args, **kwargs):
         warnings.warn("method `gtiffwrite` has been renamed `to_gtiff`",
                 FutureWarning)
-        return self.to_gtiff(fnm)
+        return self.to_gtiff(*args, **kwargs)
 
     def aaiwrite(self, *args, **kwargs):
         warnings.warn("method `aaiwrite` has been renamed `to_aai`",
