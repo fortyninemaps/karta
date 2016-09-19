@@ -114,12 +114,16 @@ def sphere_azimuth(lon1, lat1, lon2, lat2):
 
 def spherical_area(r, x1, y1, x2, y2):
     """ Area between a geodesic and the equator on a sphere """
+    if x2 < x1:
+        reverse = -1
+    else:
+        reverse = 1
     _, x1, y1, x2, y2 = _canonical_configuration(x1, y1, x2, y2)
     phi1 = _radians(y1)
     phi2 = _radians(y2)
-    lambda12 = (x2-x1)*pi/180.0
+    lambda12 = _radians(x2-x1)
     alpha1, alpha2, _ = solve_vincenty(r, 0, lambda12, phi1, phi2)
-    return r**2 * (alpha2-alpha1)
+    return reverse * r**2 * (alpha2-alpha1)
 
 def isbetween_circular(x, x0, x1):
     """ Tests whether *x* is between *x0* and *x1* on a circle [-180, 180) """
@@ -691,15 +695,15 @@ def _ellipsoidal_area(a, b, lambda12, phi1, phi2, alpha1, alpha2):
 
 
 def ellipsoidal_area(a, b, x1, y1, x2, y2):
-    """ Area of a single quatrilateral defined by two meridians, the equator,
+    """ Area of a single quadrilateral defined by two meridians, the equator,
     and another geodesic.
 
     Parameters
     ----------
-    a : float (degrees)
-        longitude of first meridian
-    b : float (degrees)
-        longitude of second meridian
+    a : float
+        equatorial radius
+    b : float
+        polar radius
     x1 : float (degrees)
         longitude of geodesic segment start
     y1 : float (degrees)
@@ -710,6 +714,10 @@ def ellipsoidal_area(a, b, x1, y1, x2, y2):
         latitude of geodesic segment end
 
     """
+    if x2 < x1:
+        reverse = -1
+    else:
+        reverse = 1
     _, x1, y1, x2, y2 = _canonical_configuration(x1, y1, x2, y2)
     phi1 = y1*pi/180.0
     phi2 = y2*pi/180.0
@@ -718,7 +726,7 @@ def ellipsoidal_area(a, b, x1, y1, x2, y2):
     az, baz, _ = ellipsoidal_inverse(a, b, x1, y1, x2, y2)
     alpha1 = az * pi/180
     alpha2 = (baz-pi) * pi/180
-    return _ellipsoidal_area(a, b, lambda12, phi1, phi2, alpha1, alpha2)
+    return reverse * _ellipsoidal_area(a, b, lambda12, phi1, phi2, alpha1, alpha2)
 
 
 ###### Root-finding ######
