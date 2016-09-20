@@ -9,25 +9,34 @@ def _slope(D, res=(1.0, 1.0)):
     """ Return the scalar slope at each pixel using the neighbourhood method.
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works
     """
-    dx = res[0]
-    dy = res[1]
+    dx, dy = res
     Ddx = ((2 * D[1:-1,2:] + D[:-2,2:] + D[2:,2:]) -
            (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * dx)
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
+    return np.pad(np.sqrt(Ddx*Ddx + Ddy*Ddy), ((1, 1), (1, 1)), "reflect",
+                  reflect_type="odd")
 
-    return np.pad(np.sqrt(Ddx*Ddx + Ddy*Ddy), ((1, 1), (1, 1)), "constant", 
-                  constant_values=np.nan)
-
-def slope(grid):
+def slope(grid, band=0):
     """ Return the scalar slope at each pixel using the neighbourhood method.
+
+    Parameters
+    ----------
+    grid: RegularGrid
+    band: int, optional
+        band to compute hillshade for (default 0)
+
+    Returns
+    -------
+    RegularGrid
+
+    Notes
+    -----
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works
     """
     if grid.skew != (0, 0):
         raise NotImplementedError("slope calculations not implemented on skewed grids")
-    if grid.nbands != 1:
-        raise ValueError("input grid must be single-banded")
-    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:,band].astype(np.float32), np.nan)
     return RegularGrid(grid.transform, _slope(D, grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
 
@@ -35,42 +44,58 @@ def _aspect(D, res=(1.0, 1.0)):
     """ Return the slope aspect for each pixel.
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Aspect%20works
     """
-    dx = res[0]
-    dy = res[1]
     Ddx = ((2 * D[1:-1,2:] + D[:-2,2:] + D[2:,2:]) -
-           (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * dx)
+           (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * res[0])
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
-           (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
+           (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * res[1])
+    return np.pad(np.arctan2(Ddy, -Ddx), ((1, 1), (1, 1)), "constant",
+                  constant_values=(np.nan,))
 
-    return np.pad(np.arctan2(Ddy, -Ddx), ((1, 1), (1, 1)), "constant", constant_values=np.nan)
+def aspect(grid, band=0):
+    """ Compute grid aspect.
 
-def aspect(grid):
+    Parameters
+    ----------
+    grid: RegularGrid
+    band: int, optional
+        band to compute hillshade for (default 0)
+
+    Returns
+    -------
+    RegularGrid
+    """
     if grid.skew != (0, 0):
         raise NotImplementedError("aspect calculations not implemented on skewed grids")
-    if grid.nbands != 1:
-        raise ValueError("input grid must be single-banded")
-    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:,band].astype(np.float32), np.nan)
     return RegularGrid(grid.transform, _aspect(D, grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
 
 def _grad(D, res=(1.0, 1.0)):
     """ Computes the gradient of potential D. Return a tuple (dx, dy).
     """
-    dx = res[0]
-    dy = res[1]
     Ddx = ((2 * D[1:-1,2:] + D[:-2,2:] + D[2:,2:]) -
-           (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * dx)
+           (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * res[0])
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
-           (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
-    return (np.pad(Ddx, ((1, 1), (1, 1)), "constant", constant_values=np.nan),
-            np.pad(Ddy, ((1, 1), (1, 1)), "constant", constant_values=np.nan))
+           (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * res[1])
+    return (np.pad(Ddx, ((1, 1), (1, 1)), "constant", constant_values=(np.nan,)),
+            np.pad(Ddy, ((1, 1), (1, 1)), "constant", constant_values=(np.nan,)))
 
-def gradient(grid):
+def gradient(grid, band=0):
+    """ Compute gradient field from a grid.
+
+    Parameters
+    ----------
+    grid: RegularGrid
+    band: int, optional
+        band to compute hillshade for (default 0)
+
+    Returns
+    -------
+    (RegularGrid, RegularGrid)
+    """
     if grid.skew != (0, 0):
         raise NotImplementedError("gradient calculations not implemented on skewed grids")
-    if grid.nbands != 1:
-        raise ValueError("input grid must be single-banded")
-    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:,band].astype(np.float32), np.nan)
     dDdx, dDdy = _grad(D, grid.resolution)
     return (RegularGrid(grid.transform, dDdx, crs=grid.crs, nodata_value=np.nan),
             RegularGrid(grid.transform, dDdy, crs=grid.crs, nodata_value=np.nan))
@@ -79,16 +104,26 @@ def _div(U, V, res=(1.0, 1.0)):
     """ Calculate the divergence of a vector field. """
     dUdx = (U[:,2:] - U[:,:-2]) / (2.0*res[0])
     dVdy = (V[2:,:] - V[:-2,:]) / (2.0*res[1])
-    divergence = np.pad(dUdx, ((0, 0), (1, 1)), "constant", constant_values=np.nan) \
-               + np.pad(dVdy, ((1, 1), (0, 0)), "constant", constant_values=np.nan)
+    divergence = np.pad(dUdx, ((0, 0), (1, 1)), "constant", constant_values=(np.nan,)) \
+               + np.pad(dVdy, ((1, 1), (0, 0)), "constant", constant_values=(np.nan,))
     return divergence
 
-def divergence(grid):
+def divergence(grid, band=0):
+    """ Compute divergence from a grid.
+
+    Parameters
+    ----------
+    grid: RegularGrid
+    band: int, optional
+        band to compute hillshade for (default 0)
+
+    Returns
+    -------
+    RegularGrid
+    """
     if grid.skew != (0, 0):
         raise NotImplementedError("divergence calculations not implemented on skewed grids")
-    if grid.nbands != 1:
-        raise ValueError("input grid must be single-banded")
-    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:,band].astype(np.float32), np.nan)
     return RegularGrid(grid.transform, _div(D, grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
 
@@ -104,37 +139,52 @@ def _normed_potential_vectors(D, res=(1.0, 1.0)):
     M = np.sqrt(Ddx**2 + Ddy**2)
     U = Ddx / M[np.isnan(M)==False].max()
     V = Ddy / M[np.isnan(M)==False].max()
-    return (np.pad(U, ((1, 1), (1, 1)), "constant", constant_values=np.nan),
-            np.pad(V, ((1, 1), (1, 1)), "constant", constant_values=np.nan))
+    return (np.pad(U, ((1, 1), (1, 1)), "constant", constant_values=(np.nan,)),
+            np.pad(V, ((1, 1), (1, 1)), "constant", constant_values=(np.nan,)))
 
-def normed_potential_vectors(grid):
+def normed_potential_vectors(grid, band=0):
+    """ Computes a U,V vector field of a potential grid. Scalar components of
+    U,V are normalized to max(|U, V|).
+
+    Parameters
+    ----------
+    grid: RegularGrid
+    band: int, optional
+        band to compute hillshade for (default 0)
+
+    Returns
+    -------
+    (RegularGrid, RegularGrid)
+    """
     if grid.skew != (0, 0):
         raise NotImplementedError("potential vector calculations not implemented on skewed grids")
-    if grid.nbands != 1:
-        raise ValueError("input grid must be single-banded")
-    D = np.where(grid.data_mask, grid[:,:].astype(np.float32), np.nan)
+    D = np.where(grid.data_mask, grid[:,:,band].astype(np.float32), np.nan)
     u, v = _normed_potential_vectors(D, res=grid.resolution)
     return (RegularGrid(grid.transform, u, crs=grid.crs, nodata_value=np.nan),
             RegularGrid(grid.transform, v, crs=grid.crs, nodata_value=np.nan))
 
-def hillshade(grid, azimuth=330.0, elevation=60.0):
+def hillshade(grid, azimuth=330.0, elevation=60.0, band=0):
     """ Return a hill-shaded version of *grid*.
 
     Parameters
     ----------
-    grid: RegularGrid instance
+    grid: RegularGrid
     azimuth: float, optional
         direction of light source (default 330.0)
-    elevation : float, optional
+    elevation: float, optional
         height of light source (default 60.0)
+    band: int, optional
+        band to compute hillshade for (default 0)
+
+    Returns
+    -------
+    RegularGrid
 
     Notes
     -----
     Currently assumes orthogonal coordinates.
     """
-    if grid.nbands != 1:
-        raise ValueError("input grid must be single-banded")
-    dxgrid, dygrid = gradient(grid)
+    dxgrid, dygrid = gradient(grid, band=band)
     dx = dxgrid[:,:]
     dy = dygrid[:,:]
     res = grid.resolution
