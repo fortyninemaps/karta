@@ -5,77 +5,6 @@
 import numpy as np
 from .grid import RegularGrid
 
-def witch_of_agnesi(nx=100, ny=100, a=4.0):
-    """ Return a raster field defined by the equation Z = 8a^3 / (d^2 + 2a^2)
-    where d is the distance from the center.
-
-    Parameters
-    ----------
-    nx, ny : int
-        raster size
-    a : float
-        magnitude
-
-    Returns
-    -------
-    ndarray
-    """
-    xc = int(np.floor(nx / 2.0))
-    yc = int(np.floor(ny / 2.0))
-    X, Y = np.meshgrid(range(nx), range(ny))
-    D = np.sqrt( (X-xc)**2 + (Y-yc)**2 )
-
-    return (8.0 * a**3) / (D**2 + 4 * a**2)
-
-def pad(A, width=1, edges="all", value=0.0):
-    """ Apply padding to a 2D array.
-
-    Parameters
-    ----------
-    A : ndarray
-        array to pad
-    width : int
-        thickness of padding
-    edges : str
-        one of "all", "left", "right", "top", "bottom"
-    value : number
-        fill value for padding
-
-    Returns
-    -------
-    ndarray
-    """
-    ny = A.shape[0]
-    nx = A.shape[1]
-
-    if edges == "all":
-        edges = ["left", "right", "bottom", "top"]
-
-    if "top" == edges or "top" in edges:
-        ny += width
-        y0 = width
-    else:
-        y0 = 0
-    if "bottom" == edges or "bottom" in edges:
-        ny += width
-        yf = -width
-    else:
-        yf = None
-    if "left" == edges or "left" in edges:
-        nx += width
-        x0 = width
-    else:
-        x0 = 0
-    if "right" == edges or "right" in edges:
-        nx += width
-        xf = -width
-    else:
-        xf = None
-
-    B = np.full((ny, nx), value, dtype=type(value))
-    B[y0:yf, x0:xf] = A
-    return B
-
 def _slope(D, res=(1.0, 1.0)):
     """ Return the scalar slope at each pixel using the neighbourhood method.
     http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works
@@ -87,7 +16,7 @@ def _slope(D, res=(1.0, 1.0)):
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
 
-    return pad(np.sqrt(Ddx*Ddx + Ddy*Ddy), value=np.nan)
+    return np.pad(np.sqrt(Ddx*Ddx + Ddy*Ddy), ((1, 1), (1, 1)), constant_values=np.nan)
 
 def slope(grid):
     """ Return the scalar slope at each pixel using the neighbourhood method.
@@ -112,7 +41,7 @@ def _aspect(D, res=(1.0, 1.0)):
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
 
-    return pad(np.arctan2(Ddy, -Ddx), value=np.nan)
+    return np.pad(np.arctan2(Ddy, -Ddx), ((1, 1), (1, 1)), constant_values=np.nan)
 
 def aspect(grid):
     if grid.skew != (0, 0):
@@ -132,8 +61,8 @@ def _grad(D, res=(1.0, 1.0)):
            (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * dx)
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
-    return (pad(Ddx, width=1, edges='all', value=np.nan),
-            pad(Ddy, width=1, edges='all', value=np.nan))
+    return (np.pad(Ddx, ((1, 1), (1, 1)), constant_values=np.nan),
+            np.pad(Ddy, ((1, 1), (1, 1)), constant_values=np.nan))
 
 def gradient(grid):
     if grid.skew != (0, 0):
@@ -149,8 +78,8 @@ def _div(U, V, res=(1.0, 1.0)):
     """ Calculate the divergence of a vector field. """
     dUdx = (U[:,2:] - U[:,:-2]) / (2.0*res[0])
     dVdy = (V[2:,:] - V[:-2,:]) / (2.0*res[1])
-    divergence = pad(dUdx, width=1, edges=('left', 'right'), value=np.nan) \
-               + pad(dVdy, width=1, edges=('top', 'bottom'), value=np.nan)
+    divergence = np.pad(dUdx, ((0, 0), (1, 1)), constant_values=np.nan) \
+               + np.pad(dVdy, ((1, 1), (0, 0)), constant_values=np.nan)
     return divergence
 
 def divergence(grid):
@@ -174,7 +103,8 @@ def _normed_potential_vectors(D, res=(1.0, 1.0)):
     M = np.sqrt(Ddx**2 + Ddy**2)
     U = Ddx / M[np.isnan(M)==False].max()
     V = Ddy / M[np.isnan(M)==False].max()
-    return pad(U, value=np.nan), pad(V, value=np.nan)
+    return (np.pad(U, ((1, 1), (1, 1)), constant_values=np.nan),
+            np.pad(V, ((1, 1), (1, 1)), constant_values=np.nan))
 
 def normed_potential_vectors(grid):
     if grid.skew != (0, 0):

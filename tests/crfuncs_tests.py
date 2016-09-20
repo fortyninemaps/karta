@@ -1,7 +1,28 @@
 import unittest
 import numpy as np
-from karta.raster.misc import witch_of_agnesi
 from karta.raster import crfuncs
+
+def witch_of_agnesi(nx=100, ny=100, a=4.0):
+    """ Return a raster field defined by the equation Z = 8a^3 / (d^2 + 2a^2)
+    where d is the distance from the center.
+
+    Parameters
+    ----------
+    nx, ny : int
+        raster size
+    a : float
+        magnitude
+
+    Returns
+    -------
+    ndarray
+    """
+    xc = int(np.floor(nx / 2.0))
+    yc = int(np.floor(ny / 2.0))
+    X, Y = np.meshgrid(range(nx), range(ny))
+    D = np.sqrt( (X-xc)**2 + (Y-yc)**2 )
+
+    return (8.0 * a**3) / (D**2 + 4 * a**2)
 
 class TestCrfuncs(unittest.TestCase):
 
