@@ -128,7 +128,7 @@ class SimpleBand(object):
         if initval is None:
             self.array = np.empty(size, dtype=dtype)
         else:
-            self.array = np.full(size, initval, dtype-dtype)
+            self.array = np.full(size, initval, dtype=dtype)
         self.dtype = dtype
 
     def __getitem__(self, key):
