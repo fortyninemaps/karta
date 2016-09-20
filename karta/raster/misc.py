@@ -16,7 +16,8 @@ def _slope(D, res=(1.0, 1.0)):
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
 
-    return np.pad(np.sqrt(Ddx*Ddx + Ddy*Ddy), ((1, 1), (1, 1)), constant_values=np.nan)
+    return np.pad(np.sqrt(Ddx*Ddx + Ddy*Ddy), ((1, 1), (1, 1)), "constant", 
+                  constant_values=np.nan)
 
 def slope(grid):
     """ Return the scalar slope at each pixel using the neighbourhood method.
@@ -41,7 +42,7 @@ def _aspect(D, res=(1.0, 1.0)):
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
 
-    return np.pad(np.arctan2(Ddy, -Ddx), ((1, 1), (1, 1)), constant_values=np.nan)
+    return np.pad(np.arctan2(Ddy, -Ddx), ((1, 1), (1, 1)), "constant", constant_values=np.nan)
 
 def aspect(grid):
     if grid.skew != (0, 0):
@@ -61,8 +62,8 @@ def _grad(D, res=(1.0, 1.0)):
            (2 * D[1:-1,:-2] + D[:-2,:-2] + D[2:,:-2])) / (8.0 * dx)
     Ddy = ((2 * D[2:,1:-1] + D[2:,2:] + D[2:,:-2]) -
            (2 * D[:-2,1:-1] + D[:-2,:-2] + D[:-2,2:])) / (8.0 * dy)
-    return (np.pad(Ddx, ((1, 1), (1, 1)), constant_values=np.nan),
-            np.pad(Ddy, ((1, 1), (1, 1)), constant_values=np.nan))
+    return (np.pad(Ddx, ((1, 1), (1, 1)), "constant", constant_values=np.nan),
+            np.pad(Ddy, ((1, 1), (1, 1)), "constant", constant_values=np.nan))
 
 def gradient(grid):
     if grid.skew != (0, 0):
@@ -78,8 +79,8 @@ def _div(U, V, res=(1.0, 1.0)):
     """ Calculate the divergence of a vector field. """
     dUdx = (U[:,2:] - U[:,:-2]) / (2.0*res[0])
     dVdy = (V[2:,:] - V[:-2,:]) / (2.0*res[1])
-    divergence = np.pad(dUdx, ((0, 0), (1, 1)), constant_values=np.nan) \
-               + np.pad(dVdy, ((1, 1), (0, 0)), constant_values=np.nan)
+    divergence = np.pad(dUdx, ((0, 0), (1, 1)), "constant", constant_values=np.nan) \
+               + np.pad(dVdy, ((1, 1), (0, 0)), "constant", constant_values=np.nan)
     return divergence
 
 def divergence(grid):
@@ -103,8 +104,8 @@ def _normed_potential_vectors(D, res=(1.0, 1.0)):
     M = np.sqrt(Ddx**2 + Ddy**2)
     U = Ddx / M[np.isnan(M)==False].max()
     V = Ddy / M[np.isnan(M)==False].max()
-    return (np.pad(U, ((1, 1), (1, 1)), constant_values=np.nan),
-            np.pad(V, ((1, 1), (1, 1)), constant_values=np.nan))
+    return (np.pad(U, ((1, 1), (1, 1)), "constant", constant_values=np.nan),
+            np.pad(V, ((1, 1), (1, 1)), "constant", constant_values=np.nan))
 
 def normed_potential_vectors(grid):
     if grid.skew != (0, 0):
