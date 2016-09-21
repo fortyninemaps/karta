@@ -17,6 +17,7 @@ from table_tests import *
 
 from grid_tests import *
 from band_tests import *
+from coordgen_tests import *
 from raster_misc_tests import *
 
 # Vector operations
