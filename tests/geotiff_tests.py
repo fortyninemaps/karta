@@ -21,7 +21,7 @@ class GdalTests(unittest.TestCase):
         self.assertEqual(_gdal.numpy_dtype(11), np.complex64)
         return
 
-    def test_io(self):
+    def test_write_read(self):
         # try writing a file, then read it back in and verify that it matches
         v = peaks(500)[:100,:]
         utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
@@ -39,7 +39,7 @@ class GdalTests(unittest.TestCase):
         self.assertTrue(np.all(g[:,:] == gnew[:,:]))
         return
 
-    def test_io_virtual(self):
+    def test_write_read_disk(self):
         # try writing a file, then open it without loading into memory and verify
         v = peaks(500)[:100,:]
         utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
@@ -66,8 +66,37 @@ class GdalTests(unittest.TestCase):
 
         fpath = os.path.join(TMPDATA, "test.tif")
         g.to_geotiff(fpath, compress="LZW")
+        self.assertTrue(os.path.isfile(fpath))
+        os.remove(fpath)
         g.to_geotiff(fpath, compress="PACKBITS")
+        self.assertTrue(os.path.isfile(fpath))
         return
+
+    def test_read_as_bands(self):
+        # write several files and then read as a single multiband grid
+        v = peaks(500)[:100,:]
+        utm7 = karta.crs.ProjectedCRS("+proj=utm +zone=7 +north +datum=WGS84",
+                                      "UTM 7N (WGS 84)")
+        g1 = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v, crs=utm7)
+        g2 = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v**2, crs=utm7)
+        g3 = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v+2, crs=utm7)
+        g4 = karta.RegularGrid([15.0, 15.0, 30.0, 30.0, 0.0, 0.0], v*2, crs=utm7)
+
+        paths = []
+        for i, g in enumerate((g1, g2, g3, g4)):
+            fpath = os.path.join(TMPDATA, "test{0}.tif".format(i))
+            g.to_geotiff(fpath, compress=None)
+            paths.append(fpath)
+
+        gnew = karta.from_geotiffs(*paths)
+        self.assertTrue("+proj=utm" in gnew.crs.get_proj4())
+        self.assertTrue("+zone=7" in gnew.crs.get_proj4())
+        self.assertEqual(g.transform, gnew.transform)
+        self.assertEqual(g.values.dtype, gnew.values.dtype)
+        self.assertEqual(gnew.size, (100, 500))
+        self.assertEqual(gnew.nbands, 4)
+        return
+
 
 class GdalVirtualArrayTests(unittest.TestCase):
 
@@ -82,6 +111,7 @@ class GdalVirtualArrayTests(unittest.TestCase):
         self.grid = karta.read_geotiff(fpath, in_memory=False)
 
     def test_slicing_virtual(self):
+        """ make sure that slicing a disk-based array works """
         self.grid[5:10, 7:15]
         self.grid[5:10:2, 7:15]
         self.grid[10:5:-1, 7:15]
@@ -96,9 +126,11 @@ class GdalVirtualArrayTests(unittest.TestCase):
         return
 
     def test_iteration_virtual(self):
+        i = 0
         for row in self.grid.values:
-            pass
-
+            i += 1
+        self.assertEqual(i, 100)
+        return
 
 def peaks(n=49):
     """ 2d peaks function of MATLAB logo fame. """

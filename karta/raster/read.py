@@ -75,13 +75,19 @@ def from_geotiffs(*fnms, **kw):
         will have bands of type karta.raster._gdal.GdalFileBand
     """
     in_memory = kw.get("in_memory", True)
+    if len(fnms) == 0:
+        raise ValueError("at least one filename must be provided")
     bands = []
     hdrs = []
-    for fnm in fnms:
+    for i, fnm in enumerate(fnms):
         _b, _h = _gdal.read(fnm, in_memory, 1, **kw)
-        if len(hdrs) != 0:
-            if _h != hdrs[-1]:
-                raise GridError("geotransform in {0} not equivalent to a previous GeoTiff".format(fnm))
+        if (i != 0) and (len(hdrs) != 0):
+            for k, v in _h.items():
+                if (isinstance(v, float)
+                        and np.isnan(v) and not np.isnan(hdrs[-1].get(k, 0))):
+                    if v != hdrs[-1].get(k, np.nan):
+                        raise GridError("geotransform in {0} not equivalent to "
+                                        "a previous GeoTiff".format(fnm))
         bands.append(_b[0])
         hdrs.append(_h)
 
