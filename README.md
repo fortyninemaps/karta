@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/fortyninemaps/karta.svg?branch=master)](https://travis-ci.org/fortyninemaps/karta)
+[![Coverage Status](https://coveralls.io/repos/github/fortyninemaps/karta/badge.svg?branch=master)](https://coveralls.io/github/fortyninemaps/karta?branch=master)
 
 ![Karta](https://raw.githubusercontent.com/fortyninemaps/karta/gh-pages/figures/karta_logo.png)
 
