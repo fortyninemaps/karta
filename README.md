@@ -103,12 +103,11 @@ Building from source requires Cython:
 Then, clone the repository and install:
 
     git clone https://github.com/fortyninemaps/karta.git karta
-    pip install -r karta/requirements.txt
     pip install karta/
 
 ## Dependencies
 
-- numpy >= >1.7
+- numpy >= 1.7
 - gdal >= 1.10
 - pyproj >= 1.9
 - blosc >= 1.2

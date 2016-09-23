@@ -62,7 +62,21 @@ class RegularGridTests(unittest.TestCase):
         val_ = val.copy()
         val[msk] = -1
         grid = karta.RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
-        grid.apply(lambda x: x**2)
+        newgrid = grid.apply(lambda x: x**2)
+
+        self.assertTrue(np.all(newgrid[:,:][msk] == -1))
+        self.assertTrue(np.all(newgrid[:,:][~msk] == val_[~msk]**2))
+        return
+
+    def test_apply_inplace(self):
+        msk = np.zeros([8, 8], dtype=np.bool)
+        msk[3, 2] = True
+        msk[:2,3:] = True
+        val = np.arange(64, dtype=np.float64).reshape([8,8])
+        val_ = val.copy()
+        val[msk] = -1
+        grid = karta.RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
+        grid.apply(lambda x: x**2, inplace=True)
 
         self.assertTrue(np.all(grid[:,:][msk] == -1))
         self.assertTrue(np.all(grid[:,:][~msk] == val_[~msk]**2))

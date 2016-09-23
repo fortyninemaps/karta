@@ -47,10 +47,24 @@ class Grid(object):
         else:
             return (np.nan, np.nan)
 
-    def apply(self, func, copy=False):
-        """ Apply a function *func* to grid values """
+    def apply(self, func, inplace=False):
+        """ Apply a vector function to grid values.
+
+        Parameters
+        ----------
+        func : callable
+            function that takes a vector of values and returns an equally-sized
+            vector of values with the same type
+        inplace : boolean, optional
+            whether to perform operation in place rather than returning a new
+            grid instance (default False)
+
+        Returns
+        -------
+        *gridclass* instance
+        """
         msk = self.data_mask_full
-        if copy:
+        if not inplace:
             newgrid = self.copy()
             newgrid[:,:] = np.where(msk, func(self[:,:]), self._nodata)
             return newgrid
