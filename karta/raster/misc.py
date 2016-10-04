@@ -4,6 +4,7 @@
 
 import numpy as np
 from .grid import RegularGrid
+from .coordgen import CoordinateGenerator
 
 def _slope(D, res=(1.0, 1.0)):
     """ Return the scalar slope at each pixel using the neighbourhood method.
@@ -203,4 +204,37 @@ def hillshade(grid, azimuth=330.0, elevation=60.0, band=0):
     np.clip(dprod, q[0], q[1], out=dprod)
 
     return RegularGrid(grid.transform, values=dprod, crs=grid.crs)
+
+def align(grid, bbox, resolution=None, skew=None, method="bilinear"):
+    """ Align a grid to a bounding box.
+
+    Parameters
+    ----------
+    grid : RegularGrid
+        Grid instance to realign.
+    bbox : tuple
+        Bounding box (xmin, ymin, xmax, ymax) of the output grid
+    resolution : tuple, optional
+        Resolution of the output grid. Default is the same as the input grid.
+    skew : tuple, optional
+        Skew of the output grid. Default is the same as the input grid.
+    method : str, optional
+        Method to use to resample grid. See `RegularGrid.sample`. Default is
+        'bilinear'.
+
+    Returns
+    -------
+    RegularGrid
+    """
+    if resolution is None:
+        resolution = grid.resolution
+    if skew is None:
+        skew = grid.skew
+    T = (bbox[0], bbox[1], resolution[0], resolution[1], skew[0], skew[1])
+    nx = int(np.round((bbox[2]-bbox[0]) / resolution[0]))
+    ny = int(np.round((bbox[3]-bbox[1]) / resolution[1]))
+    cg = CoordinateGenerator(T, (ny, nx))
+    x, y = cg[:,:]
+    v = grid.sample(x.ravel(), y.ravel(), method=method).reshape(ny, nx)
+    return karta.RegularGrid(T, values=v, crs=grid.crs)
 
