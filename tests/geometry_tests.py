@@ -475,6 +475,18 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertEqual(c.properties, poly.properties)
         return
 
+    def test_poly_rotate(self):
+        poly = Polygon([(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])
+        rot45 = poly.rotate(45, (0.5, 0.5))
+        self.assertTrue(np.allclose(rot45.coordinates,
+                                    np.array([[ 0.5,  1.20710678, 0.5, -0.20710678],
+                                              [-0.20710678, 0.5,  1.20710678, 0.5 ]])))
+        rot90 = poly.rotate(90, (0.0, 0.0))
+        self.assertTrue(np.allclose(rot90.coordinates,
+                                    np.array([[0.0, 0.0, -1.0, -1.0],
+                                              [0.0, 1.0, 1.0, 0.0]])))
+        return
+
     def test_ringedpoly_perimeter(self):
         ring = Polygon([(2.0, 2.0), (4.0, 2.0), (3.0, 6.0)])
         ringed_poly = Polygon([(0.0, 0.0), (10, 0.0), (10.0, 10.0), (0.0, 10.0)],

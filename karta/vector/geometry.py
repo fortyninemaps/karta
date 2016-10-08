@@ -472,7 +472,7 @@ class MultiVertexMixin(object):
                 kw["data"] = self.data
             return type(self)(vertices, **kw)
 
-    def rotate2d(self, thetad, origin=(0, 0)):
+    def rotate(self, thetad, origin=(0, 0)):
         """ Rotate rank 2 geometry.
 
         Parameters
@@ -483,19 +483,18 @@ class MultiVertexMixin(object):
             pivot for rotation (default (0, 0))
         """
         # First, shift by the origin
-        self.shift([-a for a in origin])
+        ret = self.shift(-np.asarray(origin))
 
         # Multiply by a rotation matrix
         theta = thetad / 180.0 * math.pi
         R = ((math.cos(theta), -math.sin(theta)),
              (math.sin(theta), math.cos(theta)))
-        rvertices = [_matmult(R, x) for x in self.vertices]
-        self.vertices = rvertices
+        rvertices = [_matmult(R, x) for x in ret.vertices]
+        ret.vertices = CoordString(rvertices)
 
         # Shift back
-        self.shift(origin)
-        self._cache = {}
-        return self
+        ret.shift(origin, inplace=True)
+        return ret
 
     def apply_affine_transform(self, M):
         """ Apply an affine transform given by matrix *M* to data and return a
