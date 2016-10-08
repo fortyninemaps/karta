@@ -179,9 +179,9 @@ class CompressedBand(object):
     def __getitem__(self, key):
 
         if isinstance(key, Integral):
-            irow = key // self.size[1]
-            icol = key % self.size[1]
-            return self._getblock(irow, icol, (1, 1))[0]
+            irow = key % self.size[0]
+            icol = 0
+            return self._getblock(irow, icol, (1, self.size[1]))
 
         elif isinstance(key, tuple):
 
@@ -241,10 +241,12 @@ class CompressedBand(object):
 
     def __setitem__(self, key, value):
 
-        if isinstance(key, int):
-            irow = key // self.size[1]
-            icol = key % self.size[1]
-            self._setblock(irow, icol, np.array(value, dtype=self.dtype))
+        if isinstance(key, Integral):
+            irow = key % self.size[0]
+            icol = 0
+            if not hasattr(value, "__iter__"):
+                value = np.atleast_2d(value*np.ones(self.size[1], dtype=self.dtype))
+            self._setblock(irow, icol, value)
 
         elif isinstance(key, tuple):
 

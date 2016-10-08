@@ -45,6 +45,17 @@ class GenericBandTests(object):
         self.assertEqual(np.sum(band[::2,128:960:3]-d), 0.0)
         return
 
+    def test_set_get_integer_key(self):
+        x, y = np.meshgrid(np.arange(832), np.arange(1024))
+        d = (x**2+np.sqrt(y))[::2, ::3]
+
+        band = self.type((1024, 1024), np.float64, **self.initkwargs)
+        band[231] = -1.0
+        self.assertTrue(np.all(band[231,:] == -1.0))
+        self.assertTrue(np.all(band[231] == -1.0))
+        return
+
+
     def test_get_scalar(self):
 
         x, y = np.meshgrid(np.arange(1024), np.arange(1024))
