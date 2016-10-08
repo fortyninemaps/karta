@@ -108,6 +108,8 @@ cdef int bndlat_sph(Vector2 pt0, Vector2 pt1, double *ymin, double *ymax):
 def bbox(CoordString cs):
     cdef double xmin, xmax, ymin, ymax, x, y, x0, y0
     cdef int i = 1, n = len(cs)
+    if n == 0:
+        return (NAN, NAN, NAN, NAN)
     x0 = cs.getX(0)
     y0 = cs.getY(0)
     xmin = x0
