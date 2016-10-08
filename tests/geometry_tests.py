@@ -71,7 +71,7 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_multipoint_subset(self):
-        mp =  Multipoint(self.vertices, data=self.data)
+        mp = Multipoint(self.vertices, data=self.data)
         line = Line(self.vertices)
         ss1 = mp._subset(range(2,7))
         ss2 = line._subset(range(2,7))
@@ -80,7 +80,7 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_multipoint_get(self):
-        mp =  Multipoint(self.vertices, data=self.data)
+        mp = Multipoint(self.vertices, data=self.data)
         point = Point(self.vertices[0], properties={"value": 99.0})
         self.assertEqual(mp[0], point)
         return
@@ -119,12 +119,12 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_multipoint_slicing1(self):
-        mp =  Multipoint(self.vertices, data=self.data)
+        mp = Multipoint(self.vertices, data=self.data)
         submp = Multipoint(self.vertices[5:10], data=self.data[5:10])
         self.assertEqual(mp[5:10], submp)
 
     def test_multipoint_slicing2(self):
-        mp =  Multipoint(self.vertices, data=self.data)
+        mp = Multipoint(self.vertices, data=self.data)
         submp = Multipoint(self.vertices[5:], data=self.data[5:])
         self.assertEqual(mp[5:], submp)
         return
@@ -135,7 +135,7 @@ class TestGeometry(unittest.TestCase):
         return
 
     def test_multipoint_negative_index(self):
-        mp =  Multipoint(self.vertices, data=self.data)
+        mp = Multipoint(self.vertices, data=self.data)
         self.assertEqual(mp[len(mp)-1], mp[-1])
         return
 
@@ -245,19 +245,19 @@ class TestGeometryAnalysis(unittest.TestCase):
 
     def test_nearest_to(self):
         point = Point((1.0, 2.0, 3.0), properties={"type": "apple", "color": (43,67,10)})
-        mp =  Multipoint(self.vertices, data=self.data)
+        mp = Multipoint(self.vertices, data=self.data)
         self.assertEqual(mp.nearest_vertex_to(point), 12)
         return
 
     def test_multipoint_shift_inplace(self):
-        mp0 =  Multipoint(self.vertices, data=self.data)
+        mp0 = Multipoint(self.vertices, data=self.data)
         vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
         mp = Multipoint(vertices, data=self.data)
         mp.shift((1, -2, 0.5), inplace=True)
         self.assertEqual(mp, mp0)
 
     def test_multipoint_shift(self):
-        mp0 =  Multipoint(self.vertices, data=self.data)
+        mp0 = Multipoint(self.vertices, data=self.data)
         vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
         mp = Multipoint(vertices, data=self.data)
         mp_shifted = mp.shift((1, -2, 0.5))
@@ -265,9 +265,21 @@ class TestGeometryAnalysis(unittest.TestCase):
         return
 
     def test_multipoint_bbox(self):
-        mp =  Multipoint(self.vertices, data=self.data)
+        mp = Multipoint(self.vertices, data=self.data)
         bbox = (1.0, 0.0, 9.0, 9.0)
         self.assertEqual(mp.bbox, bbox)
+        return
+
+    def test_empty_multipoint_bbox(self):
+        mp = Multipoint([], crs=Cartesian)
+        bb = mp.bbox
+        for item in bb:
+            self.assertTrue(np.isnan(item))
+
+        mp = Multipoint([], crs=LonLatWGS84)
+        bb = mp.bbox
+        for item in bb:
+            self.assertTrue(np.isnan(item))
         return
 
     def test_multiline_bbox(self):
@@ -304,7 +316,7 @@ class TestGeometryAnalysis(unittest.TestCase):
 
     def test_multipoint_bbox_overlap(self):
         poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
-        mp =  Multipoint(self.vertices, data=self.data)
+        mp = Multipoint(self.vertices, data=self.data)
         self.assertTrue(mp._bbox_overlap(poly))
         return
 

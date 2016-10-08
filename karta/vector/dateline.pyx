@@ -1,4 +1,4 @@
-from libc.math cimport fmin, fmax
+from libc.math cimport fmin, fmax, NAN
 from vectorgeo cimport Vector2, fsign, bndlat_sph
 from coordstring cimport CoordString
 
@@ -22,6 +22,9 @@ def bbox(CoordString cs):
     cdef double x0, y0, x1, y1
     cdef double rot
     cdef int i = 0, retint = 0, xdateline = 0, n = len(cs)
+
+    if n == 0:
+        return (NAN, NAN, NAN, NAN)
 
     if cs.ring:
         n += 1
