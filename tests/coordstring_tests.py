@@ -73,5 +73,18 @@ class CoordStringTests(unittest.TestCase):
         self.assertTrue(np.all(cs.slice(10, 35, 3) == np.c_[x, y][10:35:3]))
         return
 
+    def test_asarray(self):
+        x = np.linspace(0, 5)
+        y = x**2
+        cs = CoordString(np.c_[x, y])
+        arr = cs.asarray()
+        self.assertTrue(np.all(arr == np.c_[x, y]))
+        return
+
+    def test_asarray_empty(self):
+        cs = CoordString([])
+        arr = cs.asarray()
+        self.assertTrue(np.all(arr == np.array([[]], dtype=np.float64)))
+
 if __name__ == "__main__":
     unittest.main()
