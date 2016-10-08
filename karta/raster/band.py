@@ -191,7 +191,7 @@ class CompressedBand(object):
             kr, kc = key
 
             if isinstance(kr, Integral):
-                yoff = kr
+                yoff = kr % self.size[0]
                 ny = 1
                 ystride = 1
 
@@ -207,7 +207,7 @@ class CompressedBand(object):
                                  "supported".format(type(kr)))
 
             if isinstance(kc, Integral):
-                xoff = kc
+                xoff = kc % self.size[1]
                 nx = 1
                 xstride = 1
 

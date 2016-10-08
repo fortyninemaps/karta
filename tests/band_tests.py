@@ -52,6 +52,8 @@ class GenericBandTests(object):
 
         self.assertEqual(band[4,3], 11.0)
         self.assertTrue(band[4:5,3:4].shape, (1, 1))
+        self.assertEqual(band[-1,-1], d[-1,-1])
+        return
 
     def test_initval(self):
         band = self.type((1024, 1024), np.float64, initval=0.0)
