@@ -190,6 +190,14 @@ class TestGeometry(unittest.TestCase):
             poly[0] = Point((0.5, 7.0), crs=SphericalEarth)
         return
 
+    def test_del_poly_vertex(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        del poly[1]
+        self.assertEqual(len(poly), 4)
+        self.assertTrue(np.all(poly.coordinates == np.array([[0.0, 6.0, 7.0, 5.0], [8.0, 1.0, 2.0, 4.0]])))
+        return
+
     def test_segments(self):
         line = Line(self.vertices)
         for i, seg in enumerate(line.segments):
