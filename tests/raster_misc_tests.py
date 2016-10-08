@@ -83,6 +83,34 @@ class RasterMiscTests(unittest.TestCase):
              0.87979538950981906]))
         return
 
+    def test_slope(self):
+        x = np.arange(64)
+        y = np.arange(64).reshape(-1, 1)
+        grid = RegularGrid((0, 0, 10, 10, 0, 0), values=x*np.ones_like(y))
+        slope = misc.slope(grid)
+        self.assertTrue(np.all(0.1 == slope[:,:]))
+
+        grid = RegularGrid((0, 0, 10, 10, 0, 0), values=x+y)
+        slope = misc.slope(grid)
+        self.assertTrue(np.allclose(0.14142136, slope[:,:]))
+        return
+
+    def test_aspect(self):
+        x = np.arange(64)
+        y = np.arange(64).reshape(-1, 1)
+        grid = RegularGrid((0, 0, 10, 10, 0, 0), values=x*np.ones_like(y))
+        aspect = misc.aspect(grid)
+        self.assertTrue(np.all(np.pi == aspect[1:-1,1:-1]))
+        self.assertTrue(np.all(np.isnan(aspect[0,:])))
+        self.assertTrue(np.all(np.isnan(aspect[-1,:])))
+        self.assertTrue(np.all(np.isnan(aspect[:,0])))
+        self.assertTrue(np.all(np.isnan(aspect[:,-1])))
+
+        grid = RegularGrid((0, 0, 10, 10, 0, 0), values=np.ones_like(x)*y)
+        aspect = misc.aspect(grid)
+        self.assertTrue(np.allclose(0.5*np.pi, aspect[1:-1,1:-1]))
+        pass
+
 if __name__ == "__main__":
     unittest.main()
 

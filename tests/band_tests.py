@@ -21,6 +21,7 @@ class GenericBandTests(object):
         band[:, :] = d
 
         self.assertEqual(np.sum(band[:,:] - d), 0.0)
+        return
 
     def test_setblock_getblock_partial(self):
 
@@ -31,6 +32,7 @@ class GenericBandTests(object):
         band[128:960, :] = d
 
         self.assertEqual(np.sum(band[128:960,:]-d), 0.0)
+        return
 
     def test_setblock_getblock_striped(self):
 
@@ -41,6 +43,7 @@ class GenericBandTests(object):
         band[::2, 128:960:3] = d
 
         self.assertEqual(np.sum(band[::2,128:960:3]-d), 0.0)
+        return
 
     def test_get_scalar(self):
 
