@@ -198,7 +198,7 @@ class RegularGrid(Grid):
                                values=self[:,:]+other[:,:],
                                crs=self.crs, nodata_value=self.nodata)
         else:
-            raise errors.NonEquivalentGridError(self, other)
+            raise errors.GridError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
@@ -206,7 +206,7 @@ class RegularGrid(Grid):
                                values=self[:,:]-other[:,:],
                                crs=self.crs, nodata_value=self.nodata)
         else:
-            raise errors.NonEquivalentGridError(self, other)
+            raise errors.GridError(self, other)
 
     def __getitem__(self, key):
         return self._bandindexer[key]
@@ -1008,20 +1008,20 @@ class RegularGrid(Grid):
 
         Raises
         ------
-        GridIOError
+        GridError
             input grid is not isometric and can therefore not be saved
         """
         if reference not in ('center', 'corner'):
-            raise errors.GridIOError("reference in AAIGrid.tofile() must be 'center' or "
+            raise errors.GridError("reference in AAIGrid.tofile() must be 'center' or "
                            "'corner'")
 
         if np.any(self._transform[4:] != 0.0):
-            raise errors.GridIOError("ESRI ASCII grids do not support skewed grids")
+            raise errors.GridError("ESRI ASCII grids do not support skewed grids")
 
         ny, nx = self.bands[0].size
         x0, y0, dx, dy = self._transform[:4]
         if dx != dy:
-            raise errors.GridIOError("ASCII grids require isometric grid cells")
+            raise errors.GridError("ASCII grids require isometric grid cells")
 
         if not hasattr(f, 'read'):
             f = open(f, "w")
