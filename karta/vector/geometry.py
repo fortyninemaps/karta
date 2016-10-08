@@ -633,7 +633,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         Parameters
         ----------
         other : Geometry
-            another geometry with multipl connected vertices
+            another geometry with multiple connected vertices
 
         Notes
         -----
@@ -1480,7 +1480,7 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
         crs : karta.CRS, optional
             coordinate system of output vertices
         """
-        if crs is None:
+        if crs is None or (crs == self.crs):
             return [np.array(v) for v in self.vertices]
         else:
             vertices = []
@@ -1583,7 +1583,7 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
         crs : karta.CRS, optional
             coordinate system of output vertices
         """
-        if crs is None:
+        if crs is None or (crs == self.crs):
             vertices = []
             for poly_vertices in self.vertices:
                 vertices.append([np.array(v) for v in poly_vertices])
@@ -1684,6 +1684,62 @@ def multipart_from_singleparts(parts, crs=None):
         raise GeometryError("cannot convert type '{0}' to multipart".format(gt))
 
     return cls(vertices, data=data, crs=crs)
+
+def merge_multiparts(*multiparts, crs=None):
+
+    """ Merge a list of multipart geometries of the same type and return the
+    combined geometry. Shared data keys are retained. Properties are combined,
+    with the first definition of a duplicate property persisting.
+
+    Parameters
+    ----------
+    multiparts... : Multipart
+        multipart instances to merge
+    crs : karta.crs.CRS, optional
+        CRS to use, if provided. By default, the CRS of the first multipart is used.
+
+    Raises
+    ------
+    TypeError if inputs are not Multipart
+    GeometryError if inputs are not all of the same derived type
+    """
+    if len(multiparts) == 1:
+        if isinstance(multiparts[0], Multipart):
+            return multiparts[0]
+        else:
+            raise TypeError("first parameter not instance of Multipart")
+
+    t = type(multiparts[0])
+    if not all(isinstance(mp, t) for mp in multiparts[1:]):
+        raise GeometryError("not all inputs are the same kind of geometry")
+
+    if crs is None:
+        crs = multiparts[0].crs
+
+    vertices = multiparts[0].get_vertices(crs=crs)
+    _p = multiparts[0].properties
+    keys = set(multiparts[0].data.fields)
+    for mp in multiparts[1:]:
+        vertices = np.vstack([vertices, mp.get_vertices(crs=crs)])
+
+        p = mp.properties
+        p.update(_p)
+        _p = p
+
+        keys = keys.intersection(mp.data.fields)
+
+    d = {}
+    for k in keys:
+        v = []
+        for mp in multiparts:
+            v.extend(mp.d[k])
+        d[k] = v
+
+    return t(vertices, properties=p, data=d, crs=crs)
+
+
+
+
 
 def affine_matrix(mpa, mpb):
     """ Compute the affine transformation matrix that best matches two

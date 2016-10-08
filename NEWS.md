@@ -1,5 +1,33 @@
 # Highlights
 
+## changes with 0.8
+
+- removed `xyfile` module
+- removed several custom Exception types
+- remove `flat_distances_to()`, and allow `distances_to` to take a crs kwarg
+  instead
+- remove `Point.coordsxy()`
+- remove `RegularGrid.coordmesh()` and `RegularGrid.center_coords()`
+- remove warpedgrid
+- remove aliases gtiffread and aairead (these have been deprecated for ?
+  versions now)
+- renames:
+    - `read_gtiff` -> `RegularGrid.from_geotiff`
+    - `read_aai` -> `RegularGrid.from_aai`
+    - `get_coordinate_lists` -> `aslists`
+    - `get_vertices` -> `asarray`
+    - `rotate2d` -> `rotate`
+- indexing a `CompressedBand` instance with a scalar now returns a row vector
+- new function `merge_multiparts` to combine multipart geometries
+
+## changes with 0.7.4
+
+- bugfixes backported from 0.8dev
+
+## changes with 0.7.3
+
+- bugfixes backported from 0.8dev
+
 ## changes with 0.7.2
 
 - performance: convex hull calculation cythonized and extended for spherical
