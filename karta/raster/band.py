@@ -86,8 +86,8 @@ class BandIndexer(object):
                 sb = slice(None, None, None) if len(key) == 2 else key[2]
                 if isinstance(sb, slice):
                     if len(value.shape) == 3:
-                        for i in range(len(self.bands)):
-                            self.bands[i][sr,sc] = value[:,:,i]
+                        for ival, iband in enumerate(range(*sb.indices(len(self.bands)))):
+                            self.bands[iband][sr,sc] = value[:,:,ival]
                     else:
                         for b in self.bands[sb]:
                             b[sr,sc] = value

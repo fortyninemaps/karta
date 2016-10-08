@@ -135,6 +135,11 @@ class BandIndexerTests(unittest.TestCase):
         self.assertTrue(np.all(bands[0][:,:] == 1.0))
         self.assertTrue(np.all(bands[1][:,:] == 2.0))
         self.assertTrue(np.all(bands[2][:,:] == 2.0))
+
+        indexer[:,:,1:] = np.dstack([2*values, 3*values])
+
+        self.assertTrue(np.all(bands[1][:,:] == 2.0))
+        self.assertTrue(np.all(bands[2][:,:] == 3.0))
         return
 
     def test_set_multibanded_masked_scalar(self):
