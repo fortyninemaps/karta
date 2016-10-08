@@ -10,6 +10,7 @@ from karta.vector.geometry import (Point, Line, Polygon,
 from karta.vector.geometry import affine_matrix, _flatten
 from karta.crs import (Cartesian, SphericalEarth,
                        LonLatWGS84, NSIDCNorth, ProjectedCRS)
+from karta.errors import CRSError
 
 class TestGeometry(unittest.TestCase):
     """ Tests for manipulating Geometry objects (indexing, iteration, equality,
@@ -166,6 +167,27 @@ class TestGeometry(unittest.TestCase):
                         (5.0, 4.0)])
         sub = poly[:]
         self.assertEqual(sub, poly)
+        return
+
+    def test_poly_setitem(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        poly[0] = (0.5, 7.0)
+        self.assertEqual(poly[0], Point((0.5, 7.0), crs=poly.crs))
+        return
+
+    def test_poly_setitem_point(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        poly[0] = Point((0.5, 7.0), crs=poly.crs)
+        self.assertEqual(poly[0], Point((0.5, 7.0), crs=poly.crs))
+        return
+
+    def test_poly_setitem_point_different_crs(self):
+        poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0), (7.0, 2.0),
+                        (5.0, 4.0)])
+        with self.assertRaises(CRSError):
+            poly[0] = Point((0.5, 7.0), crs=SphericalEarth)
         return
 
     def test_segments(self):
