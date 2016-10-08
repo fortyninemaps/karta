@@ -572,11 +572,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid[:,:]))/Xg.size < 0.45)
         return
 
-    def test_read_aai(self):
-        grid = karta.read_aai(os.path.join(TESTDATA,'peaks49.asc'))
-        self.assertTrue(np.all(grid[::-1] == self.rast[:,:]))
-        return
-
     def test_set_nodata(self):
         v = np.arange(64, dtype=np.float64).reshape([8,8])
         v[2:4, 5:7] = -1

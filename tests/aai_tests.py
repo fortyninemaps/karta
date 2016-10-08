@@ -1,41 +1,39 @@
 import unittest
+import os
 import karta
 import numpy as np
+from test_helper import TESTDATA, TMPDATA
 
-class AAIGridTests(unittest.TestCase):
-    # aaigrid module deprecated - these tests deactivated
+class AAITests(unittest.TestCase):
 
-    def setUp(self):
+    def test_read_aai_corner(self):
         pe = peaks(n=49)
-        self.rast = karta.aaigrid.AAIGrid(pe, hdr={'ncols':49, 'nrows':49,
-                                                   'xllcorner':0.0,
-                                                   'yllcorner':0.0,
-                                                   'cellsize':30.0,
-                                                   'nodata_value':-9999})
+        control = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
+        grid = karta.read_aai(os.path.join(TESTDATA, "peaks49_corner.asc"))
+        self.assertTrue(np.all(grid[::-1] == control[:,:]))
         return
 
-    def test_region_centered(self):
-        reg = self.rast.get_region()
-        self.assertEqual(reg, (15.0, 1485.0, 15.0, 1485.0))
+    def test_read_aai_center(self):
+        pe = peaks(n=49)
+        control = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
+        grid = karta.read_aai(os.path.join(TESTDATA, "peaks49_center.asc"))
+        self.assertTrue(np.all(grid[::-1] == control[:,:]))
         return
 
-    def test_minmax(self):
-        minmax = self.rast.minmax()
-        self.assertEqual(minmax, (-6.5466445243204294, 8.075173545159231))
-        return
-
-    def test_get_indices(self):
-        ind = self.rast.get_indices(0.0, 0.0)
-        self.assertEqual(ind, (0, 48))
-        ind = self.rast.get_indices(1485.0, 1485.0)
-        self.assertEqual(ind, (48, 0))
-        return
-
-    def test_resize(self):
-        orig = self.rast.data.copy()
-        x0, x1, y0, y1 = self.rast.get_region()
-        self.rast.resize((x0, x1/2.0, y0, y1/2.0))
-        self.assertTrue(np.all(self.rast.data == orig[:25,:25]))
+    def test_write_aai(self):
+        pe = peaks(n=49)
+        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
+        grid.to_aai(os.path.join(TMPDATA, "peaks49.asc"))
+        with open(os.path.join(TMPDATA, "peaks49.asc")) as f:
+            lines = f.readlines()
+        self.assertEqual(len(lines), 55)
+        self.assertEqual("".join(lines[:6]), """NCOLS 49
+NROWS 49
+XLLCORNER 0.0
+YLLCORNER 0.0
+CELLSIZE 30.0
+NODATA_VALUE -9999
+""")
         return
 
 def peaks(n=49):

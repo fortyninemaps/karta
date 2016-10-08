@@ -5,28 +5,24 @@ import numpy as np
 def aairead(fnm):
     """ Read an existing ASCII grid file and return a Numpy array and a
     dictionary of header information. """
-    try:
-        h = []
-        with open(fnm, 'r') as f:
-            # Count the number of header entries
-            cnt = 0
-            while True:
-                l = f.readline()
-                if l.split(None, 1)[0].lower() in ['nrows', 'ncols',
-                        'yllcenter', 'xllcenter', 'yllcorner', 'xllcorner',
-                        'cellsize', 'nodata_value']:
-                    cnt += 1
-                else:
-                    break
+    h = []
+    with open(fnm, 'r') as f:
+        # Count the number of header entries
+        cnt = 0
+        while True:
+            l = f.readline()
+            if l.split(None, 1)[0].lower() in ['nrows', 'ncols',
+                    'yllcenter', 'xllcenter', 'yllcorner', 'xllcorner',
+                    'cellsize', 'nodata_value']:
+                cnt += 1
+            else:
+                break
 
-            # Read the header, then the array data
-            f.seek(0)
-            for _ in range(cnt):
-                h.append(f.readline())
-            data = f.readlines()
-
-    except IOError:
-        raise AAIIOError('error while trying to open {0}'.format(fnm))
+        # Read the header, then the array data
+        f.seek(0)
+        for _ in range(cnt):
+            h.append(f.readline())
+        data = f.readlines()
 
     # Store data internally
     hs = [rec.split(None, 1) for rec in h]
@@ -63,13 +59,13 @@ def check_header(hdr):
     centered and corner spatial references. """
     for field in ('ncols', 'nrows', 'cellsize'):
         if field not in hdr:
-            raise AAIError("{0} not defined".format(field.upper()))
+            raise ValueError("{0} not set in header".format(field.upper()))
 
     d = hdr['cellsize']
 
     if hdr.get('yllcenter') is None:
         if hdr.get('yllcorner') is None:
-            raise AAIIOError('YLL reference not defined')
+            raise ValueError('YLL reference not set in header')
         else:
             hdr['yllcenter'] = hdr['yllcorner'] + d / 2.0
     else:
@@ -77,7 +73,7 @@ def check_header(hdr):
 
     if hdr.get('xllcenter') is None:
         if hdr.get('xllcorner') is None:
-            raise AAIIOError('XLL reference not defined')
+            raise ValueError('XLL reference not set in header')
         else:
             hdr['xllcenter'] = hdr['xllcorner'] + d / 2.0
     else:
@@ -85,22 +81,3 @@ def check_header(hdr):
 
     return hdr
 
-
-class AAIError(Exception):
-    def __init__(self, message=''):
-        self.message = message
-    def __str__(self):
-        return self.message
-
-
-class AAIIOError(Exception):
-    """ Exceptions related to ESRI ASCII grid driver. """
-    def __init__(self, value, detail=None):
-        self.value = value
-        self.detail = detail
-    def __str__(self):
-        if self.detail is not None:
-            s = self.value + ': ' + self.detail
-        else:
-            s = self.value
-        return repr(s)

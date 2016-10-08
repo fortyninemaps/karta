@@ -1015,7 +1015,7 @@ class RegularGrid(Grid):
             raise errors.GridError("reference in AAIGrid.tofile() must be 'center' or "
                            "'corner'")
 
-        if np.any(self._transform[4:] != 0.0):
+        if np.any(self._transform[4:] != (0.0, 0.0)):
             raise errors.GridError("ESRI ASCII grids do not support skewed grids")
 
         ny, nx = self.bands[0].size
