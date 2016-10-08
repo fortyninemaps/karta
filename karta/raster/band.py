@@ -113,7 +113,7 @@ class BandIndexer(object):
         elif len(self.bands) == 1:
             return self.bands[0].size
         else:
-            return (len(self.bands), self.bands[0].size[0], self.bands.size[1])
+            return (len(self.bands), self.bands[0].size[0], self.bands[0].size[1])
 
     @property
     def dtype(self):

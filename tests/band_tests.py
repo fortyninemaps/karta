@@ -174,5 +174,17 @@ class BandIndexerTests(unittest.TestCase):
         self.assertEqual(np.sum(indexer[:,:]), 336)
         return
 
+    def test_shape(self):
+        bands = [CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32)]
+
+        indexer1 = BandIndexer([bands[0]])
+        self.assertEqual(indexer1.shape, (16, 16))
+
+        indexer3 = BandIndexer(bands)
+        self.assertEqual(indexer3.shape, (3, 16, 16))
+        return
+
 if __name__ == "__main__":
     unittest.main()
