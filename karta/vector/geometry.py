@@ -336,12 +336,14 @@ class MultiVertexBase(Geometry):
             raise GGeoError('Indices must be integers')
 
         if getattr(value, "_geotype", None) == "Point":
-            self.vertices[key] = value.vertex
-        elif len(value) == self.vertices.shape[1]:
-            self.vertices[key] = value
+            if self.crs == value.crs:
+                self.vertices[key] = np.asarray(value.vertex)
+            else:
+                raise CRSError("Point and Geometry have different coordinate systems")
+        elif len(value) == self.vertices.rank:
+            self.vertices[key] = np.asarray(value)
         else:
-            raise ValueError("cannot insert non-Point-like value: "
-                             "{0}".format(repr(value)))
+            raise ValueError("cannot insert non-Point-like value: {0}".format(repr(value)))
         return
 
     def __delitem__(self, key):
