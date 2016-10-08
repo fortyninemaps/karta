@@ -1613,7 +1613,7 @@ def _signcross(a, b):
     """ Return sign of 2D cross product a x b """
     c = (a[0]*b[1]) - (a[1]*b[0])
     if c != 0:
-        return c/abs(c)
+        return int(c/abs(c))
     else:
         return 0
 

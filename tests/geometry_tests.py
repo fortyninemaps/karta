@@ -7,7 +7,7 @@ import numpy as np
 
 from karta.vector.geometry import (Point, Line, Polygon,
                                    Multipoint, Multiline, Multipolygon)
-from karta.vector.geometry import affine_matrix, _flatten
+from karta.vector.geometry import affine_matrix, _flatten, _signcross, _matmult
 from karta.crs import (Cartesian, SphericalEarth,
                        LonLatWGS84, NSIDCNorth, ProjectedCRS)
 from karta.errors import CRSError
@@ -632,6 +632,19 @@ class TestMiscellaneous(unittest.TestCase):
         arr0 = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]
         arr1 = [[(1, 2), (3, 4), (5, 6), (7, 8), (9, 10)]]
         self.assertEqual(_flatten(arr1), arr0)
+        return
+
+    def test_signcross(self):
+        self.assertEqual(_signcross((0, 1), (1, 0)), -1)
+        self.assertEqual(_signcross((0, -1), (1, 0)), 1)
+        self.assertEqual(_signcross((1, 0), (1, 0)), 0)
+        return
+
+    def test_matmult(self):
+        self.assertEqual(_matmult([[1, 0], [0, 1], [0.5, 0.5]], [3, 5]),
+                                  [3.0, 5.0, 4.0])
+        self.assertEqual(_matmult([[2, -1], [1, 3], [0.0, 0.0]], [3, 5]),
+                                  [1.0, 18.0, 0.0])
         return
 
 class TestGeometryProj(unittest.TestCase):
