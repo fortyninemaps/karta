@@ -201,4 +201,6 @@ cdef class CoordString:
         return x, y, z
 
     def asarray(self):
+        if self.rank == -1:
+            return np.array([[]], dtype=np.float64)
         return np.array(self.coords).reshape([-1, self.rank])
