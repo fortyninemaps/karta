@@ -348,7 +348,8 @@ class MultiVertexBase(Geometry):
 
     def __delitem__(self, key):
         if len(self) > key:
-            del self.vertices[key]
+            self.vertices = CoordString([v for i,v in enumerate(self.vertices)
+                                         if i != key])
         else:
             raise GGeoError('Index ({0}) exceeds length'
                             '({1})'.format(key, len(self)))
