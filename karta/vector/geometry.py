@@ -1685,7 +1685,7 @@ def multipart_from_singleparts(parts, crs=None):
 
     return cls(vertices, data=data, crs=crs)
 
-def merge_multiparts(*multiparts, crs=None):
+def merge_multiparts(*multiparts, **kw):
 
     """ Merge a list of multipart geometries of the same type and return the
     combined geometry. Shared data keys are retained. Properties are combined,
@@ -1697,6 +1697,10 @@ def merge_multiparts(*multiparts, crs=None):
         multipart instances to merge
     crs : karta.crs.CRS, optional
         CRS to use, if provided. By default, the CRS of the first multipart is used.
+
+    Returns
+    -------
+    Multipart instance with the same type as the input *multiparts*
 
     Raises
     ------
@@ -1713,6 +1717,7 @@ def merge_multiparts(*multiparts, crs=None):
     if not all(isinstance(mp, t) for mp in multiparts[1:]):
         raise GeometryError("not all inputs are the same kind of geometry")
 
+    crs = kw.get("crs", None)
     if crs is None:
         crs = multiparts[0].crs
 
