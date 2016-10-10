@@ -2,6 +2,8 @@
 
 ## changes with 0.8
 
+- removed `__setitem__` and `__delitem__` methods from *MultiVertex*, as part of
+  a move toward treating singlepart geometries as immutable
 - removed `xyfile` module
 - removed several custom Exception types
 - remove `flat_distances_to()`, and allow `distances_to` to take a crs kwarg

@@ -320,30 +320,6 @@ class MultiVertexBase(Geometry):
         else:
             raise KeyError('index must be integer or slice object')
 
-    def __setitem__(self, key, value):
-        if not isinstance(key, int):
-            raise GGeoError('Indices must be integers')
-
-        if getattr(value, "_geotype", None) == "Point":
-            if self.crs == value.crs:
-                self.vertices[key] = np.asarray(value.vertex)
-            else:
-                raise CRSError("Point and Geometry have different coordinate systems")
-        elif len(value) == self.vertices.rank:
-            self.vertices[key] = np.asarray(value)
-        else:
-            raise ValueError("cannot insert non-Point-like value: {0}".format(repr(value)))
-        return
-
-    def __delitem__(self, key):
-        if len(self) > key:
-            self.vertices = CoordString([v for i,v in enumerate(self.vertices)
-                                         if i != key])
-        else:
-            raise GGeoError('Index ({0}) exceeds length'
-                            '({1})'.format(key, len(self)))
-        return
-
     def __iter__(self):
         return (self[i] for i in range(len(self)))
 
