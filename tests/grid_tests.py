@@ -6,36 +6,37 @@ import numpy as np
 from test_helper import TESTDATA
 
 import karta
+from karta import RegularGrid
 
 class RegularGridTests(unittest.TestCase):
 
     def setUp(self):
         pe = peaks(n=49)
-        self.rast = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
+        self.rast = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
         return
 
     def test_get_resolution(self):
-        grid = karta.RegularGrid([0.0, 0.0, 25.0, 35.0, 10.0, 10.0])
+        grid = RegularGrid([0.0, 0.0, 25.0, 35.0, 10.0, 10.0])
         self.assertEqual(grid.resolution, (25.0, 35.0))
         return
 
     def test_add_rgrid(self):
-        rast2 = karta.RegularGrid(self.rast.transform,
-                                  values=np.random.random(self.rast.size))
+        rast2 = RegularGrid(self.rast.transform,
+                            values=np.random.random(self.rast.size))
         res = self.rast + rast2
         self.assertTrue(np.all(res[:,:] == self.rast[:,:]+rast2[:,:]))
         return
 
     def test_sub_rgrid(self):
-        rast2 = karta.RegularGrid(self.rast.transform,
-                                  values=np.random.random(self.rast.size))
+        rast2 = RegularGrid(self.rast.transform,
+                            values=np.random.random(self.rast.size))
         res = self.rast - rast2
         self.assertTrue(np.all(res[:,:] == self.rast[:,:]-rast2[:,:]))
         return
 
     def test_center_coords(self):
-        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
-                                 values=np.zeros([49, 49]))
+        grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
+                           values=np.zeros([49, 49]))
         ans = np.meshgrid(np.arange(15.0, 1471.0, 30.0),
                           np.arange(15.0, 1471.0, 30.0))
         self.assertEqual(0.0, np.sum(grid.center_coords()[0] - ans[0]))
@@ -43,8 +44,8 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_center_coords_skewed(self):
-        grid = karta.RegularGrid((15.0, 15.0, 30.0, 30.0, 20.0, 10.0),
-                                 values=np.zeros([5, 5]))
+        grid = RegularGrid((15.0, 15.0, 30.0, 30.0, 20.0, 10.0),
+                           values=np.zeros([5, 5]))
         X, Y = grid.center_coords()
         self.assertEqual(X[0,0], 40.0)
         self.assertEqual(Y[0,0], 35.0)
@@ -54,6 +55,20 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(Y[-1,-1], 195.0)
         return
 
+    def test_aschunks(self):
+        grid = RegularGrid((0, 0, 1, 1, 0, 0), values=peaks(512))
+        for chunk in grid.aschunks(size=(64, 64)):
+            self.assertEqual(chunk.size, (64, 64))
+        return
+
+    def test_aschunks_overlap(self):
+        grid = RegularGrid((0, 0, 1, 1, 0, 0), values=peaks(512))
+        count = 0
+        for chunk in grid.aschunks(size=(64, 64), overlap=(32, 32)):
+            count += 1
+        self.assertEqual(count, 256)
+        return
+
     def test_apply(self):
         msk = np.zeros([8, 8], dtype=np.bool)
         msk[3, 2] = True
@@ -61,7 +76,7 @@ class RegularGridTests(unittest.TestCase):
         val = np.arange(64, dtype=np.float64).reshape([8,8])
         val_ = val.copy()
         val[msk] = -1
-        grid = karta.RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
+        grid = RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
         newgrid = grid.apply(lambda x: x**2)
 
         self.assertTrue(np.all(newgrid[:,:][msk] == -1))
@@ -75,7 +90,7 @@ class RegularGridTests(unittest.TestCase):
         val = np.arange(64, dtype=np.float64).reshape([8,8])
         val_ = val.copy()
         val[msk] = -1
-        grid = karta.RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
+        grid = RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
         grid.apply(lambda x: x**2, inplace=True)
 
         self.assertTrue(np.all(grid[:,:][msk] == -1))
@@ -83,9 +98,9 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_merge(self):
-        grid1 = karta.RegularGrid([10, 20, 1, 1, 0, 0], values=np.ones([8, 8]))
-        grid2 = karta.RegularGrid([7, 22, 1, 1, 0, 0], values=2*np.ones([4, 6]))
-        grid3 = karta.RegularGrid([12, 15, 1, 1, 0, 0], values=3*np.ones([5, 5]))
+        grid1 = RegularGrid([10, 20, 1, 1, 0, 0], values=np.ones([8, 8]))
+        grid2 = RegularGrid([7, 22, 1, 1, 0, 0], values=2*np.ones([4, 6]))
+        grid3 = RegularGrid([12, 15, 1, 1, 0, 0], values=3*np.ones([5, 5]))
         grid_combined = karta.raster.merge([grid1, grid2, grid3])
         self.assertEqual(grid_combined.transform, (7.0, 15.0, 1.0, 1.0, 0.0, 0.0))
         self.assertEqual(grid_combined.size, (13, 11))
@@ -93,9 +108,9 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_merge_weighted(self):
-        grid1 = karta.RegularGrid([10, 20, 1, 1, 0, 0], values=np.ones([8, 8]))
-        grid2 = karta.RegularGrid([7, 22, 1, 1, 0, 0], values=2*np.ones([4, 6]))
-        grid3 = karta.RegularGrid([12, 19, 1, 1, 0, 0], values=3*np.ones([5, 5]))
+        grid1 = RegularGrid([10, 20, 1, 1, 0, 0], values=np.ones([8, 8]))
+        grid2 = RegularGrid([7, 22, 1, 1, 0, 0], values=2*np.ones([4, 6]))
+        grid3 = RegularGrid([12, 19, 1, 1, 0, 0], values=3*np.ones([5, 5]))
         grid_combined = karta.raster.merge([grid1, grid2, grid3], weights=[1, 2, 3])
         self.assertAlmostEqual(grid_combined[4,4], 1.66666666666)
         self.assertAlmostEqual(grid_combined[2,8], 2.5)
@@ -103,10 +118,10 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_merge_multiband(self):
-        grid3a = karta.RegularGrid([0, 0, 1, 1, 0, 0],
-                values=np.array([1,2,3]) * np.ones((16, 16, 3)))
-        grid3b = karta.RegularGrid([4, 4, 1, 1, 0, 0],
-                values=np.array([2,3,4]) * np.ones((16, 16, 3)))
+        grid3a = RegularGrid([0, 0, 1, 1, 0, 0],
+                             values=np.array([1,2,3]) * np.ones((16, 16, 3)))
+        grid3b = RegularGrid([4, 4, 1, 1, 0, 0],
+                             values=np.array([2,3,4]) * np.ones((16, 16, 3)))
         grid3_mosaic = karta.raster.merge([grid3a, grid3b])
         self.assertEqual(np.nansum(grid3_mosaic[:,:,0]), 552)
         self.assertEqual(np.nansum(grid3_mosaic[:,:,1]), 920)
@@ -120,7 +135,7 @@ class RegularGridTests(unittest.TestCase):
             xx, yy = np.meshgrid(np.linspace(start, finish, n),
                                  np.linspace(start, finish, n))
             zz = 2.0*xx - 3.0*yy
-            return karta.RegularGrid((0.0, 0.0, res, res, 0.0, 0.0), values=zz)
+            return RegularGrid((0.0, 0.0, res, res, 0.0, 0.0), values=zz)
 
         # node numbers from a line with extreme edges at [0, 1]
         g = makegrid(0.0, 1.0-2.0/300, 150, 1.0)
@@ -137,7 +152,7 @@ class RegularGridTests(unittest.TestCase):
             xx, yy = np.meshgrid(np.linspace(start, finish, n),
                                  np.linspace(start, finish, n))
             zz = 2.0*xx - 3.0*yy
-            return karta.RegularGrid((0.0, 0.0, res, res, 0.0, 0.0), values=zz)
+            return RegularGrid((0.0, 0.0, res, res, 0.0, 0.0), values=zz)
 
         # node numbers from a line with extreme edges at [0, 1]
         g = makegrid(0.0, 1.0-2.0/300, 150, 1.0)
@@ -148,11 +163,10 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_resample_multiband(self):
-        grid = karta.RegularGrid((0, 0, 1, 1, 0, 0),
-                values=np.dstack([np.ones((64, 64)),
-                                  2*np.ones((64, 64)),
-                                  3*np.ones((64, 64))]))
-
+        grid = RegularGrid((0, 0, 1, 1, 0, 0),
+                           values=np.dstack([np.ones((64, 64)),
+                                             2*np.ones((64, 64)),
+                                             3*np.ones((64, 64))]))
         grid2 = grid.resample(0.5, 0.5)
         self.assertEqual(grid2[0,0,0], 1.0)
         self.assertEqual(grid2[0,0,1], 2.0)
@@ -160,8 +174,8 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_sample_nearest(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 1], [1, 0.5]]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_nearest(0.6, 0.7), 0.0)
         self.assertEqual(grid.sample_nearest(0.6, 1.3), 1.0)
         self.assertEqual(grid.sample_nearest(1.4, 0.3), 1.0)
@@ -169,25 +183,25 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_sample_nearest_vector(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.arange(64).reshape([8,8]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.arange(64).reshape([8,8]))
         res = grid.sample_nearest(np.arange(1,7,0.5), np.arange(2,5,0.25))
         self.assertEqual(res.shape, (1, 12))
         return
 
     def test_sample_nearest_array(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.arange(64).reshape([8,8]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.arange(64).reshape([8,8]))
         X, Y = np.meshgrid(np.arange(1, 7, 0.5), np.arange(2, 5, 0.25))
         res = grid.sample_nearest(X, Y)
         self.assertEqual(res.shape, (1, 12, 12))
         return
 
     def test_sample_nearest_array_order(self):
-        grid = karta.RegularGrid((0, 0, 1, 1, 0, 0),
-                                 values=np.dstack([np.ones((64, 64)),
-                                                   2*np.ones((64,64)),
-                                                   3*np.ones((64,64))]))
+        grid = RegularGrid((0, 0, 1, 1, 0, 0),
+                           values=np.dstack([np.ones((64, 64)),
+                                             2*np.ones((64,64)),
+                                             3*np.ones((64,64))]))
 
         X, Y = np.meshgrid(np.arange(2, 10), np.arange(5, 13))
         val = grid.sample_nearest(X, Y)
@@ -197,8 +211,8 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_sample_nearest_skewed(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
-                                 values=np.array([[0, 1], [1, 0.5]]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
+                           values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_nearest(1, 0.75), 0.0)
         self.assertEqual(grid.sample_nearest(1.5, 1.05), 1.0)
         self.assertEqual(grid.sample_nearest(1.2, 1.4), 1.0)
@@ -206,21 +220,21 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_sample_bilinear(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 1], [1, 0.5]]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 0.625)
         return
 
     def test_sample_bilinear_vector(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.arange(64, dtype=np.float64).reshape([8,8]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.arange(64, dtype=np.float64).reshape([8,8]))
         res = grid.sample_bilinear(np.arange(1,7,0.5), np.arange(2,5,0.25))
         self.assertEqual(res.shape, (1, 12))
         return
 
     def test_sample_bilinear_array(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.arange(64, dtype=np.float64).reshape([8,8]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.arange(64, dtype=np.float64).reshape([8,8]))
         X, Y = np.meshgrid(np.arange(1, 7, 0.5), np.arange(2, 5, 0.25))
         res = grid.sample_bilinear(X, Y)
         self.assertEqual(res.shape, (1, 12, 12))
@@ -228,43 +242,39 @@ class RegularGridTests(unittest.TestCase):
 
 
     def test_sample_bilinear_int(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 2], [2, 1]],
-                                                 dtype=np.int32))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.array([[0, 2], [2, 1]], dtype=np.int32))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
         return
 
     def test_sample_bilinear_uint(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 2], [2, 1]],
-                                                 dtype=np.uint16))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.array([[0, 2], [2, 1]], dtype=np.uint16))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
         return
 
     def test_sample_bilinear_uint8(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 2], [2, 1]],
-                                                 dtype=np.uint8))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.array([[0, 2], [2, 1]], dtype=np.uint8))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
         return
 
     def test_sample_bilinear_multiband(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.dstack([[[0, 1], [1, 0.5]],
-                                                   [[1, 2], [2, 1.5]]]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.dstack([[[0, 1], [1, 0.5]], [[1, 2], [2, 1.5]]]))
         res = grid.sample_bilinear(1.0, 1.0)
         self.assertTrue(np.all(res == np.array([0.625, 1.625])))
         return
 
     def test_sample_bilinear_skewed(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
-                                 values=np.array([[0, 1], [1, 0.5]]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
+                           values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_bilinear(1.5, 1.2), 0.625)
         return
 
     def test_sample_bilinear2(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 1], [1, 0.5]]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.array([[0, 1], [1, 0.5]]))
         xi, yi = np.meshgrid(np.linspace(0.5, 1.5), np.linspace(0.5, 1.5))
         z = grid.sample_bilinear(xi, yi).ravel()
         self.assertEqual([z[400], z[1200], z[1550], z[2120]],
@@ -273,8 +283,8 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_sample_multipoint(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 1], [1, 0.5]]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.array([[0, 1], [1, 0.5]]))
         mp = karta.Multipoint([(0.6, 0.7), (0.6, 1.3), (1.4, 0.3), (1.6, 1.3)],
                               crs=grid.crs)
         self.assertTrue(np.all(np.allclose(grid.sample(mp, method="nearest"),
@@ -282,8 +292,8 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_sample_2d_array(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
-                                 values=np.array([[0, 1], [1, 0.5]]))
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+                           values=np.array([[0, 1], [1, 0.5]]))
         xi = np.array([[0.7, 1.3], [0.7, 1.3]])
         yi = np.array([[0.7, 0.7], [1.3, 1.3]])
         z = grid.sample(xi, yi, method="nearest")
@@ -291,8 +301,7 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_vertex_coords(self):
-        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
-                                 values=np.zeros([49, 49]))
+        grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=np.zeros([49, 49]))
         ans = np.meshgrid(np.arange(15.0, 1486.0, 30.0),
                           np.arange(15.0, 1486.0, 30.0))
         self.assertTrue(np.sum(grid.vertex_coords()[0] - ans[0]) < 1e-10)
@@ -300,8 +309,7 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_vertex_coords_skewed(self):
-        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 20.0, 10.0),
-                                 values=np.zeros([5, 5]))
+        grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 20.0, 10.0), values=np.zeros([5, 5]))
         ans = np.meshgrid(np.arange(15.0, 1486.0, 30.0),
                           np.arange(15.0, 1486.0, 30.0))
         self.assertTrue(np.sum(self.rast.vertex_coords()[0] - ans[0]) < 1e-10)
@@ -318,7 +326,7 @@ class RegularGridTests(unittest.TestCase):
     def test_get_extent_crs(self):
         pe = peaks(n=49)
         crs = karta.crs.ProjectedCRS("+proj=utm +zone=12 +ellps=WGS84 +north=True", "UTM 12N (WGS 84)")
-        rast_utm12N = karta.RegularGrid((0.0, 0.0, 10000.0, 10000.0, 0.0, 0.0),
+        rast_utm12N = RegularGrid((0.0, 0.0, 10000.0, 10000.0, 0.0, 0.0),
                                         values=pe,
                                         crs=crs)
         a,b,c,d = rast_utm12N.get_extent(reference='center',
@@ -329,11 +337,21 @@ class RegularGridTests(unittest.TestCase):
         self.assertAlmostEqual(d, 4.3878488543)
         return
 
+    def test_get_data_extent(self):
+        grid = RegularGrid((0, 0, 1, 1, 0, 0), values=np.zeros((128, 128), dtype=np.float64))
+        grid[:,:4] = grid.nodata
+        grid[:,-7:] = grid.nodata
+        grid[:21,:] = grid.nodata
+        grid[-17:,:] = grid.nodata
+        self.assertEqual(grid.get_data_extent("edge"), (4, 121, 21, 111))
+        self.assertEqual(grid.get_data_extent("center"), (4.5, 120.5, 21.5, 110.5))
+        return
+
     def test_minmax_nodata(self):
         values = np.array([[4, 5, 3], [4, 2, -9], [3, 6, 1]])
 
-        self.rast = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
-                                      values=values, nodata_value=-9)
+        self.rast = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
+                                values=values, nodata_value=-9)
         minmax = self.rast.minmax()
         self.assertEqual(minmax, (1, 6))
         return
@@ -341,8 +359,8 @@ class RegularGridTests(unittest.TestCase):
     def test_minmax_nodata2(self):
         values = -9*np.ones([3,3])
 
-        self.rast = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
-                                      values=values, nodata_value=-9)
+        self.rast = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
+                                values=values, nodata_value=-9)
         minmax = self.rast.minmax()
         self.assertTrue(np.isnan(minmax[0]))
         self.assertTrue(np.isnan(minmax[1]))
@@ -365,7 +383,7 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_clip_to_extent(self):
-        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), np.zeros((15,15)))
+        proto = RegularGrid((500, 500, 30, 30, 0, 0), np.zeros((15,15)))
         clipped = self.rast.clip(*proto.get_extent("edge"))
         self.assertEqual(clipped.size, (15, 15))
         self.assertEqual(clipped.transform, (510, 510, 30, 30, 0, 0))
@@ -377,14 +395,14 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_resize_smaller(self):
-        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
+        proto = RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([620, 650, 1370, 1310])
         self.assertEqual(newgrid.transform, (620.0, 650.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid[:,:] == proto[5:27,4:29]))
         return
 
     def test_resize_larger(self):
-        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
+        proto = RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([380, 320, 380+30*60, 320+30*62])
         self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid[6:56,4:54] == proto[:,:]))
@@ -392,14 +410,14 @@ class RegularGridTests(unittest.TestCase):
         return
 
     def test_resize_lower_left(self):
-        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
+        proto = RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([380, 320, 380+30*30, 320+30*32])
         self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid[6:,4:] == proto[:26,:26]))
         return
 
     def test_resize_upper_right(self):
-        proto = karta.RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
+        proto = RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([1940, 1910, 1940+30*10, 1910+30*7])
         self.assertEqual(newgrid.transform, (1940.0, 1910.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid[:3,:2] == proto[-3:,-2:]))
@@ -409,7 +427,7 @@ class RegularGridTests(unittest.TestCase):
         T = [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]
         v = np.arange(64, dtype=np.float64).reshape([8, 8])
         v[0,2:7] = np.nan
-        g = karta.RegularGrid(T, values=v, nodata_value=np.nan)
+        g = RegularGrid(T, values=v, nodata_value=np.nan)
         self.assertEqual(np.sum(g.data_mask), 59)
         return
 
@@ -417,7 +435,7 @@ class RegularGridTests(unittest.TestCase):
         T = [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]
         v = np.arange(64, dtype=np.int8).reshape([8, 8])
         v[0,2:7] = -1
-        g = karta.RegularGrid(T, values=v, nodata_value=-1)
+        g = RegularGrid(T, values=v, nodata_value=-1)
         self.assertEqual(np.sum(g.data_mask), 59)
         return
 
@@ -426,9 +444,9 @@ class RegularGridTests(unittest.TestCase):
         xp = ((2+np.cos(7*t)) * np.cos(t+0.3) + 4) * 12
         yp = ((2+np.cos(7*t)) * np.sin(t+0.2) + 4) * 12
         poly = karta.Polygon(zip(xp, yp), crs=karta.crs.Cartesian)
-        grid = karta.RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
-                                 values=np.arange(1e6).reshape(1000, 1000),
-                                 crs=karta.crs.Cartesian)
+        grid = RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
+                           values=np.arange(1e6).reshape(1000, 1000),
+                           crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 97048730546)
         return
@@ -438,9 +456,9 @@ class RegularGridTests(unittest.TestCase):
         xp = ((2+np.cos(7*t)) * np.cos(t+0.3) + 4) * 12
         yp = ((2+np.cos(7*t)) * np.sin(t+0.2) + 4) * 12
         poly = karta.Polygon(zip(xp, yp), crs=karta.crs.Cartesian)
-        grid = karta.RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
-                                 values=np.arange(1e6).reshape(1000, 1000),
-                                 crs=karta.crs.Cartesian)
+        grid = RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
+                           values=np.arange(1e6).reshape(1000, 1000),
+                           crs=karta.crs.Cartesian)
         grid.mask_by_poly(poly, inplace=True)
         self.assertEqual(int(np.nansum(grid[:,:])), 97048730546)
         return
@@ -450,9 +468,9 @@ class RegularGridTests(unittest.TestCase):
         xp = ((2+np.cos(7*t)) * np.cos(t+0.3) + 2) * 12
         yp = ((2+np.cos(7*t)) * np.sin(t+0.2) + 2) * 12
         poly = karta.Polygon(zip(xp, yp), crs=karta.crs.Cartesian)
-        grid = karta.RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
-                                 values=np.arange(1e6).reshape(1000, 1000),
-                                 crs=karta.crs.Cartesian)
+        grid = RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
+                           values=np.arange(1e6).reshape(1000, 1000),
+                           crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
         self.assertEqual(masked_grid.data_mask.sum(), 181424)
         return
@@ -460,7 +478,7 @@ class RegularGridTests(unittest.TestCase):
     def test_mask_poly_partial2(self):
         # this case has the first transect begin off-grid, which has caused
         # problems in the past
-        g = karta.RegularGrid([0, 0, 1, 1, 0, 0], values=np.ones((7, 7)))
+        g = RegularGrid([0, 0, 1, 1, 0, 0], values=np.ones((7, 7)))
         p = karta.Polygon([(-2, 3), (8, -5), (8, -1), (-2, 7)])
         gc = g.mask_by_poly(p)
         self.assertEqual(gc.data_mask.sum(), 20)
@@ -474,15 +492,15 @@ class RegularGridTests(unittest.TestCase):
         xp2 = ((2+np.cos(7*t)) * np.cos(t+0.3) + 4) * 6 + 40
         yp2 = ((2+np.cos(7*t)) * np.sin(t+0.2) + 4) * 6 + 30
         poly2 = karta.Polygon(zip(xp2, yp2), crs=karta.crs.Cartesian)
-        grid = karta.RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
-                                 values=np.arange(1e6).reshape(1000, 1000),
-                                 crs=karta.crs.Cartesian)
+        grid = RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
+                           values=np.arange(1e6).reshape(1000, 1000),
+                           crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly([poly, poly2])
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 47081206720)
         return
 
     def test_get_positions(self):
-        grid = karta.RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
+        grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.zeros((3,3)))
         (i, j) = grid.get_positions(1.5, 1.5)
         self.assertEqual((i,j), (1.0, 1.0))
@@ -575,7 +593,7 @@ class RegularGridTests(unittest.TestCase):
     def test_set_nodata(self):
         v = np.arange(64, dtype=np.float64).reshape([8,8])
         v[2:4, 5:7] = -1
-        grid = karta.RegularGrid([0, 0, 1, 1, 0, 0], values=v, nodata_value=-1)
+        grid = RegularGrid([0, 0, 1, 1, 0, 0], values=v, nodata_value=-1)
         self.assertEqual(grid.nodata, -1.0)
         grid.set_nodata_value(np.nan)
         self.assertTrue(np.isnan(grid.nodata))
