@@ -259,18 +259,8 @@ class CompressedBand(object):
                 sy = 1
 
             elif isinstance(kr, slice):
-                if kr.start is None:
-                    yoff = 0
-                else:
-                    yoff = kr.start
-                if kr.stop is None:
-                    ny = self.size[0]-yoff
-                else:
-                    ny = kr.stop-yoff
-                if kr.step is None:
-                    sy = 1
-                else:
-                    sy = kr.step
+                yoff, _ystop, sy = kr.indices(self.size[0])
+                ny = _ystop - yoff
 
             else:
                 raise IndexError("slicing with instances of '{0}' not "
@@ -282,22 +272,15 @@ class CompressedBand(object):
                 sx = 1
 
             elif isinstance(kc, slice):
-                if kc.start is None:
-                    xoff = 0
-                else:
-                    xoff = kc.start
-                if kc.stop is None:
-                    nx = self.size[1]-xoff
-                else:
-                    nx = kc.stop-xoff
-                if kc.step is None:
-                    sx = 1
-                else:
-                    sx = kc.step
+                xoff, _xstop, sx = kc.indices(self.size[1])
+                nx = _xstop - xoff
 
             else:
                 raise IndexError("slicing with instances of '{0}' not "
                                  "supported".format(type(kc)))
+
+            if not hasattr(value, "shape"):
+                value = value*np.ones((ny, nx))
 
             vny, vnx = value.shape[:2]
             if (ceil(float(ny)/sy) != vny) or (ceil(float(nx)/sx) != vnx):
