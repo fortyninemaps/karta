@@ -248,7 +248,7 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         else:
             return math.sqrt(dist**2. + (self.z-other.z)**2.)
 
-    def shift(self, shift_vector, inplace=False):
+    def shift(self, shift_vector):
         """ Shift point in space.
 
         Parameters
@@ -258,15 +258,13 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
         inplace : bool
             whether shift should be in place (default False)
         """
-        if len(shift_vector) != len(self.vertex):
-            raise GGeoError('Shift vector length must equal geometry rank.')
-
-        if inplace:
-            self.vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
-            return self
+        if len(shift_vector) != 2:
+            raise ValueError("shift vector must be of the form (xshift, yshift)")
+        if len(self.vertex) == 2:
+            vertex = (self.x+shift_vector[0], self.y+shift_vector[1])
         else:
-            vertex = tuple([a+b for a,b in zip(self.vertex, shift_vector)])
-            return Point(vertex, properties=self.properties, crs=self.crs)
+            vertex = (self.x+shift_vector[0], self.y+shift_vector[1], self.z)
+        return Point(vertex, properties=self.properties, crs=self.crs)
 
 class MultiVertexBase(Geometry):
 
@@ -345,20 +343,26 @@ class MultiVertexMixin(object):
     def coordinates(self):
         return self.get_coordinate_lists()
 
-    def get_vertices(self, crs=None):
+    def get_vertices(self, crs=None, drop_z=False):
         """ Return vertices as an array.
 
         Parameters
         ----------
         crs : karta.CRS, optional
             coordinate system of output vertices
+        drop_z : bool, optional
+            whether to discard third dimension for rank 3 geometries
         """
         if (crs is None) or (crs is self.crs):
-            return np.array(self.vertices)
+            if not drop_z:
+                return self.vertices.asarray()
+            else:
+                return self.vertices.asarray()[:,:2]
         else:
-            vertices = [_reproject(v[:2], self.crs, crs)
-                        for v in self.vertices]
-            return np.array(vertices)
+            v = self.vertices.vectors(drop_z=drop_z)
+            vt = _reproject(v, self.crs, crs)
+            return np.vstack(vt).T
+
     @property
     def bbox(self):
         return self.get_bbox()
@@ -422,31 +426,77 @@ class MultiVertexMixin(object):
         return (reg0[0] <= reg1[2] and reg1[0] <= reg0[2] and
                 reg0[1] <= reg1[3] and reg1[1] <= reg0[3])
 
-    def shift(self, shift_vector, inplace=False):
+    def apply_affine_transform(self, M):
+        """ Apply an affine transform given by matrix *M* to data and return a
+        new geometry.
+
+        Parameters
+        ----------
+        M : ndarray
+            2x3 or 3x4 affine transformation matrix, representing a
+            two-dimensional or a three-dimensional transformation,
+            respectively.
+
+        Returns
+        -------
+        Geometry
+
+        Notes
+        -----
+        The output coordinates are computed as
+
+            xnew        x
+                  = M * y
+            ynew        1
+
+        or
+
+            xnew        x
+            ynew  = M * y
+            znew        z
+                        1
+        """
+        if len(self.vertices) == 0:
+            raise GGeoError("cannot transform zero length geometry")
+
+        if M.shape == (2, 3):
+            N = np.zeros((3, 4), dtype=np.float64)
+            N[:2,:2] = M[:,:2]
+            N[:2,3] = M[:,2]
+            N[2, 2] = 1.0
+            M = N
+        elif M.shape != (3, 4):
+            raise ValueError("invalid affine matrix size: {0}".format(M.shape))
+
+        xy = self.get_vertices()
+        if xy.shape[1] == 2:
+            rank = 2
+            xy = np.hstack([xy, np.zeros((len(xy), 1), dtype=np.float64)])
+        else:
+            rank = 3
+        xy = np.hstack([xy, np.ones((len(xy), 1), dtype=np.float64)])
+        new_xy = np.dot(M, xy.T).T
+        if rank == 2:
+            new_xy = new_xy[:,:2]
+
+        if hasattr(self, "data"):
+            return type(self)(new_xy, properties=self.properties, data=self.data, crs=self.crs)
+        else:
+            return type(self)(new_xy, properties=self.properties, crs=self.crs)
+
+    def shift(self, shift_vector):
         """ Shift geometry in space.
 
         Parameters
         ----------
         shift_vector : iterable
             vector with length equal to Geometry rank defining the shift
-        inplace : bool
-            whether shift should be in place (default False)
         """
-        if len(self.vertices) == 0:
-            raise GGeoError('cannot shift zero length geometry')
-        if len(shift_vector) != len(self.vertices[0]):
-            raise GGeoError('shift vector length must equal geometry rank')
-
-        if inplace:
-            self.vertices = CoordString(self.vertices.asarray() + shift_vector)
-            self._cache = {}
-            return self
-        else:
-            vertices = self.vertices.asarray() + shift_vector
-            kw = {"properties": self.properties, "crs": self.crs}
-            if hasattr(self, "data"):
-                kw["data"] = self.data
-            return type(self)(vertices, **kw)
+        if len(shift_vector) != 2:
+            raise ValueError("shift vector must be of the form (xshift, yshift)")
+        trans_mat = np.array([[1, 0, shift_vector[0]],
+                              [0, 1, shift_vector[1]]], dtype=np.float64)
+        return self.apply_affine_transform(trans_mat)
 
     def rotate(self, thetad, origin=(0, 0)):
         """ Rotate rank 2 geometry.
@@ -458,27 +508,12 @@ class MultiVertexMixin(object):
         origin : tuple of two floats, optional
             pivot for rotation (default (0, 0))
         """
-        # First, shift by the origin
-        ret = self.shift(-np.asarray(origin))
-
-        # Multiply by a rotation matrix
-        theta = thetad / 180.0 * math.pi
-        R = ((math.cos(theta), -math.sin(theta)),
-             (math.sin(theta), math.cos(theta)))
-        rvertices = [_matmult(R, x) for x in ret.vertices]
-        ret.vertices = CoordString(rvertices)
-
-        # Shift back
-        ret.shift(origin, inplace=True)
-        return ret
-
-    def apply_affine_transform(self, M):
-        """ Apply an affine transform given by matrix *M* to data and return a
-        new geometry. """
-        vertices = []
-        for x,y in self.get_vertices():
-            vertices.append(tuple(np.dot(M, [x, y, 1])[:2]))
-        return type(self)(vertices, properties=self.properties, crs=self.crs)
+        ct = math.cos(thetad*math.pi / 180.0)
+        st = math.sin(thetad*math.pi / 180.0)
+        x, y = origin
+        M = np.array([[ct, -st, -x*ct + y*st + x],
+                      [st, ct, -x*st - y*ct + y]], dtype=np.float64)
+        return self.apply_affine_transform(M)
 
     def _subset(self, idxs):
         """ Return a subset defined by indices. """
@@ -1584,21 +1619,6 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
             ret.append(poly)
         return ret
 
-def _signcross(a, b):
-    """ Return sign of 2D cross product a x b """
-    c = (a[0]*b[1]) - (a[1]*b[0])
-    if c != 0:
-        return int(c/abs(c))
-    else:
-        return 0
-
-def _matmult(A, x):
-    """ Return product of matrix A and vector x """
-    b = []
-    for a in A:
-        b.append(sum([ai * xi for ai, xi in zip(a, x)]))
-    return b
-
 def _sign(a):
     """ Return the sign of *a* """
     if a == 0.0:
@@ -1718,10 +1738,6 @@ def merge_multiparts(*multiparts, **kw):
 
     return t(vertices, properties=p, data=d, crs=crs)
 
-
-
-
-
 def affine_matrix(mpa, mpb):
     """ Compute the affine transformation matrix that best matches two
     Multipoint geometries using a least squares fit.
@@ -1741,4 +1757,4 @@ def affine_matrix(mpa, mpb):
     for i, (x, y) in enumerate(mpa.get_vertices()):
         A[2*i:2*i+2,:] = np.kron(np.eye(2), [x, y, 1])
     M, res, rank, singvals = np.linalg.lstsq(A, vecp)
-    return np.vstack([np.reshape(M, [2, 3]), np.atleast_2d([0, 0, 1])])
+    return np.reshape(M, [2, 3])

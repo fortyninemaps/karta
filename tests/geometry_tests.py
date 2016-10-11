@@ -7,7 +7,7 @@ import numpy as np
 
 from karta.vector.geometry import (Point, Line, Polygon,
                                    Multipoint, Multiline, Multipolygon)
-from karta.vector.geometry import affine_matrix, _flatten, _signcross, _matmult
+from karta.vector.geometry import affine_matrix, _flatten
 from karta.crs import (Cartesian, SphericalEarth,
                        LonLatWGS84, NSIDCNorth, ProjectedCRS)
 from karta.errors import CRSError
@@ -230,39 +230,31 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertAlmostEqual(point.azimuth(other, projected=False), 45.036973, places=6)
         return
 
-    def test_point_shift_inplace(self):
-        point = Point((1.0, 2.0, 3.0), properties={"type": "apple", "color": (43,67,10)})
-        point2 = Point((-3.0, 5.0, 2.5), properties={"type": "apple", "color":(43,67,10)})
-        point2.shift((4.0, -3.0, 0.5), inplace=True)
-        self.assertEqual(point, point2)
-        return
-
-    def test_point_shift(self):
-        point = Point((1.0, 2.0, 3.0), properties={"type": "apple", "color": (43,67,10)})
-        point2 = Point((-3.0, 5.0, 2.5), properties={"type": "apple", "color":(43,67,10)})
-        point_shifted = point2.shift((4.0, -3.0, 0.5))
-        self.assertEqual(point, point_shifted)
-        return
-
     def test_nearest_to(self):
         point = Point((1.0, 2.0, 3.0), properties={"type": "apple", "color": (43,67,10)})
         mp = Multipoint(self.vertices, data=self.data)
         self.assertEqual(mp.nearest_vertex_to(point), 12)
         return
 
-    def test_multipoint_shift_inplace(self):
-        mp0 = Multipoint(self.vertices, data=self.data)
-        vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
-        mp = Multipoint(vertices, data=self.data)
-        mp.shift((1, -2, 0.5), inplace=True)
-        self.assertEqual(mp, mp0)
+    def test_point_shift(self):
+        point = Point((1.0, 2.0, 3.0), properties={"type": "apple", "color": (43,67,10)})
+        point2 = Point((-3.0, 5.0, 3.0), properties={"type": "apple", "color":(43,67,10)})
+        point_shifted = point2.shift((4.0, -3.0))
+        self.assertEqual(point, point_shifted)
+        return
+
+    def test_line_shift(self):
+        line0 = Line(self.vertices)
+        vertices = [(a-1, b+2, c) for (a,b,c) in self.vertices]
+        line = Line(vertices).shift((1, -2))
+        self.assertEqual(line, line0)
+        return
 
     def test_multipoint_shift(self):
         mp0 = Multipoint(self.vertices, data=self.data)
-        vertices = [(a-1,b+2,c-0.5) for (a,b,c) in self.vertices]
-        mp = Multipoint(vertices, data=self.data)
-        mp_shifted = mp.shift((1, -2, 0.5))
-        self.assertEqual(mp_shifted, mp0)
+        vertices = [(a-1, b+2, c) for (a,b,c) in self.vertices]
+        mp = Multipoint(vertices, data=self.data).shift((1, -2))
+        self.assertEqual(mp, mp0)
         return
 
     def test_multipoint_bbox(self):
@@ -617,19 +609,6 @@ class TestMiscellaneous(unittest.TestCase):
         self.assertEqual(_flatten(arr1), arr0)
         return
 
-    def test_signcross(self):
-        self.assertEqual(_signcross((0, 1), (1, 0)), -1)
-        self.assertEqual(_signcross((0, -1), (1, 0)), 1)
-        self.assertEqual(_signcross((1, 0), (1, 0)), 0)
-        return
-
-    def test_matmult(self):
-        self.assertEqual(_matmult([[1, 0], [0, 1], [0.5, 0.5]], [3, 5]),
-                                  [3.0, 5.0, 4.0])
-        self.assertEqual(_matmult([[2, -1], [1, 3], [0.0, 0.0]], [3, 5]),
-                                  [1.0, 18.0, 0.0])
-        return
-
 class TestGeometryProj(unittest.TestCase):
 
     def setUp(self):
@@ -676,7 +655,7 @@ class TestAffineTransforms(unittest.TestCase):
     def test_translate(self):
         M = affine_matrix(Multipoint([(0,0), (1,0), (0,1)]),
                           Multipoint([(1,0), (2,0), (1,1)]))
-        Mans = np.array([[1, 0, 1], [0, 1, 0], [0, 0, 1]])
+        Mans = np.array([[1, 0, 1], [0, 1, 0]])
         self.assertTrue(np.allclose(M, Mans))
 
         translated_square = self.square.apply_affine_transform(M)
@@ -688,7 +667,7 @@ class TestAffineTransforms(unittest.TestCase):
         s2 = math.sqrt(0.5)
         M = affine_matrix(Multipoint([(0,0), (1,0), (0,1)]),
                           Multipoint([(0,0), (s2,s2), (-s2,s2)]))
-        Mans = np.array([[s2, -s2, 0], [s2, s2, 0], [0, 0, 1]])
+        Mans = np.array([[s2, -s2, 0], [s2, s2, 0]])
         self.assertTrue(np.allclose(M, Mans))
 
         translated_square = self.square.apply_affine_transform(M)
@@ -699,7 +678,7 @@ class TestAffineTransforms(unittest.TestCase):
     def test_stretch(self):
         M = affine_matrix(Multipoint([(0,0), (1,0), (0,1)]),
                           Multipoint([(0,0), (2,0), (0,2)]))
-        Mans = np.array([[2, 0, 0], [0, 2, 0], [0, 0, 1]])
+        Mans = np.array([[2, 0, 0], [0, 2, 0]])
         self.assertTrue(np.allclose(M, Mans))
 
         translated_square = self.square.apply_affine_transform(M)
