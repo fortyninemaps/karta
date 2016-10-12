@@ -652,36 +652,59 @@ class TestAffineTransforms(unittest.TestCase):
         self.square = Polygon([(0, 0), (0, 1), (1, 1), (1, 0)])
         return
 
-    def test_translate(self):
+    def test_translate_point(self):
+        pt = Point((0, 0), crs=Cartesian)
+        newpt = pt.apply_transform(np.array([[0, 0, 1], [0, 0, 2]]))
+        self.assertEqual(newpt.x, 1.0)
+        self.assertEqual(newpt.y, 2.0)
+        return
+
+    def test_transform_multiline(self):
+        g = Multiline([[(0,0), (1,1), (1,2)], [(-3,2),  (-2,-1), (0,1)]])
+        pi = math.pi
+        gnew = g.apply_transform(np.array([[math.cos(0.5*pi), -math.sin(0.5*pi), 0],
+                                           [math.sin(0.5*pi), math.cos(0.5*pi), 0]]))
+        l1, l2 = gnew.get_vertices()
+        self.assertTrue(np.allclose(l1, np.array([(0,0), (-1,1), (-2,1)])))
+        self.assertTrue(np.allclose(l2, np.array([(-2,-3), (1,-2), (-1,0)])))
+
+        gnew2 = gnew.apply_transform(np.array([[2, 0, 0],
+                                               [0, -3, 0]]))
+        l1, l2 = gnew2.get_vertices()
+        self.assertTrue(np.allclose(l1, np.array([(0,0), (-2,-3), (-4,-3)])))
+        self.assertTrue(np.allclose(l2, np.array([(-4,9), (2,6), (-2,0)])))
+        return
+
+    def test_translate_multipoint(self):
         M = affine_matrix(Multipoint([(0,0), (1,0), (0,1)]),
                           Multipoint([(1,0), (2,0), (1,1)]))
         Mans = np.array([[1, 0, 1], [0, 1, 0]])
         self.assertTrue(np.allclose(M, Mans))
 
-        translated_square = self.square.apply_affine_transform(M)
+        translated_square = self.square.apply_transform(M)
         ans = np.array([[1, 0], [1, 1], [2, 1], [2, 0]])
         self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
         return
 
-    def test_rotate(self):
+    def test_rotate_multipoint(self):
         s2 = math.sqrt(0.5)
         M = affine_matrix(Multipoint([(0,0), (1,0), (0,1)]),
                           Multipoint([(0,0), (s2,s2), (-s2,s2)]))
         Mans = np.array([[s2, -s2, 0], [s2, s2, 0]])
         self.assertTrue(np.allclose(M, Mans))
 
-        translated_square = self.square.apply_affine_transform(M)
+        translated_square = self.square.apply_transform(M)
         ans = np.array([[0, 0], [-s2, s2], [0, 2*s2], [s2, s2]])
         self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
         return
 
-    def test_stretch(self):
+    def test_stretch_multipoint(self):
         M = affine_matrix(Multipoint([(0,0), (1,0), (0,1)]),
                           Multipoint([(0,0), (2,0), (0,2)]))
         Mans = np.array([[2, 0, 0], [0, 2, 0]])
         self.assertTrue(np.allclose(M, Mans))
 
-        translated_square = self.square.apply_affine_transform(M)
+        translated_square = self.square.apply_transform(M)
         ans = np.array([[0, 0], [0, 2], [2, 2], [2, 0]])
         self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
         return

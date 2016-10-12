@@ -164,6 +164,58 @@ class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
             az, _, _ = self.crs.inverse(lon0, lat0, lon1, lat1)
         return az
 
+    def apply_transform(self, M):
+        """ Apply an affine transform given by matrix *M* to data and return a
+        new Point.
+
+        Parameters
+        ----------
+        M : ndarray
+            2x3 or 3x4 affine transformation matrix, representing a
+            two-dimensional or a three-dimensional transformation,
+            respectively.
+
+        Returns
+        -------
+        Geometry
+
+        Notes
+        -----
+        The output coordinates are computed as
+
+            xnew        x
+                  = M * y
+            ynew        1
+
+        or
+
+            xnew        x
+            ynew  = M * y
+            znew        z
+                        1
+        """
+        if M.shape == (2, 3):
+            N = np.zeros((3, 4), dtype=np.float64)
+            N[:2,:2] = M[:,:2]
+            N[:2,3] = M[:,2]
+            N[2, 2] = 1.0
+            M = N
+        elif M.shape != (3, 4):
+            raise ValueError("invalid affine matrix size: {0}".format(M.shape))
+
+        if len(self.vertex) == 2:
+            old_vertex = (self.x, self.y, 0)
+        else:
+            old_vertex = self.vertex
+
+        x = old_vertex[0]*M[0,0] + old_vertex[1]*M[0,1] + old_vertex[2]*M[0,2] + M[0,3]
+        y = old_vertex[0]*M[1,0] + old_vertex[1]*M[1,1] + old_vertex[2]*M[1,2] + M[1,3]
+        if len(self.vertex) == 2:
+            return Point((x, y), properties=self.properties, crs=self.crs)
+        else:
+            z = old_vertex[0]*M[2,0] + old_vertex[1]*M[2,1] + old_vertex[2]*M[2,2] + M[2,3]
+            return Point((x, y, z), properties=self.properties, crs=self.crs)
+
     def walk(self, distance, azimuth, projected=True):
         """ Returns the point reached when moving in a given direction for
         a given distance from a specified starting location.
@@ -426,7 +478,7 @@ class MultiVertexMixin(object):
         return (reg0[0] <= reg1[2] and reg1[0] <= reg0[2] and
                 reg0[1] <= reg1[3] and reg1[1] <= reg0[3])
 
-    def apply_affine_transform(self, M):
+    def apply_transform(self, M):
         """ Apply an affine transform given by matrix *M* to data and return a
         new geometry.
 
@@ -496,7 +548,7 @@ class MultiVertexMixin(object):
             raise ValueError("shift vector must be of the form (xshift, yshift)")
         trans_mat = np.array([[1, 0, shift_vector[0]],
                               [0, 1, shift_vector[1]]], dtype=np.float64)
-        return self.apply_affine_transform(trans_mat)
+        return self.apply_transform(trans_mat)
 
     def rotate(self, thetad, origin=(0, 0)):
         """ Rotate rank 2 geometry.
@@ -513,7 +565,7 @@ class MultiVertexMixin(object):
         x, y = origin
         M = np.array([[ct, -st, -x*ct + y*st + x],
                       [st, ct, -x*st - y*ct + y]], dtype=np.float64)
-        return self.apply_affine_transform(M)
+        return self.apply_transform(M)
 
     def _subset(self, idxs):
         """ Return a subset defined by indices. """
@@ -1188,6 +1240,7 @@ class Multipart(Geometry):
     def __len__(self):
         return len(self.vertices)
 
+
 class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
     """ Point cloud with associated attributes.
 
@@ -1354,6 +1407,49 @@ class MultiVertexMultipartMixin(object):
     @property
     def extent(self):
         return self.get_extent()
+
+    def apply_transform(self, M):
+        """ Apply an affine transform given by matrix *M* to data and return a
+        new Point.
+
+        Parameters
+        ----------
+        M : ndarray
+            2x3 or 3x4 affine transformation matrix, representing a
+            two-dimensional or a three-dimensional transformation,
+            respectively.
+
+        Returns
+        -------
+        Geometry
+
+        Notes
+        -----
+        The output coordinates are computed as
+
+            xnew        x
+                  = M * y
+            ynew        1
+
+        or
+
+            xnew        x
+            ynew  = M * y
+            znew        z
+                        1
+        """
+        if M.shape == (2, 3):
+            N = np.zeros((3, 4), dtype=np.float64)
+            N[:2,:2] = M[:,:2]
+            N[:2,3] = M[:,2]
+            N[2, 2] = 1.0
+            M = N
+        elif M.shape != (3, 4):
+            raise ValueError("invalid affine matrix size: {0}".format(M.shape))
+        parts = []
+        for part in self:
+            parts.append(part.apply_transform(M))
+        return type(self)(parts, properties=self.properties, data=self.data, crs=self.crs)
 
     def within_bbox(self, bbox, max_results=-1):
         """ Return Multipart geometry representing member geometries that are
