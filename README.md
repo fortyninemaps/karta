@@ -3,9 +3,9 @@
 
 ![Karta](https://raw.githubusercontent.com/fortyninemaps/karta/gh-pages/figures/karta_logo.png)
 
-*Karta* is a package for spatial analysis in Python. It streamlines data
-processing by providing efficient generic geographical types for vector and
-raster sources as well as a selection of analysis functions.
+*Karta* is a package for spatial analysis in Python. It simplifies geospatial
+data processing by providing efficient generic classes for vector and raster
+data sources, as well as a selection of analysis functions.
 
 For example, read or create vector geometries:
 
@@ -38,7 +38,7 @@ grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
 The latest release is on PyPI (see [Installation](#installation)). Suggestions,
 bug reports, test cases, and pull requests are welcome.
 
-The latest stable release is 0.7. The repository master branch is considered a
+The latest stable release is 0.7.4. The repository master branch is considered a
 moderately-unstable development branch.
 
 ## Documentation
@@ -52,14 +52,15 @@ the documentation requires [numpydoc](https://github.com/numpy/numpydoc).
 
 ## Package Overview
 
-- **karta.crs**: framework for coordinate reference systems and geodetic
+- **karta.crs**: coordinate reference systems and interface for geodetic
   calculations
 
 - **karta.vector.geometry**: geometry classes `Point`, `Line`, `Polygon` and their
   corresponding `Multipart` types with associated methods such as length, area,
   intersections, membership testing, convex hulls, and affine transformations
 
-- **karta.raster.grid**: `RegularGrid` class
+- **karta.raster.grid**: `RegularGrid` class for raster data, with methods for
+  clipping, resizing, and sampling
 
 - **tests**: unit tests, to be run with `python tests/runtests.py`
 
@@ -71,7 +72,7 @@ Currently implemented are:
 - vector
     - GeoJSON (r,w)
     - ESRI Shapefiles (via GDAL) (r,w)
-    - GPS eXchange (GPX) (r,w)
+    - GPX (GPS eXchange) (r,w)
 - raster
     - GeoTiff (via GDAL) (r,w)
     - ESRI ASCII Grid (r,w)
@@ -115,25 +116,3 @@ Then, clone the repository and install:
 
 *Karta* supports Python 2.7 and Python 3.4+.
 
-## License
-
-This software is provided under the MIT license.
-
-### MIT License:
-
-Permission is hereby granted, free of charge, to any person obtaining a copy of
-this software and associated documentation files (the "Software"), to deal in
-the Software without restriction, including without limitation the rights to
-use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of
-the Software, and to permit persons to whom the Software is furnished to do so,
-subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
-FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
-COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER
-IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN
-CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
