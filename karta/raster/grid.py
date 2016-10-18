@@ -66,10 +66,10 @@ class Grid(object):
         msk = self.data_mask_full
         if not inplace:
             newgrid = self.copy()
-            newgrid[:,:] = np.where(msk, func(self[:,:]), self._nodata)
+            newgrid[msk] = func(self[msk])
             return newgrid
         else:
-            self[:,:] = np.where(msk, func(self[:,:]), self._nodata)
+            self[msk] = func(self[msk])
             return self
 
     def copy(self):
