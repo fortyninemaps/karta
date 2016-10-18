@@ -1489,7 +1489,7 @@ class MultiVertexMultipartMixin(object):
         Returns
         -------
         """
-        indices = self.rtree.search_overlapping(geom.bbox)
+        indices = self.rtree.search_overlapping(geom.get_bbox(self.crs))
         results = []
         if isinstance(geom, Line):
             for i in indices:
