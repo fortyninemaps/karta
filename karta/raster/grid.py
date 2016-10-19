@@ -913,7 +913,7 @@ class RegularGrid(Grid):
         crs = kwargs.get("crs", None)
         method = kwargs.get("method", "bilinear")
 
-        argerror = TypeError("`grid` takes a Point, a Multipoint, or x, y coordinate lists")
+        argerror = TypeError("'sample' method takes a Point, a Multipoint, or x and y coordinate arrays")
         if hasattr(args[0], "_geotype"):
             crs = args[0].crs
             if args[0]._geotype == "Point":
