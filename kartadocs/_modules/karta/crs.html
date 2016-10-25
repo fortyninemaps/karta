@@ -1,0 +1,749 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.crs &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.crs</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.crs</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot; Coordinate reference systems</span>
+
+<span class="sd">Implements CRS classes for different kinds of spatial reference systems:</span>
+
+<span class="sd">    - CartesianCRS</span>
+<span class="sd">    - GeographicalCRS</span>
+<span class="sd">    - SphericalCRS</span>
+<span class="sd">    - EllipsoidalCRS</span>
+<span class="sd">    - ProjectedCRS</span>
+
+<span class="sd">Coordinate reference system (CRS) objects represent mappings geographical</span>
+<span class="sd">positions to an x, y representation, and contain both projection and geodetic</span>
+<span class="sd">information. CRS objects should be treated is immutable. It is possible for</span>
+<span class="sd">multiple CRS objects to implement the same system, and tests for equality may</span>
+<span class="sd">fail.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">pi</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">pyproj</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">geodesy</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">errors</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">osgeo.osr</span>
+    <span class="n">osgeo</span><span class="o">.</span><span class="n">osr</span><span class="o">.</span><span class="n">UseExceptions</span><span class="p">()</span>
+    <span class="n">HASOSR</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">HASOSR</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="c1"># proj.4 keys for ellipsoids used by named datum definitions</span>
+<span class="n">DATUM_ELLIPSOIDS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;WGS84&quot;</span><span class="p">:</span> <span class="s2">&quot;WGS84&quot;</span><span class="p">,</span> <span class="s2">&quot;GGRS87&quot;</span><span class="p">:</span> <span class="s2">&quot;GRS80&quot;</span><span class="p">,</span> <span class="s2">&quot;NAD83&quot;</span><span class="p">:</span> <span class="s2">&quot;GRS80&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;NAD27&quot;</span><span class="p">:</span> <span class="s2">&quot;clrk66&quot;</span><span class="p">,</span> <span class="s2">&quot;potsdam&quot;</span><span class="p">:</span> <span class="s2">&quot;bessel&quot;</span><span class="p">,</span> <span class="s2">&quot;carthage&quot;</span><span class="p">:</span> <span class="s2">&quot;clark80&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;hermannskogel&quot;</span><span class="p">:</span> <span class="s2">&quot;bessel&quot;</span><span class="p">,</span> <span class="s2">&quot;ire65&quot;</span><span class="p">:</span> <span class="s2">&quot;mod_airy&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;nzgd49&quot;</span><span class="p">:</span> <span class="s2">&quot;intl&quot;</span><span class="p">,</span> <span class="s2">&quot;OSGB36&quot;</span><span class="p">:</span> <span class="s2">&quot;airy&quot;</span><span class="p">}</span>
+
+<span class="n">ELLIPSOID_DATA</span> <span class="o">=</span> <span class="p">{</span>
+ <span class="s2">&quot;MERIT&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378137.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.257</span><span class="p">,</span> <span class="s2">&quot;MERIT 1983&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;SGS85&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378136.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.257</span><span class="p">,</span> <span class="s2">&quot;Soviet Geodetic System 85&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;GRS80&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378137.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.257222101</span><span class="p">,</span> <span class="s2">&quot;GRS 1980(IUGG, 1980)&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;IAU76&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378140.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.257</span><span class="p">,</span> <span class="s2">&quot;IAU 1976&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;airy&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377563.396</span><span class="p">,</span> <span class="mf">6356256.910</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;Airy 1830&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;APL4.9&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378137.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.25</span><span class="p">,</span> <span class="s2">&quot;Appl. Physics. 1965&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;NWL9D&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378145.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.25</span><span class="p">,</span> <span class="s2">&quot;Naval Weapons Lab., 1965&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;mod_airy&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377340.189</span><span class="p">,</span> <span class="mf">6356034.446</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;Modified Airy&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;andrae&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377104.43</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">300.0</span><span class="p">,</span> <span class="s2">&quot;Andrae 1876 (Den., Iclnd.)&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;aust_SA&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378160.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.25</span><span class="p">,</span> <span class="s2">&quot;Australian Natl &amp; S. Amer. 1969&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;GRS67&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378160.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.2471674270</span><span class="p">,</span> <span class="s2">&quot;GRS 67(IUGG 1967)&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;bessel&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377397.155</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">299.1528128</span><span class="p">,</span> <span class="s2">&quot;Bessel 1841&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;bess_nam&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377483.865</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">299.1528128</span><span class="p">,</span> <span class="s2">&quot;Bessel 1841 (Namibia)&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;clrk66&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378206.4</span><span class="p">,</span> <span class="mf">6356583.8</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;Clarke 1866&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;clrk80&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378249.145</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">293.4663</span><span class="p">,</span> <span class="s2">&quot;Clarke 1880 mod.&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;clrk80ign&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378249.2</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">293.4660212936269</span><span class="p">,</span> <span class="s2">&quot;Clarke 1880 (IGN).&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;CPM&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6375738.7</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">334.29</span><span class="p">,</span> <span class="s2">&quot;Comm. des Poids et Mesures 1799&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;delmbr&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6376428.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">311.5</span><span class="p">,</span> <span class="s2">&quot;Delambre 1810 (Belgium)&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;engelis&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378136.05</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.2566</span><span class="p">,</span> <span class="s2">&quot;Engelis 1985&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;evrst30&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377276.345</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">300.8017</span><span class="p">,</span> <span class="s2">&quot;Everest 1830&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;evrst48&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377304.063</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">300.8017</span><span class="p">,</span> <span class="s2">&quot;Everest 1948&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;evrst56&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377301.243</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">300.8017</span><span class="p">,</span> <span class="s2">&quot;Everest 1956&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;evrst69&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377295.664</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">300.8017</span><span class="p">,</span> <span class="s2">&quot;Everest 1969&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;evrstSS&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6377298.556</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">300.8017</span><span class="p">,</span> <span class="s2">&quot;Everest (Sabah &amp; Sarawak)&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;fschr60&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378166.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.3</span><span class="p">,</span> <span class="s2">&quot;Fischer (Mercury Datum) 1960&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;fschr60m&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378155.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.3</span><span class="p">,</span> <span class="s2">&quot;Modified Fischer 1960&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;fschr68&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378150.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.3</span><span class="p">,</span> <span class="s2">&quot;Fischer 1968&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;helmert&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378200.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.3</span><span class="p">,</span> <span class="s2">&quot;Helmert 1906&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;hough&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378270.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">297.</span><span class="p">,</span> <span class="s2">&quot;Hough&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;intl&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378388.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">297.</span><span class="p">,</span> <span class="s2">&quot;International 1909 (Hayford)&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;krass&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378245.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.3</span><span class="p">,</span> <span class="s2">&quot;Krassovsky, 1942&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;kaula&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378163.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.24</span><span class="p">,</span> <span class="s2">&quot;Kaula 1961&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;lerch&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378139.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.257</span><span class="p">,</span> <span class="s2">&quot;Lerch 1979&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;mprts&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6397300.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">191.</span><span class="p">,</span> <span class="s2">&quot;Maupertius 1738&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;new_intl&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378157.5</span><span class="p">,</span> <span class="mf">6356772.2</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;New International 1967&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;plessis&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6376523.</span><span class="p">,</span> <span class="mf">6355863.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;Plessis 1817 (France)&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;SEasia&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378155.0</span><span class="p">,</span> <span class="mf">6356773.3205</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;Southeast Asia&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;walbeck&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6376896.0</span><span class="p">,</span> <span class="mf">6355834.8467</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;Walbeck&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;WGS60&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378165.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.3</span><span class="p">,</span> <span class="s2">&quot;WGS 60&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;WGS66&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378145.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.25</span><span class="p">,</span> <span class="s2">&quot;WGS 66&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;WGS72&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378135.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.26</span><span class="p">,</span> <span class="s2">&quot;WGS 72&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;WGS84&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6378137.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="mf">298.257223563</span><span class="p">,</span> <span class="s2">&quot;WGS 84&quot;</span><span class="p">),</span>
+ <span class="s2">&quot;sphere&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">6370997.0</span><span class="p">,</span> <span class="mf">6370997.0</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="s2">&quot;Normal Sphere (r=6370997)&quot;</span><span class="p">)}</span>
+
+<span class="k">def</span> <span class="nf">ellipsoid_major_axis</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ELLIPSOID_DATA</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">a</span>
+
+<span class="k">def</span> <span class="nf">ellipsoid_minor_axis</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rf</span> <span class="o">=</span> <span class="n">ELLIPSOID_DATA</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="o">-</span><span class="n">a</span><span class="o">/</span><span class="n">rf</span>
+    <span class="k">return</span> <span class="n">b</span>
+
+<span class="k">def</span> <span class="nf">ellipsoid_flattening</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">rf</span> <span class="o">=</span> <span class="n">ELLIPSOID_DATA</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">rf</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">rf</span> <span class="o">=</span> <span class="n">a</span><span class="o">/</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">rf</span>
+
+<span class="k">class</span> <span class="nc">Ellipsoid</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">rf</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">a</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;major axis (a) must be provided&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">b</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="p">)</span><span class="o">/</span><span class="n">a</span>
+        <span class="k">elif</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">f</span>
+        <span class="k">elif</span> <span class="n">rf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">f</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="n">rf</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">a</span><span class="o">-</span><span class="n">a</span><span class="o">*</span><span class="n">f</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">f</span> <span class="o">=</span> <span class="n">f</span>
+        <span class="k">return</span>
+
+<div class="viewcode-block" id="CRS"><a class="viewcode-back" href="../../reference.html#karta.crs.CRS">[docs]</a><span class="k">class</span> <span class="nc">CRS</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Base class for coordinate system instances.</span>
+
+<span class="sd">    Subclasses should define:</span>
+
+<span class="sd">    - name attribute</span>
+<span class="sd">    - project(x, y) method</span>
+<span class="sd">    - transform(other, x, y) method</span>
+<span class="sd">    - forward(x, y, azimuth, distance) method</span>
+<span class="sd">    - inverse(x0, y0, x1, y1) method</span>
+
+<span class="sd">    *project* transforms between world and projected coordinates, and takes the</span>
+<span class="sd">    optional boolean parameter *inverse* (default `False`)</span>
+
+<span class="sd">    *forward* performs a forward geodetic calculation and returns world</span>
+<span class="sd">    coordinates</span>
+
+<span class="sd">    *inverse* performs an inverse geodetic calculation and returns an azimuth,</span>
+<span class="sd">    a back azimuth, and a distance</span>
+
+<span class="sd">    A CRS subclass may optionally also provide string attributes:</span>
+
+<span class="sd">    - ref_proj4</span>
+<span class="sd">    - ref_wkt</span>
+
+<span class="sd">    which are used to provide interoperability with other systems.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;&lt;CRS {0}&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">get_proj4</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;ref_proj4&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_proj4</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">HASOSR</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;no ref_proj4 attribute and no conversion possible (osgeo.osr not installed)&quot;</span><span class="p">)</span>
+            <span class="n">srs</span> <span class="o">=</span> <span class="n">osgeo</span><span class="o">.</span><span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;ref_wkt&quot;</span><span class="p">):</span>
+                <span class="n">srs</span><span class="o">.</span><span class="n">ImportFromWkt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_wkt</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;incomplete CRS definition (missing ref_proj4, ref_wkt attributes)&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">srs</span><span class="o">.</span><span class="n">ExportToProj4</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">proj4</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_proj4</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">get_wkt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;ref_wkt&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_wkt</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">HASOSR</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;no ref_wkt attribute and no conversion possible (osgeo.osr not installed)&quot;</span><span class="p">)</span>
+            <span class="n">srs</span> <span class="o">=</span> <span class="n">osgeo</span><span class="o">.</span><span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;ref_proj4&quot;</span><span class="p">):</span>
+                <span class="n">_proj4</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ref_proj4</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;latlon&quot;</span><span class="p">,</span> <span class="s2">&quot;latlong&quot;</span><span class="p">)</span>\
+                                       <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;lonlat&quot;</span><span class="p">,</span> <span class="s2">&quot;longlat&quot;</span><span class="p">)</span>
+                <span class="n">srs</span><span class="o">.</span><span class="n">ImportFromProj4</span><span class="p">(</span><span class="n">_proj4</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;incomplete CRS definition (missing ref_proj4, ref_wkt attributes)&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">srs</span><span class="o">.</span><span class="n">ExportToWkt</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">wkt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_wkt</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CartesianCRS"><a class="viewcode-back" href="../../reference.html#karta.crs.CartesianCRS">[docs]</a><span class="k">class</span> <span class="nc">CartesianCRS</span><span class="p">(</span><span class="n">CRS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Cartesian (flat-earth) reference systems with (x, y) coordinates &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Cartesian&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_proj4</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_wkt</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">return</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="c1"># Projection on a cartesian coordinate system is the identity</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="CartesianCRS.forward"><a class="viewcode-back" href="../../reference.html#karta.crs.CartesianCRS.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">radians</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Forward geodetic problem from a point &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">az</span><span class="p">)</span> <span class="o">/</span> <span class="mi">180</span> <span class="o">*</span> <span class="n">pi</span>
+
+        <span class="n">x2</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">dist</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">az</span><span class="p">)</span>
+        <span class="n">y2</span> <span class="o">=</span> <span class="n">y</span> <span class="o">+</span> <span class="n">dist</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">az</span><span class="p">)</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">unroll_rad</span><span class="p">(</span><span class="n">az</span> <span class="o">+</span> <span class="n">pi</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">baz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">baz</span><span class="p">)</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="n">pi</span>
+        <span class="k">return</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">baz</span></div>
+
+    <span class="nd">@staticmethod</span>
+<div class="viewcode-block" id="CartesianCRS.inverse"><a class="viewcode-back" href="../../reference.html#karta.crs.CartesianCRS.inverse">[docs]</a>    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">radians</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Inverse geodetic problem to find the geodesic between points &quot;&quot;&quot;</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">plane_distance</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+        <span class="n">az</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">plane_azimuth</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">unroll_rad</span><span class="p">(</span><span class="n">az</span> <span class="o">+</span> <span class="n">pi</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">az</span> <span class="o">=</span> <span class="n">az</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="n">pi</span>
+            <span class="n">baz</span> <span class="o">=</span> <span class="n">baz</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="n">pi</span>
+        <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Cartesian CRS cannot be accurately transformed&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GeographicalCRS"><a class="viewcode-back" href="../../reference.html#karta.crs.GeographicalCRS">[docs]</a><span class="k">class</span> <span class="nc">GeographicalCRS</span><span class="p">(</span><span class="n">CRS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Reference systems with longitude-latitude (θ, φ) coordinates.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    spheroid : string</span>
+<span class="sd">        proj.4 spheroid identifier, e.g. &quot;+ellps=WGS84&quot;</span>
+<span class="sd">    name : string</span>
+<span class="sd">    datum : string, optional</span>
+<span class="sd">        proj.4 datum identifier, default &quot;+datum=WGS84&quot;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spheroid</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">datum</span><span class="o">=</span><span class="s2">&quot;+datum=WGS84&quot;</span><span class="p">):</span>
+        <span class="n">ellipsoid</span> <span class="o">=</span> <span class="n">parse_ellipsoid</span><span class="p">(</span><span class="n">spheroid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_proj4</span> <span class="o">=</span> <span class="s2">&quot;+proj=lonlat {0} {1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">spheroid</span><span class="p">,</span> <span class="n">datum</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_proj</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">ref_proj4</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_geod</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Geod</span><span class="p">(</span><span class="n">spheroid</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ellipsoid</span> <span class="o">=</span> <span class="n">ellipsoid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">return</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">radians</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="c1"># Projection on a non-projected system defined as the identity</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span><span class="o">/</span><span class="mi">180</span> <span class="o">*</span> <span class="n">pi</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span><span class="o">/</span><span class="mi">180</span> <span class="o">*</span> <span class="n">pi</span>
+
+<div class="viewcode-block" id="GeographicalCRS.forward"><a class="viewcode-back" href="../../reference.html#karta.crs.GeographicalCRS.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Forward geodetic problem from a point &quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_geod</span><span class="o">.</span><span class="n">fwd</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="p">(</span><span class="n">baz</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">baz</span></div>
+
+<div class="viewcode-block" id="GeographicalCRS.inverse"><a class="viewcode-back" href="../../reference.html#karta.crs.GeographicalCRS.inverse">[docs]</a>    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Inverse geodetic problem to find the geodesic between points &quot;&quot;&quot;</span>
+        <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_geod</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">az</span> <span class="o">=</span> <span class="p">(</span><span class="n">az</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="p">(</span><span class="n">baz</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+        <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span></div>
+
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_proj</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_proj</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ProjectedCRS"><a class="viewcode-back" href="../../reference.html#karta.crs.ProjectedCRS">[docs]</a><span class="k">class</span> <span class="nc">ProjectedCRS</span><span class="p">(</span><span class="n">CartesianCRS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Custom reference systems, which may be backed by a *pypoj.Proj* instance</span>
+<span class="sd">    or a custom projection function.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    proj : string</span>
+<span class="sd">        proj.4 string</span>
+<span class="sd">    name : string or None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">proj</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">ellipsoid</span> <span class="o">=</span> <span class="n">parse_ellipsoid</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_proj</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Proj</span><span class="p">(</span><span class="n">proj</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_geod</span> <span class="o">=</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">Geod</span><span class="p">(</span><span class="s2">&quot;+a=</span><span class="si">%s</span><span class="s2"> +b=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">ellipsoid</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="n">ellipsoid</span><span class="o">.</span><span class="n">b</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ellipsoid</span> <span class="o">=</span> <span class="n">ellipsoid</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_proj4</span> <span class="o">=</span> <span class="n">proj</span>
+
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">proj</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s2">&quot;_proj&quot;</span><span class="p">))</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="s2">&quot;_geod&quot;</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+        <span class="k">if</span> <span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_proj</span><span class="p">,</span> <span class="s2">&quot;srs&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_proj</span><span class="p">,</span> <span class="s2">&quot;srs&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_geod</span><span class="p">,</span> <span class="s2">&quot;initstring&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">other</span><span class="o">.</span><span class="n">_geod</span><span class="p">,</span> <span class="s2">&quot;initstring&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)):</span>
+            <span class="k">return</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">False</span>
+
+    <span class="k">def</span> <span class="nf">__ne__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="k">return</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">__eq__</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">project</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_proj</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">inverse</span><span class="o">=</span><span class="n">inverse</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ProjectedCRS.forward"><a class="viewcode-back" href="../../reference.html#karta.crs.ProjectedCRS.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Forward geodetic problem from a point &quot;&quot;&quot;</span>
+        <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_geod</span><span class="o">.</span><span class="n">fwd</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="p">(</span><span class="n">baz</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+        <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">baz</span></div>
+
+<div class="viewcode-block" id="ProjectedCRS.inverse"><a class="viewcode-back" href="../../reference.html#karta.crs.ProjectedCRS.inverse">[docs]</a>    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Inverse geodetic problem to find the geodesic between points &quot;&quot;&quot;</span>
+        <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_geod</span><span class="o">.</span><span class="n">inv</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">az</span> <span class="o">=</span> <span class="p">(</span><span class="n">az</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="p">(</span><span class="n">baz</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+        <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span></div>
+
+    <span class="k">def</span> <span class="nf">transform</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">pyproj</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_proj</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_proj</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="o">=</span><span class="n">z</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="SphericalCRS"><a class="viewcode-back" href="../../reference.html#karta.crs.SphericalCRS">[docs]</a><span class="k">class</span> <span class="nc">SphericalCRS</span><span class="p">(</span><span class="n">GeographicalCRS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Spherical geographic coordinate system defined by a radius.</span>
+
+<span class="sd">    **DEPRECATED**</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    radius : float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Spherical&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">radius</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">radius</span>
+        <span class="k">return</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ref_proj4</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;+proj=lonlat +a=</span><span class="si">%f</span><span class="s2"> +b=</span><span class="si">%f</span><span class="s2"> +no_defs&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ref_wkt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span><span class="s1">&#39;GEOGCS[&quot;unnamed ellipse&quot;,DATUM[&quot;unknown&quot;,&#39;</span>
+                <span class="s1">&#39;SPHEROID[&quot;unnamed&quot;,</span><span class="si">%f</span><span class="s1">,0]],PRIMEM[&quot;Greenwich&quot;,0],&#39;</span>
+                <span class="s1">&#39;UNIT[&quot;degree&quot;,0.0174532925199433]]&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SphericalCRS.forward"><a class="viewcode-back" href="../../reference.html#karta.crs.SphericalCRS.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lons</span><span class="p">,</span> <span class="n">lats</span><span class="p">,</span> <span class="n">az</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">radians</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Forward geodetic problem from a point &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">lons</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lons</span><span class="p">)</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span>
+            <span class="n">lats</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lats</span><span class="p">)</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span>
+            <span class="n">az</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">az</span><span class="p">)</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span>
+
+        <span class="n">d_</span> <span class="o">=</span> <span class="n">dist</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span>
+        <span class="n">lats2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arcsin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lats</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">d_</span><span class="p">)</span> <span class="o">+</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lats</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">d_</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">az</span><span class="p">))</span>
+        <span class="n">dlons</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">d_</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lats2</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lats</span><span class="p">))</span> <span class="o">/</span>
+                          <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lats</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lats2</span><span class="p">)))</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arccos</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lats</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">d_</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lats2</span><span class="p">))</span> <span class="o">/</span>
+                        <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">d_</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lats2</span><span class="p">)))</span>
+        <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">az</span> <span class="o">&lt;</span> <span class="n">pi</span><span class="p">:</span>
+            <span class="n">lons2</span> <span class="o">=</span> <span class="n">lons</span> <span class="o">+</span> <span class="n">dlons</span>
+            <span class="n">baz</span> <span class="o">=</span> <span class="o">-</span><span class="n">baz</span>
+        <span class="k">elif</span> <span class="n">pi</span> <span class="o">&lt;=</span> <span class="n">az</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="p">:</span>
+            <span class="n">lons2</span> <span class="o">=</span> <span class="n">lons</span> <span class="o">-</span> <span class="n">dlons</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;azimuth should be [0, 2pi)&quot;</span><span class="p">)</span>
+
+        <span class="n">baz</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">unroll_rad</span><span class="p">(</span><span class="n">baz</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">lons2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lons2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="n">pi</span>
+            <span class="n">lats2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">lats2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="n">pi</span>
+            <span class="n">baz</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">baz</span><span class="p">)</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="n">pi</span>
+        <span class="k">return</span> <span class="n">lons2</span><span class="p">,</span> <span class="n">lats2</span><span class="p">,</span> <span class="n">baz</span></div>
+
+<div class="viewcode-block" id="SphericalCRS.inverse"><a class="viewcode-back" href="../../reference.html#karta.crs.SphericalCRS.inverse">[docs]</a>    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lons1</span><span class="p">,</span> <span class="n">lats1</span><span class="p">,</span> <span class="n">lons2</span><span class="p">,</span> <span class="n">lats2</span><span class="p">,</span> <span class="n">radians</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Inverse geodetic problem to find the geodesic between points &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">lons1</span> <span class="o">=</span> <span class="n">lons1</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span>
+            <span class="n">lons2</span> <span class="o">=</span> <span class="n">lons2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span>
+            <span class="n">lats1</span> <span class="o">=</span> <span class="n">lats1</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span>
+            <span class="n">lats2</span> <span class="o">=</span> <span class="n">lats2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">/</span> <span class="mf">180.0</span>
+
+        <span class="n">az</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">sphere_azimuth</span><span class="p">(</span><span class="n">lons1</span><span class="p">,</span> <span class="n">lats1</span><span class="p">,</span> <span class="n">lons2</span><span class="p">,</span> <span class="n">lats2</span><span class="p">)</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">sphere_azimuth</span><span class="p">(</span><span class="n">lons2</span><span class="p">,</span> <span class="n">lats2</span><span class="p">,</span> <span class="n">lons1</span><span class="p">,</span> <span class="n">lats1</span><span class="p">)</span>
+        <span class="n">dist</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">sphere_distance</span><span class="p">(</span><span class="n">lons1</span><span class="p">,</span> <span class="n">lats1</span><span class="p">,</span> <span class="n">lons2</span><span class="p">,</span> <span class="n">lats2</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">az</span> <span class="o">=</span> <span class="n">az</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="n">pi</span>
+            <span class="n">baz</span> <span class="o">=</span> <span class="n">baz</span> <span class="o">*</span> <span class="mi">180</span> <span class="o">/</span> <span class="n">pi</span>
+        <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span></div></div>
+
+<div class="viewcode-block" id="EllipsoidalCRS"><a class="viewcode-back" href="../../reference.html#karta.crs.EllipsoidalCRS">[docs]</a><span class="k">class</span> <span class="nc">EllipsoidalCRS</span><span class="p">(</span><span class="n">GeographicalCRS</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Ellipsoidal geographic coordinate system defined by equatorial and</span>
+<span class="sd">    polar radii.</span>
+
+<span class="sd">    **DEPRECATED**</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    a : float</span>
+<span class="sd">        ellipsoid major axis dimension</span>
+<span class="sd">    b : float</span>
+<span class="sd">        ellipsoid minor axis dimension</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;Ellipsoidal&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Define a geographical coordinate system on an ellipse. *a* is the</span>
+<span class="sd">        equatorial radius, and *b* is the polar radius. &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">a</span> <span class="o">=</span> <span class="n">a</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ref_proj4</span> <span class="o">=</span> <span class="s2">&quot;+proj=lonlat +units=m +a=</span><span class="si">%f</span><span class="s2"> +b=</span><span class="si">%f</span><span class="s2"> +no_defs&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span>
+
+<div class="viewcode-block" id="EllipsoidalCRS.forward"><a class="viewcode-back" href="../../reference.html#karta.crs.EllipsoidalCRS.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">azimuth</span><span class="p">,</span> <span class="n">distance</span><span class="p">,</span> <span class="n">radians</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Forward geodetic problem from a point &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">*=</span> <span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+            <span class="n">y</span> <span class="o">*=</span> <span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+            <span class="n">azimuth</span> <span class="o">*=</span> <span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+
+        <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">baz</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">ellipsoidal_forward</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">azimuth</span><span class="p">,</span> <span class="n">distance</span><span class="p">)</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="p">(</span><span class="n">baz</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+
+        <span class="k">if</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">x2</span> <span class="o">*=</span> <span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+            <span class="n">y2</span> <span class="o">*=</span> <span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+            <span class="n">baz</span> <span class="o">*=</span> <span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+
+        <span class="k">return</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">baz</span></div>
+
+<div class="viewcode-block" id="EllipsoidalCRS.inverse"><a class="viewcode-back" href="../../reference.html#karta.crs.EllipsoidalCRS.inverse">[docs]</a>    <span class="k">def</span> <span class="nf">inverse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">radians</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Inverse geodetic problem to find the geodesic between points &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">x1</span> <span class="o">*=</span> <span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+            <span class="n">y1</span> <span class="o">*=</span> <span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+            <span class="n">x2</span> <span class="o">*=</span> <span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+            <span class="n">y2</span> <span class="o">*=</span> <span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+
+        <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span> <span class="o">=</span> <span class="n">geodesy</span><span class="o">.</span><span class="n">ellipsoidal_inverse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">a</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+        <span class="n">az</span> <span class="o">=</span> <span class="p">(</span><span class="n">az</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="p">(</span><span class="n">baz</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+
+        <span class="k">if</span> <span class="n">radians</span><span class="p">:</span>
+            <span class="n">az</span> <span class="o">*=</span> <span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+            <span class="n">baz</span> <span class="o">*=</span> <span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+
+        <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">dist</span></div></div>
+
+<span class="k">def</span> <span class="nf">parse_ellipsoid</span><span class="p">(</span><span class="n">projstring</span><span class="p">):</span>
+    <span class="n">ename</span><span class="p">,</span> <span class="n">ela</span><span class="p">,</span> <span class="n">elb</span><span class="p">,</span> <span class="n">elrf</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="s2">&quot;+ellps&quot;</span> <span class="ow">in</span> <span class="n">projstring</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">kv</span> <span class="ow">in</span> <span class="n">projstring</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">kv</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;+ellps&quot;</span><span class="p">):</span>
+                <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="o">=</span> <span class="n">kv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+                <span class="n">ela</span><span class="p">,</span> <span class="n">elb</span><span class="p">,</span> <span class="n">elrf</span><span class="p">,</span> <span class="n">ename</span> <span class="o">=</span> <span class="n">ELLIPSOID_DATA</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                <span class="k">break</span>
+    <span class="k">elif</span> <span class="s2">&quot;+datum&quot;</span> <span class="ow">in</span> <span class="n">projstring</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">kv</span> <span class="ow">in</span> <span class="n">projstring</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">kv</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;+datum&quot;</span><span class="p">):</span>
+                <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="o">=</span> <span class="n">kv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+                <span class="n">ellps</span> <span class="o">=</span> <span class="n">DATUM_ELLIPSOIDS</span><span class="p">[</span><span class="n">v</span><span class="p">]</span>
+                <span class="n">ela</span><span class="p">,</span> <span class="n">elb</span><span class="p">,</span> <span class="n">elrf</span><span class="p">,</span> <span class="n">ename</span> <span class="o">=</span> <span class="n">ELLIPSOID_DATA</span><span class="p">[</span><span class="n">ellps</span><span class="p">]</span>
+                <span class="k">break</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="s2">&quot;+a&quot;</span> <span class="ow">in</span> <span class="n">projstring</span><span class="p">)</span> <span class="ow">and</span> <span class="p">((</span><span class="s2">&quot;+b&quot;</span> <span class="ow">in</span> <span class="n">projstring</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">&quot;+f&quot;</span> <span class="ow">in</span> <span class="n">projstring</span><span class="p">)):</span>
+        <span class="n">ename</span> <span class="o">=</span> <span class="s2">&quot;Unknown&quot;</span>
+        <span class="k">for</span> <span class="n">kv</span> <span class="ow">in</span> <span class="n">projstring</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">kv</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;+a&quot;</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">ela</span> <span class="o">=</span> <span class="n">kv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+                <span class="n">ela</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">ela</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">kv</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;+b&quot;</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">elb</span> <span class="o">=</span> <span class="n">kv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+                <span class="n">elb</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">elb</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">kv</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;+f&quot;</span><span class="p">):</span>
+                <span class="n">_</span><span class="p">,</span> <span class="n">elf</span> <span class="o">=</span> <span class="n">kv</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+                <span class="n">elrf</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">elf</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">ela</span> <span class="ow">and</span> <span class="p">(</span><span class="n">elb</span> <span class="ow">or</span> <span class="n">elrf</span><span class="p">):</span>
+                <span class="k">break</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">CRSError</span><span class="p">(</span><span class="s2">&quot;ellipsoid could not be extracted from </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">projstring</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">Ellipsoid</span><span class="p">(</span><span class="n">ename</span><span class="p">,</span> <span class="n">ela</span><span class="p">,</span> <span class="n">b</span><span class="o">=</span><span class="n">elb</span><span class="p">,</span> <span class="n">rf</span><span class="o">=</span><span class="n">elrf</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">crs_from_wkt</span><span class="p">(</span><span class="n">wkt</span><span class="p">):</span>
+    <span class="n">srs</span> <span class="o">=</span> <span class="n">osgeo</span><span class="o">.</span><span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">(</span><span class="n">wkt</span><span class="p">)</span>
+    <span class="n">srs</span><span class="o">.</span><span class="n">MorphFromESRI</span><span class="p">()</span>     <span class="c1"># munge parameters for proj.4 export</span>
+    <span class="k">if</span> <span class="n">srs</span><span class="o">.</span><span class="n">IsGeographic</span><span class="p">():</span>
+        <span class="n">proj4</span> <span class="o">=</span> <span class="n">srs</span><span class="o">.</span><span class="n">ExportToProj4</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">proj4</span><span class="o">.</span><span class="n">split</span><span class="p">():</span>
+            <span class="k">if</span> <span class="s2">&quot;+ellps&quot;</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">GeographicalCRS</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="s2">&quot;unnamed&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="s2">&quot;+datum&quot;</span> <span class="ow">in</span> <span class="n">arg</span><span class="p">:</span>
+                <span class="n">_</span><span class="p">,</span><span class="n">v</span> <span class="o">=</span> <span class="n">arg</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">GeographicalCRS</span><span class="p">(</span><span class="s2">&quot;+ellps=</span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">DATUM_ELLIPSOIDS</span><span class="p">[</span><span class="n">v</span><span class="p">],</span> <span class="n">v</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">CRSError</span><span class="p">(</span><span class="s2">&quot;Could not interpret </span><span class="si">%s</span><span class="s2"> as geographical CRS&quot;</span> <span class="o">%</span> <span class="n">proj4</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="n">srs</span><span class="o">.</span><span class="n">ExportToProj4</span><span class="p">())</span>
+
+<span class="c1">############ Predefined CRS instances ############</span>
+
+<span class="n">Cartesian</span> <span class="o">=</span> <span class="n">CartesianCRS</span><span class="p">()</span>
+
+<span class="n">_SphericalEarth</span> <span class="o">=</span> <span class="n">SphericalCRS</span><span class="p">(</span><span class="mf">6371009.0</span><span class="p">)</span>
+<span class="n">_LonLatWGS84</span> <span class="o">=</span> <span class="n">EllipsoidalCRS</span><span class="p">(</span><span class="mf">6378137.0</span><span class="p">,</span> <span class="mf">6356752.314245</span><span class="p">)</span>
+<span class="n">_LonLatNAD83</span> <span class="o">=</span> <span class="n">EllipsoidalCRS</span><span class="p">(</span><span class="mf">6378137.0</span><span class="p">,</span> <span class="mf">6356752.314140</span><span class="p">)</span>
+<span class="n">_LonLatNAD27</span> <span class="o">=</span> <span class="n">EllipsoidalCRS</span><span class="p">(</span><span class="mf">6378206.4</span><span class="p">,</span> <span class="mf">6356583.8</span><span class="p">)</span>
+
+<span class="n">SphericalEarth</span> <span class="o">=</span> <span class="n">GeographicalCRS</span><span class="p">(</span><span class="s2">&quot;+ellps=sphere&quot;</span><span class="p">,</span> <span class="s2">&quot;Normal Sphere&quot;</span><span class="p">)</span>
+<span class="n">LonLatWGS84</span> <span class="o">=</span> <span class="n">GeographicalCRS</span><span class="p">(</span><span class="s2">&quot;+ellps=WGS84&quot;</span><span class="p">,</span> <span class="s2">&quot;WGS84 (Geographical)&quot;</span><span class="p">,</span> <span class="n">datum</span><span class="o">=</span><span class="s2">&quot;+datum=WGS84&quot;</span><span class="p">)</span>
+<span class="n">LonLatNAD27</span> <span class="o">=</span> <span class="n">GeographicalCRS</span><span class="p">(</span><span class="s2">&quot;+ellps=clrk66&quot;</span><span class="p">,</span> <span class="s2">&quot;NAD27 (Geographical)&quot;</span><span class="p">,</span> <span class="n">datum</span><span class="o">=</span><span class="s2">&quot;+datum=NAD27&quot;</span><span class="p">)</span>
+<span class="n">LonLatNAD83</span> <span class="o">=</span> <span class="n">GeographicalCRS</span><span class="p">(</span><span class="s2">&quot;+ellps=GRS80&quot;</span><span class="p">,</span> <span class="s2">&quot;NAD83 (Geographical)&quot;</span><span class="p">,</span> <span class="n">datum</span><span class="o">=</span><span class="s2">&quot;+datum=NAD83&quot;</span><span class="p">)</span>
+
+<span class="n">UPSNorth</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="n">proj</span><span class="o">=</span><span class="s2">&quot;+proj=stere +lat_0=90 +lat_ts=90 +lon_0=0 &quot;</span>
+                             <span class="s2">&quot;+k=0.994 +x_0=2000000 +y_0=2000000 +units=m &quot;</span>
+                             <span class="s2">&quot;+ellps=WGS84 +datum=WGS84 +no_defs&quot;</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Universal Polar Stereographic (North)&quot;</span><span class="p">)</span>
+
+<span class="n">UPSSouth</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="n">proj</span><span class="o">=</span><span class="s2">&quot;+proj=stere +lat_0=-90 +lat_ts=-90 +lon_0=0 &quot;</span>
+                             <span class="s2">&quot;+k=0.994 +x_0=2000000 +y_0=2000000 +units=m &quot;</span>
+                             <span class="s2">&quot;+ellps=WGS84 +datum=WGS84 +no_defs&quot;</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Universal Polar Stereographic (South)&quot;</span><span class="p">)</span>
+
+<span class="n">NSIDCNorth</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="n">proj</span><span class="o">=</span><span class="s2">&quot;+proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 &quot;</span>
+                               <span class="s2">&quot;+k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 &quot;</span>
+                               <span class="s2">&quot;+ellps=WGS84 +no_defs&quot;</span><span class="p">,</span>
+                          <span class="n">name</span><span class="o">=</span><span class="s2">&quot;NSIDC (North)&quot;</span><span class="p">)</span>
+
+<span class="n">NSIDCSouth</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="n">proj</span><span class="o">=</span><span class="s2">&quot;+proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 &quot;</span>
+                               <span class="s2">&quot;+k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 &quot;</span>
+                               <span class="s2">&quot;+ellps=WGS84 +no_defs&quot;</span><span class="p">,</span>
+                          <span class="n">name</span><span class="o">=</span><span class="s2">&quot;NSIDC (South)&quot;</span><span class="p">)</span>
+
+<span class="n">LambertEqualArea</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="n">proj</span><span class="o">=</span><span class="s2">&quot;+proj=laea +lat_0=0 +lon_0=0 +x_0=0 &quot;</span>
+                                     <span class="s2">&quot;+ellps=WGS84 +y_0=0 +datum=WGS84&quot;</span><span class="p">,</span>
+                                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Lambert Equal Area&quot;</span><span class="p">)</span>
+
+<span class="n">GallPetersEqualArea</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="s2">&quot;+proj=cea +lon_0=0 +lat_ts=45 +x_0=0 +y_0=0 &quot;</span>
+                                   <span class="s2">&quot;+ellps=WGS84 +datum=WGS84 +units=m +no_defs&quot;</span><span class="p">,</span>
+                                   <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Gall Peters Equal Area&quot;</span><span class="p">)</span>
+
+<span class="n">WebMercator</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="s2">&quot;+proj=merc +a=6378137 +b=6378137 +lat_ts=0.0 &quot;</span>
+                           <span class="s2">&quot;+lon_0=0.0 +x_0=0.0 +y_0=0 +k=1.0 +units=m &quot;</span>
+                           <span class="s2">&quot;+a=6378137 +b=6378137 &quot;</span>
+                           <span class="s2">&quot;+nadgrids=@null +wktext +no_defs&quot;</span><span class="p">,</span>
+                           <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Web Mercator&quot;</span><span class="p">)</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

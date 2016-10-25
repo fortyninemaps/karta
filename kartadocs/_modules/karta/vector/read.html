@@ -1,0 +1,453 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.vector.read &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.vector.read</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.vector.read</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Data input functions for Karta</span>
+
+<span class="sd">Used available drivers to read input data and return Karta geometry objects.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Number</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">geometry</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">geojson</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">shp</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">gpx</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">xyfile</span>
+<span class="kn">from</span> <span class="nn">..crs</span> <span class="kn">import</span> <span class="n">GeographicalCRS</span><span class="p">,</span> <span class="n">ProjectedCRS</span><span class="p">,</span> <span class="n">LonLatWGS84</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">errors</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">ogr</span>
+    <span class="n">HAS_OSGEO</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">HAS_OSGEO</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="c1">### GeoInterface functions ###</span>
+
+<div class="viewcode-block" id="from_shape"><a class="viewcode-back" href="../../../reference.html#karta.vector.read.from_shape">[docs]</a><span class="k">def</span> <span class="nf">from_shape</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Read a __geo_interface__ dictionary and return an appropriate karta</span>
+<span class="sd">    object &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_from_shape</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">__geo_interface__</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">_from_shape</span><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">properties</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">d</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">elif</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Feature&quot;</span><span class="p">:</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">_from_shape</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">],</span> <span class="n">p</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;coordinates&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">c</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+        <span class="k">elif</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Point&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;LineString&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Line</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Polygon&quot;</span><span class="p">:</span>
+            <span class="n">subs</span> <span class="o">=</span> <span class="p">[</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">c</span><span class="p">))]</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">c</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">,</span> <span class="n">subs</span><span class="o">=</span><span class="n">subs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MultiPoint&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Multipoint</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MultiLineString&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Multiline</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">d</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MultiPolygon&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Multipolygon</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">properties</span><span class="o">=</span><span class="n">properties</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Geometry type {0} not &quot;</span>
+                                      <span class="s2">&quot;implemented&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]))</span>
+
+<span class="c1">### GeoJSON functions ###</span>
+
+<div class="viewcode-block" id="read_geojson"><a class="viewcode-back" href="../../../reference.html#karta.vector.read.read_geojson">[docs]</a><span class="k">def</span> <span class="nf">read_geojson</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Parse GeoJSON and return a list of geometries.</span>
+
+<span class="sd">    f : file-like object or str</span>
+<span class="sd">        file object to read from or a GeoJSON string</span>
+<span class="sd">    crs : karta.crs.CRS</span>
+<span class="sd">        CRS object to bind to new geometries</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_convert_crs</span><span class="p">(</span><span class="n">crsdict</span><span class="p">):</span>
+        <span class="c1"># Deprecated</span>
+        <span class="k">if</span> <span class="n">crsdict</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;link&quot;</span><span class="p">):</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="n">LonLatWGS84</span>
+        <span class="k">elif</span> <span class="n">crsdict</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;name&quot;</span><span class="p">:</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="n">geojson</span><span class="o">.</span><span class="n">GeoJSONNamedCRS</span><span class="p">(</span><span class="n">crsdict</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+        <span class="k">elif</span> <span class="n">crsdict</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;link&quot;</span><span class="p">:</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="n">geojson</span><span class="o">.</span><span class="n">GeoJSONLinkedCRS</span><span class="p">(</span><span class="n">crsdict</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">][</span><span class="s2">&quot;href&quot;</span><span class="p">],</span>
+                                           <span class="n">crsdict</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">crs</span>
+
+    <span class="k">def</span> <span class="nf">convert</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">geojson</span><span class="o">.</span><span class="n">Feature</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert_feature</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">geojson</span><span class="o">.</span><span class="n">FeatureCollection</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert_feature</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">geom</span><span class="o">.</span><span class="n">features</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">geojson</span><span class="o">.</span><span class="n">GeometryCollection</span><span class="p">):</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="p">[</span><span class="n">convert</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">geom</span><span class="o">.</span><span class="n">geometries</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="n">convert_geometry</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">res</span>
+
+    <span class="k">def</span> <span class="nf">convert_geometry</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="c1"># TODO: Requires clean-up; was written before properties vs data was</span>
+        <span class="c1"># clearly worked out. Hacks to bring it up to speed are ugly.</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">geojson</span><span class="o">.</span><span class="n">Point</span><span class="p">):</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;properties&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kw</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span>
+            <span class="k">del</span> <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">geojson</span><span class="o">.</span><span class="n">LineString</span><span class="p">):</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;properties&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kw</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span>
+            <span class="k">del</span> <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Line</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">geojson</span><span class="o">.</span><span class="n">Polygon</span><span class="p">):</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;properties&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">kw</span><span class="o">.</span><span class="n">setdefault</span><span class="p">(</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="p">{})</span>
+            <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">kw</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">])</span>
+            <span class="k">del</span> <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                                    <span class="n">subs</span><span class="o">=</span><span class="n">geom</span><span class="o">.</span><span class="n">coordinates</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span>
+                                    <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">geojson</span><span class="o">.</span><span class="n">MultiPoint</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Multipoint</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">coordinates</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">geojson</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">geometry</span><span class="o">.</span><span class="n">Line</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">coords</span> <span class="ow">in</span> <span class="n">geom</span><span class="o">.</span><span class="n">coordinates</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">geojson</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">):</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">subs</span><span class="o">=</span><span class="n">coords</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">coords</span> <span class="ow">in</span> <span class="n">geom</span><span class="o">.</span><span class="n">coordinates</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;{0} is a not a GeoJSON entity&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">geom</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">convert_feature</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s2">&quot;vector&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">Number</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">val</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">val</span><span class="p">)):</span>
+                        <span class="k">if</span> <span class="n">val</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                            <span class="n">val</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s1">&#39;nan&#39;</span><span class="p">)</span>
+        <span class="n">prop</span> <span class="o">=</span> <span class="n">feat</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s2">&quot;scalar&quot;</span><span class="p">]</span>
+        <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prop</span>
+        <span class="k">return</span> <span class="n">convert</span><span class="p">(</span><span class="n">feat</span><span class="o">.</span><span class="n">geometry</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+    <span class="n">R</span> <span class="o">=</span> <span class="n">geojson</span><span class="o">.</span><span class="n">GeoJSONReader</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">geom</span> <span class="o">=</span> <span class="n">R</span><span class="o">.</span><span class="n">parse</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">convert</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">_geojson_properties2karta</span><span class="p">(</span><span class="n">properties</span><span class="p">,</span> <span class="n">n</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Takes a dictionary (derived from a GeoJSON properties object) and</span>
+<span class="sd">    divides it into singleton properties and *n*-degree data. &quot;&quot;&quot;</span>
+    <span class="n">props</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">in</span> <span class="n">properties</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="n">n</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;properties must be singleton or per-vertex&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">props</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">props</span><span class="p">,</span> <span class="n">data</span>
+
+<div class="viewcode-block" id="read_xyfile"><a class="viewcode-back" href="../../../reference.html#karta.vector.read.read_xyfile">[docs]</a><span class="k">def</span> <span class="nf">read_xyfile</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">header_rows</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">astype</span><span class="o">=</span><span class="n">geometry</span><span class="o">.</span><span class="n">Multipoint</span><span class="p">,</span> <span class="n">coordrank</span><span class="o">=</span><span class="mi">2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Read an ASCII delimited table and return a geometry object given by *astype*.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dat</span> <span class="o">=</span> <span class="n">xyfile</span><span class="o">.</span><span class="n">load_xy</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="n">delimiter</span><span class="p">,</span> <span class="n">header_rows</span><span class="o">=</span><span class="n">header_rows</span><span class="p">)</span>
+    <span class="n">ncols</span> <span class="o">=</span> <span class="n">dat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">ncols</span> <span class="o">&gt;=</span> <span class="n">coordrank</span><span class="p">:</span>
+        <span class="n">coords</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[:,:</span><span class="n">coordrank</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">ncols</span> <span class="o">&gt;</span> <span class="n">coordrank</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">dat</span><span class="p">[:,</span><span class="n">coordrank</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">return</span> <span class="n">astype</span><span class="p">(</span><span class="n">coords</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">IOError</span><span class="p">(</span><span class="s1">&#39;data table has insufficient number of columns&#39;</span><span class="p">)</span></div>
+
+<span class="c1">### Shapefile functions ###</span>
+
+<div class="viewcode-block" id="get_filenames"><a class="viewcode-back" href="../../../reference.html#karta.vector.read.get_filenames">[docs]</a><span class="k">def</span> <span class="nf">get_filenames</span><span class="p">(</span><span class="n">stem</span><span class="p">,</span> <span class="n">check</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Given a filename basename, return the associated shapefile paths. If</span>
+<span class="sd">    `check` is True, ensure that the files exist.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">stem</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.shp&quot;</span><span class="p">):</span>
+        <span class="n">stem</span> <span class="o">=</span> <span class="n">stem</span><span class="p">[:</span><span class="o">-</span><span class="mi">4</span><span class="p">]</span>
+    <span class="n">shp</span> <span class="o">=</span> <span class="n">stem</span> <span class="o">+</span> <span class="s1">&#39;.shp&#39;</span>
+    <span class="n">shx</span> <span class="o">=</span> <span class="n">stem</span> <span class="o">+</span> <span class="s1">&#39;.shx&#39;</span>
+    <span class="n">dbf</span> <span class="o">=</span> <span class="n">stem</span> <span class="o">+</span> <span class="s1">&#39;.dbf&#39;</span>
+    <span class="k">if</span> <span class="n">check</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">fnm</span> <span class="ow">in</span> <span class="p">(</span><span class="n">shp</span><span class="p">,</span> <span class="n">shx</span><span class="p">,</span> <span class="n">dbf</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fnm</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;missing {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fnm</span><span class="p">))</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;shp&#39;</span><span class="p">:</span><span class="n">shp</span><span class="p">,</span> <span class="s1">&#39;shx&#39;</span><span class="p">:</span><span class="n">shx</span><span class="p">,</span> <span class="s1">&#39;dbf&#39;</span><span class="p">:</span><span class="n">dbf</span><span class="p">}</span></div>
+
+<span class="k">def</span> <span class="nf">ogr_read_shapefile</span><span class="p">(</span><span class="n">stem</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">HAS_OSGEO</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingDependencyError</span><span class="p">(</span><span class="s2">&quot;Reading shapefiles requires GDAL &quot;</span>
+                                            <span class="s2">&quot;bindings&quot;</span><span class="p">)</span>
+    <span class="n">fnms</span> <span class="o">=</span> <span class="n">get_filenames</span><span class="p">(</span><span class="n">stem</span><span class="p">)</span>
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s2">&quot;ESRI Shapefile&quot;</span><span class="p">)</span>
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">Open</span><span class="p">(</span><span class="n">fnms</span><span class="p">[</span><span class="s2">&quot;shp&quot;</span><span class="p">],</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="n">layer</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">GetLayer</span><span class="p">()</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">_geoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">_from_shape</span><span class="p">(</span><span class="n">gi</span><span class="p">,</span> <span class="n">p</span><span class="p">)</span>
+                 <span class="k">for</span> <span class="p">(</span><span class="n">gi</span><span class="p">,</span><span class="n">p</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">shp</span><span class="o">.</span><span class="n">ogr_read_geometries</span><span class="p">(</span><span class="n">layer</span><span class="p">),</span>
+                                   <span class="n">shp</span><span class="o">.</span><span class="n">ogr_read_attributes</span><span class="p">(</span><span class="n">layer</span><span class="p">))]</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">ogr_parse_srs</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+    <span class="k">finally</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">ds</span><span class="p">,</span> <span class="n">driver</span><span class="p">,</span> <span class="n">layer</span>
+
+    <span class="n">geoms</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">_geoms</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">g</span><span class="p">:</span>
+                <span class="n">part</span><span class="o">.</span><span class="n">crs</span> <span class="o">=</span> <span class="n">crs</span>
+            <span class="n">geoms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">g</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">g</span><span class="o">.</span><span class="n">crs</span> <span class="o">=</span> <span class="n">crs</span>
+            <span class="n">geoms</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">geoms</span>
+
+<div class="viewcode-block" id="ogr_parse_srs"><a class="viewcode-back" href="../../../reference.html#karta.vector.read.ogr_parse_srs">[docs]</a><span class="k">def</span> <span class="nf">ogr_parse_srs</span><span class="p">(</span><span class="n">lyr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Given an OGR type with a `GetSpatialRef` method, return a matching CRS</span>
+<span class="sd">    object. &quot;&quot;&quot;</span>
+    <span class="n">srs</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">GetSpatialRef</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">srs</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">LonLatWGS84</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">srs</span><span class="o">.</span><span class="n">GetAttrValue</span><span class="p">(</span><span class="s1">&#39;PROJCS&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">srs</span><span class="o">.</span><span class="n">IsGeographic</span><span class="p">():</span>
+            <span class="n">spheroid</span> <span class="o">=</span> <span class="s2">&quot;+a={a} +f={f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">srs</span><span class="o">.</span><span class="n">GetSemiMajor</span><span class="p">(),</span>
+                                              <span class="n">f</span><span class="o">=</span><span class="mf">1.0</span><span class="o">/</span><span class="n">srs</span><span class="o">.</span><span class="n">GetInvFlattening</span><span class="p">())</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="n">GeographicalCRS</span><span class="p">(</span><span class="n">spheroid</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="n">srs</span><span class="o">.</span><span class="n">ExportToProj4</span><span class="p">(),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">crs</span></div>
+
+<span class="c1"># convenience binding</span>
+<span class="n">read_shapefile</span> <span class="o">=</span> <span class="n">ogr_read_shapefile</span>
+
+
+<span class="c1">### GPX functions ###</span>
+
+<span class="k">def</span> <span class="nf">read_gpx_waypts</span><span class="p">(</span><span class="n">fnm</span><span class="p">):</span>
+    <span class="n">gpx_doc</span> <span class="o">=</span> <span class="n">gpx</span><span class="o">.</span><span class="n">GPX</span><span class="p">(</span><span class="n">fnm</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">_waypt2pt</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">gpx_doc</span><span class="o">.</span><span class="n">waypts</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">read_gpx_tracks</span><span class="p">(</span><span class="n">fnm</span><span class="p">):</span>
+    <span class="n">gpx_doc</span> <span class="o">=</span> <span class="n">gpx</span><span class="o">.</span><span class="n">GPX</span><span class="p">(</span><span class="n">fnm</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">_track2lines</span><span class="p">(</span><span class="n">trk</span><span class="p">)</span> <span class="k">for</span> <span class="n">trk</span> <span class="ow">in</span> <span class="n">gpx_doc</span><span class="o">.</span><span class="n">tracks</span><span class="p">]</span>
+
+<span class="k">def</span> <span class="nf">_waypt2pt</span><span class="p">(</span><span class="n">waypt</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">waypt</span><span class="o">.</span><span class="n">lonlat</span><span class="p">,</span>
+                          <span class="n">properties</span><span class="o">=</span><span class="n">waypt</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span>
+                          <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_seg2line</span><span class="p">(</span><span class="n">seg</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">geometry</span><span class="o">.</span><span class="n">Line</span><span class="p">([</span><span class="n">pt</span><span class="o">.</span><span class="n">lonlat</span> <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">seg</span><span class="o">.</span><span class="n">trkpts</span><span class="p">],</span>
+                         <span class="n">properties</span><span class="o">=</span><span class="n">seg</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span>
+                         <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_track2lines</span><span class="p">(</span><span class="n">track</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">_seg2line</span><span class="p">(</span><span class="n">seg</span><span class="p">)</span> <span class="k">for</span> <span class="n">seg</span> <span class="ow">in</span> <span class="n">track</span><span class="o">.</span><span class="n">trksegs</span><span class="p">]</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

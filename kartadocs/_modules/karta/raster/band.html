@@ -1,0 +1,623 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.raster.band &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.raster.band</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.raster.band</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Band implementations for storing data in Karta Grid instances</span>
+
+<span class="sd">Overview</span>
+<span class="sd">--------</span>
+
+<span class="sd">`BandIndexer` interface for accessing data from one or more bands</span>
+
+<span class="sd">`SimpleBand` use numpy arrays for data storage</span>
+
+<span class="sd">`CompressedBand` uses blosc compression to reduce in-memory footprint</span>
+
+<span class="sd">Implementation</span>
+<span class="sd">--------------</span>
+
+<span class="sd">Bands are expected to implement the following methods:</span>
+<span class="sd">    - `__getitem__(self, key)`, accepting as *key* any of</span>
+<span class="sd">        - an int</span>
+<span class="sd">        - a slice</span>
+<span class="sd">        - a 2-tuple of ints</span>
+<span class="sd">        - a 2-tuple of slices</span>
+<span class="sd">    - `__setitem__(self, key, value)`, accepting as *key* the same</span>
+<span class="sd">      possibilities as __getitem__</span>
+
+<span class="sd">Additionally, a Band should have a `dtype` attribute indicating the type of the</span>
+<span class="sd">stored data.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">blosc</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="kn">import</span> <span class="n">Integral</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">ceil</span>
+
+<span class="k">class</span> <span class="nc">BandIndexer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bands</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bands</span> <span class="o">=</span> <span class="n">bands</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,:][</span><span class="n">key</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;third element of key exceeds number of bands&quot;</span><span class="p">)</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">key</span><span class="p">[:</span><span class="mi">2</span><span class="p">]]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">b</span><span class="p">[:,:][</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;indexing tuple must have length 2 or 3&quot;</span><span class="p">)</span>
+                <span class="n">sr</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">key</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">sb</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sb</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">b</span><span class="p">[</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">sb</span><span class="p">]])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">sb</span><span class="p">][</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,:]</span>
+                <span class="n">tmp</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,:]</span> <span class="o">=</span> <span class="n">tmp</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+                        <span class="n">tmp</span> <span class="o">=</span> <span class="n">b</span><span class="p">[:,:]</span>
+                        <span class="n">tmp</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
+                        <span class="n">b</span><span class="p">[:,:]</span> <span class="o">=</span> <span class="n">tmp</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">:</span>
+                        <span class="n">tmp</span> <span class="o">=</span> <span class="n">b</span><span class="p">[:,:]</span>
+                        <span class="n">tmp</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                        <span class="n">b</span><span class="p">[:,:]</span> <span class="o">=</span> <span class="n">tmp</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;indexing tuple must have length 2 or 3&quot;</span><span class="p">)</span>
+                <span class="n">sr</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">key</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">sb</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sb</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)):</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">[:,:,</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">sb</span><span class="p">]:</span>
+                            <span class="n">b</span><span class="p">[</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">sb</span><span class="p">][</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">,:]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns the dimensions of raster bands. If there is a single</span>
+<span class="sd">        (m x n) band, output is a tuple (m, n). If there are N&gt;1 bands, output</span>
+<span class="sd">        is a tuple (N, m, n).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no bands&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Returns bands&#39; dtype &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span>
+
+<div class="viewcode-block" id="SimpleBand"><a class="viewcode-back" href="../../../reference.html#karta.raster.band.SimpleBand">[docs]</a><span class="k">class</span> <span class="nc">SimpleBand</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; SimpleBand wraps a numpy.ndarray for storage. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">initval</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="k">if</span> <span class="n">initval</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">initval</span><span class="p">,</span> <span class="n">dtype</span><span class="o">-</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">array</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">array</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="CompressedBand"><a class="viewcode-back" href="../../../reference.html#karta.raster.band.CompressedBand">[docs]</a><span class="k">class</span> <span class="nc">CompressedBand</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; CompressedBand is a chunked, blosc-compressed array. &quot;&quot;&quot;</span>
+    <span class="n">CHUNKSET</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">CHUNKUNSET</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">chunksize</span><span class="o">=</span><span class="p">(</span><span class="mi">256</span><span class="p">,</span> <span class="mi">256</span><span class="p">),</span> <span class="n">initval</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">unsetval</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Initialize a CompressedBand instance.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        size : tuple of two ints</span>
+<span class="sd">            size of band in pixels</span>
+<span class="sd">        dtype : type</span>
+<span class="sd">            data type of pixel values</span>
+<span class="sd">        chunksize : tuple of two ints, optional</span>
+<span class="sd">            size of compressed chunks, default (256, 256)</span>
+<span class="sd">        initval : value, optional</span>
+<span class="sd">            if set, the entire grid is initialized with this value, which should</span>
+<span class="sd">            be of *dtype*</span>
+<span class="sd">        unsetval : value, optional</span>
+<span class="sd">            value to fill with when an unset block is requested</span>
+<span class="sd">            default 0</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">size</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_chunksize</span> <span class="o">=</span> <span class="n">chunksize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initval</span> <span class="o">=</span> <span class="n">initval</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_unsetval</span> <span class="o">=</span> <span class="n">unsetval</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">nchunkrows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">chunksize</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nchunkcols</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">chunksize</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+        <span class="n">nchunks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nchunkrows</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">nchunkcols</span>
+
+        <span class="c1"># Data store</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="p">[</span><span class="bp">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nchunks</span><span class="p">)]</span>
+
+        <span class="c1"># 0 =&gt; unset</span>
+        <span class="c1"># 1 =&gt; set</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chunkstatus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nchunks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">Integral</span><span class="p">):</span>
+            <span class="n">irow</span> <span class="o">=</span> <span class="n">key</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">icol</span> <span class="o">=</span> <span class="n">key</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">irow</span><span class="p">,</span> <span class="n">icol</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;band can only be indexed along two dimensions&quot;</span><span class="p">)</span>
+
+            <span class="n">kr</span><span class="p">,</span> <span class="n">kc</span> <span class="o">=</span> <span class="n">key</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="n">Integral</span><span class="p">):</span>
+                <span class="n">yoff</span> <span class="o">=</span> <span class="n">kr</span>
+                <span class="n">ny</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">ystride</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                <span class="n">ystart</span><span class="p">,</span> <span class="n">ystop</span><span class="p">,</span> <span class="n">ystride</span> <span class="o">=</span> <span class="n">kr</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">yoff</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ystart</span><span class="p">,</span> <span class="n">ystop</span><span class="p">)</span>
+                <span class="n">ny</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ystop</span><span class="o">-</span><span class="n">ystart</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">ystride</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">yoff</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;slicing with instances of &#39;{0}&#39; not &quot;</span>
+                                 <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">kr</span><span class="p">)))</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="n">Integral</span><span class="p">):</span>
+                <span class="n">xoff</span> <span class="o">=</span> <span class="n">kc</span>
+                <span class="n">nx</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">xstride</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                <span class="n">xstart</span><span class="p">,</span> <span class="n">xstop</span><span class="p">,</span> <span class="n">xstride</span> <span class="o">=</span> <span class="n">kc</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">xoff</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">xstart</span><span class="p">,</span> <span class="n">xstop</span><span class="p">)</span>
+                <span class="n">nx</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">xstop</span><span class="o">-</span><span class="n">xstart</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">xstride</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">xoff</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;slicing with instances of &#39;{0}&#39; not &quot;</span>
+                                 <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">kc</span><span class="p">)))</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="n">Integral</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="n">Integral</span><span class="p">):</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">))[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">))[::</span><span class="n">ystride</span><span class="p">,::</span><span class="n">xstride</span><span class="p">]</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">stride</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">yoff</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">stride</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">yoff</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="n">ny</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">stop</span><span class="o">-</span><span class="n">start</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]))[::</span><span class="n">stride</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;indexing with instances of &#39;{0}&#39; not &quot;</span>
+                             <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">irow</span> <span class="o">=</span> <span class="n">key</span> <span class="o">//</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">icol</span> <span class="o">=</span> <span class="n">key</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_setblock</span><span class="p">(</span><span class="n">irow</span><span class="p">,</span> <span class="n">icol</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
+
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;band can only be indexed along two dimensions&quot;</span><span class="p">)</span>
+
+            <span class="n">kr</span><span class="p">,</span> <span class="n">kc</span> <span class="o">=</span> <span class="n">key</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">yoff</span> <span class="o">=</span> <span class="n">kr</span>
+                <span class="n">ny</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">sy</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">kr</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">yoff</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">yoff</span> <span class="o">=</span> <span class="n">kr</span><span class="o">.</span><span class="n">start</span>
+                <span class="k">if</span> <span class="n">kr</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">ny</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">yoff</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">ny</span> <span class="o">=</span> <span class="n">kr</span><span class="o">.</span><span class="n">stop</span><span class="o">-</span><span class="n">yoff</span>
+                <span class="k">if</span> <span class="n">kr</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">sy</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sy</span> <span class="o">=</span> <span class="n">kr</span><span class="o">.</span><span class="n">step</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;slicing with instances of &#39;{0}&#39; not &quot;</span>
+                                 <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">kr</span><span class="p">)))</span>
+
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">xoff</span> <span class="o">=</span> <span class="n">kc</span>
+                <span class="n">nx</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">sx</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">kc</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">xoff</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">xoff</span> <span class="o">=</span> <span class="n">kc</span><span class="o">.</span><span class="n">start</span>
+                <span class="k">if</span> <span class="n">kc</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">nx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">xoff</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">nx</span> <span class="o">=</span> <span class="n">kc</span><span class="o">.</span><span class="n">stop</span><span class="o">-</span><span class="n">xoff</span>
+                <span class="k">if</span> <span class="n">kc</span><span class="o">.</span><span class="n">step</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">sx</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sx</span> <span class="o">=</span> <span class="n">kc</span><span class="o">.</span><span class="n">step</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;slicing with instances of &#39;{0}&#39; not &quot;</span>
+                                 <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">kc</span><span class="p">)))</span>
+
+            <span class="n">vny</span><span class="p">,</span> <span class="n">vnx</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">ny</span><span class="p">)</span><span class="o">/</span><span class="n">sy</span><span class="p">)</span> <span class="o">!=</span> <span class="n">vny</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="o">/</span><span class="n">sx</span><span class="p">)</span> <span class="o">!=</span> <span class="n">vnx</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Cannot insert array with size ({vny}, {vnx}))&quot;</span>
+                        <span class="s2">&quot; into slice with size ({ny}, {nx})&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                            <span class="n">vny</span><span class="o">=</span><span class="n">vny</span><span class="p">,</span> <span class="n">vnx</span><span class="o">=</span><span class="n">vnx</span><span class="p">,</span> <span class="n">ny</span><span class="o">=</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="o">=</span><span class="n">nx</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">sy</span> <span class="o">==</span> <span class="n">sx</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_setblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">))</span>
+                <span class="n">temp</span><span class="p">[::</span><span class="n">sy</span><span class="p">,::</span><span class="n">sx</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_setblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">temp</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;indexing with instances of &#39;{0}&#39; not &quot;</span>
+                             <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
+
+        <span class="k">return</span>
+
+
+    <span class="k">def</span> <span class="nf">_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">blosc</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">tostring</span><span class="p">(),</span>
+                                           <span class="n">np</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">itemsize</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chunkstatus</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">CHUNKSET</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_retrieve</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="n">bytestr</span> <span class="o">=</span> <span class="n">blosc</span><span class="o">.</span><span class="n">decompress</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">index</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">bytestr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chunksize</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_getchunks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Return a generator returning tuples identifying chunks covered by a</span>
+<span class="sd">        range. The tuples contain (chunk_number, ystart, yend, xstart, xend)</span>
+<span class="sd">        for each chunk touched by a region defined by corner indices and region</span>
+<span class="sd">        size. &quot;&quot;&quot;</span>
+        <span class="n">chunksize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunksize</span>
+        <span class="n">ystart</span> <span class="o">=</span> <span class="n">yoff</span> <span class="o">//</span> <span class="n">chunksize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">yend</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">yoff</span><span class="o">+</span><span class="n">ny</span><span class="p">)</span> <span class="o">/</span> <span class="n">chunksize</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">xstart</span> <span class="o">=</span> <span class="n">xoff</span> <span class="o">//</span> <span class="n">chunksize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">xend</span> <span class="o">=</span> <span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">xoff</span><span class="o">+</span><span class="n">nx</span><span class="p">)</span> <span class="o">/</span> <span class="n">chunksize</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="n">nxchunks</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">chunksize</span><span class="p">[</span><span class="mi">1</span><span class="p">])))</span>
+
+        <span class="n">i</span> <span class="o">=</span> <span class="n">ystart</span>
+        <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">yend</span><span class="p">:</span>
+
+            <span class="n">j</span> <span class="o">=</span> <span class="n">xstart</span>
+
+            <span class="k">while</span> <span class="n">j</span> <span class="o">&lt;</span> <span class="n">xend</span><span class="p">:</span>
+                <span class="n">chunk_number</span> <span class="o">=</span> <span class="n">i</span><span class="o">*</span><span class="n">nxchunks</span> <span class="o">+</span> <span class="n">j</span>
+                <span class="n">chunk_ystart</span> <span class="o">=</span> <span class="n">i</span><span class="o">*</span><span class="n">chunksize</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">chunk_xstart</span> <span class="o">=</span> <span class="n">j</span><span class="o">*</span><span class="n">chunksize</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">chunk_yend</span> <span class="o">=</span> <span class="nb">min</span><span class="p">((</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">chunksize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">chunk_xend</span> <span class="o">=</span> <span class="nb">min</span><span class="p">((</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">chunksize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+                <span class="k">yield</span> <span class="p">(</span><span class="n">chunk_number</span><span class="p">,</span> <span class="n">chunk_ystart</span><span class="p">,</span> <span class="n">chunk_yend</span><span class="p">,</span>
+                       <span class="n">chunk_xstart</span><span class="p">,</span> <span class="n">chunk_xend</span><span class="p">)</span>
+                <span class="n">j</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="n">i</span><span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">_setblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Store block of values in *array* starting at offset *yoff*, *xoff*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">chunksize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunksize</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">yst</span><span class="p">,</span> <span class="n">yen</span><span class="p">,</span> <span class="n">xst</span><span class="p">,</span> <span class="n">xen</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getchunks</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="o">*</span><span class="n">size</span><span class="p">):</span>
+
+            <span class="c1"># Get from data store</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunkstatus</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">CHUNKUNSET</span><span class="p">:</span>
+                <span class="n">chunkdata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_retrieve</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">chunkdata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_chunksize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initval</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+            <span class="c1"># Compute region within chunk to place data in</span>
+            <span class="n">cy0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">yoff</span><span class="o">-</span><span class="n">yst</span><span class="p">)</span>
+            <span class="n">cy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">chunksize</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">yoff</span><span class="o">+</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="n">yst</span><span class="p">)</span>
+            <span class="n">cx0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xoff</span><span class="o">-</span><span class="n">xst</span><span class="p">)</span>
+            <span class="n">cx1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">chunksize</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">xoff</span><span class="o">+</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">xst</span><span class="p">)</span>
+
+            <span class="c1"># Compute region to slice from data</span>
+            <span class="n">dy0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">yst</span><span class="o">-</span><span class="n">yoff</span><span class="p">)</span>
+            <span class="n">dy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">yen</span><span class="o">-</span><span class="n">yoff</span><span class="p">)</span>
+            <span class="n">dx0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xst</span><span class="o">-</span><span class="n">xoff</span><span class="p">)</span>
+            <span class="n">dx1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">xen</span><span class="o">-</span><span class="n">xoff</span><span class="p">)</span>
+
+            <span class="n">chunkdata</span><span class="p">[</span><span class="n">cy0</span><span class="p">:</span><span class="n">cy1</span><span class="p">,</span> <span class="n">cx0</span><span class="p">:</span><span class="n">cx1</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span><span class="p">[</span><span class="n">dy0</span><span class="p">:</span><span class="n">dy1</span><span class="p">,</span> <span class="n">dx0</span><span class="p">:</span><span class="n">dx1</span><span class="p">]</span>
+
+            <span class="c1"># Return to data store</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">(</span><span class="n">chunkdata</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">_getblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Retrieve values with dimensions *size*, starting at offset *yoff*,</span>
+<span class="sd">        *xoff*.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">yst</span><span class="p">,</span> <span class="n">yen</span><span class="p">,</span> <span class="n">xst</span><span class="p">,</span> <span class="n">xen</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getchunks</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="o">*</span><span class="n">size</span><span class="p">):</span>
+
+            <span class="c1"># Compute the bounds in the output</span>
+            <span class="n">oy0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">yst</span><span class="o">-</span><span class="n">yoff</span><span class="p">)</span>
+            <span class="n">oy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">yen</span><span class="o">-</span><span class="n">yoff</span><span class="p">)</span>
+            <span class="n">ox0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xst</span><span class="o">-</span><span class="n">xoff</span><span class="p">)</span>
+            <span class="n">ox1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">xen</span><span class="o">-</span><span class="n">xoff</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunkstatus</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">CHUNKUNSET</span><span class="p">:</span>
+                <span class="n">result</span><span class="p">[</span><span class="n">oy0</span><span class="p">:</span><span class="n">oy1</span><span class="p">,</span> <span class="n">ox0</span><span class="p">:</span><span class="n">ox1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">oy1</span><span class="o">-</span><span class="n">oy0</span><span class="p">,</span> <span class="n">ox1</span><span class="o">-</span><span class="n">ox0</span><span class="p">),</span>
+                                                   <span class="bp">self</span><span class="o">.</span><span class="n">_unsetval</span><span class="p">,</span>
+                                                   <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Compute the extents from the chunk to retain</span>
+                <span class="n">cy0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">yst</span><span class="p">)</span> <span class="o">-</span> <span class="n">yst</span>
+                <span class="n">cy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">yoff</span><span class="o">+</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">yen</span><span class="p">)</span> <span class="o">-</span> <span class="n">yst</span>
+                <span class="n">cx0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">xoff</span><span class="p">,</span> <span class="n">xst</span><span class="p">)</span> <span class="o">-</span> <span class="n">xst</span>
+                <span class="n">cx1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">xoff</span><span class="o">+</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">xen</span><span class="p">)</span> <span class="o">-</span> <span class="n">xst</span>
+
+                <span class="n">result</span><span class="p">[</span><span class="n">oy0</span><span class="p">:</span><span class="n">oy1</span><span class="p">,</span> <span class="n">ox0</span><span class="p">:</span><span class="n">ox1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_retrieve</span><span class="p">(</span><span class="n">i</span><span class="p">)[</span><span class="n">cy0</span><span class="p">:</span><span class="n">cy1</span><span class="p">,</span> <span class="n">cx0</span><span class="p">:</span><span class="n">cx1</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">result</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

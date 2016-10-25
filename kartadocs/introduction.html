@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Karta Documentation &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="index.html"/>
+        <link rel="next" title="Installation" href="installation.html"/>
+        <link rel="prev" title="Table of Contents" href="karta-manual.html"/> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Introduction</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting Started</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#data-formats">Data Formats</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#examples">Examples</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#license">License</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#mit-license">MIT License:</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+ 
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="karta-manual.html">Docs</a> &raquo;</li>
+      
+    <li>Karta Documentation</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+            <a href="_sources/introduction.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="karta-documentation">
+<h1>Karta Documentation<a class="headerlink" href="#karta-documentation" title="Permalink to this headline">¶</a></h1>
+<p><em>Karta</em> is a package for spatial analysis in Python. It streamlines data
+processing by providing generic geographical types for vector and raster sources
+as well as a selection of analysis functions.</p>
+<p><em>Karta</em> is divided into two major sections, <code class="docutils literal"><span class="pre">karta.raster</span></code> for gridded
+image-like data, and <code class="docutils literal"><span class="pre">karta.vector</span></code> for point-wise geometry data. Users of GIS
+software will find the distinction familiar. Rasters are typically used for
+applications such as satellite imagery, elevation and hillshade maps, and
+heatmaps. Vector datasets are used when it makes sense to talk about discrete
+geometries, as in a network of stations, a road system, or maps administrative
+boundaries.</p>
+<p>In addition to the above, <em>Karta</em> contains the modules <code class="docutils literal"><span class="pre">karta.crs</span></code> and
+<code class="docutils literal"><span class="pre">karta.geodesy</span></code>, which together provide support classes and functions that
+help represent raster and vector object as positions on earth. There are
+numerous ways of representing positions, including geographical
+longitude/latitude, n-vectors, and easting/northings on various projected
+systems. The CRS class encodes the type of coordinate reference system used by
+an individual or set of objects, and provides a translation layer permitting
+intercomparison of objects using different systems.</p>
+<p><em>Karta</em> is tested with Python 2.7 and Python 3.4+. Suggestions, bug reports, and
+pull requests are welcome via the <a class="reference external" href="https://www.github.com/fortyninemaps/karta">Github page</a>.</p>
+<div class="section" id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>For a whirlwind tour of some basic usage of <em>Karta</em>, look through the <a class="reference external" href="_static/tutorial.html">tutorial</a>.</p>
+</div>
+<div class="section" id="data-formats">
+<h2>Data Formats<a class="headerlink" href="#data-formats" title="Permalink to this headline">¶</a></h2>
+<p><em>Karta</em> provides a basic working interface to several common file formats.
+Currently supported include:</p>
+<ul class="simple">
+<li>vector<ul>
+<li>GeoJSON (r,w)</li>
+<li>ESRI shapefiles (GDAL) (r,w)</li>
+<li>GPS eXchange (GPX) (r,w)</li>
+</ul>
+</li>
+<li>raster<ul>
+<li>ESRI ASCII grid (r,w)</li>
+<li>GeoTiff (GDAL) (r,w)</li>
+</ul>
+</li>
+</ul>
+<p>Furthermore, <em>Karta</em> vector geometries implement the Python <a class="reference external" href="https://gist.github.com/sgillies/2217756">geo_interface</a>
+protocol, permitting direct data interchange with other packages that implement
+it, such as <a class="reference external" href="https://github.com/Toblerity/Shapely">Shapely</a> and <a class="reference external" href="http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//000v00000153000000">ArcPy</a>.</p>
+</div>
+<div class="section" id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
+<p><em>incomplete</em></p>
+</div>
+<div class="section" id="license">
+<h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
+<p>This software is provided under the MIT license.</p>
+<div class="section" id="mit-license">
+<h3>MIT License:<a class="headerlink" href="#mit-license" title="Permalink to this headline">¶</a></h3>
+<p>Permission is hereby granted, free of charge, to any person obtaining a
+copy of this software and associated documentation files (the
+&#8220;Software&#8221;), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:</p>
+<p>The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.</p>
+<p>THE SOFTWARE IS PROVIDED &#8220;AS IS&#8221;, WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="installation.html" class="btn btn-neutral float-right" title="Installation" accesskey="n">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="karta-manual.html" class="btn btn-neutral" title="Table of Contents" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'./',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="_static/jquery.js"></script>
+      <script type="text/javascript" src="_static/underscore.js"></script>
+      <script type="text/javascript" src="_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

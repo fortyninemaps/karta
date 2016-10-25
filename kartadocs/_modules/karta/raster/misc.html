@@ -1,0 +1,421 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.raster.misc &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.raster.misc</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.raster.misc</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">2D raster functions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">.grid</span> <span class="kn">import</span> <span class="n">RegularGrid</span>
+
+<div class="viewcode-block" id="witch_of_agnesi"><a class="viewcode-back" href="../../../reference.html#karta.raster.misc.witch_of_agnesi">[docs]</a><span class="k">def</span> <span class="nf">witch_of_agnesi</span><span class="p">(</span><span class="n">nx</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">ny</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">a</span><span class="o">=</span><span class="mf">4.0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return a raster field defined by the equation Z = 8a^3 / (d^2 + 2a^2)</span>
+<span class="sd">    where d is the distance from the center.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    nx, ny : int</span>
+<span class="sd">        raster size</span>
+<span class="sd">    a : float</span>
+<span class="sd">        magnitude</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">xc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">nx</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">))</span>
+    <span class="n">yc</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">ny</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">))</span>
+    <span class="n">X</span><span class="p">,</span> <span class="n">Y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">nx</span><span class="p">),</span> <span class="nb">range</span><span class="p">(</span><span class="n">ny</span><span class="p">))</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span> <span class="p">(</span><span class="n">X</span><span class="o">-</span><span class="n">xc</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">Y</span><span class="o">-</span><span class="n">yc</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="p">)</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">a</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">D</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">a</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="pad"><a class="viewcode-back" href="../../../reference.html#karta.raster.misc.pad">[docs]</a><span class="k">def</span> <span class="nf">pad</span><span class="p">(</span><span class="n">A</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Apply padding to a 2D array.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    A : ndarray</span>
+<span class="sd">        array to pad</span>
+<span class="sd">    width : int</span>
+<span class="sd">        thickness of padding</span>
+<span class="sd">    edges : str</span>
+<span class="sd">        one of &quot;all&quot;, &quot;left&quot;, &quot;right&quot;, &quot;top&quot;, &quot;bottom&quot;</span>
+<span class="sd">    value : number</span>
+<span class="sd">        fill value for padding</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    ndarray</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">ny</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">nx</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">edges</span> <span class="o">==</span> <span class="s2">&quot;all&quot;</span><span class="p">:</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="s2">&quot;top&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="s2">&quot;top&quot;</span> <span class="o">==</span> <span class="n">edges</span> <span class="ow">or</span> <span class="s2">&quot;top&quot;</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+        <span class="n">ny</span> <span class="o">+=</span> <span class="n">width</span>
+        <span class="n">y0</span> <span class="o">=</span> <span class="n">width</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">y0</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="s2">&quot;bottom&quot;</span> <span class="o">==</span> <span class="n">edges</span> <span class="ow">or</span> <span class="s2">&quot;bottom&quot;</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+        <span class="n">ny</span> <span class="o">+=</span> <span class="n">width</span>
+        <span class="n">yf</span> <span class="o">=</span> <span class="o">-</span><span class="n">width</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">yf</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="s2">&quot;left&quot;</span> <span class="o">==</span> <span class="n">edges</span> <span class="ow">or</span> <span class="s2">&quot;left&quot;</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+        <span class="n">nx</span> <span class="o">+=</span> <span class="n">width</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="n">width</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">x0</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">if</span> <span class="s2">&quot;right&quot;</span> <span class="o">==</span> <span class="n">edges</span> <span class="ow">or</span> <span class="s2">&quot;right&quot;</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+        <span class="n">nx</span> <span class="o">+=</span> <span class="n">width</span>
+        <span class="n">xf</span> <span class="o">=</span> <span class="o">-</span><span class="n">width</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">xf</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="n">B</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">),</span> <span class="n">value</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+    <span class="n">B</span><span class="p">[</span><span class="n">y0</span><span class="p">:</span><span class="n">yf</span><span class="p">,</span> <span class="n">x0</span><span class="p">:</span><span class="n">xf</span><span class="p">]</span> <span class="o">=</span> <span class="n">A</span>
+    <span class="k">return</span> <span class="n">B</span></div>
+
+<span class="k">def</span> <span class="nf">_slope</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot; Return the scalar slope at each pixel using the neighbourhood method.</span>
+<span class="sd">    http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">Ddx</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">2</span><span class="p">:])</span> <span class="o">-</span>
+           <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">Ddy</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span>
+           <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">dy</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Ddx</span><span class="o">*</span><span class="n">Ddx</span> <span class="o">+</span> <span class="n">Ddy</span><span class="o">*</span><span class="n">Ddy</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+<div class="viewcode-block" id="slope"><a class="viewcode-back" href="../../../reference.html#karta.raster.misc.slope">[docs]</a><span class="k">def</span> <span class="nf">slope</span><span class="p">(</span><span class="n">grid</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return the scalar slope at each pixel using the neighbourhood method.</span>
+<span class="sd">    http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">skew</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;slope calculations not implemented on skewed grids&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">nbands</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input grid must be single-banded&quot;</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">data_mask</span><span class="p">,</span> <span class="n">grid</span><span class="p">[:,:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">RegularGrid</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">_slope</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">resolution</span><span class="p">),</span>
+                       <span class="n">crs</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">_aspect</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot; Return the slope aspect for each pixel.</span>
+<span class="sd">    http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Aspect%20works</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">Ddx</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">2</span><span class="p">:])</span> <span class="o">-</span>
+           <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">Ddy</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span>
+           <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">dy</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">pad</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">Ddy</span><span class="p">,</span> <span class="o">-</span><span class="n">Ddx</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">aspect</span><span class="p">(</span><span class="n">grid</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">skew</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;aspect calculations not implemented on skewed grids&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">nbands</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input grid must be single-banded&quot;</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">data_mask</span><span class="p">,</span> <span class="n">grid</span><span class="p">[:,:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">RegularGrid</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">_aspect</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">resolution</span><span class="p">),</span>
+                       <span class="n">crs</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_grad</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot; Computes the gradient of potential D. Return a tuple (dx, dy).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="n">Ddx</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">2</span><span class="p">:])</span> <span class="o">-</span>
+           <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">dx</span><span class="p">)</span>
+    <span class="n">Ddy</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span>
+           <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">8.0</span> <span class="o">*</span> <span class="n">dy</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">pad</span><span class="p">(</span><span class="n">Ddx</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="n">pad</span><span class="p">(</span><span class="n">Ddy</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">gradient</span><span class="p">(</span><span class="n">grid</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">skew</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;gradient calculations not implemented on skewed grids&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">nbands</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input grid must be single-banded&quot;</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">data_mask</span><span class="p">,</span> <span class="n">grid</span><span class="p">[:,:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">dDdx</span><span class="p">,</span> <span class="n">dDdy</span> <span class="o">=</span> <span class="n">_grad</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">resolution</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">RegularGrid</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">dDdx</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="n">RegularGrid</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">dDdy</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+
+<span class="k">def</span> <span class="nf">_div</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">V</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot; Calculate the divergence of a vector field. &quot;&quot;&quot;</span>
+    <span class="n">dUdx</span> <span class="o">=</span> <span class="p">(</span><span class="n">U</span><span class="p">[:,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">-</span> <span class="n">U</span><span class="p">[:,:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span><span class="o">*</span><span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">dVdy</span> <span class="o">=</span> <span class="p">(</span><span class="n">V</span><span class="p">[</span><span class="mi">2</span><span class="p">:,:]</span> <span class="o">-</span> <span class="n">V</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,:])</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span><span class="o">*</span><span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">divergence</span> <span class="o">=</span> <span class="n">pad</span><span class="p">(</span><span class="n">dUdx</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;left&#39;</span><span class="p">,</span> <span class="s1">&#39;right&#39;</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span> \
+               <span class="o">+</span> <span class="n">pad</span><span class="p">(</span><span class="n">dVdy</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">edges</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;top&#39;</span><span class="p">,</span> <span class="s1">&#39;bottom&#39;</span><span class="p">),</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">divergence</span>
+
+<span class="k">def</span> <span class="nf">divergence</span><span class="p">(</span><span class="n">grid</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">skew</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;divergence calculations not implemented on skewed grids&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">nbands</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input grid must be single-banded&quot;</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">data_mask</span><span class="p">,</span> <span class="n">grid</span><span class="p">[:,:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">RegularGrid</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">_div</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">resolution</span><span class="p">),</span>
+                       <span class="n">crs</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_normed_potential_vectors</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)):</span>
+    <span class="sd">&quot;&quot;&quot; Computes a U,V vector field of potential D. Scalar components of</span>
+<span class="sd">    U,V are normalized to max(|U, V|).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">res</span>
+    <span class="n">Ddx</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">2</span><span class="p">:])</span> <span class="o">-</span>
+           <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">8.0</span><span class="o">*</span><span class="n">dx</span><span class="p">)</span>
+    <span class="n">Ddy</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">-</span>
+           <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:]))</span> <span class="o">/</span> <span class="p">(</span><span class="mf">8.0</span><span class="o">*</span><span class="n">dy</span><span class="p">)</span>
+    <span class="n">M</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">Ddx</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">Ddy</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">U</span> <span class="o">=</span> <span class="n">Ddx</span> <span class="o">/</span> <span class="n">M</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">M</span><span class="p">)</span><span class="o">==</span><span class="bp">False</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">V</span> <span class="o">=</span> <span class="n">Ddy</span> <span class="o">/</span> <span class="n">M</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">M</span><span class="p">)</span><span class="o">==</span><span class="bp">False</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">pad</span><span class="p">(</span><span class="n">U</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span> <span class="n">pad</span><span class="p">(</span><span class="n">V</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">normed_potential_vectors</span><span class="p">(</span><span class="n">grid</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">skew</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;potential vector calculations not implemented on skewed grids&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">nbands</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input grid must be single-banded&quot;</span><span class="p">)</span>
+    <span class="n">D</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">data_mask</span><span class="p">,</span> <span class="n">grid</span><span class="p">[:,:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">)</span>
+    <span class="n">u</span><span class="p">,</span> <span class="n">v</span> <span class="o">=</span> <span class="n">_normed_potential_vectors</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">resolution</span><span class="p">)</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">RegularGrid</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">u</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">),</span>
+            <span class="n">RegularGrid</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+
+<div class="viewcode-block" id="hillshade"><a class="viewcode-back" href="../../../reference.html#karta.raster.misc.hillshade">[docs]</a><span class="k">def</span> <span class="nf">hillshade</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">azimuth</span><span class="o">=</span><span class="mf">330.0</span><span class="p">,</span> <span class="n">elevation</span><span class="o">=</span><span class="mf">60.0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return a hill-shaded version of *grid*.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    grid: RegularGrid instance</span>
+<span class="sd">    azimuth: float, optional</span>
+<span class="sd">        direction of light source (default 330.0)</span>
+<span class="sd">    elevation : float, optional</span>
+<span class="sd">        height of light source (default 60.0)</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    Currently assumes orthogonal coordinates.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">grid</span><span class="o">.</span><span class="n">nbands</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;input grid must be single-banded&quot;</span><span class="p">)</span>
+    <span class="n">dxgrid</span><span class="p">,</span> <span class="n">dygrid</span> <span class="o">=</span> <span class="n">gradient</span><span class="p">(</span><span class="n">grid</span><span class="p">)</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">dxgrid</span><span class="p">[:,:]</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">dygrid</span><span class="p">[:,:]</span>
+    <span class="n">res</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resolution</span>
+    <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">dx</span><span class="p">),</span> <span class="n">dx</span><span class="p">))</span>
+    <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">dy</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dy</span><span class="p">))</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">cross</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">,</span> <span class="n">axisa</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">axisb</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">wunit</span> <span class="o">=</span> <span class="n">w</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_3d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">w</span><span class="o">**</span><span class="mi">2</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)))</span>
+
+    <span class="n">s</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">azimuth</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span><span class="p">),</span>
+                  <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">azimuth</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span><span class="p">),</span>
+                  <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">elevation</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span><span class="p">)))</span>
+    <span class="n">smat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">wunit</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">wunit</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="mi">3</span><span class="p">),</span> <span class="n">s</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+    <span class="n">dprod</span> <span class="o">=</span> <span class="p">(</span><span class="n">wunit</span><span class="o">*</span><span class="n">smat</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">dprod</span><span class="p">[</span><span class="o">~</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">dprod</span><span class="p">)],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">98</span><span class="p">])</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">dprod</span><span class="p">,</span> <span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">out</span><span class="o">=</span><span class="n">dprod</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">RegularGrid</span><span class="p">(</span><span class="n">grid</span><span class="o">.</span><span class="n">transform</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">dprod</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">grid</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

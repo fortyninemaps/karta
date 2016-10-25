@@ -1,0 +1,525 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.vector.rtree &mdash; Karta 0.7alpha0 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7alpha0 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.vector.rtree</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.vector.rtree</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Implements an R-tree data structure</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.vectorgeo</span> <span class="kn">import</span> <span class="n">bbox_intersection_area</span>
+
+<span class="n">MIN_CHILDREN</span>  <span class="o">=</span> <span class="mi">2</span>
+
+<div class="viewcode-block" id="Node"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.Node">[docs]</a><span class="k">class</span> <span class="nc">Node</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Represents an R-tree node &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">max_children</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bbox</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">bbox</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_children</span> <span class="o">=</span> <span class="n">max_children</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geom</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="LeafNode"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.LeafNode">[docs]</a><span class="k">class</span> <span class="nc">LeafNode</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Leaf node</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bbox : 4-tuple</span>
+<span class="sd">        (x-min, y-min, x-max, y-max)</span>
+<span class="sd">    parent : Node</span>
+<span class="sd">    max_children : int, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LeafNode</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LeafNode.add"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.LeafNode.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geom</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a geometry and return a code and a list of any new nodes</span>
+<span class="sd">        generated by splitting. &quot;&quot;&quot;</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">newnodes</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">bb</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">bbox</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bbox</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bb</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bb</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                     <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">bb</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">bb</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_children</span><span class="p">:</span>
+            <span class="n">retval</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">newnodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">retval</span><span class="p">,</span> <span class="n">newnodes</span></div>
+
+<div class="viewcode-block" id="LeafNode.split"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.LeafNode.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Split and return new nodes. &quot;&quot;&quot;</span>
+        <span class="n">bbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">bbox</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span><span class="p">:</span>
+            <span class="n">seeds</span> <span class="o">=</span> <span class="n">linear_pick_seeds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+            <span class="n">pick_next</span> <span class="o">=</span> <span class="n">linear_pick_next</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;quadratic&quot;</span><span class="p">:</span>
+            <span class="n">seeds</span> <span class="o">=</span> <span class="n">quadratic_pick_seeds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+            <span class="n">pick_next</span> <span class="o">=</span> <span class="n">quadratic_pick_next</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;kind must be one of &#39;linear&#39;, &#39;quadratic&#39;&quot;</span><span class="p">)</span>
+        <span class="n">node0</span> <span class="o">=</span> <span class="n">LeafNode</span><span class="p">(</span><span class="n">bbs</span><span class="p">[</span><span class="n">seeds</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">max_children</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_children</span><span class="p">)</span>
+        <span class="n">node1</span> <span class="o">=</span> <span class="n">LeafNode</span><span class="p">(</span><span class="n">bbs</span><span class="p">[</span><span class="n">seeds</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">max_children</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_children</span><span class="p">)</span>
+
+        <span class="c1"># add each child to a node</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span>
+        <span class="n">newnodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node0</span><span class="p">,</span> <span class="n">node1</span><span class="p">]</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">pick_next</span><span class="p">(</span><span class="n">node0</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">node1</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">children</span><span class="p">)</span>
+            <span class="n">newnodes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+
+            <span class="c1"># Ensure that each node gets a minimum number of children</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node0</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="n">MIN_CHILDREN</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">node0</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">node1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="n">MIN_CHILDREN</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">node1</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">node0</span><span class="p">,</span> <span class="n">node1</span><span class="p">]</span></div></div>
+
+<div class="viewcode-block" id="NonLeafNode"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.NonLeafNode">[docs]</a><span class="k">class</span> <span class="nc">NonLeafNode</span><span class="p">(</span><span class="n">Node</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Non-leaf node</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    bbox : 4-tuple</span>
+<span class="sd">        (x-min, y-min, x-max, y-max)</span>
+<span class="sd">    parent : Node</span>
+<span class="sd">    max_children : int, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bbox</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">NonLeafNode</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span><span class="n">bbox</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+<div class="viewcode-block" id="NonLeafNode.add"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.NonLeafNode.add">[docs]</a>    <span class="k">def</span> <span class="nf">add</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">geom</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a geometry and return a code and a list of any new nodes</span>
+<span class="sd">        generated by splitting. &quot;&quot;&quot;</span>
+        <span class="n">retval</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">newnodes</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># choose a child node to add to</span>
+        <span class="n">v</span> <span class="o">=</span> <span class="p">[</span><span class="n">volume_expanded</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">geom</span><span class="o">.</span><span class="n">bbox</span><span class="p">)</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">]</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="n">v</span><span class="p">))</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">flag</span><span class="p">,</span> <span class="n">newchildnodes</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span>
+        <span class="n">bb</span> <span class="o">=</span> <span class="n">target</span><span class="o">.</span><span class="n">bbox</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bbox</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bb</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">min</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bb</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                     <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">bb</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">bb</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+
+        <span class="k">if</span> <span class="n">flag</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># replace</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">newchildnodes</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_children</span><span class="p">:</span>
+                <span class="n">newnodes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+                <span class="n">retval</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">retval</span><span class="p">,</span> <span class="n">newnodes</span></div>
+
+<div class="viewcode-block" id="NonLeafNode.split"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.NonLeafNode.split">[docs]</a>    <span class="k">def</span> <span class="nf">split</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Split and return new nodes. &quot;&quot;&quot;</span>
+        <span class="n">bbs</span> <span class="o">=</span> <span class="p">[</span><span class="n">c</span><span class="o">.</span><span class="n">bbox</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;linear&quot;</span><span class="p">:</span>
+            <span class="n">seeds</span> <span class="o">=</span> <span class="n">linear_pick_seeds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+            <span class="n">pick_next</span> <span class="o">=</span> <span class="n">linear_pick_next</span>
+        <span class="k">elif</span> <span class="n">kind</span> <span class="o">==</span> <span class="s2">&quot;quadratic&quot;</span><span class="p">:</span>
+            <span class="n">seeds</span> <span class="o">=</span> <span class="n">quadratic_pick_seeds</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+            <span class="n">pick_next</span> <span class="o">=</span> <span class="n">quadratic_pick_next</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s2">&quot;kind must be one of &#39;linear&#39;, &#39;quadratic&#39;&quot;</span><span class="p">)</span>
+        <span class="n">node0</span> <span class="o">=</span> <span class="n">NonLeafNode</span><span class="p">(</span><span class="n">bbs</span><span class="p">[</span><span class="n">seeds</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">max_children</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_children</span><span class="p">)</span>
+        <span class="n">node1</span> <span class="o">=</span> <span class="n">NonLeafNode</span><span class="p">(</span><span class="n">bbs</span><span class="p">[</span><span class="n">seeds</span><span class="p">[</span><span class="mi">1</span><span class="p">]],</span> <span class="bp">self</span><span class="o">.</span><span class="n">parent</span><span class="p">,</span> <span class="n">max_children</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">max_children</span><span class="p">)</span>
+
+        <span class="c1"># add each child to a node</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">children</span>
+        <span class="n">newnodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node0</span><span class="p">,</span> <span class="n">node1</span><span class="p">]</span>
+        <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="o">=</span> <span class="n">pick_next</span><span class="p">(</span><span class="n">node0</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">node1</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">children</span><span class="p">)</span>
+            <span class="n">_bb</span> <span class="o">=</span> <span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span>
+            <span class="n">_node</span> <span class="o">=</span> <span class="n">newnodes</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">_node</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+            <span class="n">_node</span><span class="o">.</span><span class="n">bbox</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">min</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                          <span class="nb">max</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+
+            <span class="c1"># Ensure that each node gets a minimum number of children</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node0</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="n">MIN_CHILDREN</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">_bb</span> <span class="o">=</span> <span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span>
+                    <span class="n">node0</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                    <span class="n">node0</span><span class="o">.</span><span class="n">bbox</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">min</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                                  <span class="nb">max</span><span class="p">(</span><span class="n">node0</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">node1</span><span class="p">)</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="n">MIN_CHILDREN</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">_bb</span> <span class="o">=</span> <span class="n">children</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span>
+                    <span class="n">node1</span><span class="o">.</span><span class="n">children</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">children</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+                    <span class="n">node1</span><span class="o">.</span><span class="n">bbox</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">min</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                                  <span class="nb">max</span><span class="p">(</span><span class="n">node1</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">_node</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">_bb</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">node0</span><span class="p">,</span> <span class="n">node1</span><span class="p">]</span></div></div>
+
+<div class="viewcode-block" id="build_tree"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.build_tree">[docs]</a><span class="k">def</span> <span class="nf">build_tree</span><span class="p">(</span><span class="n">geoms</span><span class="p">,</span> <span class="n">max_children</span><span class="o">=</span><span class="mi">50</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Construct an R-tree</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    geoms : list of objects implementing a `bbox` attribute</span>
+<span class="sd">    max_children : int, optional</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bboxes</span> <span class="o">=</span> <span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">bbox</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">geoms</span><span class="p">]</span>
+    <span class="n">xmin</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bboxes</span><span class="p">)</span>
+    <span class="n">xmax</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bboxes</span><span class="p">)</span>
+    <span class="n">ymin</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bboxes</span><span class="p">)</span>
+    <span class="n">ymax</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">bboxes</span><span class="p">)</span>
+
+    <span class="n">root</span> <span class="o">=</span> <span class="n">LeafNode</span><span class="p">([</span><span class="n">xmin</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span><span class="p">],</span> <span class="bp">None</span><span class="p">,</span> <span class="n">max_children</span><span class="o">=</span><span class="n">max_children</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">geoms</span><span class="p">:</span>
+        <span class="n">flag</span><span class="p">,</span> <span class="n">newnodes</span> <span class="o">=</span> <span class="n">root</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">flag</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">root</span> <span class="o">=</span> <span class="n">NonLeafNode</span><span class="p">(</span><span class="n">root</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">max_children</span><span class="o">=</span><span class="n">max_children</span><span class="p">)</span>
+            <span class="n">root</span><span class="o">.</span><span class="n">children</span> <span class="o">=</span> <span class="n">newnodes</span>
+    <span class="k">return</span> <span class="n">root</span></div>
+
+<div class="viewcode-block" id="linear_pick_seeds"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.linear_pick_seeds">[docs]</a><span class="k">def</span> <span class="nf">linear_pick_seeds</span><span class="p">(</span><span class="n">geoms</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Choose the seeds for splitting a list of geometries using the linear</span>
+<span class="sd">    approximation of Guttman (1984). &quot;&quot;&quot;</span>
+    <span class="n">fullbb</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">geoms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">)</span>
+    <span class="n">extreme_x0</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># highest xmin</span>
+    <span class="n">extreme_x1</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># lowest xmax</span>
+    <span class="n">extreme_y0</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># highest ymin</span>
+    <span class="n">extreme_y1</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># lowest ymax</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">geoms</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+        <span class="n">gbb</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">bbox</span>
+        <span class="n">fullbb</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">fullbb</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">gbb</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">fullbb</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">fullbb</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">gbb</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">fullbb</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">fullbb</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">gbb</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">fullbb</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">fullbb</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">gbb</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">geoms</span><span class="p">[</span><span class="n">extreme_x0</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">gbb</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">extreme_x0</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">if</span> <span class="n">geoms</span><span class="p">[</span><span class="n">extreme_x1</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">gbb</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+            <span class="n">extreme_x1</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">if</span> <span class="n">geoms</span><span class="p">[</span><span class="n">extreme_y0</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">gbb</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+            <span class="n">extreme_y0</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="k">if</span> <span class="n">geoms</span><span class="p">[</span><span class="n">extreme_y1</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">gbb</span><span class="p">[</span><span class="mi">3</span><span class="p">]:</span>
+            <span class="n">extreme_y1</span> <span class="o">=</span> <span class="n">i</span>
+        <span class="n">i</span> <span class="o">+=</span> <span class="mi">1</span>
+    <span class="c1"># normalize</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="p">(</span><span class="n">geoms</span><span class="p">[</span><span class="n">extreme_x0</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">geoms</span><span class="p">[</span><span class="n">extreme_x1</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">fullbb</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">fullbb</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="p">(</span><span class="n">geoms</span><span class="p">[</span><span class="n">extreme_y0</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">geoms</span><span class="p">[</span><span class="n">extreme_y1</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="n">fullbb</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">-</span><span class="n">fullbb</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">dx</span> <span class="o">&gt;</span> <span class="n">dy</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">extreme_x0</span><span class="p">,</span> <span class="n">extreme_x1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">extreme_y0</span><span class="p">,</span> <span class="n">extreme_y1</span></div>
+
+<div class="viewcode-block" id="linear_pick_next"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.linear_pick_next">[docs]</a><span class="k">def</span> <span class="nf">linear_pick_next</span><span class="p">(</span><span class="n">bb0</span><span class="p">,</span> <span class="n">bb1</span><span class="p">,</span> <span class="n">geoms</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Simply return the last geometry, as well as the index of the bbox that</span>
+<span class="sd">    it should be placed in. &quot;&quot;&quot;</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">geoms</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+    <span class="k">if</span> <span class="n">volume_expanded</span><span class="p">(</span><span class="n">bb0</span><span class="p">,</span> <span class="n">geoms</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">volume_expanded</span><span class="p">(</span><span class="n">bb1</span><span class="p">,</span> <span class="n">geoms</span><span class="p">[</span><span class="n">n</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">n</span><span class="p">,</span> <span class="mi">0</span></div>
+
+<div class="viewcode-block" id="quadratic_pick_seeds"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.quadratic_pick_seeds">[docs]</a><span class="k">def</span> <span class="nf">quadratic_pick_seeds</span><span class="p">(</span><span class="n">geoms</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Choose the seeds for splitting a list of geometries using the quadratic</span>
+<span class="sd">    approximation of Guttman (1984). &quot;&quot;&quot;</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
+    <span class="n">I</span><span class="p">,</span> <span class="n">J</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">)</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">geoms</span><span class="p">)),</span> <span class="mi">2</span><span class="p">):</span>
+        <span class="n">bbi</span> <span class="o">=</span> <span class="n">geoms</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span>
+        <span class="n">bbj</span> <span class="o">=</span> <span class="n">geoms</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">.</span><span class="n">bbox</span>
+        <span class="n">bbc</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">bbi</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bbj</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">min</span><span class="p">(</span><span class="n">bbi</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bbj</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+               <span class="nb">max</span><span class="p">(</span><span class="n">bbi</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">bbj</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">bbi</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">bbj</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+        <span class="n">d_</span> <span class="o">=</span> <span class="n">area</span><span class="p">(</span><span class="n">bbc</span><span class="p">)</span> <span class="o">-</span> <span class="n">area</span><span class="p">(</span><span class="n">bbi</span><span class="p">)</span> <span class="o">-</span> <span class="n">area</span><span class="p">(</span><span class="n">bbj</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">d_</span> <span class="o">&gt;</span> <span class="n">d</span><span class="p">:</span>
+            <span class="n">d</span> <span class="o">=</span> <span class="n">d_</span>
+            <span class="n">I</span><span class="p">,</span> <span class="n">J</span> <span class="o">=</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span>
+    <span class="k">return</span> <span class="n">I</span><span class="p">,</span> <span class="n">J</span></div>
+
+<div class="viewcode-block" id="quadratic_pick_next"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.quadratic_pick_next">[docs]</a><span class="k">def</span> <span class="nf">quadratic_pick_next</span><span class="p">(</span><span class="n">bb0</span><span class="p">,</span> <span class="n">bb1</span><span class="p">,</span> <span class="n">geoms</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Choose an index from *geoms* to place in one of *bb0*, *bb1*.</span>
+<span class="sd">    Return the best entry to index next, and the bbox to place it in. &quot;&quot;&quot;</span>
+    <span class="n">d0</span> <span class="o">=</span> <span class="p">[</span><span class="n">volume_expanded</span><span class="p">(</span><span class="n">bb0</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">bbox</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">geoms</span><span class="p">]</span>
+    <span class="n">d1</span> <span class="o">=</span> <span class="p">[</span><span class="n">volume_expanded</span><span class="p">(</span><span class="n">bb1</span><span class="p">,</span> <span class="n">g</span><span class="o">.</span><span class="n">bbox</span><span class="p">)</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">geoms</span><span class="p">]</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="p">[</span><span class="nb">abs</span><span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span><span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">d0</span><span class="p">,</span> <span class="n">d1</span><span class="p">)]</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="n">diff</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">diff</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">d0</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">d1</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">i</span><span class="p">,</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">i</span><span class="p">,</span> <span class="mi">0</span></div>
+
+<span class="k">def</span> <span class="nf">area</span><span class="p">(</span><span class="n">bbox</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">bbox</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">-</span><span class="n">bbox</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">*</span><span class="p">(</span><span class="n">bbox</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span><span class="o">-</span><span class="n">bbox</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+<div class="viewcode-block" id="volume_expanded"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.volume_expanded">[docs]</a><span class="k">def</span> <span class="nf">volume_expanded</span><span class="p">(</span><span class="n">bb0</span><span class="p">,</span> <span class="n">bb1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return the volume by which the union of two bounding boxes larger than</span>
+<span class="sd">    the bounding box of geom0. &quot;&quot;&quot;</span>
+    <span class="n">union_bbox</span> <span class="o">=</span> <span class="p">[</span><span class="nb">min</span><span class="p">(</span><span class="n">bb0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">bb1</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">min</span><span class="p">(</span><span class="n">bb0</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">bb1</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+                  <span class="nb">max</span><span class="p">(</span><span class="n">bb0</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">bb1</span><span class="p">[</span><span class="mi">2</span><span class="p">]),</span> <span class="nb">max</span><span class="p">(</span><span class="n">bb0</span><span class="p">[</span><span class="mi">3</span><span class="p">],</span> <span class="n">bb1</span><span class="p">[</span><span class="mi">3</span><span class="p">])]</span>
+    <span class="k">return</span> <span class="n">area</span><span class="p">(</span><span class="n">union_bbox</span><span class="p">)</span><span class="o">-</span><span class="n">area</span><span class="p">(</span><span class="n">bb0</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">depth</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">LeafNode</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">d</span><span class="o">+</span><span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">tree</span><span class="o">.</span><span class="n">children</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">depth</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">d</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">children</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">d</span>
+
+<span class="c1"># def bbox_intersection_area(bb0, bb1):</span>
+<span class="c1">#     dx = max(min(bb0[2], bb1[2]) - max(bb0[0], bb1[0]), 0.0)</span>
+<span class="c1">#     dy = max(min(bb0[3], bb1[3]) - max(bb0[1], bb1[1]), 0.0)</span>
+<span class="c1">#     return dx*dy</span>
+
+<span class="k">def</span> <span class="nf">overlaps</span><span class="p">(</span><span class="n">bb0</span><span class="p">,</span> <span class="n">bb1</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">bbox_intersection_area</span><span class="p">(</span><span class="n">bb0</span><span class="p">,</span> <span class="n">bb1</span><span class="p">)</span> <span class="o">!=</span> <span class="mf">0.0</span>
+
+<div class="viewcode-block" id="search"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.search">[docs]</a><span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">bbox</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return all geometries overlapping *bbox*. &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">LeafNode</span><span class="p">):</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">overlaps</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">bbox</span><span class="p">,</span> <span class="n">bbox</span><span class="p">):</span>
+                <span class="n">matches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="n">matches</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">search</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">bbox</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">matches</span></div>
+
+<div class="viewcode-block" id="contains_geom"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.contains_geom">[docs]</a><span class="k">def</span> <span class="nf">contains_geom</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">geom</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Test whether tree contains *geom* &quot;&quot;&quot;</span>
+    <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+    <span class="k">return</span></div>
+
+<div class="viewcode-block" id="itergeoms"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.itergeoms">[docs]</a><span class="k">def</span> <span class="nf">itergeoms</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Iterator for all geometry ojects in tree &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tree</span><span class="p">,</span> <span class="n">LeafNode</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">geom</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">itergeoms</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">geom</span></div>
+
+<div class="viewcode-block" id="iternodes"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.iternodes">[docs]</a><span class="k">def</span> <span class="nf">iternodes</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Iterator for all nodes in tree &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">Node</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">_child</span> <span class="ow">in</span> <span class="n">iternodes</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">_child</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">child</span></div>
+
+<div class="viewcode-block" id="iterleaves"><a class="viewcode-back" href="../../../reference.html#karta.vector.rtree.iterleaves">[docs]</a><span class="k">def</span> <span class="nf">iterleaves</span><span class="p">(</span><span class="n">tree</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Iterator for all leaf nodes in tree &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">tree</span><span class="o">.</span><span class="n">children</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">NonLeafNode</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">_child</span> <span class="ow">in</span> <span class="n">iterleaves</span><span class="p">(</span><span class="n">child</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">_child</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">child</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on May 30, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.7alpha0',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

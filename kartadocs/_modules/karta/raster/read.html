@@ -1,0 +1,302 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.raster.read &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.raster.read</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.raster.read</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Functions for reading raster data sources as RegularGrid objects &quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">.grid</span> <span class="kn">import</span> <span class="n">RegularGrid</span>
+<span class="kn">from</span> <span class="nn">..crs</span> <span class="kn">import</span> <span class="n">ProjectedCRS</span><span class="p">,</span> <span class="n">GeographicalCRS</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">_gdal</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">_aai</span>
+<span class="kn">from</span> <span class="nn">..errors</span> <span class="kn">import</span> <span class="n">GridError</span>
+
+<div class="viewcode-block" id="read_aai"><a class="viewcode-back" href="../../../reference.html#karta.raster.read.read_aai">[docs]</a><span class="k">def</span> <span class="nf">read_aai</span><span class="p">(</span><span class="n">fnm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Convenience function to open a ESRI ASCII grid and return a RegularGrid</span>
+<span class="sd">    instance.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">values</span><span class="p">,</span> <span class="n">aschdr</span> <span class="o">=</span> <span class="n">_aai</span><span class="o">.</span><span class="n">aairead</span><span class="p">(</span><span class="n">fnm</span><span class="p">)</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;xllcorner&#39;</span><span class="p">:</span> <span class="n">aschdr</span><span class="p">[</span><span class="s1">&#39;xllcorner&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;yllcorner&#39;</span><span class="p">:</span> <span class="n">aschdr</span><span class="p">[</span><span class="s1">&#39;yllcorner&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;dx&#39;</span>       <span class="p">:</span> <span class="n">aschdr</span><span class="p">[</span><span class="s1">&#39;cellsize&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;dy&#39;</span>       <span class="p">:</span> <span class="n">aschdr</span><span class="p">[</span><span class="s1">&#39;cellsize&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;sx&#39;</span>       <span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+         <span class="s1">&#39;sy&#39;</span>       <span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+    <span class="n">values</span><span class="p">[</span><span class="n">values</span><span class="o">==</span><span class="n">aschdr</span><span class="p">[</span><span class="s1">&#39;nodata_value&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="k">return</span> <span class="n">RegularGrid</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">values</span><span class="o">=</span><span class="n">values</span><span class="p">[::</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span></div>
+
+<span class="k">def</span> <span class="nf">proj4_isgeodetic</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">(</span><span class="s2">&quot;lonlat&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">&quot;longlat&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="p">)</span> <span class="ow">or</span> \
+            <span class="p">(</span><span class="s2">&quot;latlon&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="s2">&quot;latlong&quot;</span> <span class="ow">in</span> <span class="n">s</span><span class="p">)</span>
+
+<div class="viewcode-block" id="read_gtiff"><a class="viewcode-back" href="../../../reference.html#karta.raster.read.read_gtiff">[docs]</a><span class="k">def</span> <span class="nf">read_gtiff</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="n">in_memory</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">ibands</span><span class="o">=</span><span class="n">_gdal</span><span class="o">.</span><span class="n">ALL</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Convenience function to open a GeoTIFF and return a RegularGrid</span>
+<span class="sd">    instance.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fnm : str</span>
+<span class="sd">        GeoTiff file path</span>
+<span class="sd">    in_memory : bool</span>
+<span class="sd">        if True (default), read entire dataset into memory</span>
+<span class="sd">    ibands : int | list of ints, optional</span>
+<span class="sd">        band(s) to open (default all)</span>
+<span class="sd">    bandclass : Band class, optional</span>
+<span class="sd">        class of band used by returned grid (default karta.band.CompressedBand)</span>
+<span class="sd">        if in_memory is True, this parameter is ignored and the returned grid</span>
+<span class="sd">        will have bands of type karta.raster._gdal.GdalFileBand</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bands</span><span class="p">,</span> <span class="n">hdr</span> <span class="o">=</span> <span class="n">_gdal</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="n">in_memory</span><span class="p">,</span> <span class="n">ibands</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+
+    <span class="n">t</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;xllcorner&#39;</span><span class="p">:</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;xulcorner&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;ny&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sx&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;yllcorner&#39;</span><span class="p">:</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;yulcorner&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;ny&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;dy&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;dx&#39;</span>       <span class="p">:</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;dx&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;dy&#39;</span>       <span class="p">:</span> <span class="o">-</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;dy&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;sx&#39;</span>       <span class="p">:</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sx&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;sy&#39;</span>       <span class="p">:</span> <span class="o">-</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sy&#39;</span><span class="p">]}</span>
+
+    <span class="k">if</span> <span class="n">proj4_isgeodetic</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;proj4&quot;</span><span class="p">]):</span>
+        <span class="n">geodstr</span> <span class="o">=</span> <span class="s2">&quot;+a={a} +f={f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;semimajor&quot;</span><span class="p">],</span>
+                                         <span class="n">f</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;flattening&quot;</span><span class="p">])</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">GeographicalCRS</span><span class="p">(</span><span class="n">geodstr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;proj4&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">RegularGrid</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">bands</span><span class="o">=</span><span class="n">bands</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;nodata&quot;</span><span class="p">])</span></div>
+
+<div class="viewcode-block" id="from_geotiffs"><a class="viewcode-back" href="../../../reference.html#karta.raster.read.from_geotiffs">[docs]</a><span class="k">def</span> <span class="nf">from_geotiffs</span><span class="p">(</span><span class="o">*</span><span class="n">fnms</span><span class="p">,</span> <span class="n">in_memory</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Read multiple GeoTiff files as bands within a single grid. Reads the</span>
+<span class="sd">    first band within each GeoTiff, and checks that grids share the same</span>
+<span class="sd">    spatial transform and coordinate system.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    fnm : list of str</span>
+<span class="sd">        GeoTiff file paths</span>
+<span class="sd">    in_memory : bool</span>
+<span class="sd">        if True (default), read entire dataset into memory</span>
+<span class="sd">    bandclass : Band class, optional</span>
+<span class="sd">        class of band used by returned grid (default karta.band.CompressedBand)</span>
+<span class="sd">        if in_memory is True, this parameter is ignored and the returned grid</span>
+<span class="sd">        will have bands of type karta.raster._gdal.GdalFileBand</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bands</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">hdrs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">fnm</span> <span class="ow">in</span> <span class="n">fnms</span><span class="p">:</span>
+        <span class="n">_b</span><span class="p">,</span> <span class="n">_h</span> <span class="o">=</span> <span class="n">_gdal</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="n">in_memory</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">hdrs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_h</span> <span class="o">!=</span> <span class="n">hdrs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="n">GridError</span><span class="p">(</span><span class="s2">&quot;geotransform in {0} not equivalent to a previous GeoTiff&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fnm</span><span class="p">))</span>
+        <span class="n">bands</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_b</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">hdrs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_h</span><span class="p">)</span>
+
+    <span class="n">hdr</span> <span class="o">=</span> <span class="n">hdrs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;xllcorner&#39;</span><span class="p">:</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;xulcorner&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;ny&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sx&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;yllcorner&#39;</span><span class="p">:</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;yulcorner&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;ny&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;dy&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;dx&#39;</span>       <span class="p">:</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;dx&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;dy&#39;</span>       <span class="p">:</span> <span class="o">-</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;dy&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;sx&#39;</span>       <span class="p">:</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sx&#39;</span><span class="p">],</span>
+         <span class="s1">&#39;sy&#39;</span>       <span class="p">:</span> <span class="o">-</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;sy&#39;</span><span class="p">]}</span>
+
+    <span class="k">if</span> <span class="n">proj4_isgeodetic</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;proj4&quot;</span><span class="p">]):</span>
+        <span class="n">geodstr</span> <span class="o">=</span> <span class="s2">&quot;+a={a} +f={f}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">a</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;semimajor&quot;</span><span class="p">],</span>
+                                         <span class="n">f</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;flattening&quot;</span><span class="p">])</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">GeographicalCRS</span><span class="p">(</span><span class="n">geodstr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">crs</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;proj4&quot;</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;srs&quot;</span><span class="p">][</span><span class="s2">&quot;name&quot;</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">RegularGrid</span><span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">bands</span><span class="o">=</span><span class="n">bands</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">crs</span><span class="p">,</span> <span class="n">nodata_value</span><span class="o">=</span><span class="n">hdr</span><span class="p">[</span><span class="s2">&quot;nodata&quot;</span><span class="p">])</span></div>
+
+<span class="c1"># Aliases for backwards compat.</span>
+<span class="n">gtiffread</span> <span class="o">=</span> <span class="n">read_gtiff</span>
+<span class="n">aairead</span> <span class="o">=</span> <span class="n">read_aai</span>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

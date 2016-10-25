@@ -1,0 +1,507 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.vector.gpx &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.vector.gpx</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.vector.gpx</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">GPX IO and manipulation (UNDER DEVELOPMENT)</span>
+
+<span class="sd">Overview</span>
+<span class="sd">--------</span>
+
+<span class="sd">`GPX` represents a GPX document that can be written to or read from</span>
+
+<span class="sd">To do:</span>
+<span class="sd">    - XML namespaces aren&#39;t really handled properly</span>
+<span class="sd">    - metadata node not addressed</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="kn">as</span> <span class="nn">ET</span>
+<span class="kn">from</span> <span class="nn">xml.etree.ElementTree</span> <span class="kn">import</span> <span class="n">ElementTree</span><span class="p">,</span> <span class="n">Element</span>
+<span class="kn">from</span> <span class="nn">xml.dom</span> <span class="kn">import</span> <span class="n">minidom</span>
+
+<span class="n">Point</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;Point&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;lonlat&quot;</span><span class="p">,</span> <span class="s2">&quot;properties&quot;</span><span class="p">,</span> <span class="s2">&quot;extensions&quot;</span><span class="p">])</span>
+<span class="n">Trkseg</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;Trkseg&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;trkpts&quot;</span><span class="p">,</span> <span class="s2">&quot;properties&quot;</span><span class="p">,</span> <span class="s2">&quot;extensions&quot;</span><span class="p">])</span>
+<span class="n">Track</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;Track&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;trksegs&quot;</span><span class="p">,</span> <span class="s2">&quot;properties&quot;</span><span class="p">,</span> <span class="s2">&quot;extensions&quot;</span><span class="p">])</span>
+<span class="n">Route</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;Route&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;rtepts&quot;</span><span class="p">,</span> <span class="s2">&quot;properties&quot;</span><span class="p">,</span> <span class="s2">&quot;extensions&quot;</span><span class="p">])</span>
+
+<span class="n">ET</span><span class="o">.</span><span class="n">register_namespace</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s2">&quot;http://www.topografix.com/GPX/1/1&quot;</span><span class="p">)</span>
+<span class="n">ns</span> <span class="o">=</span> <span class="s2">&quot;{http://www.topografix.com/GPX/1/1}&quot;</span>
+
+<span class="n">VALID_PROPERTIES</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;ele&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">,</span> <span class="s2">&quot;magvar&quot;</span><span class="p">,</span> <span class="s2">&quot;geoidheight&quot;</span><span class="p">,</span> <span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;cmt&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;desc&quot;</span><span class="p">,</span> <span class="s2">&quot;src&quot;</span><span class="p">,</span> <span class="s2">&quot;link&quot;</span><span class="p">,</span> <span class="s2">&quot;sym&quot;</span><span class="p">,</span> <span class="s2">&quot;type&quot;</span><span class="p">,</span> <span class="s2">&quot;fix&quot;</span><span class="p">,</span> <span class="s2">&quot;sat&quot;</span><span class="p">,</span> <span class="s2">&quot;hdop&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;vdop&quot;</span><span class="p">,</span> <span class="s2">&quot;pdop&quot;</span><span class="p">,</span> <span class="s2">&quot;ageofdgpsdata&quot;</span><span class="p">,</span> <span class="s2">&quot;dgpsid&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">strip_namespace</span><span class="p">(</span><span class="n">s</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">s</span><span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;}&quot;</span><span class="p">)</span><span class="o">+</span><span class="mi">1</span><span class="p">:]</span>
+
+<div class="viewcode-block" id="GPX"><a class="viewcode-back" href="../../../reference.html#karta.vector.gpx.GPX">[docs]</a><span class="k">class</span> <span class="nc">GPX</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Represents a GPX document, with an internal representation of</span>
+<span class="sd">    waypoints, tracks, and route that loosely approximates the XML structure.</span>
+<span class="sd">    Provides methods to easily add Point-like and Line-like objects as GPX</span>
+<span class="sd">    types. &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">waypoints</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tracks</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">routes</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Create a GPX object, either from a GPX file or from lists of</span>
+<span class="sd">        waypoints, tracks, and routes. &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">f</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">waypoints</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">waypt</span> <span class="ow">in</span> <span class="n">waypoints</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_waypoint</span><span class="p">(</span><span class="n">waypt</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tracks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="n">tracks</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_track</span><span class="p">(</span><span class="n">track</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">routes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="n">routes</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">add_route</span><span class="p">(</span><span class="n">route</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_readextensions</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;extensions&quot;</span><span class="p">):</span>
+                <span class="n">extensions</span><span class="p">[</span><span class="n">strip_namespace</span><span class="p">(</span><span class="n">ext</span><span class="o">.</span><span class="n">tag</span><span class="p">)]</span> <span class="o">=</span> <span class="n">ext</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">extensions</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_readproperties</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">()):</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">subnode</span> <span class="ow">in</span> <span class="n">node</span><span class="p">:</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">strip_namespace</span><span class="p">(</span><span class="n">subnode</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tag</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">exclude</span><span class="p">:</span>
+                <span class="n">properties</span><span class="p">[</span><span class="n">tag</span><span class="p">]</span> <span class="o">=</span> <span class="n">subnode</span><span class="o">.</span><span class="n">text</span>
+        <span class="k">return</span> <span class="n">properties</span>
+
+    <span class="k">def</span> <span class="nf">_readwpt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wpt</span><span class="p">):</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readproperties</span><span class="p">(</span><span class="n">wpt</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;extensions&quot;</span><span class="p">,))</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readextensions</span><span class="p">(</span><span class="n">wpt</span><span class="p">)</span>
+        <span class="n">lon</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">wpt</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;lon&quot;</span><span class="p">]),</span> <span class="mi">6</span><span class="p">)</span>
+        <span class="n">lat</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">wpt</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s2">&quot;lat&quot;</span><span class="p">]),</span> <span class="mi">6</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Point</span><span class="p">((</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">),</span> <span class="n">properties</span><span class="p">,</span> <span class="n">extensions</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_dict2gpx</span><span class="p">(</span><span class="n">parent</span><span class="p">,</span> <span class="n">properties</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">properties</span><span class="p">:</span>
+            <span class="n">sub</span> <span class="o">=</span> <span class="n">Element</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="n">p</span><span class="p">)</span>
+            <span class="n">sub</span><span class="o">.</span><span class="n">text</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">properties</span><span class="p">[</span><span class="n">p</span><span class="p">])</span>
+            <span class="n">parent</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sub</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parent</span>
+
+    <span class="k">def</span> <span class="nf">_extensions2gpx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parent</span><span class="p">,</span> <span class="n">extensions</span><span class="p">):</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="n">Element</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;extensions&quot;</span><span class="p">)</span>
+        <span class="n">ext</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2gpx</span><span class="p">(</span><span class="n">ext</span><span class="p">,</span> <span class="n">extensions</span><span class="p">)</span>
+        <span class="n">parent</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">parent</span>
+
+    <span class="k">def</span> <span class="nf">_build_gpx_wpt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waypt</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;wpt&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build &lt;wpt&gt; node. &quot;&quot;&quot;</span>
+        <span class="n">wpt</span> <span class="o">=</span> <span class="n">Element</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="n">tag</span><span class="p">,</span> <span class="n">lon</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">waypt</span><span class="o">.</span><span class="n">lonlat</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">lat</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">waypt</span><span class="o">.</span><span class="n">lonlat</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">wpt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2gpx</span><span class="p">(</span><span class="n">wpt</span><span class="p">,</span> <span class="n">waypt</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+        <span class="n">wpt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extensions2gpx</span><span class="p">(</span><span class="n">wpt</span><span class="p">,</span> <span class="n">waypt</span><span class="o">.</span><span class="n">extensions</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">wpt</span>
+
+    <span class="k">def</span> <span class="nf">_build_gpx_trk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">track</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Build &quot;trk&quot; nodes. &quot;&quot;&quot;</span>
+        <span class="n">trk</span> <span class="o">=</span> <span class="n">Element</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;trk&quot;</span><span class="p">)</span>
+        <span class="n">trk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2gpx</span><span class="p">(</span><span class="n">trk</span><span class="p">,</span> <span class="n">track</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+        <span class="n">trk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extensions2gpx</span><span class="p">(</span><span class="n">trk</span><span class="p">,</span> <span class="n">track</span><span class="o">.</span><span class="n">extensions</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">segment</span> <span class="ow">in</span> <span class="n">track</span><span class="o">.</span><span class="n">trksegs</span><span class="p">:</span>
+            <span class="n">trkseg</span> <span class="o">=</span> <span class="n">Element</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;trkseg&quot;</span><span class="p">)</span>
+            <span class="n">trkseg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2gpx</span><span class="p">(</span><span class="n">trkseg</span><span class="p">,</span> <span class="n">segment</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+            <span class="n">trkseg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extensions2gpx</span><span class="p">(</span><span class="n">trkseg</span><span class="p">,</span> <span class="n">segment</span><span class="o">.</span><span class="n">extensions</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">trackpt</span> <span class="ow">in</span> <span class="n">segment</span><span class="o">.</span><span class="n">trkpts</span><span class="p">:</span>
+                <span class="n">trkpt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_gpx_wpt</span><span class="p">(</span><span class="n">trackpt</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;trkpt&quot;</span><span class="p">)</span>
+                <span class="n">trkseg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trkpt</span><span class="p">)</span>
+
+            <span class="n">trk</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">trkseg</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">trk</span>
+
+    <span class="k">def</span> <span class="nf">_build_gpx_rte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">):</span>
+        <span class="n">rte</span> <span class="o">=</span> <span class="n">Element</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;rte&quot;</span><span class="p">)</span>
+        <span class="n">rte</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dict2gpx</span><span class="p">(</span><span class="n">rte</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+        <span class="n">rte</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_extensions2gpx</span><span class="p">(</span><span class="n">rte</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">extensions</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">routept</span> <span class="ow">in</span> <span class="n">route</span><span class="o">.</span><span class="n">rtepts</span><span class="p">:</span>
+            <span class="n">rte</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_gpx_wpt</span><span class="p">(</span><span class="n">routept</span><span class="p">,</span> <span class="n">tag</span><span class="o">=</span><span class="s2">&quot;rtept&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">rte</span>
+
+<div class="viewcode-block" id="GPX.fromfile"><a class="viewcode-back" href="../../../reference.html#karta.vector.gpx.GPX.fromfile">[docs]</a>    <span class="k">def</span> <span class="nf">fromfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Read a GPX document from *f*, which may be a filename or a</span>
+<span class="sd">        file-like object. &quot;&quot;&quot;</span>
+
+        <span class="n">gpxtree</span> <span class="o">=</span> <span class="n">ElementTree</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">f</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">gpx</span> <span class="o">=</span> <span class="n">gpxtree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpx</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;wpt&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parse_wpt</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpx</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;trk&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parse_trk</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">gpx</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;rte&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">parse_rte</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="GPX.parse_wpt"><a class="viewcode-back" href="../../../reference.html#karta.vector.gpx.GPX.parse_wpt">[docs]</a>    <span class="k">def</span> <span class="nf">parse_wpt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wpt</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Parse a &lt;wpt&gt; node, updating self.waypoints. &quot;&quot;&quot;</span>
+        <span class="n">point</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readwpt</span><span class="p">(</span><span class="n">wpt</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">wpt</span><span class="o">.</span><span class="n">properties</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;waypoint_&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">)))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypoints</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">point</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="GPX.parse_trk"><a class="viewcode-back" href="../../../reference.html#karta.vector.gpx.GPX.parse_trk">[docs]</a>    <span class="k">def</span> <span class="nf">parse_trk</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">trk</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Parse a &lt;trk&gt; node, updating self.tracks. &quot;&quot;&quot;</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">trkproperties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readproperties</span><span class="p">(</span><span class="n">trk</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;trkseg&quot;</span><span class="p">,))</span>
+        <span class="n">trkextensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readextensions</span><span class="p">(</span><span class="n">trk</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">trkseg</span> <span class="ow">in</span> <span class="n">trk</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;trkseg&quot;</span><span class="p">):</span>
+
+            <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_readwpt</span><span class="p">(</span><span class="n">trkpt</span><span class="p">)</span> <span class="k">for</span> <span class="n">trkpt</span> <span class="ow">in</span> <span class="n">trkseg</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;trkpt&quot;</span><span class="p">)]</span>
+            <span class="n">properties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readproperties</span><span class="p">(</span><span class="n">trkseg</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;trkpt&quot;</span><span class="p">,))</span>
+            <span class="n">extensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readextensions</span><span class="p">(</span><span class="n">trkseg</span><span class="p">)</span>
+            <span class="n">segments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Trkseg</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">extensions</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Track</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">trkproperties</span><span class="p">,</span> <span class="n">trkextensions</span><span class="p">))</span>
+        <span class="k">return</span></div>
+
+    <span class="k">def</span> <span class="nf">parse_rte</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rte</span><span class="p">):</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readproperties</span><span class="p">(</span><span class="n">rte</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;rtept&quot;</span><span class="p">,))</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_readextensions</span><span class="p">(</span><span class="n">rte</span><span class="p">)</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_readwpt</span><span class="p">(</span><span class="n">rtept</span><span class="p">)</span> <span class="k">for</span> <span class="n">rtept</span> <span class="ow">in</span> <span class="n">rte</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;rtept&quot;</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Route</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">extensions</span><span class="p">))</span>
+        <span class="k">return</span>
+
+<div class="viewcode-block" id="GPX.add_waypoint"><a class="viewcode-back" href="../../../reference.html#karta.vector.gpx.GPX.add_waypoint">[docs]</a>    <span class="k">def</span> <span class="nf">add_waypoint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waypoint</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a Point-like object as a waypoint. Properties and extension</span>
+<span class="sd">        types are taken from waypoint.properties attribute. &quot;&quot;&quot;</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">waypoint</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">VALID_PROPERTIES</span><span class="p">:</span>
+                <span class="n">properties</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">waypoint</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">extensions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">waypoint</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+        <span class="n">waypt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">(</span><span class="n">waypoint</span><span class="o">.</span><span class="n">vertex</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">extensions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">waypts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">waypt</span><span class="p">)</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="GPX.add_track"><a class="viewcode-back" href="../../../reference.html#karta.vector.gpx.GPX.add_track">[docs]</a>    <span class="k">def</span> <span class="nf">add_track</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">tracks</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add Multipoint-like objects as segments of a track. Dictionaries of</span>
+<span class="sd">        properties and extension types for the track are accepted as keyword</span>
+<span class="sd">        arguments.</span>
+
+<span class="sd">        Properties and extension types for the track segments are taken from</span>
+<span class="sd">        the `properties` attribute of each Multipoint-like object.</span>
+
+<span class="sd">        Properties and extensions types for each track point are taken from the</span>
+<span class="sd">        `data` attribute of each Multipoint-like object.</span>
+
+<span class="sd">        INCOMPLETE:</span>
+
+<span class="sd">        Needs to distinguish between properties and extensions at the trkseg</span>
+<span class="sd">        and trkpt levels</span>
+
+<span class="sd">        Needs to properly add and &lt;ele&gt; property for Lines of rank 3</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">segments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">extensions</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="n">attributes</span> <span class="o">=</span> <span class="n">kw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;attributes&quot;</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">attributes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">VALID_PROPERTIES</span><span class="p">:</span>
+                    <span class="n">properties</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">attributes</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">properties</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">attributes</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tracks</span><span class="p">:</span>
+            <span class="n">points</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">sg_properties</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">sg_extensions</span> <span class="o">=</span> <span class="p">{}</span>
+
+            <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">properties</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">VALID_PROPERTIES</span><span class="p">:</span>
+                    <span class="n">sg_properties</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sg_extensions</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="n">key</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">line</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">pt_properties</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fields</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">VALID_PROPERTIES</span><span class="p">]</span>
+                <span class="n">pt_extensions</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">line</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fields</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_PROPERTIES</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">pt_properties</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">pt_extensions</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">xy</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">vertices</span><span class="p">):</span>
+
+                <span class="n">ptprop</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">ptexte</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">pt_properties</span><span class="p">:</span>
+                    <span class="n">ptprop</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">xy</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                        <span class="n">ptprop</span><span class="p">[</span><span class="s2">&quot;ele&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">xy</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">pt_extensions</span><span class="p">:</span>
+                    <span class="n">ptexte</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">line</span><span class="o">.</span><span class="n">d</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+
+                <span class="n">points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Point</span><span class="p">((</span><span class="n">xy</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">xy</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">ptprop</span><span class="p">,</span> <span class="n">ptexte</span><span class="p">))</span>
+
+            <span class="n">segments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Trkseg</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">sg_properties</span><span class="p">,</span> <span class="n">sg_extensions</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Track</span><span class="p">(</span><span class="n">segments</span><span class="p">,</span> <span class="n">properties</span><span class="p">,</span> <span class="n">extensions</span><span class="p">))</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="GPX.add_route"><a class="viewcode-back" href="../../../reference.html#karta.vector.gpx.GPX.add_route">[docs]</a>    <span class="k">def</span> <span class="nf">add_route</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">route</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Add a Multipoint-like object as a route. Properties and extension</span>
+<span class="sd">        types for the route are taken from the `properties` attribute of the</span>
+<span class="sd">        Multipoint-like object.</span>
+
+<span class="sd">        Properties and extensions types for each route point are taken from the</span>
+<span class="sd">        `data` attribute of each Line-like object.</span>
+
+<span class="sd">        INCOMPLETE:</span>
+
+<span class="sd">        Needs to distinguish between properties and extensions at the trkseg</span>
+<span class="sd">        and trkpt levels</span>
+
+<span class="sd">        Needs to properly add and &lt;ele&gt; property for Lines of rank 3</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">points</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">vertex</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">route</span><span class="o">.</span><span class="n">vertices</span><span class="p">):</span>
+            <span class="n">prop</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">route</span><span class="o">.</span><span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">route</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+                    <span class="n">prop</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">route</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">points</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Point</span><span class="p">((</span><span class="n">vertex</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">vertex</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">prop</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Route</span><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">route</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span> <span class="p">{}))</span>
+        <span class="k">return</span></div>
+
+<div class="viewcode-block" id="GPX.as_string"><a class="viewcode-back" href="../../../reference.html#karta.vector.gpx.GPX.as_string">[docs]</a>    <span class="k">def</span> <span class="nf">as_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">waypts</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">tracks</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">routes</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Write GPX object to a string. Writes all waypoints, tracks, and</span>
+<span class="sd">        routes by default, which can be changed by changing the kwargs to</span>
+<span class="sd">        False. &quot;&quot;&quot;</span>
+        <span class="n">gpx</span> <span class="o">=</span> <span class="n">Element</span><span class="p">(</span><span class="n">ns</span> <span class="o">+</span> <span class="s2">&quot;gpx&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;1.1&quot;</span><span class="p">,</span> <span class="n">creator</span><span class="o">=</span><span class="s2">&quot;karta&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">waypts</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">waypt</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">waypts</span><span class="p">:</span>
+                <span class="n">gpx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_gpx_wpt</span><span class="p">(</span><span class="n">waypt</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">tracks</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">track</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tracks</span><span class="p">:</span>
+                <span class="n">gpx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_gpx_trk</span><span class="p">(</span><span class="n">track</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">routes</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">route</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">routes</span><span class="p">:</span>
+                <span class="n">gpx</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_build_gpx_rte</span><span class="p">(</span><span class="n">route</span><span class="p">))</span>
+
+        <span class="n">xmlstring</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">tostring</span><span class="p">(</span><span class="n">gpx</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;ascii&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">xmlstring</span></div>
+
+    <span class="k">def</span> <span class="nf">writefile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fnm</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">):</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">as_string</span><span class="p">(</span><span class="o">**</span><span class="n">kw</span><span class="p">))</span>
+        <span class="k">return</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,539 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.vector.shp &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.vector.shp</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.vector.shp</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Shapefile driver for Karta using OGR backend</span>
+
+<span class="sd">Overview</span>
+<span class="sd">--------</span>
+
+<span class="sd">`ogr_write` takes geointerface dictionaries or Karta objects and writes to ESRI</span>
+<span class="sd">shapefile</span>
+
+<span class="sd">`ogr_read_geometry` converts an OGR geometry object to a geointerface dictionary</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">numbers</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">errors</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">osgeo</span>
+    <span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">ogr</span>
+    <span class="n">HAS_OSGEO</span> <span class="o">=</span> <span class="bp">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">HAS_OSGEO</span> <span class="o">=</span> <span class="bp">False</span>
+
+<span class="k">if</span> <span class="n">HAS_OSGEO</span><span class="p">:</span>
+    <span class="n">OGRGEOMTYPES</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ogr</span><span class="o">.</span><span class="n">__dict__</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;wkb&quot;</span><span class="p">):</span>
+            <span class="n">OGRGEOMTYPES</span><span class="p">[</span><span class="n">ogr</span><span class="o">.</span><span class="n">__dict__</span><span class="p">[</span><span class="n">k</span><span class="p">]]</span> <span class="o">=</span> <span class="n">k</span><span class="p">[</span><span class="mi">3</span><span class="p">:]</span>
+
+<span class="n">OGRTYPES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Point&quot;</span><span class="p">:</span> <span class="n">ogr</span><span class="o">.</span><span class="n">wkbPoint</span><span class="p">,</span>
+            <span class="s2">&quot;LineString&quot;</span><span class="p">:</span> <span class="n">ogr</span><span class="o">.</span><span class="n">wkbLineString</span><span class="p">,</span>
+            <span class="s2">&quot;Polygon&quot;</span><span class="p">:</span> <span class="n">ogr</span><span class="o">.</span><span class="n">wkbPolygon</span><span class="p">,</span>
+            <span class="s2">&quot;MultiPoint&quot;</span><span class="p">:</span> <span class="n">ogr</span><span class="o">.</span><span class="n">wkbMultiPoint</span><span class="p">,</span>
+            <span class="s2">&quot;MultiLineString&quot;</span><span class="p">:</span> <span class="n">ogr</span><span class="o">.</span><span class="n">wkbMultiLineString</span><span class="p">,</span>
+            <span class="s2">&quot;MultiPolygon&quot;</span><span class="p">:</span> <span class="n">ogr</span><span class="o">.</span><span class="n">wkbMultiPolygon</span><span class="p">}</span>
+
+<span class="c1"># dictionary that matches each OGR type to a Python builtin</span>
+<span class="n">FIELDTYPES</span> <span class="o">=</span> <span class="p">{</span><span class="n">ogr</span><span class="o">.</span><span class="n">OFTInteger</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTIntegerList</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTReal</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTRealList</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTString</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTStringList</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTWideString</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTWideStringList</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTBinary</span><span class="p">:</span> <span class="nb">bin</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTDate</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTTime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">,</span>
+              <span class="n">ogr</span><span class="o">.</span><span class="n">OFTDateTime</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">}</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">FIELDTYPES</span><span class="p">[</span><span class="n">ogr</span><span class="o">.</span><span class="n">OFTInteger64</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span>
+    <span class="n">FIELDTYPES</span><span class="p">[</span><span class="n">ogr</span><span class="o">.</span><span class="n">OFTInteger64List</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span>
+<span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+    <span class="k">pass</span>
+
+<div class="viewcode-block" id="ogr_get_fieldtype"><a class="viewcode-back" href="../../../reference.html#karta.vector.ogr_get_fieldtype">[docs]</a><span class="k">def</span> <span class="nf">ogr_get_fieldtype</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Returns a tuple of</span>
+<span class="sd">        - an OGR type integer that describes the type of *a*</span>
+<span class="sd">        - a default width that should work for most cases</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Number</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_isnumpytype</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Integral</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_isnumpyint</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTInteger</span><span class="p">,</span> <span class="mi">32</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">numbers</span><span class="o">.</span><span class="n">Real</span><span class="p">)</span> <span class="ow">or</span> <span class="n">_isnumpyfloat</span><span class="p">(</span><span class="n">val</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTReal</span><span class="p">,</span> <span class="mi">32</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cannot choose the correct dBase type for &quot;</span>
+                            <span class="s2">&quot;{0}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)))</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTString</span><span class="p">,</span> <span class="mi">180</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTBinary</span><span class="p">,</span> <span class="mi">32</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTDateTime</span><span class="p">,</span> <span class="mi">64</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">date</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTDate</span><span class="p">,</span> <span class="mi">32</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">datetime</span><span class="o">.</span><span class="n">time</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTTime</span><span class="p">,</span> <span class="mi">32</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+        <span class="n">t</span> <span class="o">=</span> <span class="n">ogr_get_fieldtype</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">t</span> <span class="o">==</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTInteger</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTIntegerList</span><span class="p">,</span> <span class="mi">1000</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTReal</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTRealList</span><span class="p">,</span> <span class="mi">1000</span>
+        <span class="k">elif</span> <span class="n">t</span> <span class="o">==</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTString</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTStringList</span><span class="p">,</span> <span class="mi">1000</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cannot choose the correct dBase type for a list &quot;</span>
+                            <span class="s2">&quot;with elements of type &#39;{0}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cannot choose the correct dBase type for &quot;</span>
+                        <span class="s2">&quot;{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)))</span></div>
+
+<div class="viewcode-block" id="get_geometry_type"><a class="viewcode-back" href="../../../reference.html#karta.vector.get_geometry_type">[docs]</a><span class="k">def</span> <span class="nf">get_geometry_type</span><span class="p">(</span><span class="n">gi</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return the geometry type from a __geo_interface__ dictionary &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Feature&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">get_geometry_type</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;FeatureCollection&quot;</span><span class="p">,</span> <span class="s2">&quot;GeometryCollection&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">get_geometry_type</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometries&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="ogr_get_polygon_points"><a class="viewcode-back" href="../../../reference.html#karta.vector.ogr_get_polygon_points">[docs]</a><span class="k">def</span> <span class="nf">ogr_get_polygon_points</span><span class="p">(</span><span class="n">poly</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return a list of lists of ogr.Polygon coordinate rings. &quot;&quot;&quot;</span>
+    <span class="n">geoms</span> <span class="o">=</span> <span class="p">[</span><span class="n">poly</span><span class="o">.</span><span class="n">GetGeometryRef</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">GetGeometryCount</span><span class="p">())]</span>
+    <span class="n">pts</span> <span class="o">=</span> <span class="p">[</span><span class="n">geom</span><span class="o">.</span><span class="n">GetPoints</span><span class="p">()[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">geom</span> <span class="ow">in</span> <span class="n">geoms</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">pts</span></div>
+
+<div class="viewcode-block" id="ogr_read_geometry"><a class="viewcode-back" href="../../../reference.html#karta.vector.ogr_read_geometry">[docs]</a><span class="k">def</span> <span class="nf">ogr_read_geometry</span><span class="p">(</span><span class="n">geom</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Convert an ogr.Geometry to a __geo_interface__ dictionary. &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">geom</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">None</span>
+    <span class="n">wkbtype</span> <span class="o">=</span> <span class="n">OGRGEOMTYPES</span><span class="p">[</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryType</span><span class="p">()]</span>
+    <span class="k">if</span> <span class="n">wkbtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Point&#39;</span><span class="p">,</span> <span class="s1">&#39;Point25D&#39;</span><span class="p">,</span> <span class="s1">&#39;NDR&#39;</span><span class="p">,</span> <span class="s1">&#39;XDR&#39;</span><span class="p">):</span>
+        <span class="n">jsontype</span> <span class="o">=</span> <span class="s1">&#39;Point&#39;</span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">GetPoint</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">wkbtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;LineString&#39;</span><span class="p">,</span> <span class="s1">&#39;LineString25D&#39;</span><span class="p">):</span>
+        <span class="n">jsontype</span> <span class="o">=</span> <span class="s1">&#39;LineString&#39;</span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">GetPoints</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">wkbtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Polygon&#39;</span><span class="p">,</span> <span class="s1">&#39;Polygon25D&#39;</span><span class="p">):</span>
+        <span class="n">jsontype</span> <span class="o">=</span> <span class="s1">&#39;Polygon&#39;</span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="n">ogr_get_polygon_points</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">wkbtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;MultiPoint&#39;</span><span class="p">,</span> <span class="s1">&#39;MultiPoint25D&#39;</span><span class="p">):</span>
+        <span class="n">jsontype</span> <span class="o">=</span> <span class="s1">&#39;MultiPoint&#39;</span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="p">[</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryRef</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">GetPoints</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+               <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryCount</span><span class="p">())]</span>
+    <span class="k">elif</span> <span class="n">wkbtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;MultiLineString&#39;</span><span class="p">,</span> <span class="s1">&#39;MultiLineString25D&#39;</span><span class="p">):</span>
+        <span class="n">jsontype</span> <span class="o">=</span> <span class="s1">&#39;MultiLineString&#39;</span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="p">[</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryRef</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">GetPoints</span><span class="p">()</span>
+               <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryCount</span><span class="p">())]</span>
+    <span class="k">elif</span> <span class="n">wkbtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;MultiPolygon&#39;</span><span class="p">,</span> <span class="s1">&#39;MultiPolygon25D&#39;</span><span class="p">):</span>
+        <span class="n">jsontype</span> <span class="o">=</span> <span class="s1">&#39;MultiPolygon&#39;</span>
+        <span class="n">pts</span> <span class="o">=</span> <span class="p">[</span><span class="n">ogr_get_polygon_points</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryRef</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+               <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryCount</span><span class="p">())]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;WKB type {0} not handled&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">wkbtype</span><span class="p">))</span>
+
+    <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">GetEnvelope</span><span class="p">()</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">jsontype</span><span class="p">,</span>
+            <span class="s1">&#39;bbox&#39;</span><span class="p">:</span> <span class="p">(</span><span class="n">xmin</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymax</span><span class="p">),</span>
+            <span class="s1">&#39;coordinates&#39;</span><span class="p">:</span> <span class="n">pts</span><span class="p">}</span></div>
+
+<div class="viewcode-block" id="ogr_read_geometries"><a class="viewcode-back" href="../../../reference.html#karta.vector.ogr_read_geometries">[docs]</a><span class="k">def</span> <span class="nf">ogr_read_geometries</span><span class="p">(</span><span class="n">lyr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Given an ogr.Layer instance, return a list of __geo_interface__</span>
+<span class="sd">    dictionaries.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gi_dicts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">feature</span> <span class="ow">in</span> <span class="n">lyr</span><span class="p">:</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">feature</span><span class="o">.</span><span class="n">GetGeometryRef</span><span class="p">()</span>
+        <span class="n">gi_dicts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ogr_read_geometry</span><span class="p">(</span><span class="n">geom</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">gi_dicts</span></div>
+
+<div class="viewcode-block" id="ogr_read_attributes"><a class="viewcode-back" href="../../../reference.html#karta.vector.ogr_read_attributes">[docs]</a><span class="k">def</span> <span class="nf">ogr_read_attributes</span><span class="p">(</span><span class="n">lyr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Given an ogr.Layer instance, return a list of dictionaries with feature</span>
+<span class="sd">    property data. &quot;&quot;&quot;</span>
+    <span class="n">lyr_defn</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">GetLayerDefn</span><span class="p">()</span>
+    <span class="n">nfields</span> <span class="o">=</span> <span class="n">lyr_defn</span><span class="o">.</span><span class="n">GetFieldCount</span><span class="p">()</span>
+    <span class="n">field_defns</span> <span class="o">=</span> <span class="p">[</span><span class="n">lyr_defn</span><span class="o">.</span><span class="n">GetFieldDefn</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nfields</span><span class="p">)]</span>
+    <span class="n">fieldnames</span> <span class="o">=</span> <span class="p">[</span><span class="n">fd</span><span class="o">.</span><span class="n">GetName</span><span class="p">()</span> <span class="k">for</span> <span class="n">fd</span> <span class="ow">in</span> <span class="n">field_defns</span><span class="p">]</span>
+    <span class="n">fieldtypes</span> <span class="o">=</span> <span class="p">[</span><span class="n">FIELDTYPES</span><span class="p">[</span><span class="n">fd</span><span class="o">.</span><span class="n">GetType</span><span class="p">()]</span> <span class="k">for</span> <span class="n">fd</span> <span class="ow">in</span> <span class="n">field_defns</span><span class="p">]</span>
+
+    <span class="n">nfeat</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">GetFeatureCount</span><span class="p">()</span>
+    <span class="n">propertylist</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nfeat</span><span class="p">):</span>
+        <span class="n">p</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="n">t</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">fieldnames</span><span class="p">,</span> <span class="n">fieldtypes</span><span class="p">)):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">fn</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="p">(</span><span class="n">lyr</span><span class="o">.</span><span class="n">GetFeature</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">GetField</span><span class="p">(</span><span class="n">j</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">fn</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
+                <span class="c1"># This is due to GDAL bug #5811 on Python 3</span>
+                <span class="c1"># https://trac.osgeo.org/gdal/ticket/5811</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">fn</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;gdal bug 5811&quot;</span>
+        <span class="n">propertylist</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">p</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">propertylist</span></div>
+
+<div class="viewcode-block" id="ogr_write"><a class="viewcode-back" href="../../../reference.html#karta.vector.ogr_write">[docs]</a><span class="k">def</span> <span class="nf">ogr_write</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="o">*</span><span class="n">objs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Write features to shapefile using OGR backend. Features are</span>
+<span class="sd">    __geo_interface__ Feature mappings. &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">HAS_OSGEO</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">MissingDependencyError</span><span class="p">(</span><span class="s2">&quot;Writing shapefiles requires GDAL &quot;</span>
+                                            <span class="s2">&quot;bindings&quot;</span><span class="p">)</span>
+
+    <span class="n">driver</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s2">&quot;ESRI Shapefile&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failure loading OGR driver for &#39;ESRI Shapefile&#39;&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fnm</span><span class="p">):</span>
+        <span class="n">driver</span><span class="o">.</span><span class="n">DeleteDataSource</span><span class="p">(</span><span class="n">fnm</span><span class="p">)</span>
+
+    <span class="n">ds</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">CreateDataSource</span><span class="p">(</span><span class="n">fnm</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">ds</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failure creating ogr.DataSource from ogr.Driver&quot;</span><span class="p">)</span>
+
+    <span class="c1"># create a spatial reference</span>
+    <span class="n">proj4</span> <span class="o">=</span> <span class="n">objs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;properties&quot;</span><span class="p">][</span><span class="s2">&quot;_karta_proj4&quot;</span><span class="p">]</span>\
+                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;lonlat&quot;</span><span class="p">,</span> <span class="s2">&quot;longlat&quot;</span><span class="p">)</span>\
+                <span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;latlon&quot;</span><span class="p">,</span> <span class="s2">&quot;latlong&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">proj4</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">proj4</span> <span class="o">=</span> <span class="s2">&quot;+proj=longlat +datum=WGS84&quot;</span>
+    <span class="n">srs</span> <span class="o">=</span> <span class="n">osgeo</span><span class="o">.</span><span class="n">osr</span><span class="o">.</span><span class="n">SpatialReference</span><span class="p">()</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">srs</span><span class="o">.</span><span class="n">ImportFromProj4</span><span class="p">(</span><span class="n">proj4</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">CRSError</span><span class="p">(</span><span class="s2">&quot;invalid projection string: &#39;{0}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">proj4</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">srs</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failure creating osr.SpatialReference&quot;</span><span class="p">)</span>
+
+    <span class="c1"># create layer</span>
+    <span class="n">geo_t</span> <span class="o">=</span> <span class="n">get_geometry_type</span><span class="p">(</span><span class="n">objs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">ogr_t</span> <span class="o">=</span> <span class="n">OGRTYPES</span><span class="p">[</span><span class="n">geo_t</span><span class="p">]</span>
+    <span class="n">layer_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">fnm</span><span class="p">)[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">lyr</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">CreateLayer</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">srs</span><span class="p">,</span> <span class="n">ogr_t</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">lyr</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failure creating ogr.Layer within ogr.DataSource&quot;</span><span class="p">)</span>
+
+    <span class="c1"># add attribute table, reserving the first column for &#39;id&#39;</span>
+    <span class="n">idfield</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">FieldDefn</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTInteger</span><span class="p">)</span>
+    <span class="n">lyr</span><span class="o">.</span><span class="n">CreateField</span><span class="p">(</span><span class="n">idfield</span><span class="p">)</span>
+
+    <span class="n">keys</span> <span class="o">=</span> <span class="nb">set</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="o">*</span><span class="p">[</span><span class="nb">set</span><span class="p">(</span><span class="n">obj</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="k">for</span> <span class="n">obj</span> <span class="ow">in</span> <span class="n">objs</span><span class="p">])</span>
+    <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">k</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_karta&quot;</span><span class="p">)]</span>
+    <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+        <span class="n">typ</span><span class="p">,</span> <span class="n">default_width</span> <span class="o">=</span> <span class="n">ogr_get_fieldtype</span><span class="p">(</span><span class="n">objs</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;properties&quot;</span><span class="p">][</span><span class="n">k</span><span class="p">])</span>
+        <span class="n">fd</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">FieldDefn</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">typ</span><span class="p">)</span>
+        <span class="n">fd</span><span class="o">.</span><span class="n">SetWidth</span><span class="p">(</span><span class="n">default_width</span><span class="p">)</span>
+        <span class="n">lyr</span><span class="o">.</span><span class="n">CreateField</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span>
+
+    <span class="c1"># add geometries</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">obj</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">objs</span><span class="p">):</span>
+        <span class="n">ogr_write_feature</span><span class="p">(</span><span class="n">lyr</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="n">i</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+<div class="viewcode-block" id="ogr_write_feature"><a class="viewcode-back" href="../../../reference.html#karta.vector.ogr_write_feature">[docs]</a><span class="k">def</span> <span class="nf">ogr_write_feature</span><span class="p">(</span><span class="n">lyr</span><span class="p">,</span> <span class="n">gi</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Write the geometry encoded in a __geointerface__ dictionary to an OGR</span>
+<span class="sd">    Layer. &quot;&quot;&quot;</span>
+    <span class="n">layer_def</span> <span class="o">=</span> <span class="n">lyr</span><span class="o">.</span><span class="n">GetLayerDefn</span><span class="p">()</span>
+    <span class="n">feature</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Feature</span><span class="p">(</span><span class="n">layer_def</span><span class="p">)</span>
+    <span class="n">feature</span><span class="o">.</span><span class="n">SetField</span><span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="nb">id</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">layer_def</span><span class="o">.</span><span class="n">GetFieldCount</span><span class="p">()):</span>
+        <span class="n">attr_name</span> <span class="o">=</span> <span class="n">layer_def</span><span class="o">.</span><span class="n">GetFieldDefn</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">GetNameRef</span><span class="p">()</span>
+        <span class="n">feature</span><span class="o">.</span><span class="n">SetField</span><span class="p">(</span><span class="n">attr_name</span><span class="p">,</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;properties&quot;</span><span class="p">][</span><span class="n">attr_name</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Point&quot;</span><span class="p">:</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr_asPoint</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;LineString&quot;</span><span class="p">:</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr_asLineString</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;Polygon&quot;</span><span class="p">:</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr_asPolygon</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MultiPoint&quot;</span><span class="p">:</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr_asMultiPoint</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MultiLineString&quot;</span><span class="p">:</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr_asMultiLineString</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">])</span>
+    <span class="k">elif</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MultiPolygon&quot;</span><span class="p">:</span>
+        <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr_asMultiPolygon</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;geometry type unhandled: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]))</span>
+    <span class="n">feature</span><span class="o">.</span><span class="n">SetGeometry</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span>
+    <span class="n">lyr</span><span class="o">.</span><span class="n">CreateFeature</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
+    <span class="k">return</span></div>
+
+<span class="k">def</span> <span class="nf">ogr_asPoint</span><span class="p">(</span><span class="n">gi</span><span class="p">):</span>
+    <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">geom</span><span class="o">.</span><span class="n">AddPoint</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;coordinates&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;coordinates&quot;</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">geom</span>
+
+<span class="k">def</span> <span class="nf">ogr_asLineString</span><span class="p">(</span><span class="n">gi</span><span class="p">):</span>
+    <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;coordinates&quot;</span><span class="p">]:</span>
+        <span class="n">geom</span><span class="o">.</span><span class="n">AddPoint</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+    <span class="k">return</span> <span class="n">geom</span>
+
+<span class="k">def</span> <span class="nf">ogr_asPolygon</span><span class="p">(</span><span class="n">gi</span><span class="p">):</span>
+    <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">ring</span> <span class="ow">in</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;coordinates&quot;</span><span class="p">]:</span>
+        <span class="n">ogr_ring</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="n">ogr</span><span class="o">.</span><span class="n">wkbLinearRing</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">ring</span><span class="p">:</span>
+            <span class="n">ogr_ring</span><span class="o">.</span><span class="n">AddPoint</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">geom</span><span class="o">.</span><span class="n">AddGeometry</span><span class="p">(</span><span class="n">ogr_ring</span><span class="p">)</span>
+    <span class="n">geom</span><span class="o">.</span><span class="n">CloseRings</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">geom</span>
+
+<span class="k">def</span> <span class="nf">ogr_asMultiPoint</span><span class="p">(</span><span class="n">gi</span><span class="p">):</span>
+    <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;coordinates&quot;</span><span class="p">]:</span>
+        <span class="n">g</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">g</span><span class="o">.</span><span class="n">AddPoint</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">geom</span><span class="o">.</span><span class="n">AddGeometry</span><span class="p">(</span><span class="n">g</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">geom</span>
+
+<span class="k">def</span> <span class="nf">ogr_asMultiLineString</span><span class="p">(</span><span class="n">gi</span><span class="p">):</span>
+    <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">linestring</span> <span class="ow">in</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;coordinates&quot;</span><span class="p">]:</span>
+        <span class="n">ogr_linstring</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">linestring</span><span class="p">:</span>
+            <span class="n">ogr_linstring</span><span class="o">.</span><span class="n">AddPoint</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+        <span class="n">geom</span><span class="o">.</span><span class="n">AddGeometry</span><span class="p">(</span><span class="n">ogr_linstring</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">geom</span>
+
+<span class="k">def</span> <span class="nf">ogr_asMultiPolygon</span><span class="p">(</span><span class="n">gi</span><span class="p">):</span>
+    <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="mi">5</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">polygon</span> <span class="ow">in</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;coordinates&quot;</span><span class="p">]:</span>
+        <span class="n">ogr_polygon</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">ring</span> <span class="ow">in</span> <span class="n">polygon</span><span class="p">:</span>
+            <span class="n">ogr_ring</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">Geometry</span><span class="p">(</span><span class="n">ogr</span><span class="o">.</span><span class="n">wkbLinearRing</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">ring</span><span class="p">:</span>
+                <span class="n">ogr_ring</span><span class="o">.</span><span class="n">AddPoint</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="n">ogr_polygon</span><span class="o">.</span><span class="n">AddGeometry</span><span class="p">(</span><span class="n">ogr_ring</span><span class="p">)</span>
+        <span class="n">ogr_polygon</span><span class="o">.</span><span class="n">CloseRings</span><span class="p">()</span>
+        <span class="n">geom</span><span class="o">.</span><span class="n">AddGeometry</span><span class="p">(</span><span class="n">ogr_polygon</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">geom</span>
+
+<span class="k">def</span> <span class="nf">_isnumpyint</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">)</span> <span class="ow">and</span> \
+            <span class="n">o</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;int8&quot;</span><span class="p">,</span> <span class="s2">&quot;int16&quot;</span><span class="p">,</span> <span class="s2">&quot;int32&quot;</span><span class="p">,</span> <span class="s2">&quot;int64&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_isnumpyfloat</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">)</span> <span class="ow">and</span> \
+            <span class="n">o</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;float16&quot;</span><span class="p">,</span> <span class="s2">&quot;float32&quot;</span><span class="p">,</span> <span class="s2">&quot;float64&quot;</span><span class="p">,</span> <span class="s2">&quot;float128&quot;</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_isnumpytype</span><span class="p">(</span><span class="n">o</span><span class="p">):</span>
+    <span class="k">return</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">o</span><span class="p">,</span> <span class="s2">&quot;dtype&quot;</span><span class="p">)</span>
+
+<span class="n">write_shapefile</span> <span class="o">=</span> <span class="n">ogr_write</span>
+
+<span class="k">def</span> <span class="nf">write_shapefile</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="o">*</span><span class="n">geometries</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">ogr_write</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="o">*</span><span class="p">[</span><span class="n">g</span><span class="o">.</span><span class="n">__geo_interface__</span> <span class="k">for</span> <span class="n">g</span> <span class="ow">in</span> <span class="n">geometries</span><span class="p">])</span>
+
+<div class="viewcode-block" id="ShapefileOutMixin"><a class="viewcode-back" href="../../../reference.html#karta.vector.ShapefileOutMixin">[docs]</a><span class="k">class</span> <span class="nc">ShapefileOutMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Mixin class to be added to geometry objects, adding shapefile</span>
+<span class="sd">    functionality.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ShapefileOutMixin.to_shapefile"><a class="viewcode-back" href="../../../reference.html#karta.vector.ShapefileOutMixin.to_shapefile">[docs]</a>    <span class="k">def</span> <span class="nf">to_shapefile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fnm</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Save line to a shapefile &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">fnm</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.shp&quot;</span><span class="p">):</span>
+            <span class="n">fnm</span> <span class="o">=</span> <span class="n">fnm</span> <span class="o">+</span> <span class="s2">&quot;.shp&quot;</span>
+        <span class="n">ogr_write</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">__geo_interface__</span><span class="p">)</span>
+        <span class="k">return</span></div></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

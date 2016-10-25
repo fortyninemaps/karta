@@ -1,0 +1,1006 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.geodesy &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="../../index.html"/>
+        <link rel="up" title="Module code" href="../index.html"/> 
+
+  
+  <script src="../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.geodesy</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.geodesy</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Defines basic geodetic operations on a spheres and ellipsoids. &quot;&quot;&quot;</span>
+
+<span class="c1">#</span>
+<span class="c1"># Functions are defined with an underscored version that works on scalars and a</span>
+<span class="c1"># public version that dispatches between scalars and vectors. This approach is</span>
+<span class="c1"># used rather than vectorization to make the C translation more straighforward.</span>
+<span class="c1">#</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">division</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">math</span> <span class="kn">import</span> <span class="n">sqrt</span><span class="p">,</span> <span class="n">sin</span><span class="p">,</span> <span class="n">cos</span><span class="p">,</span> <span class="n">tan</span><span class="p">,</span> <span class="n">asin</span><span class="p">,</span> <span class="n">acos</span><span class="p">,</span> <span class="n">atan</span><span class="p">,</span> <span class="n">atan2</span><span class="p">,</span> <span class="n">atanh</span><span class="p">,</span> <span class="n">pi</span>
+<span class="kn">from</span> <span class="nn">.errors</span> <span class="kn">import</span> <span class="n">NoIntersection</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+
+<span class="c1"># ---------------------------------</span>
+<span class="c1"># Miscellaneous functions</span>
+<span class="c1"># ---------------------------------</span>
+
+<span class="k">def</span> <span class="nf">recurse_iterables</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="s2">&quot;__iter__&quot;</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">argsset</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">argset</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">f</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">func</span>
+
+<span class="k">def</span> <span class="nf">cross</span><span class="p">(</span><span class="n">u</span><span class="p">,</span> <span class="n">v</span><span class="p">):</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="p">(</span><span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+         <span class="n">u</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>
+         <span class="n">u</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">u</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">v</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">w</span>
+
+<span class="k">def</span> <span class="nf">sph2cart</span><span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">):</span>
+    <span class="n">theta</span> <span class="o">=</span> <span class="mi">90</span><span class="o">-</span><span class="n">lat</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">sin</span><span class="p">(</span><span class="n">pi</span><span class="o">*</span><span class="n">theta</span><span class="o">/</span><span class="mf">180.0</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">pi</span><span class="o">*</span><span class="n">lon</span><span class="o">/</span><span class="mf">180.0</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">sin</span><span class="p">(</span><span class="n">pi</span><span class="o">*</span><span class="n">theta</span><span class="o">/</span><span class="mf">180.0</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">pi</span><span class="o">*</span><span class="n">lon</span><span class="o">/</span><span class="mf">180.0</span><span class="p">)</span>
+    <span class="n">z</span> <span class="o">=</span> <span class="n">cos</span><span class="p">(</span><span class="n">pi</span><span class="o">*</span><span class="n">theta</span><span class="o">/</span><span class="mf">180.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span>
+
+<span class="k">def</span> <span class="nf">cart2sph</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">z</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-4</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">atan</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">z</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">theta</span> <span class="o">=</span> <span class="n">acos</span><span class="p">(</span><span class="n">z</span> <span class="o">/</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">z</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-4</span><span class="p">:</span>
+        <span class="n">lon</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">lon</span> <span class="o">=</span> <span class="n">asin</span><span class="p">(</span><span class="n">y</span><span class="o">/</span><span class="n">sqrt</span><span class="p">(</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+    <span class="n">lat</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="n">pi</span> <span class="o">-</span> <span class="n">theta</span>
+    <span class="k">return</span> <span class="n">lon</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">pi</span><span class="p">,</span> <span class="n">lat</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">pi</span>
+
+<span class="nd">@recurse_iterables</span>
+<span class="k">def</span> <span class="nf">unroll_rad</span><span class="p">(</span><span class="n">rad</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return *rad* in the range [0, 2pi) &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">rad</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="p">)</span>
+
+<span class="nd">@recurse_iterables</span>
+<span class="k">def</span> <span class="nf">reduce_rad</span><span class="p">(</span><span class="n">rad</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return *rad* in the range [-pi, pi) &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">rad</span><span class="o">+</span><span class="n">pi</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="p">)</span> <span class="o">-</span> <span class="n">pi</span>
+
+<div class="viewcode-block" id="unroll_deg"><a class="viewcode-back" href="../../reference.html#karta.geodesy.unroll_deg">[docs]</a><span class="k">def</span> <span class="nf">unroll_deg</span><span class="p">(</span><span class="n">deg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return *deg* in the range [0, 360) &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">deg</span> <span class="o">%</span> <span class="mi">360</span></div>
+
+<div class="viewcode-block" id="reduce_deg"><a class="viewcode-back" href="../../reference.html#karta.geodesy.reduce_deg">[docs]</a><span class="k">def</span> <span class="nf">reduce_deg</span><span class="p">(</span><span class="n">deg</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return *deg* in the range [-180, 180) &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">deg</span><span class="o">+</span><span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span></div>
+
+<span class="k">def</span> <span class="nf">_degrees</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">r</span><span class="o">*</span><span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+
+<span class="k">def</span> <span class="nf">_radians</span><span class="p">(</span><span class="n">d</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">d</span><span class="o">/</span><span class="mf">180.0</span><span class="o">*</span><span class="n">pi</span>
+
+<span class="c1"># ---------------------------------</span>
+<span class="c1"># Functions for planar geometry</span>
+<span class="c1"># ---------------------------------</span>
+
+<span class="nd">@recurse_iterables</span>
+<span class="k">def</span> <span class="nf">plane_distance</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">sqrt</span><span class="p">((</span><span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+
+<span class="nd">@recurse_iterables</span>
+<span class="k">def</span> <span class="nf">plane_azimuth</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Cartesian azimuth between points &quot;&quot;&quot;</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">x2</span> <span class="o">-</span> <span class="n">x1</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">y2</span> <span class="o">-</span> <span class="n">y1</span>
+    <span class="k">return</span> <span class="n">atan2</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">)</span>
+
+<span class="c1"># ---------------------------------</span>
+<span class="c1"># Functions for spherical geodesy</span>
+<span class="c1"># ---------------------------------</span>
+
+<span class="nd">@recurse_iterables</span>
+<span class="k">def</span> <span class="nf">sphere_distance</span><span class="p">(</span><span class="n">lons1</span><span class="p">,</span> <span class="n">lats1</span><span class="p">,</span> <span class="n">lons2</span><span class="p">,</span> <span class="n">lats2</span><span class="p">,</span> <span class="n">radius</span><span class="o">=</span><span class="mf">1.0</span><span class="p">):</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lon1</span><span class="o">-</span><span class="n">lon2</span><span class="p">)</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lat1</span><span class="o">-</span><span class="n">lat2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dx</span> <span class="o">&gt;</span> <span class="mf">0.01</span> <span class="ow">or</span> <span class="n">dy</span> <span class="o">&gt;</span> <span class="mf">0.01</span><span class="p">:</span>
+        <span class="c1"># use spherical law of cosines</span>
+        <span class="n">d_</span> <span class="o">=</span> <span class="n">acos</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">+</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">dx</span><span class="p">))</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># use haversine</span>
+        <span class="n">d_</span> <span class="o">=</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">asin</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">dy</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span>
+                        <span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">dx</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="n">radius</span> <span class="o">*</span> <span class="n">d_</span>
+
+<span class="nd">@recurse_iterables</span>
+<span class="k">def</span> <span class="nf">sphere_azimuth</span><span class="p">(</span><span class="n">lon1</span><span class="p">,</span> <span class="n">lat1</span><span class="p">,</span> <span class="n">lon2</span><span class="p">,</span> <span class="n">lat2</span><span class="p">):</span>
+    <span class="n">dlon</span> <span class="o">=</span> <span class="n">lon2</span> <span class="o">-</span> <span class="n">lon1</span>
+    <span class="k">return</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">_radians</span><span class="p">(</span><span class="n">dlon</span><span class="p">)),</span> <span class="n">cos</span><span class="p">(</span><span class="n">_radians</span><span class="p">(</span><span class="n">lat1</span><span class="p">))</span> <span class="o">*</span> <span class="n">tan</span><span class="p">(</span><span class="n">_radians</span><span class="p">(</span><span class="n">lat2</span><span class="p">))</span> <span class="o">-</span> <span class="n">sin</span><span class="p">(</span><span class="n">_radians</span><span class="p">(</span><span class="n">lat1</span><span class="p">))</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">_radians</span><span class="p">(</span><span class="n">dlon</span><span class="p">)))</span>
+
+<div class="viewcode-block" id="spherical_area"><a class="viewcode-back" href="../../reference.html#karta.geodesy.spherical_area">[docs]</a><span class="k">def</span> <span class="nf">spherical_area</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Area between a geodesic and the equator on a sphere &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">_canonical_configuration</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+    <span class="n">phi1</span> <span class="o">=</span> <span class="n">_radians</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span>
+    <span class="n">phi2</span> <span class="o">=</span> <span class="n">_radians</span><span class="p">(</span><span class="n">y2</span><span class="p">)</span>
+    <span class="n">lambda12</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="n">x1</span><span class="p">)</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+    <span class="n">alpha1</span><span class="p">,</span> <span class="n">alpha2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">solve_vincenty</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">lambda12</span><span class="p">,</span> <span class="n">phi1</span><span class="p">,</span> <span class="n">phi2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">r</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">alpha2</span><span class="o">-</span><span class="n">alpha1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="isbetween_circular"><a class="viewcode-back" href="../../reference.html#karta.geodesy.isbetween_circular">[docs]</a><span class="k">def</span> <span class="nf">isbetween_circular</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Tests whether *x* is between *x0* and *x1* on a circle [-180, 180) &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">unroll_deg</span><span class="p">(</span><span class="n">x1</span><span class="o">-</span><span class="n">x0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">180</span><span class="p">:</span>
+        <span class="n">x0</span><span class="p">,</span> <span class="n">x1</span> <span class="o">=</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x0</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">reduce_deg</span><span class="p">(</span><span class="n">x</span><span class="o">-</span><span class="n">x0</span><span class="p">)</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="n">reduce_deg</span><span class="p">(</span><span class="n">x1</span><span class="o">-</span><span class="n">x0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">x</span> <span class="o">&lt;=</span> <span class="n">x1</span></div>
+
+<div class="viewcode-block" id="eulerpole"><a class="viewcode-back" href="../../reference.html#karta.geodesy.eulerpole">[docs]</a><span class="k">def</span> <span class="nf">eulerpole</span><span class="p">(</span><span class="n">pt1</span><span class="p">,</span> <span class="n">pt2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Return the Euler pole of a geodesic passing through two points. &quot;&quot;&quot;</span>
+    <span class="n">v1</span> <span class="o">=</span> <span class="n">sph2cart</span><span class="p">(</span><span class="o">*</span><span class="n">pt1</span><span class="p">)</span>
+    <span class="n">v2</span> <span class="o">=</span> <span class="n">sph2cart</span><span class="p">(</span><span class="o">*</span><span class="n">pt2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">cross</span><span class="p">(</span><span class="n">v1</span><span class="p">,</span> <span class="n">v2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="check_in_segment_range"><a class="viewcode-back" href="../../reference.html#karta.geodesy.check_in_segment_range">[docs]</a><span class="k">def</span> <span class="nf">check_in_segment_range</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span> <span class="n">segment</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Test whether *pt* is within the lon/lat range of *segment* &quot;&quot;&quot;</span>
+    <span class="n">lon_1</span> <span class="o">=</span> <span class="n">unroll_deg</span><span class="p">(</span><span class="n">segment</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">lon_2</span> <span class="o">=</span> <span class="n">unroll_deg</span><span class="p">(</span><span class="n">segment</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+
+    <span class="c1"># check longitude difference. if it&#39;s very small and latitude difference is</span>
+    <span class="c1"># larger, go to startegy 2</span>
+    <span class="n">dlon</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">reduce_deg</span><span class="p">(</span><span class="n">lon_2</span><span class="o">-</span><span class="n">lon_1</span><span class="p">))</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">dlon</span> <span class="o">&lt;</span> <span class="mf">1e-8</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">segment</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">segment</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">dlon</span><span class="p">):</span>
+        <span class="c1"># strategy 2</span>
+        <span class="k">return</span> <span class="p">(</span><span class="nb">abs</span><span class="p">((</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span><span class="o">%</span><span class="mi">360</span> <span class="o">-</span> <span class="n">lon_1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">180</span><span class="p">)</span> <span class="ow">and</span> \
+               <span class="p">(</span><span class="n">segment</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">pt</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">segment</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># strategy 1</span>
+        <span class="k">return</span> <span class="n">isbetween_circular</span><span class="p">(</span><span class="n">pt</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lon_1</span><span class="p">,</span> <span class="n">lon_2</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="intersection_spherical"><a class="viewcode-back" href="../../reference.html#karta.geodesy.intersection_spherical">[docs]</a><span class="k">def</span> <span class="nf">intersection_spherical</span><span class="p">(</span><span class="n">segment1</span><span class="p">,</span> <span class="n">segment2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; compute the intersection between two great circle segments on a sphere</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    segment1, segment2 : tuple of tuples</span>
+<span class="sd">        Tuples of the form ((x1, y1), (x2, y2)) describing line segements</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">gc1</span> <span class="o">=</span> <span class="n">eulerpole</span><span class="p">(</span><span class="o">*</span><span class="n">segment1</span><span class="p">)</span>
+    <span class="n">gc2</span> <span class="o">=</span> <span class="n">eulerpole</span><span class="p">(</span><span class="o">*</span><span class="n">segment2</span><span class="p">)</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">cross</span><span class="p">(</span><span class="n">gc1</span><span class="p">,</span> <span class="n">gc2</span><span class="p">)</span>
+    <span class="n">lon</span><span class="p">,</span> <span class="n">lat</span> <span class="o">=</span> <span class="n">cart2sph</span><span class="p">(</span><span class="o">*</span><span class="n">n</span><span class="p">)</span>
+    <span class="n">lon_antipodal</span> <span class="o">=</span> <span class="p">(</span><span class="n">lon</span><span class="o">+</span><span class="mi">360</span><span class="p">)</span><span class="o">%</span><span class="mi">360</span><span class="o">-</span><span class="mi">180</span>
+
+    <span class="n">pt</span> <span class="o">=</span> <span class="p">(</span><span class="n">lon</span><span class="p">,</span> <span class="n">lat</span><span class="p">)</span>
+    <span class="n">pt_antipodal</span> <span class="o">=</span> <span class="p">(</span><span class="n">lon_antipodal</span><span class="p">,</span> <span class="o">-</span><span class="n">lat</span><span class="p">)</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">check_in_segment_range</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span> <span class="n">segment1</span><span class="p">)</span> <span class="ow">and</span>
+        <span class="n">check_in_segment_range</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span> <span class="n">segment2</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">pt</span>
+    <span class="k">elif</span> <span class="p">(</span><span class="n">check_in_segment_range</span><span class="p">(</span><span class="n">pt_antipodal</span><span class="p">,</span> <span class="n">segment1</span><span class="p">)</span> <span class="ow">and</span>
+          <span class="n">check_in_segment_range</span><span class="p">(</span><span class="n">pt_antipodal</span><span class="p">,</span> <span class="n">segment2</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="n">pt_antipodal</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">NoIntersection</span><span class="p">()</span></div>
+
+<span class="c1"># ---------------------------------</span>
+<span class="c1"># Functions for ellipsoidal geodesy</span>
+<span class="c1"># ---------------------------------</span>
+
+<div class="viewcode-block" id="solve_astroid"><a class="viewcode-back" href="../../reference.html#karta.geodesy.solve_astroid">[docs]</a><span class="k">def</span> <span class="nf">solve_astroid</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">lambda12</span><span class="p">,</span> <span class="n">phi1</span><span class="p">,</span> <span class="n">phi2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Used to provide an initial guess to the inverse problem in the case of</span>
+<span class="sd">    nearly antipodal points.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    a: float</span>
+<span class="sd">        equatorial radius</span>
+<span class="sd">    f: float</span>
+<span class="sd">        flattening</span>
+<span class="sd">    lambda12: float (radians)</span>
+<span class="sd">        difference in longitudes</span>
+<span class="sd">    phi1: float (radians)</span>
+<span class="sd">        first latitude</span>
+<span class="sd">    phi2: float (radians)</span>
+<span class="sd">        second latitude</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    alpha1: float (radians)</span>
+<span class="sd">        estimated forward azimuth at first point</span>
+
+<span class="sd">    see Karney (2013) J. Geod. for details</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">beta1</span> <span class="o">=</span> <span class="n">atan</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">)</span> <span class="o">*</span> <span class="n">tan</span><span class="p">(</span><span class="n">phi1</span><span class="p">))</span>
+    <span class="n">beta2</span> <span class="o">=</span> <span class="n">atan</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">)</span> <span class="o">*</span> <span class="n">tan</span><span class="p">(</span><span class="n">phi2</span><span class="p">))</span>
+    <span class="n">delta</span> <span class="o">=</span> <span class="n">f</span><span class="o">*</span><span class="n">a</span><span class="o">*</span><span class="n">pi</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="p">(</span><span class="n">lambda12</span><span class="o">-</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">a</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">))</span> <span class="o">/</span> <span class="n">delta</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">beta2</span> <span class="o">+</span> <span class="n">beta1</span><span class="p">)</span> <span class="o">*</span> <span class="n">a</span> <span class="o">/</span> <span class="n">delta</span>
+    <span class="n">mu</span> <span class="o">=</span> <span class="n">fzero_brent</span><span class="p">(</span><span class="mf">1e-3</span><span class="p">,</span> <span class="n">pi</span><span class="o">*</span><span class="n">a</span><span class="p">,</span> <span class="k">lambda</span> <span class="n">mu</span><span class="p">:</span> <span class="p">(</span><span class="n">mu</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">mu</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span>
+                                             <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="o">-</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">mu</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">mu</span> <span class="o">-</span>
+                                             <span class="n">y</span><span class="o">**</span><span class="mi">2</span><span class="p">),</span> <span class="mf">1e-12</span><span class="p">)</span>
+    <span class="n">alpha1</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="o">-</span><span class="n">x</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">mu</span><span class="p">),</span> <span class="n">y</span><span class="o">/</span><span class="n">mu</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">alpha1</span></div>
+
+<div class="viewcode-block" id="solve_vincenty"><a class="viewcode-back" href="../../reference.html#karta.geodesy.solve_vincenty">[docs]</a><span class="k">def</span> <span class="nf">solve_vincenty</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">lambda12</span><span class="p">,</span> <span class="n">phi1</span><span class="p">,</span> <span class="n">phi2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Used to provide an initial guess to the inverse problem by solving the</span>
+<span class="sd">    corresponding problem on a sphere.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    a: float</span>
+<span class="sd">        equatorial radius</span>
+<span class="sd">    f: float</span>
+<span class="sd">        flattening</span>
+<span class="sd">    lambda12: flat(radians)</span>
+<span class="sd">        difference in longitudes</span>
+<span class="sd">    phi1: float (radians)</span>
+<span class="sd">        first latitude</span>
+<span class="sd">    phi2: float (radians)</span>
+<span class="sd">        second latitude</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    alpha1: float (radians)</span>
+<span class="sd">        forward azimuth at first point</span>
+<span class="sd">    alpha2: float (radians)</span>
+<span class="sd">        forward azimuth at second point</span>
+<span class="sd">    s12: float</span>
+<span class="sd">        distance between points</span>
+
+<span class="sd">    see Karney (2013) J. Geod. for details</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">eccn2</span> <span class="o">=</span> <span class="n">f</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">-</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">beta1</span> <span class="o">=</span> <span class="n">atan</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">)</span> <span class="o">*</span> <span class="n">tan</span><span class="p">(</span><span class="n">phi1</span><span class="p">))</span>
+    <span class="n">beta2</span> <span class="o">=</span> <span class="n">atan</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">)</span> <span class="o">*</span> <span class="n">tan</span><span class="p">(</span><span class="n">phi2</span><span class="p">))</span>
+    <span class="n">w</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">eccn2</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span> <span class="o">+</span> <span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">)))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">omega12</span> <span class="o">=</span> <span class="n">lambda12</span> <span class="o">/</span> <span class="n">w</span>
+
+    <span class="n">z1_r</span> <span class="o">=</span> <span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span> <span class="o">-</span> <span class="n">sin</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">omega12</span><span class="p">)</span>
+    <span class="n">z1_i</span> <span class="o">=</span> <span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">omega12</span><span class="p">)</span>
+    <span class="n">z1</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">z1_r</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">z1_i</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">sigma12</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">z1</span><span class="p">,</span> <span class="n">sin</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span> <span class="o">+</span> <span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">omega12</span><span class="p">))</span>
+    <span class="n">z2_r</span> <span class="o">=</span> <span class="o">-</span><span class="n">sin</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span> <span class="o">+</span> <span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">omega12</span><span class="p">)</span>
+    <span class="n">z2_i</span> <span class="o">=</span> <span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">omega12</span><span class="p">)</span>
+
+    <span class="n">alpha1</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">z1_i</span><span class="p">,</span> <span class="n">z1_r</span><span class="p">)</span>
+    <span class="n">alpha2</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">z2_i</span><span class="p">,</span> <span class="n">z2_r</span><span class="p">)</span>
+    <span class="n">s12</span> <span class="o">=</span> <span class="n">a</span><span class="o">*</span><span class="n">w</span><span class="o">*</span><span class="n">sigma12</span>
+    <span class="k">return</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">alpha2</span><span class="p">,</span> <span class="n">s12</span></div>
+
+<span class="k">def</span> <span class="nf">_solve_NEA</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; See Karney (2013) &quot;&quot;&quot;</span>
+    <span class="n">sigma1</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">beta1</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">))</span>
+    <span class="n">omega1</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">sigma1</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">sigma1</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">sigma1</span><span class="p">,</span> <span class="n">omega1</span>
+
+<span class="k">def</span> <span class="nf">_solve_NEB</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">,</span> <span class="n">beta2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; See Karney (2013) &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">alpha2</span> <span class="o">=</span> <span class="n">acos</span><span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> \
+                    <span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span> <span class="o">/</span> <span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">))</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">alpha2</span> <span class="o">=</span> <span class="n">asin</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span> <span class="o">/</span> <span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">))</span>     <span class="c1"># Less accurate?</span>
+    <span class="n">sigma2</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">beta2</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">alpha2</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">))</span>
+    <span class="n">omega2</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">sigma2</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">sigma2</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">alpha2</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">,</span> <span class="n">omega2</span>
+
+<span class="k">def</span> <span class="nf">_canonical_configuration</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Put coordinates into a configuration where (Karney, eqn 44)</span>
+<span class="sd">        y1 &lt;= 0</span>
+<span class="sd">        y1 &lt;= y2 &lt;= -y1</span>
+<span class="sd">        0 &lt;= x2-x1 &lt;= 180</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">transformation</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">yflip</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">xflip</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ysignswap</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">y1</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">y2</span><span class="p">):</span>
+        <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">y2</span><span class="p">,</span> <span class="n">y1</span>
+        <span class="n">transformation</span><span class="p">[</span><span class="s2">&quot;yflip&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">if</span> <span class="n">y1</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">y1</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="o">-</span><span class="n">y1</span><span class="p">,</span> <span class="o">-</span><span class="n">y2</span>
+        <span class="n">transformation</span><span class="p">[</span><span class="s2">&quot;ysignswap&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">reduce_deg</span><span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="n">x1</span><span class="p">)</span>
+    <span class="n">x1</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">x2</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">x2</span> <span class="o">&gt;</span> <span class="mi">180</span><span class="p">):</span>
+        <span class="n">x2</span> <span class="o">=</span> <span class="o">-</span><span class="n">x2</span>
+        <span class="n">transformation</span><span class="p">[</span><span class="s2">&quot;xflip&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="k">return</span> <span class="n">transformation</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span>
+
+<div class="viewcode-block" id="ellipsoidal_forward"><a class="viewcode-back" href="../../reference.html#karta.geodesy.ellipsoidal_forward">[docs]</a><span class="k">def</span> <span class="nf">ellipsoidal_forward</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">azimuth</span><span class="p">,</span> <span class="n">distance</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Compute the destination reached starting from a point and travelling</span>
+<span class="sd">    in a specified direction.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    a: float</span>
+<span class="sd">        equatorial radius</span>
+<span class="sd">    b: float</span>
+<span class="sd">        polar radius</span>
+<span class="sd">    x: float (degrees)</span>
+<span class="sd">        longitude at start</span>
+<span class="sd">    y: float (degrees)</span>
+<span class="sd">        latitude at start</span>
+<span class="sd">    azimuth: float (radians)</span>
+<span class="sd">        direction travelled from point</span>
+<span class="sd">    distnce: float</span>
+<span class="sd">        distance travelled</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    x2: float (degrees)</span>
+<span class="sd">        longitude at destination</span>
+<span class="sd">    y2: float (degrees)</span>
+<span class="sd">        latitude at destination</span>
+<span class="sd">    back_az: float (degrees)</span>
+<span class="sd">        back azimuth from destination</span>
+
+<span class="sd">    Algorithm due to Karney, C.F.F. &quot;Algorithms for geodesics&quot;, J. Geod (2013)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">a</span>
+
+    <span class="n">phi1</span> <span class="o">=</span> <span class="n">pi</span><span class="o">*</span><span class="n">y</span><span class="o">/</span><span class="mf">180.0</span>
+    <span class="n">alpha1</span> <span class="o">=</span> <span class="n">pi</span><span class="o">*</span><span class="n">azimuth</span><span class="o">/</span><span class="mf">180.0</span>
+
+    <span class="c1"># Solve triangle NEA from Karney Fig. 1</span>
+    <span class="n">beta1</span> <span class="o">=</span> <span class="n">atan</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">)</span><span class="o">*</span><span class="n">tan</span><span class="p">(</span><span class="n">phi1</span><span class="p">))</span>
+    <span class="n">_i</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">beta1</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">alpha0</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">),</span> <span class="n">_i</span><span class="p">)</span>
+    <span class="c1"># sigma1 = atan2(sin(beta1), cos(alpha1)*cos(beta1))</span>
+    <span class="c1"># omega1 = atan2(sin(alpha0)*sin(sigma1), cos(sigma1))</span>
+    <span class="n">sigma1</span><span class="p">,</span> <span class="n">omega1</span> <span class="o">=</span> <span class="n">_solve_NEA</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">)</span>
+
+    <span class="c1"># Determine sigma2</span>
+    <span class="n">eccn2</span> <span class="o">=</span> <span class="p">(</span><span class="n">f</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">-</span><span class="n">f</span><span class="p">))</span>
+    <span class="n">second_eccn2</span> <span class="o">=</span> <span class="n">eccn2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">eccn2</span><span class="p">)</span>
+    <span class="n">k2</span> <span class="o">=</span> <span class="n">second_eccn2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="n">_rad</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">k2</span><span class="p">)</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">A1</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">eps</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">4</span> <span class="o">+</span> <span class="n">eps</span><span class="o">**</span><span class="mi">4</span><span class="o">/</span><span class="mi">64</span> <span class="o">+</span> <span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="o">/</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">C1</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">eps</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">-</span> <span class="mf">9.0</span><span class="o">/</span><span class="mi">2048</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">48</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">256</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">5.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">7.0</span><span class="o">/</span><span class="mi">1280</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">7.0</span><span class="o">/</span><span class="mi">2048</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">]</span>
+
+    <span class="n">I1</span> <span class="o">=</span> <span class="n">A1</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma1</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C1</span><span class="p">)))</span>
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">I1</span> <span class="o">*</span> <span class="n">b</span>
+    <span class="n">s2</span> <span class="o">=</span> <span class="n">s1</span> <span class="o">+</span> <span class="n">distance</span>
+    <span class="n">tau2</span> <span class="o">=</span> <span class="n">s2</span> <span class="o">/</span> <span class="p">(</span><span class="n">b</span><span class="o">*</span><span class="n">A1</span><span class="p">)</span>
+
+    <span class="n">C1p</span> <span class="o">=</span> <span class="p">[</span><span class="n">eps</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">9.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="mf">205.0</span><span class="o">/</span><span class="mi">1536</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+           <span class="mf">5.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">37.0</span><span class="o">/</span><span class="mi">96</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">1335.0</span><span class="o">/</span><span class="mi">4096</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+           <span class="mf">29.0</span><span class="o">/</span><span class="mi">96</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mf">75.0</span><span class="o">/</span><span class="mi">128</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+           <span class="mf">539.0</span><span class="o">/</span><span class="mi">1536</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">-</span> <span class="mf">2391.0</span><span class="o">/</span><span class="mi">2560</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+           <span class="mf">3467.0</span><span class="o">/</span><span class="mi">7680</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+           <span class="mf">38081.0</span><span class="o">/</span><span class="mi">61440</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">]</span>
+
+    <span class="n">sigma2</span> <span class="o">=</span> <span class="n">tau2</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">tau2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C1p</span><span class="p">))</span>
+
+    <span class="c1"># Solve triangle NEB in Karney Fig. 1</span>
+    <span class="n">alpha2</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">sigma2</span><span class="p">))</span>
+    <span class="n">_j</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">((</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">sigma2</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">beta2</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">sigma2</span><span class="p">),</span> <span class="n">_j</span><span class="p">)</span>
+    <span class="n">omega2</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">sigma2</span><span class="p">),</span> <span class="n">cos</span><span class="p">(</span><span class="n">sigma2</span><span class="p">))</span>
+
+    <span class="c1"># Determine lambda12</span>
+    <span class="n">n</span> <span class="o">=</span> <span class="n">f</span> <span class="o">/</span> <span class="p">(</span><span class="mf">2.0</span><span class="o">-</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">n2</span> <span class="o">=</span> <span class="n">n</span><span class="o">*</span><span class="n">n</span>
+    <span class="n">A3</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">2</span><span class="o">-</span><span class="n">n</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span> <span class="o">+</span> <span class="n">n</span><span class="o">/</span><span class="mi">8</span> <span class="o">-</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">n2</span><span class="o">/</span><span class="mi">8</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> \
+        <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">16</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">16</span> <span class="o">+</span> <span class="n">n2</span><span class="o">/</span><span class="mi">16</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">64</span> <span class="o">+</span> <span class="n">n</span><span class="o">/</span><span class="mi">32</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> \
+        <span class="o">-</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">128</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span>
+
+    <span class="n">C3</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span> <span class="o">-</span> <span class="n">n</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">8</span> <span class="o">-</span> <span class="n">n2</span><span class="o">/</span><span class="mi">8</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">64</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">64</span> <span class="o">-</span> <span class="n">n2</span><span class="o">/</span><span class="mi">64</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> \
+            <span class="o">+</span> <span class="p">(</span><span class="mf">5.0</span><span class="o">/</span><span class="mi">128</span> <span class="o">+</span> <span class="n">n</span><span class="o">/</span><span class="mi">64</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">128</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+          <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">16</span> <span class="o">-</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">32</span> <span class="o">+</span> <span class="n">n2</span><span class="o">/</span><span class="mi">32</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">64</span> <span class="o">-</span> <span class="n">n</span><span class="o">/</span><span class="mi">32</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">n2</span><span class="o">/</span><span class="mi">64</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> \
+            <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">128</span> <span class="o">+</span> <span class="n">n</span><span class="o">/</span><span class="mi">128</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">5.0</span><span class="o">/</span><span class="mi">256</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+          <span class="p">(</span><span class="mf">5.0</span><span class="o">/</span><span class="mi">192</span> <span class="o">-</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">64</span> <span class="o">+</span> <span class="mf">5.0</span><span class="o">*</span><span class="n">n2</span><span class="o">/</span><span class="mi">192</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">128</span> <span class="o">-</span> <span class="mf">5.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">192</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> \
+            <span class="o">+</span> <span class="mf">7.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+          <span class="p">(</span><span class="mf">7.0</span><span class="o">/</span><span class="mi">512</span> <span class="o">-</span> <span class="mf">7.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">256</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">7.0</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">512</span><span class="p">,</span>
+          <span class="mf">21.0</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">2560</span><span class="p">]</span>
+
+    <span class="n">I3s1</span> <span class="o">=</span> <span class="n">A3</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma1</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C3</span><span class="p">)))</span>
+    <span class="n">I3s2</span> <span class="o">=</span> <span class="n">A3</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma2</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C3</span><span class="p">)))</span>
+
+    <span class="n">lambda1</span> <span class="o">=</span> <span class="n">omega1</span> <span class="o">-</span> <span class="n">f</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">I3s1</span>
+    <span class="n">lambda2</span> <span class="o">=</span> <span class="n">omega2</span> <span class="o">-</span> <span class="n">f</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">I3s2</span>
+    <span class="n">lambda12</span> <span class="o">=</span> <span class="n">lambda2</span> <span class="o">-</span> <span class="n">lambda1</span>
+
+    <span class="n">phi2</span> <span class="o">=</span> <span class="n">atan</span><span class="p">(</span><span class="n">tan</span><span class="p">(</span><span class="n">beta2</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">))</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="n">x</span> <span class="o">+</span> <span class="n">lambda12</span><span class="o">*</span><span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+    <span class="k">if</span> <span class="n">x2</span> <span class="o">&gt;=</span> <span class="mf">180.0</span><span class="p">:</span>
+        <span class="n">x2</span> <span class="o">-=</span> <span class="mf">360.0</span>
+    <span class="n">y2</span> <span class="o">=</span> <span class="n">phi2</span><span class="o">*</span><span class="mf">180.0</span><span class="o">/</span><span class="n">pi</span>
+    <span class="n">backaz</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha2</span><span class="o">+</span><span class="n">pi</span><span class="p">)</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">pi</span>
+    <span class="n">x2</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span><span class="o">+</span><span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+    <span class="n">backaz</span> <span class="o">=</span> <span class="p">(</span><span class="n">backaz</span><span class="o">+</span><span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+    <span class="k">return</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">backaz</span></div>
+
+<span class="k">def</span> <span class="nf">_ellipsoidal_inverse_equatorial</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">):</span>
+    <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="n">x1</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+    <span class="k">if</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">az</span> <span class="o">=</span> <span class="o">-</span><span class="mf">90.0</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="mf">90.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">az</span> <span class="o">=</span> <span class="mf">90.0</span>
+        <span class="n">baz</span> <span class="o">=</span> <span class="o">-</span><span class="mf">90.0</span>
+    <span class="n">s12</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">pi</span> <span class="o">*</span> <span class="n">a</span> <span class="o">*</span> <span class="nb">abs</span><span class="p">(</span><span class="n">x1</span><span class="o">-</span><span class="n">x2</span><span class="p">)</span><span class="o">/</span><span class="mf">360.0</span>
+    <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">s12</span>
+
+<div class="viewcode-block" id="ellipsoidal_inverse"><a class="viewcode-back" href="../../reference.html#karta.geodesy.ellipsoidal_inverse">[docs]</a><span class="k">def</span> <span class="nf">ellipsoidal_inverse</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Compute the shortest path (geodesic) between two points.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    a: float</span>
+<span class="sd">        equatorial radius</span>
+<span class="sd">    b: float</span>
+<span class="sd">        polar radius</span>
+<span class="sd">    x1: float (degrees)</span>
+<span class="sd">        first longitude</span>
+<span class="sd">    y1: float (degrees)</span>
+<span class="sd">        first latitude</span>
+<span class="sd">    x2: float (degrees)</span>
+<span class="sd">        second longitude</span>
+<span class="sd">    y2: float (degrees)</span>
+<span class="sd">        second latitude</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    az: float (degrees)</span>
+<span class="sd">        forward azimuth from first point</span>
+<span class="sd">    back_az: float (degrees)</span>
+<span class="sd">        back azimuth from second point</span>
+<span class="sd">    distance: float</span>
+<span class="sd">        distance between points</span>
+
+<span class="sd">    Algorithm due to Karney, C.F.F. &quot;Algorithms for geodesics&quot;, J. Geod (2013)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">niter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">maxiter</span> <span class="o">=</span> <span class="mi">100</span>
+    <span class="k">if</span> <span class="n">tol</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">tol</span> <span class="o">=</span> <span class="mf">1e-12</span>
+
+    <span class="k">if</span> <span class="n">y1</span> <span class="o">==</span> <span class="n">y2</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="c1"># Equatorial case</span>
+        <span class="k">return</span> <span class="n">_ellipsoidal_inverse_equatorial</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">)</span>
+
+    <span class="c1"># Canonical configuration</span>
+    <span class="n">tr</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">_canonical_configuration</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+
+    <span class="n">phi1</span> <span class="o">=</span> <span class="n">y1</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+    <span class="n">phi2</span> <span class="o">=</span> <span class="n">y2</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+    <span class="n">lambda12</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="n">x1</span><span class="p">)</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="p">)</span> <span class="o">/</span> <span class="n">a</span>
+
+    <span class="n">beta1</span> <span class="o">=</span> <span class="n">atan</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">)</span><span class="o">*</span><span class="n">tan</span><span class="p">(</span><span class="n">phi1</span><span class="p">))</span>
+    <span class="n">beta2</span> <span class="o">=</span> <span class="n">atan</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">)</span><span class="o">*</span><span class="n">tan</span><span class="p">(</span><span class="n">phi2</span><span class="p">))</span>
+
+    <span class="n">eccn2</span> <span class="o">=</span> <span class="n">f</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">-</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">second_eccn2</span> <span class="o">=</span> <span class="n">eccn2</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">eccn2</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">x1</span> <span class="o">==</span> <span class="n">x2</span><span class="p">:</span>
+        <span class="c1"># Meridional case 1</span>
+        <span class="n">alpha0</span> <span class="o">=</span> <span class="n">alpha1</span> <span class="o">=</span> <span class="n">alpha2</span> <span class="o">=</span> <span class="n">omega1</span> <span class="o">=</span> <span class="n">omega2</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="n">_i</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">beta1</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">alpha0</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">),</span> <span class="n">_i</span><span class="p">)</span>
+        <span class="n">sigma1</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_solve_NEA</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_solve_NEB</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">,</span> <span class="n">beta2</span><span class="p">)</span>
+
+        <span class="n">k2</span> <span class="o">=</span> <span class="n">second_eccn2</span>
+        <span class="n">_rad</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">k2</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">elif</span> <span class="nb">abs</span><span class="p">(</span><span class="n">lambda12</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="p">)</span> <span class="o">-</span> <span class="n">pi</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">1e-12</span><span class="p">:</span>
+        <span class="c1"># Meridional case 2</span>
+        <span class="k">if</span> <span class="n">y1</span> <span class="o">+</span> <span class="n">y2</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">alpha0</span> <span class="o">=</span> <span class="n">alpha1</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">alpha2</span> <span class="o">=</span> <span class="n">omega1</span> <span class="o">=</span> <span class="n">omega2</span> <span class="o">=</span> <span class="n">pi</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">alpha0</span> <span class="o">=</span> <span class="n">alpha1</span> <span class="o">=</span> <span class="n">omega1</span> <span class="o">=</span> <span class="n">omega2</span> <span class="o">=</span> <span class="n">pi</span>
+            <span class="n">alpha2</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="n">sigma1</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_solve_NEA</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">)</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_solve_NEB</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">,</span> <span class="n">beta2</span><span class="p">)</span>
+
+        <span class="n">k2</span> <span class="o">=</span> <span class="n">second_eccn2</span>
+        <span class="n">_rad</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">k2</span><span class="p">)</span>
+        <span class="n">eps</span> <span class="o">=</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Newton iteration</span>
+
+        <span class="c1"># Guess the azimuth</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">lambda12</span><span class="o">-</span><span class="n">pi</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0087</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">phi1</span><span class="o">+</span><span class="n">phi2</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">0.0087</span><span class="p">):</span>
+            <span class="c1"># not nearly antipodal</span>
+            <span class="n">alpha1</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">solve_vincenty</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">lambda12</span><span class="p">,</span> <span class="n">phi1</span><span class="p">,</span> <span class="n">phi2</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">alpha1</span> <span class="o">=</span> <span class="n">solve_astroid</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">lambda12</span><span class="p">,</span> <span class="n">phi1</span><span class="p">,</span> <span class="n">phi2</span><span class="p">)</span>
+
+        <span class="n">dlambda12</span> <span class="o">=</span> <span class="n">tol</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">while</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">dlambda12</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">niter</span> <span class="o">!=</span> <span class="n">maxiter</span><span class="p">):</span>
+
+            <span class="c1"># Solve triangles</span>
+            <span class="n">_i</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">beta1</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+            <span class="n">alpha0</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">),</span> <span class="n">_i</span><span class="p">)</span>
+            <span class="n">sigma1</span><span class="p">,</span> <span class="n">omega1</span> <span class="o">=</span> <span class="n">_solve_NEA</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">)</span>
+            <span class="n">alpha2</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">,</span> <span class="n">omega2</span> <span class="o">=</span> <span class="n">_solve_NEB</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">,</span> <span class="n">beta2</span><span class="p">)</span>
+
+            <span class="c1"># Determine lambda12</span>
+            <span class="n">k2</span> <span class="o">=</span> <span class="n">second_eccn2</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+            <span class="n">_rad</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">k2</span><span class="p">)</span>
+            <span class="n">eps</span> <span class="o">=</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="n">n</span> <span class="o">=</span> <span class="n">f</span><span class="o">/</span><span class="p">(</span><span class="mi">2</span><span class="o">-</span><span class="n">f</span><span class="p">)</span>
+            <span class="n">n2</span> <span class="o">=</span> <span class="n">n</span><span class="o">*</span><span class="n">n</span>
+            <span class="n">A3</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">2</span> <span class="o">-</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span> <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">8</span><span class="o">*</span><span class="n">n</span> <span class="o">-</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">8</span><span class="o">*</span><span class="n">n2</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> \
+                <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">16</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">n</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">n2</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">64</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">n</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> \
+                <span class="o">-</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">128</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span>
+
+            <span class="n">C3</span> <span class="o">=</span> <span class="p">[(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span> <span class="o">-</span> <span class="n">n</span><span class="o">/</span><span class="mi">4</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">8</span> <span class="o">-</span> <span class="n">n2</span><span class="o">/</span><span class="mi">8</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">64</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">64</span> <span class="o">-</span> <span class="n">n2</span><span class="o">/</span><span class="mi">64</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> \
+                    <span class="o">+</span> <span class="p">(</span><span class="mf">5.0</span><span class="o">/</span><span class="mi">128</span> <span class="o">+</span> <span class="n">n</span><span class="o">/</span><span class="mi">64</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">128</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+                  <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">16</span> <span class="o">-</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">32</span> <span class="o">+</span> <span class="n">n2</span><span class="o">/</span><span class="mi">32</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">64</span> <span class="o">-</span> <span class="n">n</span><span class="o">/</span><span class="mi">32</span> <span class="o">-</span> <span class="mi">3</span><span class="o">*</span><span class="n">n2</span><span class="o">/</span><span class="mi">64</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> \
+                    <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">128</span> <span class="o">+</span> <span class="n">n</span><span class="o">/</span><span class="mi">128</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">5.0</span><span class="o">/</span><span class="mi">256</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+                  <span class="p">(</span><span class="mf">5.0</span><span class="o">/</span><span class="mi">192</span> <span class="o">-</span> <span class="mf">3.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">64</span> <span class="o">+</span> <span class="mf">5.0</span><span class="o">*</span><span class="n">n2</span><span class="o">/</span><span class="mi">192</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="p">(</span><span class="mf">3.0</span><span class="o">/</span><span class="mi">128</span> <span class="o">-</span> <span class="mf">5.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">192</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> \
+                    <span class="o">+</span> <span class="mf">7.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+                  <span class="p">(</span><span class="mf">7.0</span><span class="o">/</span><span class="mi">512</span> <span class="o">-</span> <span class="mf">7.0</span><span class="o">*</span><span class="n">n</span><span class="o">/</span><span class="mi">256</span><span class="p">)</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">7.0</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">512</span><span class="p">,</span>
+                  <span class="mf">21.0</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">2560</span><span class="p">]</span>
+
+            <span class="n">I3s1</span> <span class="o">=</span> <span class="n">A3</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma1</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C3</span><span class="p">)))</span>
+            <span class="n">I3s2</span> <span class="o">=</span> <span class="n">A3</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma2</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C3</span><span class="p">)))</span>
+
+            <span class="n">lambda1</span> <span class="o">=</span> <span class="n">omega1</span> <span class="o">-</span> <span class="n">f</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">I3s1</span>
+            <span class="n">lambda2</span> <span class="o">=</span> <span class="n">omega2</span> <span class="o">-</span> <span class="n">f</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">I3s2</span>
+            <span class="n">lambda12_next</span> <span class="o">=</span> <span class="n">lambda2</span> <span class="o">-</span> <span class="n">lambda1</span>
+            <span class="n">dlambda12</span> <span class="o">=</span> <span class="n">lambda12_next</span> <span class="o">-</span> <span class="n">lambda12</span>
+
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">dlambda12</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">tol</span><span class="p">:</span>
+                <span class="c1"># Refine alpha1</span>
+                <span class="n">A1</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">eps</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">4</span> <span class="o">+</span> <span class="n">eps</span><span class="o">**</span><span class="mi">4</span><span class="o">/</span><span class="mi">64</span> <span class="o">+</span> <span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="o">/</span><span class="mi">256</span><span class="p">)</span>
+                <span class="n">C1</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">eps</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+                      <span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">-</span> <span class="mf">9.0</span><span class="o">/</span><span class="mi">2048</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+                      <span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">48</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">256</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+                      <span class="o">-</span><span class="mf">5.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+                      <span class="o">-</span><span class="mf">7.0</span><span class="o">/</span><span class="mi">1280</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+                      <span class="o">-</span><span class="mf">7.0</span><span class="o">/</span><span class="mi">2048</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">]</span>
+
+                <span class="n">I1s1</span> <span class="o">=</span> <span class="n">A1</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma1</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C1</span><span class="p">)))</span>
+                <span class="n">I1s2</span> <span class="o">=</span> <span class="n">A1</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma2</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C1</span><span class="p">)))</span>
+
+                <span class="n">A2</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">eps</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">4</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">9.0</span><span class="o">/</span><span class="mi">64</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">25.0</span><span class="o">/</span><span class="mi">256</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">)</span>
+                <span class="n">C2</span> <span class="o">=</span> <span class="p">[</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">eps</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+                      <span class="mf">3.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">35.0</span><span class="o">/</span><span class="mi">2048</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+                      <span class="mf">5.0</span><span class="o">/</span><span class="mi">48</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="mf">5.0</span><span class="o">/</span><span class="mi">256</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+                      <span class="mf">35.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">7.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+                      <span class="mf">63.0</span><span class="o">/</span><span class="mi">1280</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+                      <span class="mf">77.0</span><span class="o">/</span><span class="mi">2048</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">]</span>
+
+                <span class="n">I2s1</span> <span class="o">=</span> <span class="n">A2</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma1</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C2</span><span class="p">)))</span>
+                <span class="n">I2s2</span> <span class="o">=</span> <span class="n">A2</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma2</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C2</span><span class="p">)))</span>
+
+                <span class="n">Js1</span> <span class="o">=</span> <span class="n">I1s1</span> <span class="o">-</span> <span class="n">I2s1</span>
+                <span class="n">Js2</span> <span class="o">=</span> <span class="n">I1s2</span> <span class="o">-</span> <span class="n">I2s2</span>
+
+                <span class="n">m12</span> <span class="o">=</span> <span class="n">b</span> <span class="o">*</span> <span class="p">(</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">k2</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">sigma2</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">sigma1</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">sigma2</span><span class="p">)</span> \
+                         <span class="o">-</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">k2</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">sigma1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">sin</span><span class="p">(</span><span class="n">sigma1</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">sigma2</span><span class="p">)</span> \
+                         <span class="o">-</span> <span class="n">cos</span><span class="p">(</span><span class="n">sigma1</span><span class="p">)</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">sigma2</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">Js2</span><span class="o">-</span><span class="n">Js1</span><span class="p">))</span>
+                <span class="n">dlambda12_dalpha1</span> <span class="o">=</span> <span class="n">m12</span><span class="o">/</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">alpha2</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta2</span><span class="p">))</span>
+                <span class="n">dalpha1</span> <span class="o">=</span> <span class="o">-</span><span class="n">dlambda12</span> <span class="o">/</span> <span class="n">dlambda12_dalpha1</span>
+                <span class="n">alpha1</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha1</span> <span class="o">+</span> <span class="n">dalpha1</span><span class="p">)</span> <span class="o">%</span> <span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="n">pi</span><span class="p">)</span>
+
+            <span class="n">niter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">niter</span> <span class="o">==</span> <span class="n">maxiter</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;Convergence failure (</span><span class="si">%f</span><span class="s2">, </span><span class="si">%f</span><span class="s2">) -&gt; (</span><span class="si">%f</span><span class="s2">, </span><span class="si">%f</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">),</span>
+            <span class="ne">RuntimeWarning</span><span class="p">)</span>
+
+    <span class="n">k2</span> <span class="o">=</span> <span class="n">second_eccn2</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+    <span class="n">_rad</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">k2</span><span class="p">)</span>
+    <span class="n">eps</span> <span class="o">=</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">_rad</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># Determine s12</span>
+    <span class="n">A1</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">eps</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">eps</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">4</span> <span class="o">+</span> <span class="n">eps</span><span class="o">**</span><span class="mi">4</span><span class="o">/</span><span class="mi">64</span> <span class="o">+</span> <span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="o">/</span><span class="mi">256</span><span class="p">)</span>
+    <span class="n">C1</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">eps</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">-</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">16</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="mf">1.0</span><span class="o">/</span><span class="mi">32</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">-</span> <span class="mf">9.0</span><span class="o">/</span><span class="mi">2048</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">48</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">3</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">256</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">5.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mf">3.0</span><span class="o">/</span><span class="mi">512</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">7.0</span><span class="o">/</span><span class="mi">1280</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">5</span><span class="p">,</span>
+          <span class="o">-</span><span class="mf">7.0</span><span class="o">/</span><span class="mi">2048</span><span class="o">*</span><span class="n">eps</span><span class="o">**</span><span class="mi">6</span><span class="p">]</span>
+
+    <span class="n">I1s1</span> <span class="o">=</span> <span class="n">A1</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma1</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C1</span><span class="p">)))</span>
+    <span class="n">I1s2</span> <span class="o">=</span> <span class="n">A1</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma2</span> <span class="o">+</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="mi">2</span><span class="o">*</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">C1</span><span class="p">)))</span>
+
+    <span class="n">s1</span> <span class="o">=</span> <span class="n">I1s1</span><span class="o">*</span><span class="n">b</span>
+    <span class="n">s2</span> <span class="o">=</span> <span class="n">I1s2</span><span class="o">*</span><span class="n">b</span>
+    <span class="n">s12</span> <span class="o">=</span> <span class="n">s2</span><span class="o">-</span><span class="n">s1</span>
+
+    <span class="k">if</span> <span class="n">tr</span><span class="p">[</span><span class="s2">&quot;xflip&quot;</span><span class="p">]:</span>
+        <span class="n">alpha1</span> <span class="o">=</span> <span class="o">-</span><span class="n">alpha1</span>
+        <span class="n">alpha2</span> <span class="o">=</span> <span class="o">-</span><span class="n">alpha2</span>
+
+    <span class="k">if</span> <span class="n">tr</span><span class="p">[</span><span class="s2">&quot;yflip&quot;</span><span class="p">]:</span>
+        <span class="n">alpha1</span><span class="p">,</span> <span class="n">alpha2</span> <span class="o">=</span> <span class="n">pi</span><span class="o">-</span><span class="n">alpha2</span><span class="p">,</span> <span class="n">pi</span><span class="o">-</span><span class="n">alpha1</span>
+
+    <span class="k">if</span> <span class="n">tr</span><span class="p">[</span><span class="s2">&quot;ysignswap&quot;</span><span class="p">]:</span>
+        <span class="n">alpha1</span> <span class="o">=</span> <span class="n">pi</span> <span class="o">-</span> <span class="n">alpha1</span>
+        <span class="n">alpha2</span> <span class="o">=</span> <span class="n">pi</span> <span class="o">-</span> <span class="n">alpha2</span>
+
+    <span class="n">az</span> <span class="o">=</span> <span class="p">(</span><span class="n">alpha1</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">pi</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+    <span class="n">backaz</span> <span class="o">=</span> <span class="p">((</span><span class="n">alpha2</span><span class="o">+</span><span class="n">pi</span><span class="p">)</span><span class="o">*</span><span class="mi">180</span><span class="o">/</span><span class="n">pi</span> <span class="o">+</span> <span class="mi">180</span><span class="p">)</span> <span class="o">%</span> <span class="mi">360</span> <span class="o">-</span> <span class="mi">180</span>
+    <span class="k">return</span> <span class="n">az</span><span class="p">,</span> <span class="n">backaz</span><span class="p">,</span> <span class="n">s12</span></div>
+
+<span class="k">def</span> <span class="nf">_ellipsoidal_area</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lambda12</span><span class="p">,</span> <span class="n">phi1</span><span class="p">,</span> <span class="n">phi2</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">alpha2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Area of a single quatrilateral defined by two meridians, the equator,</span>
+<span class="sd">    and another geodesic.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="p">)</span><span class="o">/</span><span class="n">a</span>
+    <span class="n">e2</span> <span class="o">=</span> <span class="n">f</span><span class="o">*</span><span class="p">(</span><span class="mi">2</span><span class="o">-</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">ep2</span> <span class="o">=</span> <span class="n">e2</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">-</span><span class="n">e2</span><span class="p">)</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">e2</span><span class="p">)</span>
+
+    <span class="c1"># Authalic radius</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">a</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">b</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">2</span><span class="o">*</span><span class="n">atanh</span><span class="p">(</span><span class="n">e</span><span class="p">)</span><span class="o">/</span><span class="n">e</span><span class="p">)</span>
+
+    <span class="n">beta1</span> <span class="o">=</span> <span class="n">atan</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">)</span><span class="o">*</span><span class="n">tan</span><span class="p">(</span><span class="n">phi1</span><span class="p">))</span>
+    <span class="n">beta2</span> <span class="o">=</span> <span class="n">atan</span><span class="p">((</span><span class="mi">1</span><span class="o">-</span><span class="n">f</span><span class="p">)</span><span class="o">*</span><span class="n">tan</span><span class="p">(</span><span class="n">phi2</span><span class="p">))</span>
+
+    <span class="n">_i</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">beta1</span><span class="p">))</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">alpha0</span> <span class="o">=</span> <span class="n">atan2</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha1</span><span class="p">)</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">beta1</span><span class="p">),</span> <span class="n">_i</span><span class="p">)</span>
+
+    <span class="n">sigma1</span><span class="p">,</span> <span class="n">omega1</span> <span class="o">=</span> <span class="n">_solve_NEA</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">)</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">sigma2</span><span class="p">,</span> <span class="n">omega2</span> <span class="o">=</span> <span class="n">_solve_NEB</span><span class="p">(</span><span class="n">alpha0</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">beta1</span><span class="p">,</span> <span class="n">beta2</span><span class="p">)</span>
+    <span class="n">omega12</span> <span class="o">=</span> <span class="n">omega2</span> <span class="o">-</span> <span class="n">omega1</span>
+
+    <span class="c1"># Bessel identity for alpha2 - alpha1</span>
+    <span class="n">alpha12</span> <span class="o">=</span> <span class="mi">2</span><span class="o">*</span><span class="n">atan</span><span class="p">(</span><span class="n">sin</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">beta1</span><span class="o">+</span><span class="mf">0.5</span><span class="o">*</span><span class="n">beta2</span><span class="p">)</span><span class="o">/</span><span class="n">cos</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">beta2</span><span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="n">beta1</span><span class="p">)</span> \
+            <span class="o">*</span> <span class="n">tan</span><span class="p">(</span><span class="mf">0.5</span><span class="o">*</span><span class="n">omega12</span><span class="p">))</span>
+    <span class="n">sph_term</span> <span class="o">=</span> <span class="n">c</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">alpha12</span>
+
+    <span class="c1"># compute integrals for ellipsoidal correction</span>
+    <span class="n">k2</span> <span class="o">=</span> <span class="n">ep2</span><span class="o">*</span><span class="n">cos</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="n">C40</span> <span class="o">=</span> <span class="p">(</span><span class="mf">2.0</span><span class="o">/</span><span class="mi">3</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">15</span> <span class="o">+</span> <span class="mi">4</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">105</span> <span class="o">-</span> <span class="mi">8</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="mi">315</span> <span class="o">+</span> <span class="mi">64</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">4</span><span class="o">/</span><span class="mi">3465</span> <span class="o">-</span> <span class="mi">128</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">9009</span><span class="p">)</span> \
+        <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">20</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">35</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">105</span> <span class="o">-</span> <span class="mi">16</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="mi">1155</span> <span class="o">+</span> <span class="mi">32</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">4</span><span class="o">/</span><span class="mi">3003</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span> \
+        <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">42</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">63</span> <span class="o">+</span> <span class="mi">8</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">693</span> <span class="o">-</span> <span class="mi">90</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="mi">9009</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">2</span> \
+        <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">72</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">99</span> <span class="o">+</span> <span class="mi">10</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">1287</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">3</span> \
+        <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">110</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">143</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">4</span> <span class="o">-</span> <span class="n">k2</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">156</span>
+
+    <span class="n">C41</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">180</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">315</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">945</span> <span class="o">-</span> <span class="mi">16</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="mi">10395</span> <span class="o">+</span> <span class="mi">32</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">4</span><span class="o">/</span><span class="mi">27027</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span> \
+        <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">252</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">378</span> <span class="o">+</span> <span class="mi">4</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">2079</span> <span class="o">-</span> <span class="mi">40</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="mi">27027</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">2</span> \
+        <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">360</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">495</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">1287</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">3</span> \
+        <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">495</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">ep2</span><span class="o">/</span><span class="mi">1287</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mi">5</span><span class="o">*</span><span class="n">k2</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">3276</span>
+
+    <span class="n">C42</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">2100</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">3150</span> <span class="o">+</span> <span class="mi">4</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">17325</span> <span class="o">-</span> <span class="mi">8</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">3</span><span class="o">/</span><span class="mi">45045</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">2</span> \
+        <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">1800</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">2475</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">6435</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">3</span> \
+        <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">1925</span> <span class="o">-</span> <span class="mi">2</span><span class="o">*</span><span class="n">ep2</span><span class="o">/</span><span class="mi">5005</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">4</span> <span class="o">-</span> <span class="n">k2</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">2184</span>
+
+    <span class="n">C43</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">17640</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">24255</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">ep2</span><span class="o">**</span><span class="mi">2</span><span class="o">/</span><span class="mi">63063</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">3</span> \
+        <span class="o">-</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">10780</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">14014</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">4</span> <span class="o">+</span> <span class="mi">5</span><span class="o">*</span><span class="n">k2</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">45864</span>
+
+    <span class="n">C44</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.0</span><span class="o">/</span><span class="mi">124740</span> <span class="o">-</span> <span class="n">ep2</span><span class="o">/</span><span class="mi">162162</span><span class="p">)</span> <span class="o">*</span> <span class="n">k2</span><span class="o">**</span><span class="mi">4</span> <span class="o">-</span> <span class="mi">1</span><span class="o">*</span><span class="n">k2</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">58968</span>
+
+    <span class="n">C45</span> <span class="o">=</span> <span class="n">k2</span><span class="o">**</span><span class="mi">5</span><span class="o">/</span><span class="mi">792792</span>
+
+    <span class="n">Cs</span> <span class="o">=</span> <span class="p">[</span><span class="n">C40</span><span class="p">,</span> <span class="n">C41</span><span class="p">,</span> <span class="n">C42</span><span class="p">,</span> <span class="n">C43</span><span class="p">,</span> <span class="n">C44</span><span class="p">,</span> <span class="n">C45</span><span class="p">]</span>
+    <span class="n">I4s1</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">cos</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma1</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Cs</span><span class="p">))</span>
+    <span class="n">I4s2</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">c</span><span class="o">*</span><span class="n">cos</span><span class="p">((</span><span class="mi">2</span><span class="o">*</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">sigma2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">c</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">Cs</span><span class="p">))</span>
+
+    <span class="n">S12</span> <span class="o">=</span> <span class="n">sph_term</span> <span class="o">+</span> <span class="n">e</span><span class="o">**</span><span class="mi">2</span><span class="o">*</span><span class="n">a</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">cos</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span><span class="o">*</span><span class="n">sin</span><span class="p">(</span><span class="n">alpha0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">I4s2</span><span class="o">-</span><span class="n">I4s1</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">S12</span>
+
+
+<div class="viewcode-block" id="ellipsoidal_area"><a class="viewcode-back" href="../../reference.html#karta.geodesy.ellipsoidal_area">[docs]</a><span class="k">def</span> <span class="nf">ellipsoidal_area</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Area of a single quatrilateral defined by two meridians, the equator,</span>
+<span class="sd">    and another geodesic.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    a : float (degrees)</span>
+<span class="sd">        longitude of first meridian</span>
+<span class="sd">    b : float (degrees)</span>
+<span class="sd">        longitude of second meridian</span>
+<span class="sd">    x1 : float (degrees)</span>
+<span class="sd">        longitude of geodesic segment start</span>
+<span class="sd">    y1 : float (degrees)</span>
+<span class="sd">        latitude of geodesic segment start</span>
+<span class="sd">    x2 : float (degrees)</span>
+<span class="sd">        longitude of geodesic segment end</span>
+<span class="sd">    y2 : float (degrees)</span>
+<span class="sd">        latitude of geodesic segment end</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">_</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span> <span class="o">=</span> <span class="n">_canonical_configuration</span><span class="p">(</span><span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+    <span class="n">phi1</span> <span class="o">=</span> <span class="n">y1</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+    <span class="n">phi2</span> <span class="o">=</span> <span class="n">y2</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+    <span class="n">lambda12</span> <span class="o">=</span> <span class="p">(</span><span class="n">x2</span><span class="o">-</span><span class="n">x1</span><span class="p">)</span><span class="o">*</span><span class="n">pi</span><span class="o">/</span><span class="mf">180.0</span>
+
+    <span class="n">az</span><span class="p">,</span> <span class="n">baz</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ellipsoidal_inverse</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">)</span>
+    <span class="n">alpha1</span> <span class="o">=</span> <span class="n">az</span> <span class="o">*</span> <span class="n">pi</span><span class="o">/</span><span class="mi">180</span>
+    <span class="n">alpha2</span> <span class="o">=</span> <span class="p">(</span><span class="n">baz</span><span class="o">-</span><span class="n">pi</span><span class="p">)</span> <span class="o">*</span> <span class="n">pi</span><span class="o">/</span><span class="mi">180</span>
+    <span class="k">return</span> <span class="n">_ellipsoidal_area</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">lambda12</span><span class="p">,</span> <span class="n">phi1</span><span class="p">,</span> <span class="n">phi2</span><span class="p">,</span> <span class="n">alpha1</span><span class="p">,</span> <span class="n">alpha2</span><span class="p">)</span></div>
+
+
+<span class="c1">###### Root-finding ######</span>
+
+<div class="viewcode-block" id="fzero_brent"><a class="viewcode-back" href="../../reference.html#karta.geodesy.fzero_brent">[docs]</a><span class="k">def</span> <span class="nf">fzero_brent</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">tol</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Evaluate a function to find a bracketed root</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    a : float</span>
+<span class="sd">        left bracket</span>
+<span class="sd">    b : float</span>
+<span class="sd">        right bracket</span>
+<span class="sd">    f : callable</span>
+<span class="sd">        function to find zero of</span>
+<span class="sd">    tol : float</span>
+<span class="sd">        error tolerance</span>
+
+<span class="sd">    Raises</span>
+<span class="sd">    ------</span>
+<span class="sd">    ValueError</span>
+<span class="sd">        if root is not bracketed</span>
+<span class="sd">    RuntimeError</span>
+<span class="sd">        if maximum iterations exceeded</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fa</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+    <span class="n">fb</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">fa</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">a</span>
+    <span class="k">elif</span> <span class="n">fb</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">b</span>
+    <span class="k">elif</span> <span class="n">fa</span> <span class="o">*</span> <span class="n">fb</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;root not bracketed&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">fa</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">fb</span><span class="p">):</span>
+        <span class="n">a</span><span class="p">,</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="p">,</span><span class="n">a</span>
+    <span class="n">c</span> <span class="o">=</span> <span class="n">a</span>
+    <span class="n">d</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+    <span class="n">mflag</span> <span class="o">=</span> <span class="bp">True</span>
+
+    <span class="n">delta</span> <span class="o">=</span> <span class="mf">1e-10</span>
+    <span class="n">niter</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">niter</span> <span class="o">!=</span> <span class="mi">1000</span><span class="p">:</span>
+
+        <span class="n">fc</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">fa</span> <span class="o">!=</span> <span class="n">fc</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">fb</span> <span class="o">!=</span> <span class="n">fc</span><span class="p">):</span>
+            <span class="c1"># inverse quadratic interpolation</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">a</span><span class="o">*</span><span class="n">fb</span><span class="o">*</span><span class="n">fc</span> <span class="o">/</span> <span class="p">((</span><span class="n">fa</span><span class="o">-</span><span class="n">fb</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">fa</span><span class="o">-</span><span class="n">fc</span><span class="p">))</span> \
+                    <span class="o">+</span> <span class="n">b</span><span class="o">*</span><span class="n">fa</span><span class="o">*</span><span class="n">fc</span> <span class="o">/</span> <span class="p">((</span><span class="n">fb</span><span class="o">-</span><span class="n">fa</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">fb</span><span class="o">-</span><span class="n">fc</span><span class="p">))</span> \
+                    <span class="o">+</span> <span class="n">c</span><span class="o">*</span><span class="n">fa</span><span class="o">*</span><span class="n">fb</span> <span class="o">/</span> <span class="p">((</span><span class="n">fc</span><span class="o">-</span><span class="n">fa</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">fc</span><span class="o">-</span><span class="n">fb</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># secant</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">b</span> <span class="o">-</span> <span class="n">fb</span><span class="o">*</span><span class="p">(</span><span class="n">b</span><span class="o">-</span><span class="n">a</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">fb</span><span class="o">-</span><span class="n">fa</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">((</span><span class="ow">not</span> <span class="mf">0.25</span><span class="o">*</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">a</span><span class="o">+</span><span class="n">b</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">s</span> <span class="o">&lt;</span> <span class="n">b</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="ow">not</span> <span class="n">b</span> <span class="o">&lt;</span> <span class="n">s</span> <span class="o">&lt;</span> <span class="mf">0.25</span><span class="o">*</span><span class="p">(</span><span class="mi">3</span><span class="o">*</span><span class="n">a</span><span class="o">+</span><span class="n">b</span><span class="p">)))</span> <span class="ow">or</span> \
+                <span class="p">(</span><span class="n">mflag</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="o">-</span><span class="n">b</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="o">*</span><span class="nb">abs</span><span class="p">(</span><span class="n">b</span><span class="o">-</span><span class="n">c</span><span class="p">)))</span> <span class="ow">or</span> \
+                <span class="p">(</span><span class="o">~</span><span class="n">mflag</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">s</span><span class="o">-</span><span class="n">b</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">0.5</span><span class="o">*</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">d</span><span class="p">)))</span> <span class="ow">or</span> \
+                <span class="p">(</span><span class="n">mflag</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">b</span><span class="o">-</span><span class="n">c</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">)))</span> <span class="ow">or</span> \
+                <span class="p">(</span><span class="o">~</span><span class="n">mflag</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">c</span><span class="o">-</span><span class="n">d</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">delta</span><span class="p">))):</span>
+            <span class="c1"># bisection</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="mf">0.5</span><span class="o">*</span><span class="p">(</span><span class="n">a</span><span class="o">+</span><span class="n">b</span><span class="p">)</span>
+            <span class="n">mflag</span> <span class="o">=</span> <span class="bp">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">mflag</span> <span class="o">=</span> <span class="bp">False</span>
+
+        <span class="n">fs</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">s</span><span class="p">)</span>
+        <span class="n">d</span> <span class="o">=</span> <span class="n">c</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="n">b</span>
+        <span class="n">fa</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
+        <span class="n">fb</span> <span class="o">=</span> <span class="n">f</span><span class="p">(</span><span class="n">b</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">fa</span><span class="o">*</span><span class="n">fs</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">s</span>
+            <span class="n">fb</span> <span class="o">=</span> <span class="n">fs</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">s</span>
+            <span class="n">fa</span> <span class="o">=</span> <span class="n">fs</span>
+
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">fa</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">abs</span><span class="p">(</span><span class="n">fb</span><span class="p">):</span>
+            <span class="n">a</span><span class="p">,</span><span class="n">b</span> <span class="o">=</span> <span class="n">b</span><span class="p">,</span><span class="n">a</span>
+            <span class="n">fa</span><span class="p">,</span><span class="n">fb</span> <span class="o">=</span> <span class="n">fb</span><span class="p">,</span><span class="n">fa</span>
+
+        <span class="k">if</span> <span class="n">fb</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">b</span>
+        <span class="k">elif</span> <span class="n">f</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">s</span>
+        <span class="k">elif</span> <span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">b</span><span class="o">-</span><span class="n">a</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">tol</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">b</span>
+        <span class="n">niter</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;maximum iterations exceeded (</span><span class="si">%f</span><span class="s2">, </span><span class="si">%f</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">s</span><span class="p">))</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="description" content="Geospatial analysis in Python">
+  <meta name="author" content="Nat Wilson">
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="/favicon-32x32.png" sizes="32x32">
+  <link rel="icon" type="image/png" href="/favicon-16x16.png" sizes="16x16">
+  <link rel="manifest" href="/manifest.json">
+  <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+  <meta name="theme-color" content="#ffffff">
+
+  <title>Karta - geospatial analysis in Python</title>
+  <link rel="stylesheet" href="//brick.a.ssl.fastly.net/Source+Code+Pro:700">
+  <link rel="stylesheet" href="//brick.a.ssl.fastly.net/Titillium:200,400">
+  <link rel="stylesheet" href="bootstrap-3.3.7-dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/karta.css">
+
+  <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+    (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+    m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-75313828-1', 'auto');
+    ga('send', 'pageview');
+
+  </script>
+
+</head>
+
+<body>
+
+    <div id="title">
+
+      <div class="display row">
+
+        <h1>Karta</h1>
+        <h2>Python toolkit for geospatial analysis</h2>
+
+        <div>
+          <p>
+             <a class="button" href="kartadocs/introduction.html" role="button">Docs</a>
+             <a class="button" href="https://github.com/fortyninemaps/karta" role="button">Github</a>
+             <a class="button" href="https://pypi.python.org/pypi/karta/" role="button">PyPI</a>
+          </p>
+        </div>
+
+        <small><a href="https://github.com/fortyninemaps/karta/archive/0.7.4.tar.gz">Download v0.7.4</a></small>
+
+      </div>
+
+    </div>
+
+  <div class="container-fluid">
+
+    <section id="raster">
+      <div class="row">
+        <div class="pymodule"><a href="kartadocs/reference.html#raster-package-karta-raster">import karta.raster</a></div>
+        <a name="raster"></a>
+
+        <h3 class="text-muted subtitle">Grid statistics, resizing, resampling,
+        and profile extraction</h3>
+
+        <div class="col-md-7 col-md-push-5">
+
+          <p class="lead text-left">Karta simplifies management of in- and
+          out-of-memory digital elevation models, satellite imagery, and land
+          classification maps.</p>
+
+          <p class="lead text-left">Regularly-spaced grids are represented by
+          <code>RegularGrid</code>, which can be created from Numpy ndarrays
+          and spatial reference information. Grid data is then stored in a
+          chunked and compressed in-memory array for space efficiency, or a
+          simple Numpy ndarray for speed. Grids may also use GeoTiff-backed
+          files for large on-disk data. Experimental support exists for
+          structured grids with arbitrary spacing, which are represented by
+          <code>WarpedGrid</code>.</p>
+
+          <p class="lead text-left">Grids can be clipped, resampled, queried at
+          geographical points, and read or written to ESRI ASCII files or to
+          GeoTiff via GDAL. Functions are provided for computing DEM properties
+          such as slope, aspect, and hillshade.</p>
+
+          <pre class="text-left">
+# Read a grid and resample
+grid = karta.read_gtiff("region_dem_UTM.tif").resize(bbox)
+grid_100m = grid.resample(100, 100)
+hs = karta.raster.hillshade(grid_100m)</pre>
+
+        </div>
+
+        <div class="col-md-5 col-md-pull-7">
+          <img class="img-responsive center-block" src="images/garibaldi.jpg">
+        </div>
+
+      </div>
+    </section>
+
+
+    <section id="vector">
+      <div class="row">
+
+        <div class="pymodule"><a href="kartadocs/reference.html#vector-package-karta-vector">import karta.vector</a></div>
+        <a name="vector"></a>
+
+        <h3 class="text-muted subtitle">Bounding boxes, distances and lengths,
+        intersection calculations, convex hulls</h3>
+
+        <div class="col-md-6">
+          <img class="img-responsive center-block" src="images/ontario_rtree.png">
+        </div>
+
+        <div class="col-md-6">
+
+          <pre class="text-left">
+# Create and manipulate geometries
+point = Point((-130.0, 52.0), crs=LonLatWGS84)
+line = read_geojson("linedata.json")
+polygon = Polygon([(-515005.78, -1301130.53),
+                   (-579174.89, -1282271.94),
+                   (-542977.83, -1221147.82),
+                   (-437864.05, -1251641.55),
+                   (-438160.72, -1252421.48),
+                   (-437961.28, -1285314.00)],
+                   crs=NSIDCNorth)
+
+print(polygon.area)
+polygon.convex_hull().to_shapefile("poly_hull.shp")
+</pre>
+        </div>
+
+      </div>
+      <div class="row">
+
+        <div class="col-md-12">
+
+          <p class="lead text-left">Karta provides Point, Line, Polygon classes, and
+            corresponding multi-part collections, and computes properties and
+            relationships between vector geometries.</p>
+
+          <p class="lead text-left"> All geometry objects can contain a
+            reference to a coordinate reference system, and metadata, with
+            multi-part collections additionally containing table data. Methods
+            of geometry objects handle basic queries about geometry properties
+            such as perimeter, area, and convex hull, and relationships such as
+            distance, intersections, and membership. Fast quadtree and R-tree
+            datastructures are automatically constructed to enable efficient
+            queries on multi-part collections (Multipoint, Multiline, and
+            Multipolygon). </p>
+
+          <p class="lead text-left">GeoJSON I/O is handled natively while ESRI
+            shapefile access is via <a
+              href="http://www.gdal.org/">GDAL/OGR</a>. Geometries implement
+            the <code>__geo_interface__</code> attribute, permitting
+            interchange with other libraries such as <a
+              href="http://toblerity.org/shapely/">Shapely</a>.</p>
+
+        </div>
+
+      </div>
+    </section>
+
+
+    <section id="geodesy">
+      <div class="row">
+
+        <div class="pymodule"><a href="kartadocs/reference.html#module-karta.crs">import karta.crs</a></div>
+        <a name="geodesy"></a>
+
+        <h3 class="text-muted subtitle">Placing data on Earth with coordinate reference systems</h3>
+
+        <div class="col-md-12">
+
+          <p class="lead text-left">A given project may involve GPS
+            measurements in WGS84 spherical coordinates, survey data on a UTM
+            grid, and public roads data in a local Albers projection. Karta is
+            coordinate-system aware and tracks the reference system associated
+            with grids and geometries.</p>
+
+          <p class="lead text-left">Geometries and grids are referenced to
+            instances of <code>karta.crs.CRS</code> that provide information
+            about the geographical projection and geodetic relationships
+            between positions.</p>
+
+          <p class="lead text-left">For performing accurate calculations,
+            geodetic operations rely on the algorithms from <a
+              href="http://geographiclib.sourceforge.net/">geographiclib</a>,
+            while projection and datum transformations leverage <a
+              href="http://jswhit.github.io/pyproj/">pyproj</a>.</p>
+
+        </div>
+
+      </div>
+    </section>
+
+    <footer>
+      <a class="pull-left" href="http://www.fortyninemaps.com"><img src="https://www.fortyninemaps/logo/fortynine_logo_72.png"></a>
+      <a class="pull-right" href="https://github.com/fortyninemaps/karta"><img src="images/GitHub-Mark-Light-64px.png"></a>
+    </footer>
+  </div>
+
+</body></html>
+
+

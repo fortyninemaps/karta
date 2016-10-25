@@ -1,0 +1,302 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.raster._aai &mdash; Karta 0.7.2 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+    <link rel="top" title="Karta 0.7.2 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.7.2
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.raster._aai</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.raster._aai</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot; Low-level functions for reading ESRI ASCII grids &quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<div class="viewcode-block" id="aairead"><a class="viewcode-back" href="../../../reference.html#karta.raster._aai.aairead">[docs]</a><span class="k">def</span> <span class="nf">aairead</span><span class="p">(</span><span class="n">fnm</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Read an existing ASCII grid file and return a Numpy array and a</span>
+<span class="sd">    dictionary of header information. &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fnm</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="c1"># Count the number of header entries</span>
+            <span class="n">cnt</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="n">l</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">()</span>
+                <span class="k">if</span> <span class="n">l</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">in</span> <span class="p">[</span><span class="s1">&#39;nrows&#39;</span><span class="p">,</span> <span class="s1">&#39;ncols&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;yllcenter&#39;</span><span class="p">,</span> <span class="s1">&#39;xllcenter&#39;</span><span class="p">,</span> <span class="s1">&#39;yllcorner&#39;</span><span class="p">,</span> <span class="s1">&#39;xllcorner&#39;</span><span class="p">,</span>
+                        <span class="s1">&#39;cellsize&#39;</span><span class="p">,</span> <span class="s1">&#39;nodata_value&#39;</span><span class="p">]:</span>
+                    <span class="n">cnt</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+            <span class="c1"># Read the header, then the array data</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">cnt</span><span class="p">):</span>
+                <span class="n">h</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">readline</span><span class="p">())</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()</span>
+
+    <span class="k">except</span> <span class="ne">IOError</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">AAIIOError</span><span class="p">(</span><span class="s1">&#39;error while trying to open {0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fnm</span><span class="p">))</span>
+
+    <span class="c1"># Store data internally</span>
+    <span class="n">hs</span> <span class="o">=</span> <span class="p">[</span><span class="n">rec</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">h</span><span class="p">]</span>
+    <span class="n">hdr</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">([(</span><span class="n">rec</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="nb">float</span><span class="p">(</span><span class="n">rec</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span> <span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">hs</span><span class="p">])</span>
+    <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;ncols&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;ncols&#39;</span><span class="p">])</span>
+    <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;nrows&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;nrows&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="s1">&#39;yllcenter&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hdr</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;yllcenter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="s1">&#39;xllcenter&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hdr</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;xllcenter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="s1">&#39;yllcorner&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hdr</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;yllcorner&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="s1">&#39;xllcorner&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hdr</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;xllcorner&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">if</span> <span class="s1">&#39;nodata_value&#39;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hdr</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;nodata_value&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mi">9999</span>
+
+    <span class="n">check_header</span><span class="p">(</span><span class="n">hdr</span><span class="p">)</span>
+
+    <span class="n">f</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">l</span><span class="p">:</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">l</span><span class="o">.</span><span class="n">split</span><span class="p">()]</span>
+    <span class="n">data_f</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="n">data</span><span class="p">))</span>
+    <span class="n">data_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data_f</span><span class="p">)</span>
+    <span class="n">data_a</span><span class="p">[</span><span class="n">data_a</span><span class="o">==</span><span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;nodata_value&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+
+    <span class="k">return</span> <span class="n">data_a</span><span class="p">,</span> <span class="n">hdr</span></div>
+
+
+<div class="viewcode-block" id="check_header"><a class="viewcode-back" href="../../../reference.html#karta.raster._aai.check_header">[docs]</a><span class="k">def</span> <span class="nf">check_header</span><span class="p">(</span><span class="n">hdr</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Make sure that all required header records are present, as well as both</span>
+<span class="sd">    centered and corner spatial references. &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;ncols&#39;</span><span class="p">,</span> <span class="s1">&#39;nrows&#39;</span><span class="p">,</span> <span class="s1">&#39;cellsize&#39;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">field</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">hdr</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AAIError</span><span class="p">(</span><span class="s2">&quot;{0} not defined&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">upper</span><span class="p">()))</span>
+
+    <span class="n">d</span> <span class="o">=</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;cellsize&#39;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">hdr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;yllcenter&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">hdr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;yllcorner&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AAIIOError</span><span class="p">(</span><span class="s1">&#39;YLL reference not defined&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;yllcenter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;yllcorner&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;yllcorner&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;yllcenter&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+    <span class="k">if</span> <span class="n">hdr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;xllcenter&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">hdr</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;xllcorner&#39;</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">AAIIOError</span><span class="p">(</span><span class="s1">&#39;XLL reference not defined&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;xllcenter&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;xllcorner&#39;</span><span class="p">]</span> <span class="o">+</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;xllcorner&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">hdr</span><span class="p">[</span><span class="s1">&#39;xllcenter&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="n">d</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+    <span class="k">return</span> <span class="n">hdr</span></div>
+
+
+<span class="k">class</span> <span class="nc">AAIError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">message</span><span class="o">=</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">message</span> <span class="o">=</span> <span class="n">message</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">message</span>
+
+
+<div class="viewcode-block" id="AAIIOError"><a class="viewcode-back" href="../../../reference.html#karta.raster._aai.AAIIOError">[docs]</a><span class="k">class</span> <span class="nc">AAIIOError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Exceptions related to ESRI ASCII grid driver. &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">detail</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detail</span> <span class="o">=</span> <span class="n">detail</span>
+    <span class="k">def</span> <span class="nf">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">+</span> <span class="s1">&#39;: &#39;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">detail</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value</span>
+        <span class="k">return</span> <span class="nb">repr</span><span class="p">(</span><span class="n">s</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Aug 29, 2016.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.7.2',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

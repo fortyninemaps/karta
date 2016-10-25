@@ -1,0 +1,10 @@
+.. do not remove the toctree directive
+
+.. toctree::
+   :maxdepth: 2
+
+   karta-manual
+   installation
+   reference
+
+
