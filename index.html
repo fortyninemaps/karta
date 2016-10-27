@@ -52,7 +52,7 @@
           </p>
         </div>
 
-        <small><a href="https://github.com/fortyninemaps/karta/archive/0.7.4.tar.gz">Download v0.7.4</a></small>
+        <small>Download <a href="https://github.com/fortyninemaps/karta/archive/0.7.4.zip">v0.7.4</a> | <a href=https://github.com/fortyninemaps/karta/archive/master.zip">v0.8dev</a></small>
 
       </div>
 
@@ -75,18 +75,19 @@
           classification maps.</p>
 
           <p class="lead text-left">Regularly-spaced grids are represented by
-          <code>RegularGrid</code>, which can be created from Numpy ndarrays
-          and spatial reference information. Grid data is then stored in a
-          chunked and compressed in-memory array for space efficiency, or a
-          simple Numpy ndarray for speed. Grids may also use GeoTiff-backed
-          files for large on-disk data. Experimental support exists for
-          structured grids with arbitrary spacing, which are represented by
-          <code>WarpedGrid</code>.</p>
+          <a
+          href="kartadocs/reference.html#karta.raster.grid.RegularGrid"><code>RegularGrid</code></a>,
+          which can be created from Numpy ndarrays and spatial reference
+          information. Grid data is then stored in a chunked and compressed
+          in-memory array for space efficiency, or a simple Numpy ndarray for
+          speed. Grids may also use GeoTiff-backed files for large on-disk
+          data.</p>
 
           <p class="lead text-left">Grids can be clipped, resampled, queried at
           geographical points, and read or written to ESRI ASCII files or to
-          GeoTiff via GDAL. Functions are provided for computing DEM properties
-          such as slope, aspect, and hillshade.</p>
+          GeoTiff via <a href="http://www.gdal.org/">GDAL</a>. Functions are
+          provided for computing DEM properties such as slope, aspect, and
+          hillshade.</p>
 
           <pre class="text-left">
 # Read a grid and resample
@@ -141,9 +142,18 @@ polygon.convex_hull().to_shapefile("poly_hull.shp")
 
         <div class="col-md-12">
 
-          <p class="lead text-left">Karta provides Point, Line, Polygon classes, and
-            corresponding multi-part collections, and computes properties and
-            relationships between vector geometries.</p>
+          <p class="lead text-left">Karta provides <a
+              href="kartadocs/reference.html#karta.vector.Point"><code>Point</code></a>,
+            <a
+              href="kartadocs/reference.html#karta.vector.Line"><code>Line</code></a>, and
+            <a
+              href="kartadocs/reference.html#karta.vector.Polygon"><code>Polygon</code></a>
+            classes and corresponding multipart collections, <a
+              href="kartadocs/reference.html#karta.vector.Multipoint"><code>Multipoint</code></a>,
+            <a
+              href="kartadocs/reference.html#karta.vector.Multiline"><code>Multiline</code></a>, and
+            <a
+              href="kartadocs/reference.html#karta.vector.Multipolygon"><code>Multipolygon</code></a>.
 
           <p class="lead text-left"> All geometry objects can contain a
             reference to a coordinate reference system, and metadata, with
@@ -152,12 +162,11 @@ polygon.convex_hull().to_shapefile("poly_hull.shp")
             such as perimeter, area, and convex hull, and relationships such as
             distance, intersections, and membership. Fast quadtree and R-tree
             datastructures are automatically constructed to enable efficient
-            queries on multi-part collections (Multipoint, Multiline, and
-            Multipolygon). </p>
+            queries on multi-part collections.</p>
 
           <p class="lead text-left">GeoJSON I/O is handled natively while ESRI
             shapefile access is via <a
-              href="http://www.gdal.org/">GDAL/OGR</a>. Geometries implement
+              href="http://www.gdal.org/">OGR</a>. Geometries implement
             the <code>__geo_interface__</code> attribute, permitting
             interchange with other libraries such as <a
               href="http://toblerity.org/shapely/">Shapely</a>.</p>
@@ -185,9 +194,10 @@ polygon.convex_hull().to_shapefile("poly_hull.shp")
             with grids and geometries.</p>
 
           <p class="lead text-left">Geometries and grids are referenced to
-            instances of <code>karta.crs.CRS</code> that provide information
-            about the geographical projection and geodetic relationships
-            between positions.</p>
+            instances of <a
+              href="kartadocs/reference.html#karta.crs.CRS"><code>karta.crs.CRS</code></a>
+            that provide information about the geographical projection and
+            geodetic relationships between positions.</p>
 
           <p class="lead text-left">For performing accurate calculations,
             geodetic operations rely on the algorithms from <a
