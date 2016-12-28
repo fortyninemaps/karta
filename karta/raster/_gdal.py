@@ -115,7 +115,10 @@ class GdalFileBand(object):
 def SRS_from_WKT(s):
     """ Return Proj.4 string, semimajor axis, and flattening """
     sr = osgeo.osr.SpatialReference()
-    sr.ImportFromWkt(s)
+    try:
+        sr.ImportFromWkt(s)
+    except RuntimeError:
+        sr = None
     return sr
 
 def pytype(dt_int):
@@ -230,10 +233,16 @@ def read(fnm, in_memory, ibands=ALL, bandclass=CompressedBand):
             raise AttributeError("No GeoTransform in geotiff file")
 
         sr = SRS_from_WKT(dataset.GetProjectionRef())
-        hdr["srs"] = {"proj4": sr.ExportToProj4(),
-                      "semimajor": sr.GetSemiMajor(),
-                      "flattening": sr.GetInvFlattening(),
-                      "name": sr.GetAttrValue('PROJCS')}
+        if sr is not None:
+            hdr["srs"] = {"proj4": sr.ExportToProj4(),
+                          "semimajor": sr.GetSemiMajor(),
+                          "flattening": sr.GetInvFlattening(),
+                          "name": sr.GetAttrValue('PROJCS')}
+        else:
+            hdr["srs"] = {"proj4": "+lonlat +proj=WGS84",
+                          "semimajor": 6370997.0,
+                          "flattening": 1.0 / 298.257223563,
+                          "name": "unknown"}
 
         max_dtype = 0
         rasterbands = [dataset.GetRasterBand(i) for i in ibands]
