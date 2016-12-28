@@ -105,11 +105,9 @@ def read_geojson(f, crs=LonLatWGS84):
         elif isinstance(geom, geojson.MultiPoint):
             return geometry.Multipoint(geom.coordinates, **kw)
         elif isinstance(geom, geojson.MultiLineString):
-            return [geometry.Line(coords, **kw)
-                    for coords in geom.coordinates]
+            return geometry.Multiline(geom.coordinates, **kw)
         elif isinstance(geom, geojson.MultiPolygon):
-            return [geometry.Polygon(coords[0], subs=coords[1:], **kw)
-                    for coords in geom.coordinates]
+            return geometry.Multipolygon(geom.coordinates, **kw)
         else:
             raise TypeError("{0} is a not a GeoJSON entity".format(type(geom)))
 
