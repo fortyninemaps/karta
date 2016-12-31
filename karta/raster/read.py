@@ -1,7 +1,7 @@
 """ Functions for reading raster data sources as RegularGrid objects """
 import numpy as np
 from .grid import RegularGrid
-from ..crs import ProjectedCRS, GeographicalCRS
+from ..crs import ProjectedCRS, GeographicalCRS, Cartesian
 from . import _gdal
 from . import _aai
 from ..errors import GridError
@@ -50,7 +50,10 @@ def read_geotiff(fnm, in_memory=True, ibands=_gdal.ALL, **kw):
          'sx'       : hdr['sx'],
          'sy'       : -hdr['sy']}
 
-    if proj4_isgeodetic(hdr["srs"]["proj4"]):
+    if len(hdr["srs"]["proj4"]) == 0:
+        # invalid or missing SRS information
+        crs = Cartesian
+    elif proj4_isgeodetic(hdr["srs"]["proj4"]):
         geodstr = "+a={a} +f={f}".format(a=hdr["srs"]["semimajor"],
                                          f=hdr["srs"]["flattening"])
         crs = GeographicalCRS(geodstr, name=hdr["srs"]["name"])

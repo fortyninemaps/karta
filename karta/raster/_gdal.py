@@ -239,10 +239,10 @@ def read(fnm, in_memory, ibands=ALL, bandclass=CompressedBand):
                           "flattening": sr.GetInvFlattening(),
                           "name": sr.GetAttrValue('PROJCS')}
         else:
-            hdr["srs"] = {"proj4": "+lonlat +proj=WGS84",
+            hdr["srs"] = {"proj4": "",
                           "semimajor": 6370997.0,
                           "flattening": 1.0 / 298.257223563,
-                          "name": "unknown"}
+                          "name": "NA"}
 
         max_dtype = 0
         rasterbands = [dataset.GetRasterBand(i) for i in ibands]
