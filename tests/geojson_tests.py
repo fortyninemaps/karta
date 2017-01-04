@@ -7,93 +7,17 @@ try:
 except ImportError:
     from io import StringIO
 import json
+
+import picogeojson
+
 from test_helper import TESTDATA
 
 import karta.vector as vector
 import karta.vector._geojson as geojson
-from karta.vector._geojson import GeoJSONReader, GeoJSONNamedCRS
 from karta.vector.geometry import Point, Line, Polygon, Multipoint, Multiline, Multipolygon
 from karta.crs import LonLatWGS84, WebMercator, Cartesian
 
-class TestGeoJSONInput(unittest.TestCase):
-
-    def test_point_read(self):
-        with open(os.path.join(TESTDATA, 'geojson_input/point.json')) as f:
-            reader = GeoJSONReader(f)
-        res = reader.parse()
-        self.assertEqual(res.coordinates, [100.0, 0.0])
-        return
-
-    def test_linestring_read(self):
-        with open(os.path.join(TESTDATA, 'geojson_input/linestring.json')) as f:
-            reader = GeoJSONReader(f)
-        res = reader.parse()
-        self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
-        return
-
-    def test_polygon_read(self):
-        with open(os.path.join(TESTDATA, 'geojson_input/polygon.json')) as f:
-            reader = GeoJSONReader(f)
-        res = reader.parse()
-        self.assertEqual(res.coordinates,
-            [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]]])
-        return
-
-    def test_multipoint_read(self):
-        with open(os.path.join(TESTDATA, 'geojson_input/multipoint.json')) as f:
-            reader = GeoJSONReader(f)
-        res = reader.parse()
-        self.assertEqual(res.coordinates, [[100.0, 0.0], [101.0, 1.0]])
-        return
-
-    def test_multilinestring_read(self):
-        with open(os.path.join(TESTDATA, 'geojson_input/multilinestring.json')) as f:
-            reader = GeoJSONReader(f)
-        res = reader.parse()
-        self.assertEqual(res.coordinates, [[[100.0, 0.0], [101.0, 1.0]],
-                                              [[102.0, 2.0], [103.0, 3.0]]])
-        return
-
-    def test_multipolygon_read(self):
-        with open(os.path.join(TESTDATA, 'geojson_input/multipolygon.json')) as f:
-            reader = GeoJSONReader(f)
-        res = reader.parse()
-        self.assertEqual(res.coordinates,
-            [[[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
-             [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
-             [[100.2, 0.2], [100.8, 0.2], [100.8, 0.8], [100.2, 0.8], [100.2, 0.2]]]])
-        return
-
-    def test_featurecollection_read(self):
-        path = os.path.join(TESTDATA, "geojson_input/featurecollection.json")
-        with open(path) as f:
-            reader = GeoJSONReader(f)
-        fc = reader.parse()
-        self.assertTrue(isinstance(fc.features[0].geometry, geojson.Point))
-        self.assertEqual(fc.features[0].geometry.coordinates, [102.0, 0.5])
-        self.assertEqual(fc.features[0].properties["scalar"], {"prop0": "value0"})
-
-        self.assertTrue(isinstance(fc.features[1].geometry, geojson.LineString))
-        self.assertEqual(fc.features[1].geometry.coordinates,
-                        [[102.0, 0.0], [103.0, 1.0], [104.0, 0.0], [105.0, 1.0]])
-        self.assertEqual(fc.features[1].properties["scalar"],
-                        {"prop0": "value0", "prop1": 0.0})
-
-        self.assertTrue(isinstance(fc.features[2].geometry, geojson.Polygon))
-        self.assertEqual(fc.features[2].geometry.coordinates,
-                        [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
-                          [100.0, 1.0], [100.0, 0.0]]])
-        self.assertEqual(fc.features[2].properties["scalar"],
-                        {"prop0": "value0", "prop1": {"this": "that"}})
-        return
-
 class TestGeoJSON(unittest.TestCase):
-    """ While the test cases TestGeoJSONInput and TestGeoJSONOutput test the
-    low level geojson module, this test case focuses on the bindings with geometry.
-    """
-
-    def setUp(self):
-        self.default_crs = GeoJSONNamedCRS("urn:ogc:def:crs:OGC:1.3:CRS84")
 
     def test_geometrycollection2geometry(self):
         path = os.path.join(TESTDATA, "geojson_input/geometrycollection.json")
@@ -284,66 +208,6 @@ class TestGeoJSONOutput(unittest.TestCase):
         s = capitols.as_geojson()
         self.assertTrue("crs" in s)
         self.assertTrue('"name": "urn:ogc:def:crs:OGC:1.3:CRS84"' in s)
-        return
-
-class GeoJSONSerializerTests(unittest.TestCase):
-
-    def setUp(self):
-        self.serializer = geojson.GeoJSONSerializer()
-        return
-
-    def test_serialize_point(self):
-        pt = geojson.Point((44.0, 17.0), LonLatWGS84)
-        s = self.serializer(pt)
-        d = json.loads(s)
-        self.assertEqual(tuple(pt.coordinates), tuple(d["coordinates"]))
-        return
-
-    def test_serialize_linestring(self):
-        linestring = geojson.LineString([[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
-                                        LonLatWGS84)
-        s = self.serializer(linestring)
-        d = json.loads(s)
-        self.assertEqual(list(linestring.coordinates), list(d["coordinates"]))
-        return
-
-    def test_serialize_polygon(self):
-        polygon = geojson.Polygon([[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0], [44.0, 17.0]],
-                                   [[1.0, 1.0], [0.5, -0.5], [0.8, -0.7], [1.0, 1.0]]],
-                                  LonLatWGS84)
-        s = self.serializer(polygon)
-        d = json.loads(s)
-
-        self.assertEqual(list(polygon.coordinates), list(d["coordinates"]))
-        return
-
-    def test_serialize_multipoint(self):
-        multipoint = geojson.MultiPoint([[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
-                                        LonLatWGS84)
-        s = self.serializer(multipoint)
-        d = json.loads(s)
-        self.assertEqual(list(multipoint.coordinates), list(d["coordinates"]))
-        return
-
-    def test_serialize_multilinestring(self):
-        multilinestring = geojson.MultiLineString(
-                            [[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
-                             [[49.0, -3.0], [48.0, -2.5], [2.9, -16.0]]],
-                            LonLatWGS84)
-        s = self.serializer(multilinestring)
-        d = json.loads(s)
-        self.assertEqual(list(multilinestring.coordinates), list(d["coordinates"]))
-        return
-
-    def test_serialize_multipolygon(self):
-        multipolygon = geojson.MultiPolygon(
-                            [[[44.0, 17.0], [43.0, 17.5], [-2.1, 4.0]],
-                              [[1.0, 1.0], [0.5, -0.5], [0.8, [-0.7]]],
-                             [[[49.0, -3.0], [48.0, -2.5], [2.9, -16.0]]]],
-                            LonLatWGS84)
-        s = self.serializer(multipolygon)
-        d = json.loads(s)
-        self.assertEqual(list(multipolygon.coordinates), list(d["coordinates"]))
         return
 
 if __name__ == "__main__":

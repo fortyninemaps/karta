@@ -110,6 +110,7 @@ Then, clone the repository and install:
 
 - numpy >= 1.7
 - gdal >= 1.10
+- picogeojson >= 0.2
 - pyproj >= 1.9
 - blosc >= 1.2
 - C99-compliant compiler

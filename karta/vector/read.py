@@ -6,8 +6,8 @@ Used available drivers to read input data and return Karta geometry objects.
 import os
 from numbers import Number
 from osgeo import ogr
+import picogeojson
 from . import geometry
-from . import _geojson as geojson
 from . import _shp as shp
 from . import _gpx as gpx
 from ..crs import GeographicalCRS, ProjectedCRS, LonLatWGS84
@@ -62,18 +62,18 @@ def read_geojson(f, crs=LonLatWGS84):
         if crsdict.get("type", None) not in ("name", "link"):
             crs = LonLatWGS84
         elif crsdict["type"] == "name":
-            crs = geojson.GeoJSONNamedCRS(crsdict["properties"]["name"])
+            crs = picogeojson.GeoJSONNamedCRS(crsdict["properties"]["name"])
         elif crsdict["type"] == "link":
-            crs = geojson.GeoJSONLinkedCRS(crsdict["properties"]["href"],
-                                           crsdict["properties"]["type"])
+            crs = picogeojson.GeoJSONLinkedCRS(crsdict["properties"]["href"],
+                                               crsdict["properties"]["type"])
         return crs
 
     def convert(geom, **kw):
-        if isinstance(geom, geojson.Feature):
+        if isinstance(geom, picogeojson.Feature):
             res = [convert_feature(geom, **kw)]
-        elif isinstance(geom, geojson.FeatureCollection):
+        elif isinstance(geom, picogeojson.FeatureCollection):
             res = [convert_feature(f, **kw) for f in geom.features]
-        elif isinstance(geom, geojson.GeometryCollection):
+        elif isinstance(geom, picogeojson.GeometryCollection):
             res = [convert(item, **kw) for item in geom.geometries]
         else:
             res = convert_geometry(geom, **kw)
@@ -82,19 +82,19 @@ def read_geojson(f, crs=LonLatWGS84):
     def convert_geometry(geom, **kw):
         # TODO: Requires clean-up; was written before properties vs data was
         # clearly worked out. Hacks to bring it up to speed are ugly.
-        if isinstance(geom, geojson.Point):
+        if isinstance(geom, picogeojson.Point):
             kw.setdefault("properties", {})
             kw.setdefault("data", {})
             kw["properties"].update(kw["data"])
             del kw["data"]
             return geometry.Point(geom.coordinates, **kw)
-        elif isinstance(geom, geojson.LineString):
+        elif isinstance(geom, picogeojson.LineString):
             kw.setdefault("properties", {})
             kw.setdefault("data", {})
             kw["properties"].update(kw["data"])
             del kw["data"]
             return geometry.Line(geom.coordinates, **kw)
-        elif isinstance(geom, geojson.Polygon):
+        elif isinstance(geom, picogeojson.Polygon):
             kw.setdefault("properties", {})
             kw.setdefault("data", {})
             kw["properties"].update(kw["data"])
@@ -102,32 +102,43 @@ def read_geojson(f, crs=LonLatWGS84):
             return geometry.Polygon(geom.coordinates[0],
                                     subs=geom.coordinates[1:],
                                     **kw)
-        elif isinstance(geom, geojson.MultiPoint):
+        elif isinstance(geom, picogeojson.MultiPoint):
             return geometry.Multipoint(geom.coordinates, **kw)
-        elif isinstance(geom, geojson.MultiLineString):
+        elif isinstance(geom, picogeojson.MultiLineString):
             return geometry.Multiline(geom.coordinates, **kw)
-        elif isinstance(geom, geojson.MultiPolygon):
+        elif isinstance(geom, picogeojson.MultiPolygon):
             return geometry.Multipolygon(geom.coordinates, **kw)
         else:
             raise TypeError("{0} is a not a GeoJSON entity".format(type(geom)))
 
     def convert_feature(feat, **kw):
-        data = feat.properties["vector"]
-        if len(data) == 0:
-            data = {}
+        properties = {}
+        data = {}
+        if isinstance(feat.geometry, (picogeojson.MultiPoint,
+                                      picogeojson.MultiLineString,
+                                      picogeojson.MultiPolygon)):
+            n = len(feat.geometry.coordinates)
+            for k, v in feat.properties.items():
+                if len(v) == n:
+                    data[k] = v
+                else:
+                    properties[k] = v
         else:
-            for key, val in data.items():
-                if any(isinstance(a, Number) or hasattr(a, "dtype") for a in val):
-                    for i in range(len(val)):
-                        if val[i] is None:
-                            val[i] = float('nan')
-        prop = feat.properties["scalar"]
+            properties.update(feat.properties)
+        # if len(data) == 0:
+        #     data = {}
+        # else:
+        #     for key, val in data.items():
+        #         if any(isinstance(a, Number) or hasattr(a, "dtype") for a in val):
+        #             for i in range(len(val)):
+        #                 if val[i] is None:
+        #                     val[i] = float('nan')
         kw["data"] = data
-        kw["properties"] = prop
+        kw["properties"] = properties
         return convert(feat.geometry, **kw)
 
-    R = geojson.GeoJSONReader(f)
-    geom = R.parse()
+    R = picogeojson.Deserializer()
+    geom = R(f)
     return convert(geom, crs=crs)
 
 def _geojson_properties2karta(properties, n):

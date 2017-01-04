@@ -968,9 +968,6 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
 
                 seg = next(segments, seg)
                 seg_remaining = seg.displacement()
-                # except StopIteration as e:
-                #     if abs(Ltotal-x) > 1e-8:       # tolerance for endpoint
-                #         raise e
 
         if len(vertices) == n-1:
             vertices.append(seg[-1].get_vertex())
@@ -1854,3 +1851,4 @@ def affine_matrix(mpa, mpb):
         A[2*i:2*i+2,:] = np.kron(np.eye(2), [x, y, 1])
     M, res, rank, singvals = np.linalg.lstsq(A, vecp)
     return np.reshape(M, [2, 3])
+

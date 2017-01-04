@@ -70,7 +70,11 @@ setup(
     name = "karta",
     version = VERSION,
     setup_requires = ["numpy>=1.7"],
-    install_requires = ["numpy>=1.7", "pyproj>=1.9", "gdal>=1.10", "blosc>=1.2.8"],
+    install_requires = ["numpy>=1.7",
+                        "pyproj>=1.9",
+                        "gdal>=1.10",
+                        "blosc>=1.2.8",
+                        "picogeojson>0.2.0"],
     author = "Nat Wilson",
     author_email = "njwilson23@gmail.com",
     packages = ["karta", "karta.vector", "karta.raster"],
@@ -203,6 +207,7 @@ Dependencies
 
 -  numpy >= >1.7
 -  gdal >= 1.10
+-  picogeojson >= 0.2
 -  pyproj >= 1.9
 -  blosc >= 1.2
 -  C99-compliant compiler
