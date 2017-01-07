@@ -37,7 +37,6 @@ from tile_tests import *
 from crfuncs_tests import *
 from geotiff_tests import *
 from aai_tests import *
-from dem_tests import *
 
 if __name__ == "__main__":
 
