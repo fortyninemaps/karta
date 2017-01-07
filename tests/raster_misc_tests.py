@@ -109,7 +109,37 @@ class RasterMiscTests(unittest.TestCase):
         grid = RegularGrid((0, 0, 10, 10, 0, 0), values=np.ones_like(x)*y)
         aspect = misc.aspect(grid)
         self.assertTrue(np.allclose(0.5*np.pi, aspect[1:-1,1:-1]))
-        pass
+        return
+
+    def test_gradient(self):
+        x = np.linspace(-np.pi, np.pi, 256)
+        y = np.linspace(-np.pi, np.pi, 256).reshape(-1, 1)
+        g = RegularGrid((0, 0, 2*np.pi/255, 2*np.pi/255, 0, 0), values=np.sin(x)*np.cos(y))
+        gx, gy = misc.gradient(g)
+        self.assertTrue(np.nansum(np.abs(gx[:,:] - np.cos(x)*np.cos(y))) < 7.0)
+        self.assertTrue(np.nansum(np.abs(gy[:,:] + np.sin(x)*np.sin(y))) < 7.0)
+        return
+
+    def test_normed_potential_vectors(self):
+        x = np.linspace(-np.pi, np.pi, 256)
+        y = np.linspace(-np.pi, np.pi, 256).reshape(-1, 1)
+        g = RegularGrid((0, 0, 2*np.pi/255, 2*np.pi/255, 0, 0), values=np.sin(x)+np.sin(y))
+        u, v = misc.normed_potential_vectors(g)
+        # TODO: add test for correctness
+        return
+
+    def test_divergence(self):
+        x = np.linspace(-np.pi, np.pi, 256)
+        y = np.linspace(-np.pi, np.pi, 256).reshape(-1, 1)
+        g = RegularGrid((0, 0, 2*np.pi/255, 2*np.pi/255, 0, 0), values=np.sin(x)+np.sin(y))
+        u, v = misc.normed_potential_vectors(g)
+        twoband = RegularGrid(g.transform, np.dstack([u[:,:], v[:,:]]))
+        div = misc.divergence(twoband)
+
+        self.assertTrue(
+            np.nansum(np.abs((g[:,:]/g.max() + div[:,:]/div.max()))) < 1.32
+        )
+        return
 
 if __name__ == "__main__":
     unittest.main()

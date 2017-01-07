@@ -86,8 +86,7 @@ def gradient(grid, band=0):
     Parameters
     ----------
     grid: RegularGrid
-    band: int, optional
-        band to compute hillshade for (default 0)
+    band: int, optional (default 0)
 
     Returns
     -------
@@ -108,14 +107,13 @@ def _div(U, V, res=(1.0, 1.0)):
                + np.pad(dVdy, ((1, 1), (0, 0)), "constant", constant_values=(np.nan,))
     return divergence
 
-def divergence(grid, band=0):
+def divergence(grid, bands=(0, 1)):
     """ Compute divergence from a grid.
 
     Parameters
     ----------
     grid: RegularGrid
-    band: int, optional
-        band to compute hillshade for (default 0)
+    band: tuple of ints, optional (default (0, 1))
 
     Returns
     -------
@@ -123,8 +121,10 @@ def divergence(grid, band=0):
     """
     if grid.skew != (0, 0):
         raise NotImplementedError("divergence calculations not implemented on skewed grids")
-    D = np.where(grid.data_mask, grid[:,:,band].astype(np.float32), np.nan)
-    return RegularGrid(grid.transform, _div(D, grid.resolution),
+    return RegularGrid(grid.transform,
+                       _div(grid[:,:,bands[0]],
+                            grid[:,:,bands[1]],
+                            grid.resolution),
                        crs=grid.crs, nodata_value=np.nan)
 
 def _normed_potential_vectors(D, res=(1.0, 1.0)):
@@ -149,8 +149,7 @@ def normed_potential_vectors(grid, band=0):
     Parameters
     ----------
     grid: RegularGrid
-    band: int, optional
-        band to compute hillshade for (default 0)
+    band: int, optional (default 0)
 
     Returns
     -------
