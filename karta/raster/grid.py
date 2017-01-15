@@ -635,6 +635,19 @@ class RegularGrid(Grid):
         if getattr(polys, "_geotype", "") == "Polygon":
             polys = [polys]
 
+        def unpack_multipolygons(L):
+            out = []
+            for item in L:
+                if getattr(item, "_geotype", "") == "Multipolygon":
+                    out.extend(item[i] for i in range(len(item)))
+                elif getattr(item, "_geotype", "") == "Polygon":
+                    out.append(item)
+                elif isinstance(item, (list, tuple)):
+                    out.extend(unpack_multipolygons(a for a in item))
+            return out
+
+        polys = unpack_multipolygons(polys)
+
         msk = None
         ny, nx = self.size
         for poly in polys:
