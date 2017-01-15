@@ -206,42 +206,6 @@ class TestCRS(unittest.TestCase):
         self.assertEqual(baz2, 90)
         return
 
-    def test_EllipsoidalNearAntipodalInverse(self):
-        az, baz, d = crs.LonLatWGS84.inverse(0.0, 30.0, 179.9, -29.9)
-        az_, baz_, d_ = crs._LonLatWGS84.inverse(0.0, 30.0, 179.9, -29.9)
-        self.assertAlmostEqual(az, az_, places=4)
-        self.assertAlmostEqual(baz, baz_, places=4)
-        self.assertAlmostEqual(d, d_, places=4)
-        return
-
-    def test_EllipsoidalForward(self):
-        np.random.seed(43)
-        for i in range(1000):
-            x = 360*np.random.rand() - 180
-            y = 180*np.random.rand() - 90
-            az = 360*np.random.rand() - 180
-            d = 2e7*np.random.rand()
-            x1, y1, baz = crs.LonLatWGS84.forward(x, y, az, d)
-            x1_, y1_, baz_ = crs._LonLatWGS84.forward(x, y, az, d)
-
-            self.assertAlmostEqual(x1, x1_, places=4)
-            self.assertAlmostEqual(y1, y1_, places=4)
-            self.assertAlmostEqual(baz, baz_, places=4)
-
-    def test_EllipsoidalInverse(self):
-        np.random.seed(43)
-        for i in range(1000):
-            x1 = 360*np.random.rand() - 180
-            y1 = 178*np.random.rand() - 89
-            x2 = 360*np.random.rand() - 180
-            y2 = 178*np.random.rand() - 89
-            az, baz, d = crs.LonLatWGS84.inverse(x1, y1, x2, y2)
-            az_, baz_, d_ = crs._LonLatWGS84.inverse(x1, y1, x2, y2)
-
-            self.assertAlmostEqual(az, az_, places=4)
-            self.assertAlmostEqual(baz, baz_, places=4)
-            self.assertAlmostEqual(d, d_, places=2)
-
     def test_EllipsoidalArea(self):
         a = 6378137.0
         b = 6356752.314245
@@ -391,6 +355,46 @@ class TestGeodesyFuncs(unittest.TestCase):
         self.assertTuplesAlmostEqual(geodesy.cart2sph(1, 0, 1), (0.0, 45.0))
         self.assertTuplesAlmostEqual(geodesy.cart2sph(-1, 1, 0), (135.0, 0.0))
         return
+
+    def test_EllipsoidalForward(self):
+        np.random.seed(43)
+        for i in range(1000):
+            x = 360*np.random.rand() - 180
+            y = 180*np.random.rand() - 90
+            az = 360*np.random.rand() - 180
+            d = 2e7*np.random.rand()
+            x1, y1, baz = crs.LonLatWGS84.forward(x, y, az, d)
+            x1_, y1_, baz_ = geodesy.ellipsoidal_forward(6378137.0, 6356752.314245,
+                                                         x, y, az, d)
+
+            self.assertAlmostEqual(x1, x1_, places=4)
+            self.assertAlmostEqual(y1, y1_, places=4)
+            self.assertAlmostEqual(baz, baz_, places=4)
+
+    def test_EllipsoidalInverse(self):
+        np.random.seed(43)
+        for i in range(1000):
+            x1 = 360*np.random.rand() - 180
+            y1 = 178*np.random.rand() - 89
+            x2 = 360*np.random.rand() - 180
+            y2 = 178*np.random.rand() - 89
+            az, baz, d = crs.LonLatWGS84.inverse(x1, y1, x2, y2)
+            az_, baz_, d_ = geodesy.ellipsoidal_inverse(6378137.0, 6356752.314245,
+                                                        x1, y1, x2, y2)
+
+            self.assertAlmostEqual(az, az_, places=4)
+            self.assertAlmostEqual(baz, baz_, places=4)
+            self.assertAlmostEqual(d, d_, places=2)
+
+    def test_EllipsoidalNearAntipodalInverse(self):
+        az, baz, d = crs.LonLatWGS84.inverse(0.0, 30.0, 179.9999, -29.9999)
+        az_, baz_, d_ = geodesy.ellipsoidal_inverse(6378137.0, 6356752.314245,
+                                                    0.0, 30.0, 179.9999, -29.9999)
+        self.assertAlmostEqual(az, az_, places=4)
+        self.assertAlmostEqual(baz, baz_, places=4)
+        self.assertAlmostEqual(d, d_, places=4)
+        return
+
 
 if __name__ == "__main__":
     unittest.main()

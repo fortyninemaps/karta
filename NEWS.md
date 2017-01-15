@@ -2,6 +2,7 @@
 
 ## changes with 0.8
 
+- refactor GeoJSON support into external module, [picogeojson](https://github.com/fortyninemaps/picogeojson)
 - removed `__setitem__` and `__delitem__` methods from *MultiVertex*, as part of
   a move toward treating singlepart geometries as immutable
 - removed `xyfile` module
@@ -19,6 +20,7 @@
     - `get_coordinate_lists` -> `aslists`
     - `get_vertices` -> `asarray`
     - `rotate2d` -> `rotate`
+- remove deprecated \_SphericalCRS and \_EllipsoidalCRS
 - indexing a `CompressedBand` instance with a scalar now returns a row vector
 - new function `merge_multiparts` to combine multipart geometries
 

@@ -1,19 +1,19 @@
 # -*- coding: utf-8 -*-
 """ Coordinate reference systems
 
-Implements CRS classes for different kinds of spatial reference systems:
+Implements `CRS` bass class and subclasses for different kinds of spatial
+reference systems:
 
-    - CartesianCRS
-    - GeographicalCRS
-    - SphericalCRS
-    - EllipsoidalCRS
-    - ProjectedCRS
+    - `CartesianCRS`
+    - `GeographicalCRS`
+    - `ProjectedCRS`
 
 Coordinate reference system (CRS) objects represent mappings geographical
 positions to an x, y representation, and contain both projection and geodetic
-information. CRS objects should be treated is immutable. It is possible for
-multiple CRS objects to implement the same system, and tests for equality may
-fail.
+information. See `CRS` for information on subclassing.
+
+CRS objects should be immutable. It is possible for multiple CRS objects to
+implement the same system, and tests for equality may fail.
 """
 
 from math import pi
@@ -117,7 +117,7 @@ class CRS(object):
     Subclasses should define:
 
     - name attribute
-    - project(x, y) method
+    - project(x, y, inverse=False) method
     - transform(other, x, y) method
     - forward(x, y, azimuth, distance) method
     - inverse(x0, y0, x1, y1) method
@@ -125,18 +125,18 @@ class CRS(object):
     *project* transforms between world and projected coordinates, and takes the
     optional boolean parameter *inverse* (default `False`)
 
-    *forward* performs a forward geodetic calculation and returns world
-    coordinates
+    *transform* converts from own CRS coordinates to coordinates in another CRS
+
+    *forward* performs a forward geodetic calculation and returns coordinates
 
     *inverse* performs an inverse geodetic calculation and returns an azimuth,
     a back azimuth, and a distance
 
-    A CRS subclass may optionally also provide string attributes:
+    A CRS subclass may optionally also provide string attributes to provide
+    interoperability with other systems.
 
     - ref_proj4
     - ref_wkt
-
-    which are used to provide interoperability with other systems.
     """
     def __str__(self):
         return "<CRS {0}>".format(self.name)
@@ -262,8 +262,8 @@ class GeographicalCRS(CRS):
         return pyproj.transform(self._proj, other._proj, x, y)
 
 class ProjectedCRS(CartesianCRS):
-    """ Custom reference systems, which may be backed by a *pypoj.Proj* instance
-    or a custom projection function.
+    """ Projected reference systems backed by a *pypoj.Proj* instance or a
+    custom projection function.
 
     Parameters
     ----------
@@ -315,136 +315,6 @@ class ProjectedCRS(CartesianCRS):
 
     def transform(self, other, x, y, z=None):
         return pyproj.transform(self._proj, other._proj, x, y, z=z)
-
-class SphericalCRS(GeographicalCRS):
-    """ Spherical geographic coordinate system defined by a radius.
-
-    **DEPRECATED**
-
-    Parameters
-    ----------
-    radius : float
-    """
-    name = "Spherical"
-
-    def __init__(self, radius):
-        self.radius = radius
-        return
-
-    @property
-    def ref_proj4(self):
-        return "+proj=lonlat +a=%f +b=%f +no_defs" % (self.radius, self.radius)
-
-    @property
-    def ref_wkt(self):
-        return ('GEOGCS["unnamed ellipse",DATUM["unknown",'
-                'SPHEROID["unnamed",%f,0]],PRIMEM["Greenwich",0],'
-                'UNIT["degree",0.0174532925199433]]' % self.radius)
-
-    def forward(self, lons, lats, az, dist, radians=False):
-        """ Forward geodetic problem from a point """
-        if not radians:
-            lons = np.array(lons) * pi / 180.0
-            lats = np.array(lats) * pi / 180.0
-            az = np.array(az) * pi / 180.0
-
-        d_ = dist / self.radius
-        lats2 = np.arcsin(np.sin(lats) * np.cos(d_) +
-                    np.cos(lats) * np.sin(d_) * np.cos(az))
-        dlons = np.arccos((np.cos(d_) - np.sin(lats2) * np.sin(lats)) /
-                          (np.cos(lats) * np.cos(lats2)))
-        baz = np.arccos((np.sin(lats) - np.cos(d_) * np.sin(lats2)) /
-                        (np.sin(d_) * np.cos(lats2)))
-        if 0 <= az < pi:
-            lons2 = lons + dlons
-            baz = -baz
-        elif pi <= az < 2*pi:
-            lons2 = lons - dlons
-        else:
-            raise ValueError("azimuth should be [0, 2pi)")
-
-        baz = geodesy.unroll_rad(baz)
-
-        if not radians:
-            lons2 = np.array(lons2) * 180 / pi
-            lats2 = np.array(lats2) * 180 / pi
-            baz = np.array(baz) * 180 / pi
-        return lons2, lats2, baz
-
-    def inverse(self, lons1, lats1, lons2, lats2, radians=False):
-        """ Inverse geodetic problem to find the geodesic between points """
-        if not radians:
-            lons1 = lons1 * pi / 180.0
-            lons2 = lons2 * pi / 180.0
-            lats1 = lats1 * pi / 180.0
-            lats2 = lats2 * pi / 180.0
-
-        az = geodesy.sphere_azimuth(lons1, lats1, lons2, lats2)
-        baz = geodesy.sphere_azimuth(lons2, lats2, lons1, lats1)
-        dist = geodesy.sphere_distance(lons1, lats1, lons2, lats2, self.radius)
-
-        if not radians:
-            az = az * 180 / pi
-            baz = baz * 180 / pi
-        return az, baz, dist
-
-class EllipsoidalCRS(GeographicalCRS):
-    """ Ellipsoidal geographic coordinate system defined by equatorial and
-    polar radii.
-
-    **DEPRECATED**
-
-    Parameters
-    ----------
-    a : float
-        ellipsoid major axis dimension
-    b : float
-        ellipsoid minor axis dimension
-    """
-    name = "Ellipsoidal"
-
-    def __init__(self, a, b):
-        """ Define a geographical coordinate system on an ellipse. *a* is the
-        equatorial radius, and *b* is the polar radius. """
-        self.a = a
-        self.b = b
-        self.ref_proj4 = "+proj=lonlat +units=m +a=%f +b=%f +no_defs" % (a, b)
-        return
-
-    def forward(self, x, y, azimuth, distance, radians=False):
-        """ Forward geodetic problem from a point """
-        if radians:
-            x *= 180.0/pi
-            y *= 180.0/pi
-            azimuth *= 180.0/pi
-
-        x2, y2, baz = geodesy.ellipsoidal_forward(self.a, self.b, x, y, azimuth, distance)
-        baz = (baz + 180) % 360 - 180
-
-        if radians:
-            x2 *= pi/180.0
-            y2 *= pi/180.0
-            baz *= pi/180.0
-
-        return x2, y2, baz
-
-    def inverse(self, x1, y1, x2, y2, radians=False):
-        """ Inverse geodetic problem to find the geodesic between points """
-        if radians:
-            x1 *= 180.0/pi
-            y1 *= 180.0/pi
-            x2 *= 180.0/pi
-            y2 *= 180.0/pi
-
-        az, baz, dist = geodesy.ellipsoidal_inverse(self.a, self.b, x1, y1, x2, y2)
-        az = (az + 180) % 360 - 180
-        baz = (baz + 180) % 360 - 180
-
-        if radians:
-            az *= pi/180.0
-            baz *= pi/180.0
-
-        return az, baz, dist
 
 def parse_ellipsoid(projstring):
     ename, ela, elb, elrf = None, None, None, None
@@ -498,11 +368,6 @@ def crs_from_wkt(wkt):
 ############ Predefined CRS instances ############
 
 Cartesian = CartesianCRS()
-
-_SphericalEarth = SphericalCRS(6371009.0)
-_LonLatWGS84 = EllipsoidalCRS(6378137.0, 6356752.314245)
-_LonLatNAD83 = EllipsoidalCRS(6378137.0, 6356752.314140)
-_LonLatNAD27 = EllipsoidalCRS(6378206.4, 6356583.8)
 
 SphericalEarth = GeographicalCRS("+ellps=sphere", "Normal Sphere")
 LonLatWGS84 = GeographicalCRS("+ellps=WGS84", "WGS84 (Geographical)", datum="+datum=WGS84")

@@ -213,7 +213,7 @@ def solve_astroid(a, f, lambda12, phi1, phi2):
     delta = f*a*pi*cos(beta1)**2
     x = (lambda12-pi) * (a*cos(beta1)) / delta
     y = (beta2 + beta1) * a / delta
-    mu = fzero_brent(1e-3, pi*a, lambda mu: (mu**4 + 2*mu**3 +
+    mu = fzero_brent(1e-6, pi*a, lambda mu: (mu**4 + 2*mu**3 +
                                              (1-x**2-y**2)*mu**2 - 2*y**2*mu -
                                              y**2), 1e-12)
     alpha1 = atan2(-x / (1+mu), y/mu)
