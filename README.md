@@ -108,7 +108,7 @@ Then, clone the repository and install:
 
 ## Dependencies
 
-- numpy >= 1.7
+- numpy >= 1.10
 - gdal >= 1.10
 - picogeojson >= 0.2
 - pyproj >= 1.9
