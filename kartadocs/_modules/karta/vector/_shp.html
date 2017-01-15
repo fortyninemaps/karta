@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>karta.vector.shp &mdash; Karta 0.7.2 documentation</title>
+  <title>karta.vector._shp &mdash; Karta 0.8b1 documentation</title>
   
 
   
@@ -32,7 +32,10 @@
   
 
   
-    <link rel="top" title="Karta 0.7.2 documentation" href="../../../index.html"/>
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Karta 0.8b1 documentation" href="../../../index.html"/>
         <link rel="up" title="Module code" href="../../index.html"/> 
 
   
@@ -61,7 +64,7 @@
             
             
               <div class="version">
-                0.7.2
+                0.8
               </div>
             
           
@@ -118,7 +121,7 @@
       
           <li><a href="../../index.html">Module code</a> &raquo;</li>
       
-    <li>karta.vector.shp</li>
+    <li>karta.vector._shp</li>
       <li class="wy-breadcrumbs-aside">
         
           
@@ -130,7 +133,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <h1>Source code for karta.vector.shp</h1><div class="highlight"><pre>
+  <h1>Source code for karta.vector._shp</h1><div class="highlight"><pre>
 <span></span><span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Shapefile driver for Karta using OGR backend</span>
 
@@ -146,9 +149,9 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">datetime</span>
 <span class="kn">import</span> <span class="nn">numbers</span>
-<span class="kn">from</span> <span class="nn">..</span> <span class="kn">import</span> <span class="n">errors</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">errors</span>
 <span class="kn">import</span> <span class="nn">osgeo</span>
-<span class="kn">from</span> <span class="nn">osgeo</span> <span class="kn">import</span> <span class="n">ogr</span>
+<span class="kn">from</span> <span class="nn">osgeo</span> <span class="k">import</span> <span class="n">ogr</span>
 
 <span class="n">OGRGEOMTYPES</span> <span class="o">=</span> <span class="p">{}</span>
 <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">ogr</span><span class="o">.</span><span class="n">__dict__</span><span class="p">:</span>
@@ -194,7 +197,7 @@
             <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTReal</span><span class="p">,</span> <span class="mi">32</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cannot choose the correct dBase type for &quot;</span>
-                            <span class="s2">&quot;{0}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)))</span>
+                            <span class="s2">&quot;</span><span class="si">{0}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)))</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTString</span><span class="p">,</span> <span class="mi">180</span>
     <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">):</span>
@@ -215,10 +218,10 @@
             <span class="k">return</span> <span class="n">ogr</span><span class="o">.</span><span class="n">OFTStringList</span><span class="p">,</span> <span class="mi">1000</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cannot choose the correct dBase type for a list &quot;</span>
-                            <span class="s2">&quot;with elements of type &#39;{0}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+                            <span class="s2">&quot;with elements of type &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;cannot choose the correct dBase type for &quot;</span>
-                        <span class="s2">&quot;{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)))</span></div>
+                        <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">val</span><span class="p">)))</span></div>
 
 <div class="viewcode-block" id="get_geometry_type"><a class="viewcode-back" href="../../../reference.html#karta.vector.get_geometry_type">[docs]</a><span class="k">def</span> <span class="nf">get_geometry_type</span><span class="p">(</span><span class="n">gi</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Return the geometry type from a __geo_interface__ dictionary &quot;&quot;&quot;</span>
@@ -237,8 +240,8 @@
 
 <div class="viewcode-block" id="ogr_read_geometry"><a class="viewcode-back" href="../../../reference.html#karta.vector.ogr_read_geometry">[docs]</a><span class="k">def</span> <span class="nf">ogr_read_geometry</span><span class="p">(</span><span class="n">geom</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Convert an ogr.Geometry to a __geo_interface__ dictionary. &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">geom</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="bp">None</span>
+    <span class="k">if</span> <span class="n">geom</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
     <span class="n">wkbtype</span> <span class="o">=</span> <span class="n">OGRGEOMTYPES</span><span class="p">[</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryType</span><span class="p">()]</span>
     <span class="k">if</span> <span class="n">wkbtype</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;Point&#39;</span><span class="p">,</span> <span class="s1">&#39;Point25D&#39;</span><span class="p">,</span> <span class="s1">&#39;PointZ&#39;</span><span class="p">,</span> <span class="s1">&#39;PointM&#39;</span><span class="p">,</span> <span class="s1">&#39;PointZM&#39;</span><span class="p">,</span>
                    <span class="s1">&#39;NDR&#39;</span><span class="p">,</span> <span class="s1">&#39;XDR&#39;</span><span class="p">):</span>
@@ -268,7 +271,7 @@
         <span class="n">pts</span> <span class="o">=</span> <span class="p">[</span><span class="n">ogr_get_polygon_points</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryRef</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">GetGeometryCount</span><span class="p">())]</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;WKB type {0} not handled&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">wkbtype</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;WKB type </span><span class="si">{0}</span><span class="s2"> not handled&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">wkbtype</span><span class="p">))</span>
 
     <span class="n">xmin</span><span class="p">,</span> <span class="n">xmax</span><span class="p">,</span> <span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">GetEnvelope</span><span class="p">()</span>
     <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">jsontype</span><span class="p">,</span>
@@ -302,7 +305,7 @@
             <span class="k">try</span><span class="p">:</span>
                 <span class="n">p</span><span class="p">[</span><span class="n">fn</span><span class="p">]</span> <span class="o">=</span> <span class="n">t</span><span class="p">(</span><span class="n">lyr</span><span class="o">.</span><span class="n">GetFeature</span><span class="p">(</span><span class="n">i</span><span class="p">)</span><span class="o">.</span><span class="n">GetField</span><span class="p">(</span><span class="n">j</span><span class="p">))</span>
             <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
-                <span class="n">p</span><span class="p">[</span><span class="n">fn</span><span class="p">]</span> <span class="o">=</span> <span class="bp">None</span>
+                <span class="n">p</span><span class="p">[</span><span class="n">fn</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="k">except</span> <span class="ne">UnicodeDecodeError</span><span class="p">:</span>
                 <span class="c1"># This is due to GDAL bug #5811 on Python 3</span>
                 <span class="c1"># https://trac.osgeo.org/gdal/ticket/5811</span>
@@ -315,13 +318,13 @@
     <span class="sd">&quot;&quot;&quot; Write features to shapefile using OGR backend. Features are</span>
 <span class="sd">    __geo_interface__ Feature mappings. &quot;&quot;&quot;</span>
     <span class="n">driver</span> <span class="o">=</span> <span class="n">ogr</span><span class="o">.</span><span class="n">GetDriverByName</span><span class="p">(</span><span class="s2">&quot;ESRI Shapefile&quot;</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">driver</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failure loading OGR driver for &#39;ESRI Shapefile&#39;&quot;</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">fnm</span><span class="p">):</span>
         <span class="n">driver</span><span class="o">.</span><span class="n">DeleteDataSource</span><span class="p">(</span><span class="n">fnm</span><span class="p">)</span>
 
     <span class="n">ds</span> <span class="o">=</span> <span class="n">driver</span><span class="o">.</span><span class="n">CreateDataSource</span><span class="p">(</span><span class="n">fnm</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">ds</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">ds</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failure creating ogr.DataSource from ogr.Driver&quot;</span><span class="p">)</span>
 
     <span class="c1"># create a spatial reference</span>
@@ -334,8 +337,8 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">srs</span><span class="o">.</span><span class="n">ImportFromProj4</span><span class="p">(</span><span class="n">proj4</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">RuntimeError</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">CRSError</span><span class="p">(</span><span class="s2">&quot;invalid projection string: &#39;{0}&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">proj4</span><span class="p">))</span>
-    <span class="k">if</span> <span class="n">srs</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">errors</span><span class="o">.</span><span class="n">CRSError</span><span class="p">(</span><span class="s2">&quot;invalid projection string: &#39;</span><span class="si">{0}</span><span class="s2">&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">proj4</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">srs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failure creating osr.SpatialReference&quot;</span><span class="p">)</span>
 
     <span class="c1"># create layer</span>
@@ -343,7 +346,7 @@
     <span class="n">ogr_t</span> <span class="o">=</span> <span class="n">OGRTYPES</span><span class="p">[</span><span class="n">geo_t</span><span class="p">]</span>
     <span class="n">layer_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">fnm</span><span class="p">)[</span><span class="mi">1</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">lyr</span> <span class="o">=</span> <span class="n">ds</span><span class="o">.</span><span class="n">CreateLayer</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">srs</span><span class="p">,</span> <span class="n">ogr_t</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">lyr</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">lyr</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;failure creating ogr.Layer within ogr.DataSource&quot;</span><span class="p">)</span>
 
     <span class="c1"># add attribute table, reserving the first column for &#39;id&#39;</span>
@@ -386,7 +389,7 @@
     <span class="k">elif</span> <span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;MultiPolygon&quot;</span><span class="p">:</span>
         <span class="n">geom</span> <span class="o">=</span> <span class="n">ogr_asMultiPolygon</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">])</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;geometry type unhandled: {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;geometry type unhandled: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">gi</span><span class="p">[</span><span class="s2">&quot;geometry&quot;</span><span class="p">][</span><span class="s2">&quot;type&quot;</span><span class="p">]))</span>
     <span class="n">feature</span><span class="o">.</span><span class="n">SetGeometry</span><span class="p">(</span><span class="n">geom</span><span class="p">)</span>
     <span class="n">lyr</span><span class="o">.</span><span class="n">CreateFeature</span><span class="p">(</span><span class="n">feature</span><span class="p">)</span>
     <span class="k">return</span></div>
@@ -482,7 +485,7 @@
   <div role="contentinfo">
     <p>
         &copy; Copyright 2016, Nat Wilson.
-      Last updated on Sep 12, 2016.
+      Last updated on Jan 15, 2017.
 
     </p>
   </div>
@@ -504,7 +507,7 @@
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'../../../',
-            VERSION:'0.7.2',
+            VERSION:'0.8b1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true

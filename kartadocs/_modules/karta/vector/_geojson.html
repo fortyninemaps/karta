@@ -1,0 +1,333 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>karta.vector._geojson &mdash; Karta 0.8b1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+
+  
+  
+    
+
+  
+
+  
+  
+    <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  
+
+  
+
+  
+        <link rel="index" title="Index"
+              href="../../../genindex.html"/>
+        <link rel="search" title="Search" href="../../../search.html"/>
+    <link rel="top" title="Karta 0.8b1 documentation" href="../../../index.html"/>
+        <link rel="up" title="Module code" href="../../index.html"/> 
+
+  
+  <script src="../../../_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav" role="document">
+
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="../../../karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.8
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+                <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../introduction.html">Introduction</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../reference.html">Package reference</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+        <a href="../../../karta-manual.html">Karta</a>
+      </nav>
+
+
+      
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+  <ul class="wy-breadcrumbs">
+    <li><a href="../../../karta-manual.html">Docs</a> &raquo;</li>
+      
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      
+    <li>karta.vector._geojson</li>
+      <li class="wy-breadcrumbs-aside">
+        
+          
+        
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for karta.vector._geojson</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">picogeojson</span>
+<span class="kn">from</span> <span class="nn">.utilities</span> <span class="k">import</span> <span class="n">_as_nested_lists</span><span class="p">,</span> <span class="n">_reproject_nested</span>
+<span class="kn">from</span> <span class="nn">..crs</span> <span class="k">import</span> <span class="n">LonLatWGS84</span>
+
+<span class="k">def</span> <span class="nf">crs_from_urn</span><span class="p">(</span><span class="n">urn</span><span class="p">):</span>
+    <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">urn</span><span class="p">}}</span>
+
+<span class="k">def</span> <span class="nf">crs_from_karta</span><span class="p">(</span><span class="n">crs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="s2">&quot;jsonhref&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="s2">&quot;jsontype&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;link&#39;</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;href&#39;</span><span class="p">:</span> <span class="n">crs</span><span class="o">.</span><span class="n">jsonname</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="n">crs</span><span class="o">.</span><span class="n">jsontype</span><span class="p">}}</span>
+    <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">crs</span><span class="p">,</span> <span class="s2">&quot;jsonname&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;name&#39;</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="n">crs</span><span class="o">.</span><span class="n">jsonname</span><span class="p">}}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># NOTE: make sure CRS gets written to file by caller</span>
+        <span class="k">return</span> <span class="p">{</span><span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;link&#39;</span><span class="p">,</span> <span class="s1">&#39;properties&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;href&#39;</span><span class="p">:</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="s1">&#39;type&#39;</span><span class="p">:</span> <span class="s1">&#39;proj4&#39;</span><span class="p">}}</span>
+
+<div class="viewcode-block" id="GeoJSONOutMixin"><a class="viewcode-back" href="../../../reference.html#karta.vector.GeoJSONOutMixin">[docs]</a><span class="k">class</span> <span class="nc">GeoJSONOutMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot; Mixin class to be added to geometry objects, adding geojson</span>
+<span class="sd">    functionality.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_serializer</span> <span class="o">=</span> <span class="n">picogeojson</span><span class="o">.</span><span class="n">Serializer</span><span class="p">(</span><span class="n">antimeridian_cutting</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                         <span class="n">enforce_poly_winding</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_as_named_tuple</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Convert one or more Geometry instances to GeoJSON-structured named tuples.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        *geoms : subtypes of karta.Geometry</span>
+<span class="sd">            karta vector geometries to convert</span>
+<span class="sd">        urn : str, optional</span>
+<span class="sd">            URN defining a specific CRS to use</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        Either a Feature or a FeatureCollection</span>
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        TypeError</span>
+<span class="sd">            if one or more of geoms has an unrecognized `_geotype` attribute</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;urn&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="n">crs_from_urn</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;urn&quot;</span><span class="p">])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">crs</span> <span class="o">=</span> <span class="n">crs_from_karta</span><span class="p">(</span><span class="n">geoms</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">geom</span><span class="o">.</span><span class="n">_geotype</span> <span class="o">==</span> <span class="s2">&quot;Point&quot;</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">picogeojson</span><span class="o">.</span><span class="n">Point</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">vertex</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">geom</span><span class="o">.</span><span class="n">_geotype</span> <span class="o">==</span> <span class="s2">&quot;Line&quot;</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">picogeojson</span><span class="o">.</span><span class="n">LineString</span><span class="p">(</span><span class="n">_as_nested_lists</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">vertices</span><span class="p">),</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">geom</span><span class="o">.</span><span class="n">_geotype</span> <span class="o">==</span> <span class="s2">&quot;Polygon&quot;</span><span class="p">:</span>
+            <span class="n">verts</span> <span class="o">=</span> <span class="p">[</span><span class="n">_as_nested_lists</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">vertices_ring</span><span class="p">)]</span>
+            <span class="k">for</span> <span class="n">sub</span> <span class="ow">in</span> <span class="n">geom</span><span class="o">.</span><span class="n">subs</span><span class="p">:</span>
+                <span class="n">verts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_as_nested_lists</span><span class="p">(</span><span class="n">sub</span><span class="o">.</span><span class="n">vertices</span><span class="p">))</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">picogeojson</span><span class="o">.</span><span class="n">Polygon</span><span class="p">(</span><span class="n">verts</span><span class="p">,</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">geom</span><span class="o">.</span><span class="n">_geotype</span> <span class="o">==</span> <span class="s2">&quot;Multipoint&quot;</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">picogeojson</span><span class="o">.</span><span class="n">MultiPoint</span><span class="p">(</span><span class="n">_as_nested_lists</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">vertices</span><span class="p">),</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">geom</span><span class="o">.</span><span class="n">_geotype</span> <span class="o">==</span> <span class="s2">&quot;Multiline&quot;</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">picogeojson</span><span class="o">.</span><span class="n">MultiLineString</span><span class="p">(</span><span class="n">_as_nested_lists</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">vertices</span><span class="p">),</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">geom</span><span class="o">.</span><span class="n">_geotype</span> <span class="o">==</span> <span class="s2">&quot;Multipolygon&quot;</span><span class="p">:</span>
+            <span class="n">g</span> <span class="o">=</span> <span class="n">picogeojson</span><span class="o">.</span><span class="n">MultiPolygon</span><span class="p">(</span><span class="n">_as_nested_lists</span><span class="p">(</span><span class="n">geom</span><span class="o">.</span><span class="n">vertices_ring</span><span class="p">),</span> <span class="n">crs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;unhandled type: </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">geom</span><span class="p">)))</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">geom</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">geom</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">fields</span><span class="p">:</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">d</span><span class="p">[</span><span class="n">field</span><span class="p">]</span>
+
+        <span class="n">properties</span> <span class="o">=</span> <span class="n">geom</span><span class="o">.</span><span class="n">properties</span>
+        <span class="n">properties</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">picogeojson</span><span class="o">.</span><span class="n">Feature</span><span class="p">(</span><span class="n">g</span><span class="p">,</span> <span class="n">properties</span><span class="p">)</span>
+
+<div class="viewcode-block" id="GeoJSONOutMixin.as_geojson"><a class="viewcode-back" href="../../../reference.html#karta.vector.GeoJSONOutMixin.as_geojson">[docs]</a>    <span class="k">def</span> <span class="nf">as_geojson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">urn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_wgs84</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Output representation of internal data as a GeoJSON string.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        indent : int, optional</span>
+<span class="sd">            indentation of generated GeoJSON (default 2)</span>
+<span class="sd">        force_wgs84 : bool, optional</span>
+<span class="sd">            Forces output to use geographical coordinates with the WGS84 datum,</span>
+<span class="sd">            as recommended by the GeoJSON draft specification</span>
+<span class="sd">            (https://datatracker.ietf.org/doc/draft-ietf-geojson/).</span>
+<span class="sd">            If *urn* is not set, &quot;urn:ogc:def:crs:OGC:1.3:CRS84&quot; is used.</span>
+<span class="sd">            (default True)</span>
+<span class="sd">        urn : str, optional</span>
+<span class="sd">            overrides GeoJSON CRS with provided URN string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">force_wgs84</span> <span class="ow">and</span> <span class="p">(</span><span class="n">urn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+            <span class="n">urn</span> <span class="o">=</span> <span class="s2">&quot;urn:ogc:def:crs:OGC:1.3:CRS84&quot;</span>
+        <span class="k">if</span> <span class="n">force_wgs84</span> <span class="ow">and</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">crs</span> <span class="o">!=</span> <span class="n">LonLatWGS84</span><span class="p">):</span>
+            <span class="n">kw</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">properties</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">properties</span><span class="p">,</span> <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;data&quot;</span><span class="p">):</span>
+                <span class="n">kw</span><span class="p">[</span><span class="s2">&quot;data&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;vertices&quot;</span><span class="p">):</span>
+                <span class="n">vertices</span> <span class="o">=</span> <span class="n">_reproject_nested</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vertices</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">LonLatWGS84</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">vertices</span> <span class="o">=</span> <span class="n">_reproject</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">vertex</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">crs</span><span class="p">,</span> <span class="n">LonLatWGS84</span><span class="p">)</span>
+            <span class="n">geo</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span><span class="n">vertices</span><span class="p">,</span> <span class="o">**</span><span class="n">kw</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">geo</span> <span class="o">=</span> <span class="bp">self</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serializer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_as_named_tuple</span><span class="p">(</span><span class="n">geo</span><span class="p">,</span> <span class="n">urn</span><span class="o">=</span><span class="n">urn</span><span class="p">),</span>
+                                <span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="GeoJSONOutMixin.to_geojson"><a class="viewcode-back" href="../../../reference.html#karta.vector.GeoJSONOutMixin.to_geojson">[docs]</a>    <span class="k">def</span> <span class="nf">to_geojson</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">urn</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force_wgs84</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot; Write data as a GeoJSON string to a file-like object `f`.</span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        f : str or file-like object</span>
+<span class="sd">            file to receive GeoJSON string</span>
+<span class="sd">        indent : int, optional</span>
+<span class="sd">            indentation of generated GeoJSON (default None)</span>
+<span class="sd">        force_wgs84 : bool, optional</span>
+<span class="sd">            Forces output to use geographical coordinates with the WGS84 datum,</span>
+<span class="sd">            as recommended by the GeoJSON draft specification</span>
+<span class="sd">            (https://datatracker.ietf.org/doc/draft-ietf-geojson/).</span>
+<span class="sd">            If *urn* is not set, &quot;urn:ogc:def:crs:OGC:1.3:CRS84&quot; is used.</span>
+<span class="sd">            (default True)</span>
+<span class="sd">        urn : str, optional</span>
+<span class="sd">            overrides GeoJSON CRS with provided URN string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;write&quot;</span><span class="p">):</span>
+                <span class="n">fobj</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">fobj</span> <span class="o">=</span> <span class="n">f</span>
+            <span class="n">fobj</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">as_geojson</span><span class="p">(</span><span class="n">indent</span><span class="o">=</span><span class="n">indent</span><span class="p">,</span> <span class="n">urn</span><span class="o">=</span><span class="n">urn</span><span class="p">,</span>
+                                       <span class="n">force_wgs84</span><span class="o">=</span><span class="n">force_wgs84</span><span class="p">))</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">f</span><span class="p">,</span> <span class="s2">&quot;write&quot;</span><span class="p">):</span>
+                <span class="n">fobj</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+        <span class="k">return</span></div></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson.
+      Last updated on Jan 15, 2017.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    <script type="text/javascript">
+        var DOCUMENTATION_OPTIONS = {
+            URL_ROOT:'../../../',
+            VERSION:'0.8b1',
+            COLLAPSE_INDEX:false,
+            FILE_SUFFIX:'.html',
+            HAS_SOURCE:  true
+        };
+    </script>
+      <script type="text/javascript" src="../../../_static/jquery.js"></script>
+      <script type="text/javascript" src="../../../_static/underscore.js"></script>
+      <script type="text/javascript" src="../../../_static/doctools.js"></script>
+      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+
+  
+
+  
+  
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+  
+
+  
+  
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.StickyNav.enable();
+      });
+  </script>
+   
+
+</body>
+</html>

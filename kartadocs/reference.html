@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Package reference &mdash; Karta 0.7.2 documentation</title>
+  <title>Package reference &mdash; Karta 0.8b1 documentation</title>
   
 
   
@@ -32,7 +32,10 @@
   
 
   
-    <link rel="top" title="Karta 0.7.2 documentation" href="index.html"/>
+        <link rel="index" title="Index"
+              href="genindex.html"/>
+        <link rel="search" title="Search" href="search.html"/>
+    <link rel="top" title="Karta 0.8b1 documentation" href="index.html"/>
         <link rel="prev" title="Installation" href="installation.html"/> 
 
   
@@ -61,7 +64,7 @@
             
             
               <div class="version">
-                0.7.2
+                0.8
               </div>
             
           
@@ -88,7 +91,6 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Package reference</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#raster-package-karta-raster">Raster package (<code class="docutils literal"><span class="pre">karta.raster</span></code>)</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="#regulargrid">RegularGrid</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#warpedgrid">WarpedGrid</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#simpleband">SimpleBand</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#compressedband">CompressedBand</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#module-karta.raster.misc">Miscellaneous raster functions</a></li>
@@ -117,9 +119,9 @@
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#module-karta.vector.read">Vector IO modules</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#module-karta.vector.geojson">GeoJSON</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-karta.vector.shp">ESRI shapefile (GDAL interface)</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#module-karta.vector.gpx">GPS Exchange</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-karta.vector._geojson">GeoJSON</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-karta.vector._shp">ESRI shapefile (GDAL interface)</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#module-karta.vector._gpx">GPS Exchange</a></li>
 </ul>
 </li>
 </ul>
@@ -165,7 +167,7 @@
       <li class="wy-breadcrumbs-aside">
         
           
-            <a href="_sources/reference.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/reference.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -194,8 +196,29 @@ and profile extraction.</p>
 <dd><p>Grid base class</p>
 <dl class="method">
 <dt id="karta.raster.grid.Grid.apply">
-<code class="descname">apply</code><span class="sig-paren">(</span><em>func</em>, <em>copy=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#Grid.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid.apply" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply a function <em>func</em> to grid values</p>
+<code class="descname">apply</code><span class="sig-paren">(</span><em>func</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#Grid.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid.apply" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply a vector function to grid values.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>func</strong> : callable</p>
+<blockquote>
+<div><p>function that takes a vector of values and returns an equally-sized
+vector of values with the same type</p>
+</div></blockquote>
+<p><strong>inplace</strong> : boolean, optional</p>
+<blockquote>
+<div><p>whether to perform operation in place rather than returning a new
+grid instance (default False)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><em>gridclass</em> instance</p>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -254,14 +277,6 @@ using an affine transform <em>T</em> such that</p>
 <li>(e,f) can be used to define a rotation</li>
 </ul>
 <p>In the common case of a &#8220;east-right, north-up&#8221; grid, e = f = 0.</p>
-<dl class="method">
-<dt id="karta.raster.grid.RegularGrid.as_warpedgrid">
-<code class="descname">as_warpedgrid</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.as_warpedgrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.as_warpedgrid" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a copy of grid as a <cite>WarpedGrid</cite>. This is a more general
-grid class that has a larger memory footprint but can represent more
-flexible data layouts.</p>
-</dd></dl>
-
 <dl class="method">
 <dt id="karta.raster.grid.RegularGrid.aschunks">
 <code class="descname">aschunks</code><span class="sig-paren">(</span><em>size=(-1</em>, <em>-1)</em>, <em>overlap=(0</em>, <em>0)</em>, <em>copy=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.aschunks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.aschunks" title="Permalink to this definition">¶</a></dt>
@@ -442,7 +457,7 @@ and exception when points are out of range.</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>GridError</strong></p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>IndexError</strong></p>
 <blockquote class="last">
 <div><p>points outside of Grid bbox</p>
 </div></blockquote>
@@ -618,7 +633,7 @@ input is an m x n array, the output is p x m x n.</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>GridError</strong></p>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>IndexError</strong></p>
 <blockquote class="last">
 <div><p>points outside of Grid bbox</p>
 </div></blockquote>
@@ -652,7 +667,7 @@ input is an m x n array, the output is p x m x n.</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>GridError</strong></p>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>IndexError</strong></p>
 <blockquote class="last">
 <div><p>points outside of Grid bbox</p>
 </div></blockquote>
@@ -686,7 +701,7 @@ input is an m x n array, the output is p x m x n.</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>GridError</strong></p>
+<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>IndexError</strong></p>
 <blockquote class="last">
 <div><p>points outside of Grid bbox</p>
 </div></blockquote>
@@ -733,7 +748,7 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>GridIOError</strong></p>
+<tr class="field-even field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>GridError</strong></p>
 <blockquote class="last">
 <div><p>input grid is not isometric and can therefore not be saved</p>
 </div></blockquote>
@@ -744,8 +759,8 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.raster.grid.RegularGrid.to_gtiff">
-<code class="descname">to_gtiff</code><span class="sig-paren">(</span><em>fnm</em>, <em>compress='PACKBITS'</em>, <em>tiled=False</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.to_gtiff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.to_gtiff" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.raster.grid.RegularGrid.to_geotiff">
+<code class="descname">to_geotiff</code><span class="sig-paren">(</span><em>fnm</em>, <em>compress='PACKBITS'</em>, <em>tiled=False</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.to_geotiff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.to_geotiff" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write data to a GeoTiff file using GDAL.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -766,29 +781,15 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.raster.grid.RegularGrid.vertex_coords">
-<code class="descname">vertex_coords</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.vertex_coords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.vertex_coords" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the coordinates of cell vertices.</p>
-</dd></dl>
-
-</dd></dl>
-
-</div>
-<div class="section" id="warpedgrid">
-<h3>WarpedGrid<a class="headerlink" href="#warpedgrid" title="Permalink to this headline">¶</a></h3>
-<dl class="class">
-<dt id="karta.raster.WarpedGrid">
-<em class="property">class </em><code class="descclassname">karta.raster.</code><code class="descname">WarpedGrid</code><span class="sig-paren">(</span><em>X</em>, <em>Y</em>, <em>values</em>, <em>crs=None</em>, <em>nodata_value=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#WarpedGrid"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.WarpedGrid" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="method">
-<dt id="karta.raster.WarpedGrid.resample">
-<code class="descname">resample</code><span class="sig-paren">(</span><em>X</em>, <em>Y</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#WarpedGrid.resample"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.WarpedGrid.resample" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resample internal grid to the points defined by X, Y.</p>
+<dt id="karta.raster.grid.RegularGrid.to_gtiff">
+<code class="descname">to_gtiff</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.to_gtiff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.to_gtiff" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for to_geotiff</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.raster.WarpedGrid.rotate">
-<code class="descname">rotate</code><span class="sig-paren">(</span><em>deg</em>, <em>origin=(0.0</em>, <em>0.0)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#WarpedGrid.rotate"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.WarpedGrid.rotate" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rotate grid by <em>deg</em> degrees counter-clockwise around <em>origin</em>.</p>
+<dt id="karta.raster.grid.RegularGrid.vertex_coords">
+<code class="descname">vertex_coords</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#RegularGrid.vertex_coords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.RegularGrid.vertex_coords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the coordinates of cell vertices.</p>
 </dd></dl>
 
 </dd></dl>
@@ -807,7 +808,7 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 <h3>CompressedBand<a class="headerlink" href="#compressedband" title="Permalink to this headline">¶</a></h3>
 <dl class="class">
 <dt id="karta.raster.band.CompressedBand">
-<em class="property">class </em><code class="descclassname">karta.raster.band.</code><code class="descname">CompressedBand</code><span class="sig-paren">(</span><em>size</em>, <em>dtype</em>, <em>chunksize=(256</em>, <em>256)</em>, <em>initval=0</em>, <em>unsetval=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/band.html#CompressedBand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.band.CompressedBand" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">karta.raster.band.</code><code class="descname">CompressedBand</code><span class="sig-paren">(</span><em>size</em>, <em>dtype</em>, <em>chunksize=(256</em>, <em>256)</em>, <em>initval=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/band.html#CompressedBand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.band.CompressedBand" title="Permalink to this definition">¶</a></dt>
 <dd><p>CompressedBand is a chunked, blosc-compressed array.</p>
 </dd></dl>
 
@@ -816,22 +817,89 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 <span id="miscellaneous-raster-functions"></span><h3>Miscellaneous raster functions<a class="headerlink" href="#module-karta.raster.misc" title="Permalink to this headline">¶</a></h3>
 <p>2D raster functions</p>
 <dl class="function">
+<dt id="karta.raster.misc.aspect">
+<code class="descclassname">karta.raster.misc.</code><code class="descname">aspect</code><span class="sig-paren">(</span><em>grid</em>, <em>band=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#aspect"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.aspect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute grid aspect.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
+<p><strong>band: int, optional</strong></p>
+<blockquote>
+<div><p>band to compute hillshade for (default 0)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">RegularGrid</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.misc.divergence">
+<code class="descclassname">karta.raster.misc.</code><code class="descname">divergence</code><span class="sig-paren">(</span><em>grid</em>, <em>bands=(0</em>, <em>1)</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#divergence"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.divergence" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute divergence from a grid.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
+<p><strong>band: tuple of ints, optional (default (0, 1))</strong></p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">RegularGrid</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.misc.gradient">
+<code class="descclassname">karta.raster.misc.</code><code class="descname">gradient</code><span class="sig-paren">(</span><em>grid</em>, <em>band=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#gradient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.gradient" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute gradient field from a grid.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
+<p><strong>band: int, optional (default 0)</strong></p>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(RegularGrid, RegularGrid)</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
 <dt id="karta.raster.misc.hillshade">
-<code class="descclassname">karta.raster.misc.</code><code class="descname">hillshade</code><span class="sig-paren">(</span><em>grid</em>, <em>azimuth=330.0</em>, <em>elevation=60.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#hillshade"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.hillshade" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">karta.raster.misc.</code><code class="descname">hillshade</code><span class="sig-paren">(</span><em>grid</em>, <em>azimuth=330.0</em>, <em>elevation=60.0</em>, <em>band=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#hillshade"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.hillshade" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a hill-shaded version of <em>grid</em>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid instance</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
 <p><strong>azimuth: float, optional</strong></p>
 <blockquote>
 <div><p>direction of light source (default 330.0)</p>
 </div></blockquote>
-<p><strong>elevation</strong> : float, optional</p>
-<blockquote class="last">
+<p><strong>elevation: float, optional</strong></p>
+<blockquote>
 <div><p>height of light source (default 60.0)</p>
 </div></blockquote>
+<p><strong>band: int, optional</strong></p>
+<blockquote>
+<div><p>band to compute hillshade for (default 0)</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">RegularGrid</p>
 </td>
 </tr>
 </tbody>
@@ -841,32 +909,19 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.raster.misc.pad">
-<code class="descclassname">karta.raster.misc.</code><code class="descname">pad</code><span class="sig-paren">(</span><em>A</em>, <em>width=1</em>, <em>edges='all'</em>, <em>value=0.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#pad"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.pad" title="Permalink to this definition">¶</a></dt>
-<dd><p>Apply padding to a 2D array.</p>
+<dt id="karta.raster.misc.normed_potential_vectors">
+<code class="descclassname">karta.raster.misc.</code><code class="descname">normed_potential_vectors</code><span class="sig-paren">(</span><em>grid</em>, <em>band=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#normed_potential_vectors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.normed_potential_vectors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Computes a U,V vector field of a potential grid. Scalar components of
+U,V are normalized to max(<a href="#id3"><span class="problematic" id="id4">|U, V|</span></a>).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>A</strong> : ndarray</p>
-<blockquote>
-<div><p>array to pad</p>
-</div></blockquote>
-<p><strong>width</strong> : int</p>
-<blockquote>
-<div><p>thickness of padding</p>
-</div></blockquote>
-<p><strong>edges</strong> : str</p>
-<blockquote>
-<div><p>one of &#8220;all&#8221;, &#8220;left&#8221;, &#8220;right&#8221;, &#8220;top&#8221;, &#8220;bottom&#8221;</p>
-</div></blockquote>
-<p><strong>value</strong> : number</p>
-<blockquote>
-<div><p>fill value for padding</p>
-</div></blockquote>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
+<p><strong>band: int, optional (default 0)</strong></p>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">ndarray</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(RegularGrid, RegularGrid)</p>
 </td>
 </tr>
 </tbody>
@@ -875,35 +930,26 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 
 <dl class="function">
 <dt id="karta.raster.misc.slope">
-<code class="descclassname">karta.raster.misc.</code><code class="descname">slope</code><span class="sig-paren">(</span><em>grid</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#slope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.slope" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the scalar slope at each pixel using the neighbourhood method.
-<a class="reference external" href="http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works">http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works</a></p>
-</dd></dl>
-
-<dl class="function">
-<dt id="karta.raster.misc.witch_of_agnesi">
-<code class="descclassname">karta.raster.misc.</code><code class="descname">witch_of_agnesi</code><span class="sig-paren">(</span><em>nx=100</em>, <em>ny=100</em>, <em>a=4.0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#witch_of_agnesi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.witch_of_agnesi" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a raster field defined by the equation Z = 8a^3 / (d^2 + 2a^2)
-where d is the distance from the center.</p>
+<code class="descclassname">karta.raster.misc.</code><code class="descname">slope</code><span class="sig-paren">(</span><em>grid</em>, <em>band=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#slope"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.slope" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the scalar slope at each pixel using the neighbourhood method.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>nx, ny</strong> : int</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
+<p><strong>band: int, optional</strong></p>
 <blockquote>
-<div><p>raster size</p>
-</div></blockquote>
-<p><strong>a</strong> : float</p>
-<blockquote>
-<div><p>magnitude</p>
+<div><p>band to compute hillshade for (default 0)</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">ndarray</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">RegularGrid</p>
 </td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Notes</p>
+<p><a class="reference external" href="http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works">http://webhelp.esri.com/arcgisdesktop/9.2/index.cfm?TopicName=How%20Slope%20works</a></p>
 </dd></dl>
 
 </div>
@@ -911,15 +957,8 @@ where d is the distance from the center.</p>
 <span id="raster-io-modules"></span><h3>Raster IO modules<a class="headerlink" href="#module-karta.raster.read" title="Permalink to this headline">¶</a></h3>
 <p>Functions for reading raster data sources as RegularGrid objects</p>
 <dl class="function">
-<dt id="karta.raster.read.aairead">
-<code class="descclassname">karta.raster.read.</code><code class="descname">aairead</code><span class="sig-paren">(</span><em>fnm</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.raster.read.aairead" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convenience function to open a ESRI ASCII grid and return a RegularGrid
-instance.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="karta.raster.read.from_geotiffs">
-<code class="descclassname">karta.raster.read.</code><code class="descname">from_geotiffs</code><span class="sig-paren">(</span><em>*fnms</em>, <em>*</em>, <em>in_memory=True</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/read.html#from_geotiffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.read.from_geotiffs" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">karta.raster.read.</code><code class="descname">from_geotiffs</code><span class="sig-paren">(</span><em>*fnms</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/read.html#from_geotiffs"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.read.from_geotiffs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read multiple GeoTiff files as bands within a single grid. Reads the
 first band within each GeoTiff, and checks that grids share the same
 spatial transform and coordinate system.</p>
@@ -948,8 +987,15 @@ will have bands of type karta.raster._gdal.GdalFileBand</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.raster.read.gtiffread">
-<code class="descclassname">karta.raster.read.</code><code class="descname">gtiffread</code><span class="sig-paren">(</span><em>fnm</em>, <em>in_memory=True</em>, <em>ibands=-1</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.raster.read.gtiffread" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.raster.read.read_aai">
+<code class="descclassname">karta.raster.read.</code><code class="descname">read_aai</code><span class="sig-paren">(</span><em>fnm</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/read.html#read_aai"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.read.read_aai" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convenience function to open a ESRI ASCII grid and return a RegularGrid
+instance.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="karta.raster.read.read_geotiff">
+<code class="descclassname">karta.raster.read.</code><code class="descname">read_geotiff</code><span class="sig-paren">(</span><em>fnm</em>, <em>in_memory=True</em>, <em>ibands=-1</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/read.html#read_geotiff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.read.read_geotiff" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function to open a GeoTIFF and return a RegularGrid
 instance.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -981,15 +1027,8 @@ will have bands of type karta.raster._gdal.GdalFileBand</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.raster.read.read_aai">
-<code class="descclassname">karta.raster.read.</code><code class="descname">read_aai</code><span class="sig-paren">(</span><em>fnm</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/read.html#read_aai"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.read.read_aai" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convenience function to open a ESRI ASCII grid and return a RegularGrid
-instance.</p>
-</dd></dl>
-
-<dl class="function">
 <dt id="karta.raster.read.read_gtiff">
-<code class="descclassname">karta.raster.read.</code><code class="descname">read_gtiff</code><span class="sig-paren">(</span><em>fnm</em>, <em>in_memory=True</em>, <em>ibands=-1</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/read.html#read_gtiff"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.read.read_gtiff" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">karta.raster.read.</code><code class="descname">read_gtiff</code><span class="sig-paren">(</span><em>fnm</em>, <em>in_memory=True</em>, <em>ibands=-1</em>, <em>**kw</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.raster.read.read_gtiff" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function to open a GeoTIFF and return a RegularGrid
 instance.</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -1039,7 +1078,7 @@ datasource.</p>
 <dl class="function">
 <dt id="karta.raster._gdal.gdal_type">
 <code class="descclassname">karta.raster._gdal.</code><code class="descname">gdal_type</code><span class="sig-paren">(</span><em>dtype</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/_gdal.html#gdal_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster._gdal.gdal_type" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a GDAL type that matches numpy dtype</p>
+<dd><p>Return a GDAL type that most closely matches numpy dtype</p>
 </dd></dl>
 
 <dl class="function">
@@ -1096,12 +1135,6 @@ information.</p>
 <div class="section" id="module-karta.raster._aai">
 <span id="esri-ascii-grids"></span><h4>ESRI ASCII grids<a class="headerlink" href="#module-karta.raster._aai" title="Permalink to this headline">¶</a></h4>
 <p>Low-level functions for reading ESRI ASCII grids</p>
-<dl class="exception">
-<dt id="karta.raster._aai.AAIIOError">
-<em class="property">exception </em><code class="descclassname">karta.raster._aai.</code><code class="descname">AAIIOError</code><span class="sig-paren">(</span><em>value</em>, <em>detail=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/_aai.html#AAIIOError"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster._aai.AAIIOError" title="Permalink to this definition">¶</a></dt>
-<dd><p>Exceptions related to ESRI ASCII grid driver.</p>
-</dd></dl>
-
 <dl class="function">
 <dt id="karta.raster._aai.aairead">
 <code class="descclassname">karta.raster._aai.</code><code class="descname">aairead</code><span class="sig-paren">(</span><em>fnm</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/_aai.html#aairead"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster._aai.aairead" title="Permalink to this definition">¶</a></dt>
@@ -1164,33 +1197,65 @@ with methods for simple measurements such as distance, area, and direction.</p>
 </tbody>
 </table>
 <dl class="method">
-<dt id="karta.vector.Point.as_geojson">
-<code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Point.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<dt id="karta.vector.Point.apply_transform">
+<code class="descname">apply_transform</code><span class="sig-paren">(</span><em>M</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geometry.html#Point.apply_transform"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.Point.apply_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply an affine transform given by matrix <em>M</em> to data and return a
+new Point.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>M</strong> : ndarray</p>
 <blockquote>
-<div><p>indentation of generated GeoJSON (default 2)</p>
+<div><p>2x3 or 3x4 affine transformation matrix, representing a
+two-dimensional or a three-dimensional transformation,
+respectively.</p>
 </div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
-as recommended by the GeoJSON draft specification
-(<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
-If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Geometry</p>
 </td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Notes</p>
+<p>The output coordinates are computed as</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>xnew        x</dt>
+<dd>= M * y</dd>
+</dl>
+<p>ynew        1</p>
+</div></blockquote>
+<p>or</p>
+<blockquote>
+<div><p>xnew        x
+ynew  = M * y
+znew        z</p>
+<blockquote>
+<div>1</div></blockquote>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.Point.as_geojson">
+<code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Point.as_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output representation of internal data as a GeoJSON string.
+Parameters
+&#8212;&#8212;&#8212;-
+indent : int, optional</p>
+<blockquote>
+<div>indentation of generated GeoJSON (default 2)</div></blockquote>
+<dl class="docutils">
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
+as recommended by the GeoJSON draft specification
+(<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
+If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1226,13 +1291,6 @@ option has no effect.</p>
 <li>If CRS is geographical, returns azimuth as defined by the CRS
 instance.</li>
 </ul>
-</dd></dl>
-
-<dl class="method">
-<dt id="karta.vector.Point.coordsxy">
-<code class="descname">coordsxy</code><span class="sig-paren">(</span><em>convert_to=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geometry.html#Point.coordsxy"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.Point.coordsxy" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns the x,y coordinates. Convert_to may be set to &#8216;deg&#8217;
-or &#8216;rad&#8217; for convenience.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1288,7 +1346,7 @@ instance (e.g. ellipsoidal or spherical).</li>
 
 <dl class="method">
 <dt id="karta.vector.Point.shift">
-<code class="descname">shift</code><span class="sig-paren">(</span><em>shift_vector</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geometry.html#Point.shift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.Point.shift" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shift</code><span class="sig-paren">(</span><em>shift_vector</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geometry.html#Point.shift"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.Point.shift" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shift point in space.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1311,35 +1369,24 @@ instance (e.g. ellipsoidal or spherical).</li>
 <dl class="method">
 <dt id="karta.vector.Point.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Point.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
+Parameters
+&#8212;&#8212;&#8212;-
+f : str or file-like object</p>
 <blockquote>
-<div><p>file to receive GeoJSON string</p>
-</div></blockquote>
-<p><strong>indent</strong> : int, optional</p>
-<blockquote>
-<div><p>indentation of generated GeoJSON (default None)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>file to receive GeoJSON string</div></blockquote>
+<dl class="docutils">
+<dt>indent</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span><dd>indentation of generated GeoJSON (default None)</dd>
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1415,40 +1462,65 @@ effect.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.Line.apply_affine_transform">
-<code class="descname">apply_affine_transform</code><span class="sig-paren">(</span><em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.apply_affine_transform" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector.Line.apply_transform">
+<code class="descname">apply_transform</code><span class="sig-paren">(</span><em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.apply_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply an affine transform given by matrix <em>M</em> to data and return a
 new geometry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>M</strong> : ndarray</p>
+<blockquote>
+<div><p>2x3 or 3x4 affine transformation matrix, representing a
+two-dimensional or a three-dimensional transformation,
+respectively.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Geometry</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The output coordinates are computed as</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>xnew        x</dt>
+<dd>= M * y</dd>
+</dl>
+<p>ynew        1</p>
+</div></blockquote>
+<p>or</p>
+<blockquote>
+<div><p>xnew        x
+ynew  = M * y
+znew        z</p>
+<blockquote>
+<div>1</div></blockquote>
+</div></blockquote>
 </dd></dl>
 
 <dl class="method">
 <dt id="karta.vector.Line.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.
+Parameters
+&#8212;&#8212;&#8212;-
+indent : int, optional</p>
 <blockquote>
-<div><p>indentation of generated GeoJSON (default 2)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>indentation of generated GeoJSON (default 2)</div></blockquote>
+<dl class="docutils">
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1528,15 +1600,19 @@ dateline.</p>
 
 <dl class="method">
 <dt id="karta.vector.Line.get_vertices">
-<code class="descname">get_vertices</code><span class="sig-paren">(</span><em>crs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.get_vertices" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_vertices</code><span class="sig-paren">(</span><em>crs=None</em>, <em>drop_z=False</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.get_vertices" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return vertices as an array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>crs</strong> : karta.CRS, optional</p>
-<blockquote class="last">
+<blockquote>
 <div><p>coordinate system of output vertices</p>
+</div></blockquote>
+<p><strong>drop_z</strong> : bool, optional</p>
+<blockquote class="last">
+<div><p>whether to discard third dimension for rank 3 geometries</p>
 </div></blockquote>
 </td>
 </tr>
@@ -1580,7 +1656,7 @@ dateline.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>other</strong> : Geometry</p>
 <blockquote class="last">
-<div><p>another geometry with multipl connected vertices</p>
+<div><p>another geometry with multiple connected vertices</p>
 </div></blockquote>
 </td>
 </tr>
@@ -1634,8 +1710,8 @@ points are equidistant, only one will be returned.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.Line.rotate2d">
-<code class="descname">rotate2d</code><span class="sig-paren">(</span><em>thetad</em>, <em>origin=(0</em>, <em>0)</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.rotate2d" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector.Line.rotate">
+<code class="descname">rotate</code><span class="sig-paren">(</span><em>thetad</em>, <em>origin=(0</em>, <em>0)</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.rotate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rotate rank 2 geometry.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1669,19 +1745,15 @@ points are equidistant, only one will be returned.</p>
 
 <dl class="method">
 <dt id="karta.vector.Line.shift">
-<code class="descname">shift</code><span class="sig-paren">(</span><em>shift_vector</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.shift" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shift</code><span class="sig-paren">(</span><em>shift_vector</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.shift" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shift geometry in space.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>shift_vector</strong> : iterable</p>
-<blockquote>
-<div><p>vector with length equal to Geometry rank defining the shift</p>
-</div></blockquote>
-<p><strong>inplace</strong> : bool</p>
 <blockquote class="last">
-<div><p>whether shift should be in place (default False)</p>
+<div><p>vector with length equal to Geometry rank defining the shift</p>
 </div></blockquote>
 </td>
 </tr>
@@ -1711,35 +1783,24 @@ boundary to a point.</p>
 <dl class="method">
 <dt id="karta.vector.Line.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
+Parameters
+&#8212;&#8212;&#8212;-
+f : str or file-like object</p>
 <blockquote>
-<div><p>file to receive GeoJSON string</p>
-</div></blockquote>
-<p><strong>indent</strong> : int, optional</p>
-<blockquote>
-<div><p>indentation of generated GeoJSON (default None)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>file to receive GeoJSON string</div></blockquote>
+<dl class="docutils">
+<dt>indent</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span><dd>indentation of generated GeoJSON (default None)</dd>
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -1788,29 +1849,6 @@ If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:d
 <dt id="karta.vector.Line.to_shapefile">
 <code class="descname">to_shapefile</code><span class="sig-paren">(</span><em>fnm</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.to_shapefile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save line to a shapefile</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="karta.vector.Line.to_xyfile">
-<code class="descname">to_xyfile</code><span class="sig-paren">(</span><em>fnm</em>, <em>fields=None</em>, <em>delimiter=' '</em>, <em>header=None</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.to_xyfile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data to a delimited ASCII table.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>fnm</strong> : string</p>
-<blockquote>
-<div><p>filename to write to</p>
-</div></blockquote>
-<p><strong>fields</strong> : list</p>
-<blockquote>
-<div><p>specify the fields to be written (optional, default all)</p>
-</div></blockquote>
-<p class="last"><strong>Additional kwargs are passed to `xyfile.write_xy`.</strong></p>
-</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="method">
@@ -1873,10 +1911,44 @@ If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:d
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.Polygon.apply_affine_transform">
-<code class="descname">apply_affine_transform</code><span class="sig-paren">(</span><em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.apply_affine_transform" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector.Polygon.apply_transform">
+<code class="descname">apply_transform</code><span class="sig-paren">(</span><em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.apply_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply an affine transform given by matrix <em>M</em> to data and return a
 new geometry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>M</strong> : ndarray</p>
+<blockquote>
+<div><p>2x3 or 3x4 affine transformation matrix, representing a
+two-dimensional or a three-dimensional transformation,
+respectively.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Geometry</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The output coordinates are computed as</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>xnew        x</dt>
+<dd>= M * y</dd>
+</dl>
+<p>ynew        1</p>
+</div></blockquote>
+<p>or</p>
+<blockquote>
+<div><p>xnew        x
+ynew  = M * y
+znew        z</p>
+<blockquote>
+<div>1</div></blockquote>
+</div></blockquote>
 </dd></dl>
 
 <dl class="attribute">
@@ -1894,31 +1966,22 @@ calculation.</li>
 <dl class="method">
 <dt id="karta.vector.Polygon.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.
+Parameters
+&#8212;&#8212;&#8212;-
+indent : int, optional</p>
 <blockquote>
-<div><p>indentation of generated GeoJSON (default 2)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>indentation of generated GeoJSON (default 2)</div></blockquote>
+<dl class="docutils">
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="attribute">
@@ -1930,8 +1993,8 @@ If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:d
 <dl class="method">
 <dt id="karta.vector.Polygon.contains">
 <code class="descname">contains</code><span class="sig-paren">(</span><em>point</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geometry.html#Polygon.contains"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.Polygon.contains" title="Permalink to this definition">¶</a></dt>
-<dd><p>Returns True if point is inside or on the boundary of the polygon, and
-False otherwise. Uses a crossing number scheme.</p>
+<dd><p>Returns True if point is inside or on the boundary of the polygon,
+and False otherwise. Uses a crossing number scheme.</p>
 <p class="rubric">Notes</p>
 <ul class="simple">
 <li>When the polygon is polar in a geographical coordinate system, a less
@@ -1993,15 +2056,19 @@ dateline.</p>
 
 <dl class="method">
 <dt id="karta.vector.Polygon.get_vertices">
-<code class="descname">get_vertices</code><span class="sig-paren">(</span><em>crs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.get_vertices" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_vertices</code><span class="sig-paren">(</span><em>crs=None</em>, <em>drop_z=False</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.get_vertices" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return vertices as an array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>crs</strong> : karta.CRS, optional</p>
-<blockquote class="last">
+<blockquote>
 <div><p>coordinate system of output vertices</p>
+</div></blockquote>
+<p><strong>drop_z</strong> : bool, optional</p>
+<blockquote class="last">
+<div><p>whether to discard third dimension for rank 3 geometries</p>
 </div></blockquote>
 </td>
 </tr>
@@ -2045,7 +2112,7 @@ dateline.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>other</strong> : Geometry</p>
 <blockquote class="last">
-<div><p>another geometry with multipl connected vertices</p>
+<div><p>another geometry with multiple connected vertices</p>
 </div></blockquote>
 </td>
 </tr>
@@ -2135,8 +2202,8 @@ their perimeters are added recursively.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.Polygon.rotate2d">
-<code class="descname">rotate2d</code><span class="sig-paren">(</span><em>thetad</em>, <em>origin=(0</em>, <em>0)</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.rotate2d" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector.Polygon.rotate">
+<code class="descname">rotate</code><span class="sig-paren">(</span><em>thetad</em>, <em>origin=(0</em>, <em>0)</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.rotate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rotate rank 2 geometry.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2171,19 +2238,15 @@ tuples.</p>
 
 <dl class="method">
 <dt id="karta.vector.Polygon.shift">
-<code class="descname">shift</code><span class="sig-paren">(</span><em>shift_vector</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.shift" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shift</code><span class="sig-paren">(</span><em>shift_vector</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.shift" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shift geometry in space.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>shift_vector</strong> : iterable</p>
-<blockquote>
-<div><p>vector with length equal to Geometry rank defining the shift</p>
-</div></blockquote>
-<p><strong>inplace</strong> : bool</p>
 <blockquote class="last">
-<div><p>whether shift should be in place (default False)</p>
+<div><p>vector with length equal to Geometry rank defining the shift</p>
 </div></blockquote>
 </td>
 </tr>
@@ -2213,35 +2276,24 @@ boundary to a point.</p>
 <dl class="method">
 <dt id="karta.vector.Polygon.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
+Parameters
+&#8212;&#8212;&#8212;-
+f : str or file-like object</p>
 <blockquote>
-<div><p>file to receive GeoJSON string</p>
-</div></blockquote>
-<p><strong>indent</strong> : int, optional</p>
-<blockquote>
-<div><p>indentation of generated GeoJSON (default None)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>file to receive GeoJSON string</div></blockquote>
+<dl class="docutils">
+<dt>indent</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span><dd>indentation of generated GeoJSON (default None)</dd>
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -2254,29 +2306,6 @@ If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:d
 <dt id="karta.vector.Polygon.to_shapefile">
 <code class="descname">to_shapefile</code><span class="sig-paren">(</span><em>fnm</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.to_shapefile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save line to a shapefile</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="karta.vector.Polygon.to_xyfile">
-<code class="descname">to_xyfile</code><span class="sig-paren">(</span><em>fnm</em>, <em>fields=None</em>, <em>delimiter=' '</em>, <em>header=None</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.to_xyfile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data to a delimited ASCII table.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>fnm</strong> : string</p>
-<blockquote>
-<div><p>filename to write to</p>
-</div></blockquote>
-<p><strong>fields</strong> : list</p>
-<blockquote>
-<div><p>specify the fields to be written (optional, default all)</p>
-</div></blockquote>
-<p class="last"><strong>Additional kwargs are passed to `xyfile.write_xy`.</strong></p>
-</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="method">
@@ -2339,40 +2368,65 @@ If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:d
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.Multipoint.apply_affine_transform">
-<code class="descname">apply_affine_transform</code><span class="sig-paren">(</span><em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.apply_affine_transform" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector.Multipoint.apply_transform">
+<code class="descname">apply_transform</code><span class="sig-paren">(</span><em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.apply_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply an affine transform given by matrix <em>M</em> to data and return a
 new geometry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>M</strong> : ndarray</p>
+<blockquote>
+<div><p>2x3 or 3x4 affine transformation matrix, representing a
+two-dimensional or a three-dimensional transformation,
+respectively.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Geometry</p>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The output coordinates are computed as</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>xnew        x</dt>
+<dd>= M * y</dd>
+</dl>
+<p>ynew        1</p>
+</div></blockquote>
+<p>or</p>
+<blockquote>
+<div><p>xnew        x
+ynew  = M * y
+znew        z</p>
+<blockquote>
+<div>1</div></blockquote>
+</div></blockquote>
 </dd></dl>
 
 <dl class="method">
 <dt id="karta.vector.Multipoint.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.
+Parameters
+&#8212;&#8212;&#8212;-
+indent : int, optional</p>
 <blockquote>
-<div><p>indentation of generated GeoJSON (default 2)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>indentation of generated GeoJSON (default 2)</div></blockquote>
+<dl class="docutils">
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -2419,15 +2473,19 @@ position.</li>
 
 <dl class="method">
 <dt id="karta.vector.Multipoint.get_vertices">
-<code class="descname">get_vertices</code><span class="sig-paren">(</span><em>crs=None</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.get_vertices" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_vertices</code><span class="sig-paren">(</span><em>crs=None</em>, <em>drop_z=False</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.get_vertices" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return vertices as an array.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>crs</strong> : karta.CRS, optional</p>
-<blockquote class="last">
+<blockquote>
 <div><p>coordinate system of output vertices</p>
+</div></blockquote>
+<p><strong>drop_z</strong> : bool, optional</p>
+<blockquote class="last">
+<div><p>whether to discard third dimension for rank 3 geometries</p>
 </div></blockquote>
 </td>
 </tr>
@@ -2458,8 +2516,8 @@ points are equidistant, only one will be returned.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.Multipoint.rotate2d">
-<code class="descname">rotate2d</code><span class="sig-paren">(</span><em>thetad</em>, <em>origin=(0</em>, <em>0)</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.rotate2d" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector.Multipoint.rotate">
+<code class="descname">rotate</code><span class="sig-paren">(</span><em>thetad</em>, <em>origin=(0</em>, <em>0)</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.rotate" title="Permalink to this definition">¶</a></dt>
 <dd><p>Rotate rank 2 geometry.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -2481,19 +2539,15 @@ points are equidistant, only one will be returned.</p>
 
 <dl class="method">
 <dt id="karta.vector.Multipoint.shift">
-<code class="descname">shift</code><span class="sig-paren">(</span><em>shift_vector</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.shift" title="Permalink to this definition">¶</a></dt>
+<code class="descname">shift</code><span class="sig-paren">(</span><em>shift_vector</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.shift" title="Permalink to this definition">¶</a></dt>
 <dd><p>Shift geometry in space.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>shift_vector</strong> : iterable</p>
-<blockquote>
-<div><p>vector with length equal to Geometry rank defining the shift</p>
-</div></blockquote>
-<p><strong>inplace</strong> : bool</p>
 <blockquote class="last">
-<div><p>whether shift should be in place (default False)</p>
+<div><p>vector with length equal to Geometry rank defining the shift</p>
 </div></blockquote>
 </td>
 </tr>
@@ -2504,64 +2558,30 @@ points are equidistant, only one will be returned.</p>
 <dl class="method">
 <dt id="karta.vector.Multipoint.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
+Parameters
+&#8212;&#8212;&#8212;-
+f : str or file-like object</p>
 <blockquote>
-<div><p>file to receive GeoJSON string</p>
-</div></blockquote>
-<p><strong>indent</strong> : int, optional</p>
-<blockquote>
-<div><p>indentation of generated GeoJSON (default None)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>file to receive GeoJSON string</div></blockquote>
+<dl class="docutils">
+<dt>indent</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span><dd>indentation of generated GeoJSON (default None)</dd>
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
 <dt id="karta.vector.Multipoint.to_shapefile">
 <code class="descname">to_shapefile</code><span class="sig-paren">(</span><em>fnm</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.to_shapefile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save line to a shapefile</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="karta.vector.Multipoint.to_xyfile">
-<code class="descname">to_xyfile</code><span class="sig-paren">(</span><em>fnm</em>, <em>fields=None</em>, <em>delimiter=' '</em>, <em>header=None</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.to_xyfile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data to a delimited ASCII table.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>fnm</strong> : string</p>
-<blockquote>
-<div><p>filename to write to</p>
-</div></blockquote>
-<p><strong>fields</strong> : list</p>
-<blockquote>
-<div><p>specify the fields to be written (optional, default all)</p>
-</div></blockquote>
-<p class="last"><strong>Additional kwargs are passed to `xyfile.write_xy`.</strong></p>
-</td>
-</tr>
-</tbody>
-</table>
 </dd></dl>
 
 <dl class="method">
@@ -2637,33 +2657,65 @@ are excluded.</p>
 </tbody>
 </table>
 <dl class="method">
-<dt id="karta.vector.Multiline.as_geojson">
-<code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multiline.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<dt id="karta.vector.Multiline.apply_transform">
+<code class="descname">apply_transform</code><span class="sig-paren">(</span><em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multiline.apply_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply an affine transform given by matrix <em>M</em> to data and return a
+new Point.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>M</strong> : ndarray</p>
 <blockquote>
-<div><p>indentation of generated GeoJSON (default 2)</p>
+<div><p>2x3 or 3x4 affine transformation matrix, representing a
+two-dimensional or a three-dimensional transformation,
+respectively.</p>
 </div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
-as recommended by the GeoJSON draft specification
-(<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
-If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Geometry</p>
 </td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Notes</p>
+<p>The output coordinates are computed as</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>xnew        x</dt>
+<dd>= M * y</dd>
+</dl>
+<p>ynew        1</p>
+</div></blockquote>
+<p>or</p>
+<blockquote>
+<div><p>xnew        x
+ynew  = M * y
+znew        z</p>
+<blockquote>
+<div>1</div></blockquote>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.Multiline.as_geojson">
+<code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multiline.as_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output representation of internal data as a GeoJSON string.
+Parameters
+&#8212;&#8212;&#8212;-
+indent : int, optional</p>
+<blockquote>
+<div>indentation of generated GeoJSON (default 2)</div></blockquote>
+<dl class="docutils">
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
+as recommended by the GeoJSON draft specification
+(<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
+If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -2693,35 +2745,24 @@ If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:d
 <dl class="method">
 <dt id="karta.vector.Multiline.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multiline.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
+Parameters
+&#8212;&#8212;&#8212;-
+f : str or file-like object</p>
 <blockquote>
-<div><p>file to receive GeoJSON string</p>
-</div></blockquote>
-<p><strong>indent</strong> : int, optional</p>
-<blockquote>
-<div><p>indentation of generated GeoJSON (default None)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>file to receive GeoJSON string</div></blockquote>
+<dl class="docutils">
+<dt>indent</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span><dd>indentation of generated GeoJSON (default None)</dd>
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -2834,33 +2875,65 @@ contained by a bounding box.</p>
 </tbody>
 </table>
 <dl class="method">
-<dt id="karta.vector.Multipolygon.as_geojson">
-<code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipolygon.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<dt id="karta.vector.Multipolygon.apply_transform">
+<code class="descname">apply_transform</code><span class="sig-paren">(</span><em>M</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipolygon.apply_transform" title="Permalink to this definition">¶</a></dt>
+<dd><p>Apply an affine transform given by matrix <em>M</em> to data and return a
+new Point.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>M</strong> : ndarray</p>
 <blockquote>
-<div><p>indentation of generated GeoJSON (default 2)</p>
+<div><p>2x3 or 3x4 affine transformation matrix, representing a
+two-dimensional or a three-dimensional transformation,
+respectively.</p>
 </div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
-as recommended by the GeoJSON draft specification
-(<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
-If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">Geometry</p>
 </td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Notes</p>
+<p>The output coordinates are computed as</p>
+<blockquote>
+<div><dl class="docutils">
+<dt>xnew        x</dt>
+<dd>= M * y</dd>
+</dl>
+<p>ynew        1</p>
+</div></blockquote>
+<p>or</p>
+<blockquote>
+<div><p>xnew        x
+ynew  = M * y
+znew        z</p>
+<blockquote>
+<div>1</div></blockquote>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.Multipolygon.as_geojson">
+<code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipolygon.as_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output representation of internal data as a GeoJSON string.
+Parameters
+&#8212;&#8212;&#8212;-
+indent : int, optional</p>
+<blockquote>
+<div>indentation of generated GeoJSON (default 2)</div></blockquote>
+<dl class="docutils">
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
+as recommended by the GeoJSON draft specification
+(<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
+If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -2890,35 +2963,24 @@ If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:d
 <dl class="method">
 <dt id="karta.vector.Multipolygon.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipolygon.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
+Parameters
+&#8212;&#8212;&#8212;-
+f : str or file-like object</p>
 <blockquote>
-<div><p>file to receive GeoJSON string</p>
-</div></blockquote>
-<p><strong>indent</strong> : int, optional</p>
-<blockquote>
-<div><p>indentation of generated GeoJSON (default None)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>file to receive GeoJSON string</div></blockquote>
+<dl class="docutils">
+<dt>indent</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span><dd>indentation of generated GeoJSON (default None)</dd>
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
@@ -3106,409 +3168,142 @@ object.</p>
 </dl>
 </dd></dl>
 
-<dl class="function">
-<dt id="karta.vector.read.read_xyfile">
-<code class="descclassname">karta.vector.read.</code><code class="descname">read_xyfile</code><span class="sig-paren">(</span><em>f</em>, <em>delimiter=''</em>, <em>header_rows=0</em>, <em>astype=&lt;class 'karta.vector.geometry.Multipoint'&gt;</em>, <em>coordrank=2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/read.html#read_xyfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.read.read_xyfile" title="Permalink to this definition">¶</a></dt>
-<dd><p>Read an ASCII delimited table and return a geometry object given by <em>astype</em>.</p>
-</dd></dl>
-
-<div class="section" id="module-karta.vector.geojson">
-<span id="geojson"></span><h4>GeoJSON<a class="headerlink" href="#module-karta.vector.geojson" title="Permalink to this headline">¶</a></h4>
-<p>GeoJSON drivers for Karta</p>
-<p>Defines named tuples representing GeoJSON entities.</p>
-<div class="section" id="overview">
-<h5>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h5>
-<p><cite>GeoJSONReader</cite> converts GeoJSON strings to named tuples.</p>
-<p><cite>GeoJSONSerializer</cite> converts named tuples to GeoJSON strings.</p>
-<p><cite>as_named_tuple</cite> function converts karta.geometry classes to equivalent named
-tuples.</p>
+<div class="section" id="module-karta.vector._geojson">
+<span id="geojson"></span><h4>GeoJSON<a class="headerlink" href="#module-karta.vector._geojson" title="Permalink to this headline">¶</a></h4>
 <dl class="class">
-<dt id="karta.vector.geojson.Feature">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">Feature</code><span class="sig-paren">(</span><em>geometry</em>, <em>properties</em>, <em>id</em>, <em>crs</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.geojson.Feature" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="karta.vector.geojson.Feature.crs">
-<code class="descname">crs</code><a class="headerlink" href="#karta.vector.geojson.Feature.crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 3</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.Feature.geometry">
-<code class="descname">geometry</code><a class="headerlink" href="#karta.vector.geojson.Feature.geometry" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.Feature.id">
-<code class="descname">id</code><a class="headerlink" href="#karta.vector.geojson.Feature.id" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 2</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.Feature.properties">
-<code class="descname">properties</code><a class="headerlink" href="#karta.vector.geojson.Feature.properties" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.FeatureCollection">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">FeatureCollection</code><span class="sig-paren">(</span><em>features</em>, <em>crs</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.geojson.FeatureCollection" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="karta.vector.geojson.FeatureCollection.crs">
-<code class="descname">crs</code><a class="headerlink" href="#karta.vector.geojson.FeatureCollection.crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.FeatureCollection.features">
-<code class="descname">features</code><a class="headerlink" href="#karta.vector.geojson.FeatureCollection.features" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.GeoJSONOutMixin">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">GeoJSONOutMixin</code><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONOutMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONOutMixin" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._geojson.GeoJSONOutMixin">
+<em class="property">class </em><code class="descclassname">karta.vector._geojson.</code><code class="descname">GeoJSONOutMixin</code><a class="reference internal" href="_modules/karta/vector/_geojson.html#GeoJSONOutMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._geojson.GeoJSONOutMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mixin class to be added to geometry objects, adding geojson
 functionality.</p>
 <dl class="method">
-<dt id="karta.vector.geojson.GeoJSONOutMixin.as_geojson">
-<code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONOutMixin.as_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONOutMixin.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
+<dt id="karta.vector._geojson.GeoJSONOutMixin.as_geojson">
+<code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_geojson.html#GeoJSONOutMixin.as_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._geojson.GeoJSONOutMixin.as_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Output representation of internal data as a GeoJSON string.
+Parameters
+&#8212;&#8212;&#8212;-
+indent : int, optional</p>
 <blockquote>
-<div><p>indentation of generated GeoJSON (default 2)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>indentation of generated GeoJSON (default 2)</div></blockquote>
+<dl class="docutils">
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.geojson.GeoJSONOutMixin.to_geojson">
-<code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONOutMixin.to_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONOutMixin.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
+<dt id="karta.vector._geojson.GeoJSONOutMixin.to_geojson">
+<code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_geojson.html#GeoJSONOutMixin.to_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._geojson.GeoJSONOutMixin.to_geojson" title="Permalink to this definition">¶</a></dt>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
+Parameters
+&#8212;&#8212;&#8212;-
+f : str or file-like object</p>
 <blockquote>
-<div><p>file to receive GeoJSON string</p>
-</div></blockquote>
-<p><strong>indent</strong> : int, optional</p>
-<blockquote>
-<div><p>indentation of generated GeoJSON (default None)</p>
-</div></blockquote>
-<p><strong>force_wgs84</strong> : bool, optional</p>
-<blockquote>
-<div><p>Forces output to use geographical coordinates with the WGS84 datum,
+<div>file to receive GeoJSON string</div></blockquote>
+<dl class="docutils">
+<dt>indent</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span><dd>indentation of generated GeoJSON (default None)</dd>
+<dt>force_wgs84</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span><dd>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote class="last">
-<div><p>overrides GeoJSON CRS with provided URN string</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
+(default True)</dd>
+<dt>urn</dt>
+ <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span><dd>overrides GeoJSON CRS with provided URN string</dd>
+</dl>
 </dd></dl>
 
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.GeoJSONSerializer">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">GeoJSONSerializer</code><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONSerializer"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONSerializer" title="Permalink to this definition">¶</a></dt>
-<dd><p>Class for converting GeoJSON named tuples to GeoJSON.</p>
-<p>Usage:</p>
-<blockquote>
-<div>serializer = GeoJSONSerializer()
-json_string = serializer(named_tuple)</div></blockquote>
-<dl class="staticmethod">
-<dt id="karta.vector.geojson.GeoJSONSerializer.crsdict">
-<em class="property">static </em><code class="descname">crsdict</code><span class="sig-paren">(</span><em>crs=None</em>, <em>urn=None</em>, <em>href=''</em>, <em>linktype='proj4'</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geojson.html#GeoJSONSerializer.crsdict"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.GeoJSONSerializer.crsdict" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a dictionary that can be serialized as a GeoJSON coordinate
-system mapping using a <em>urn</em> or a <em>crs</em> instance.</p>
-<p>In the case of a linked CRS, the link address and type can be specified
-using the <cite>href</cite> and <cite>linktype</cite> keyword arguments.</p>
-<p>For more details, see the GeoJSON specification at:
-<a class="reference external" href="http://geojson.org/geojson-spec.html#coordinate-reference-system-objects">http://geojson.org/geojson-spec.html#coordinate-reference-system-objects</a></p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.GeometryCollection">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">GeometryCollection</code><span class="sig-paren">(</span><em>geometries</em>, <em>crs</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.geojson.GeometryCollection" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="karta.vector.geojson.GeometryCollection.crs">
-<code class="descname">crs</code><a class="headerlink" href="#karta.vector.geojson.GeometryCollection.crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.GeometryCollection.geometries">
-<code class="descname">geometries</code><a class="headerlink" href="#karta.vector.geojson.GeometryCollection.geometries" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.LineString">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">LineString</code><span class="sig-paren">(</span><em>coordinates</em>, <em>crs</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.geojson.LineString" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="karta.vector.geojson.LineString.coordinates">
-<code class="descname">coordinates</code><a class="headerlink" href="#karta.vector.geojson.LineString.coordinates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.LineString.crs">
-<code class="descname">crs</code><a class="headerlink" href="#karta.vector.geojson.LineString.crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.MultiLineString">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">MultiLineString</code><span class="sig-paren">(</span><em>coordinates</em>, <em>crs</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.geojson.MultiLineString" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="karta.vector.geojson.MultiLineString.coordinates">
-<code class="descname">coordinates</code><a class="headerlink" href="#karta.vector.geojson.MultiLineString.coordinates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.MultiLineString.crs">
-<code class="descname">crs</code><a class="headerlink" href="#karta.vector.geojson.MultiLineString.crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.MultiPoint">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">MultiPoint</code><span class="sig-paren">(</span><em>coordinates</em>, <em>crs</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.geojson.MultiPoint" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="karta.vector.geojson.MultiPoint.coordinates">
-<code class="descname">coordinates</code><a class="headerlink" href="#karta.vector.geojson.MultiPoint.coordinates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.MultiPoint.crs">
-<code class="descname">crs</code><a class="headerlink" href="#karta.vector.geojson.MultiPoint.crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.MultiPolygon">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">MultiPolygon</code><span class="sig-paren">(</span><em>coordinates</em>, <em>crs</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.geojson.MultiPolygon" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="karta.vector.geojson.MultiPolygon.coordinates">
-<code class="descname">coordinates</code><a class="headerlink" href="#karta.vector.geojson.MultiPolygon.coordinates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.MultiPolygon.crs">
-<code class="descname">crs</code><a class="headerlink" href="#karta.vector.geojson.MultiPolygon.crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.NumpyAwareJSONEncoder">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">NumpyAwareJSONEncoder</code><span class="sig-paren">(</span><em>skipkeys=False</em>, <em>ensure_ascii=True</em>, <em>check_circular=True</em>, <em>allow_nan=True</em>, <em>sort_keys=False</em>, <em>indent=None</em>, <em>separators=None</em>, <em>default=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geojson.html#NumpyAwareJSONEncoder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.NumpyAwareJSONEncoder" title="Permalink to this definition">¶</a></dt>
-<dd><p>Numpy-specific numbers prior to 1.9 don&#8217;t inherit from Python numeric
-ABCs. This class is a hack to coerce numpy values into Python types for
-JSON serialization.</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.Point">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">Point</code><span class="sig-paren">(</span><em>coordinates</em>, <em>crs</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.geojson.Point" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="karta.vector.geojson.Point.coordinates">
-<code class="descname">coordinates</code><a class="headerlink" href="#karta.vector.geojson.Point.coordinates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.Point.crs">
-<code class="descname">crs</code><a class="headerlink" href="#karta.vector.geojson.Point.crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.vector.geojson.Polygon">
-<em class="property">class </em><code class="descclassname">karta.vector.geojson.</code><code class="descname">Polygon</code><span class="sig-paren">(</span><em>coordinates</em>, <em>crs</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.geojson.Polygon" title="Permalink to this definition">¶</a></dt>
-<dd><dl class="attribute">
-<dt id="karta.vector.geojson.Polygon.coordinates">
-<code class="descname">coordinates</code><a class="headerlink" href="#karta.vector.geojson.Polygon.coordinates" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 0</p>
-</dd></dl>
-
-<dl class="attribute">
-<dt id="karta.vector.geojson.Polygon.crs">
-<code class="descname">crs</code><a class="headerlink" href="#karta.vector.geojson.Polygon.crs" title="Permalink to this definition">¶</a></dt>
-<dd><p>Alias for field number 1</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="function">
-<dt id="karta.vector.geojson.as_named_tuple">
-<code class="descclassname">karta.vector.geojson.</code><code class="descname">as_named_tuple</code><span class="sig-paren">(</span><em>*geoms</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geojson.html#as_named_tuple"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.as_named_tuple" title="Permalink to this definition">¶</a></dt>
-<dd><p>Convert one or more Geometry instances to GeoJSON-structured named tuples.</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>*geoms</strong> : subtypes of karta.Geometry</p>
-<blockquote>
-<div><p>karta vector geometries to convert</p>
-</div></blockquote>
-<p><strong>urn</strong> : str, optional</p>
-<blockquote>
-<div><p>URN defining a specific CRS to use</p>
-</div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">Either a Feature or a FeatureCollection</p>
-</td>
-</tr>
-<tr class="field-odd field"><th class="field-name">Raises:</th><td class="field-body"><p class="first"><strong>TypeError</strong></p>
-<blockquote class="last">
-<div><p>if one or more of geoms has an unrecognized <cite>_geotype</cite> attribute</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
-<dl class="function">
-<dt id="karta.vector.geojson.asfixedlist">
-<code class="descclassname">karta.vector.geojson.</code><code class="descname">asfixedlist</code><span class="sig-paren">(</span><em>A</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geojson.html#asfixedlist"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.geojson.asfixedlist" title="Permalink to this definition">¶</a></dt>
-<dd><p>Recursively convert nested iterables or coordinates to nested lists at
-fixed precision.</p>
 </dd></dl>
 
 </div>
-</div>
-<div class="section" id="module-karta.vector.shp">
-<span id="esri-shapefile-gdal-interface"></span><h4>ESRI shapefile (GDAL interface)<a class="headerlink" href="#module-karta.vector.shp" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="module-karta.vector._shp">
+<span id="esri-shapefile-gdal-interface"></span><h4>ESRI shapefile (GDAL interface)<a class="headerlink" href="#module-karta.vector._shp" title="Permalink to this headline">¶</a></h4>
 <p>Shapefile driver for Karta using OGR backend</p>
-<div class="section" id="id2">
-<h5>Overview<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="overview">
+<h5>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h5>
 <p><cite>ogr_write</cite> takes geointerface dictionaries or Karta objects and writes to ESRI
 shapefile</p>
 <p><cite>ogr_read_geometry</cite> converts an OGR geometry object to a geointerface dictionary</p>
 <dl class="class">
-<dt id="karta.vector.shp.ShapefileOutMixin">
-<em class="property">class </em><code class="descclassname">karta.vector.shp.</code><code class="descname">ShapefileOutMixin</code><a class="reference internal" href="_modules/karta/vector/shp.html#ShapefileOutMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.ShapefileOutMixin" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.ShapefileOutMixin">
+<em class="property">class </em><code class="descclassname">karta.vector._shp.</code><code class="descname">ShapefileOutMixin</code><a class="reference internal" href="_modules/karta/vector/_shp.html#ShapefileOutMixin"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.ShapefileOutMixin" title="Permalink to this definition">¶</a></dt>
 <dd><p>Mixin class to be added to geometry objects, adding shapefile
 functionality.</p>
 <dl class="method">
-<dt id="karta.vector.shp.ShapefileOutMixin.to_shapefile">
-<code class="descname">to_shapefile</code><span class="sig-paren">(</span><em>fnm</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/shp.html#ShapefileOutMixin.to_shapefile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.ShapefileOutMixin.to_shapefile" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.ShapefileOutMixin.to_shapefile">
+<code class="descname">to_shapefile</code><span class="sig-paren">(</span><em>fnm</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_shp.html#ShapefileOutMixin.to_shapefile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.ShapefileOutMixin.to_shapefile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Save line to a shapefile</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.vector.shp.get_geometry_type">
-<code class="descclassname">karta.vector.shp.</code><code class="descname">get_geometry_type</code><span class="sig-paren">(</span><em>gi</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/shp.html#get_geometry_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.get_geometry_type" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.get_geometry_type">
+<code class="descclassname">karta.vector._shp.</code><code class="descname">get_geometry_type</code><span class="sig-paren">(</span><em>gi</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_shp.html#get_geometry_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.get_geometry_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the geometry type from a __geo_interface__ dictionary</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.vector.shp.ogr_get_fieldtype">
-<code class="descclassname">karta.vector.shp.</code><code class="descname">ogr_get_fieldtype</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/shp.html#ogr_get_fieldtype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.ogr_get_fieldtype" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.ogr_get_fieldtype">
+<code class="descclassname">karta.vector._shp.</code><code class="descname">ogr_get_fieldtype</code><span class="sig-paren">(</span><em>val</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_shp.html#ogr_get_fieldtype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.ogr_get_fieldtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a tuple of
 - an OGR type integer that describes the type of <em>a</em>
 - a default width that should work for most cases</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.vector.shp.ogr_get_polygon_points">
-<code class="descclassname">karta.vector.shp.</code><code class="descname">ogr_get_polygon_points</code><span class="sig-paren">(</span><em>poly</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/shp.html#ogr_get_polygon_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.ogr_get_polygon_points" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.ogr_get_polygon_points">
+<code class="descclassname">karta.vector._shp.</code><code class="descname">ogr_get_polygon_points</code><span class="sig-paren">(</span><em>poly</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_shp.html#ogr_get_polygon_points"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.ogr_get_polygon_points" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a list of lists of ogr.Polygon coordinate rings.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.vector.shp.ogr_read_attributes">
-<code class="descclassname">karta.vector.shp.</code><code class="descname">ogr_read_attributes</code><span class="sig-paren">(</span><em>lyr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/shp.html#ogr_read_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.ogr_read_attributes" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.ogr_read_attributes">
+<code class="descclassname">karta.vector._shp.</code><code class="descname">ogr_read_attributes</code><span class="sig-paren">(</span><em>lyr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_shp.html#ogr_read_attributes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.ogr_read_attributes" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given an ogr.Layer instance, return a list of dictionaries with feature
 property data.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.vector.shp.ogr_read_geometries">
-<code class="descclassname">karta.vector.shp.</code><code class="descname">ogr_read_geometries</code><span class="sig-paren">(</span><em>lyr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/shp.html#ogr_read_geometries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.ogr_read_geometries" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.ogr_read_geometries">
+<code class="descclassname">karta.vector._shp.</code><code class="descname">ogr_read_geometries</code><span class="sig-paren">(</span><em>lyr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_shp.html#ogr_read_geometries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.ogr_read_geometries" title="Permalink to this definition">¶</a></dt>
 <dd><p>Given an ogr.Layer instance, return a list of __geo_interface__
 dictionaries.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.vector.shp.ogr_read_geometry">
-<code class="descclassname">karta.vector.shp.</code><code class="descname">ogr_read_geometry</code><span class="sig-paren">(</span><em>geom</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/shp.html#ogr_read_geometry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.ogr_read_geometry" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.ogr_read_geometry">
+<code class="descclassname">karta.vector._shp.</code><code class="descname">ogr_read_geometry</code><span class="sig-paren">(</span><em>geom</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_shp.html#ogr_read_geometry"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.ogr_read_geometry" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert an ogr.Geometry to a __geo_interface__ dictionary.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.vector.shp.ogr_write">
-<code class="descclassname">karta.vector.shp.</code><code class="descname">ogr_write</code><span class="sig-paren">(</span><em>fnm</em>, <em>*objs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/shp.html#ogr_write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.ogr_write" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.ogr_write">
+<code class="descclassname">karta.vector._shp.</code><code class="descname">ogr_write</code><span class="sig-paren">(</span><em>fnm</em>, <em>*objs</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_shp.html#ogr_write"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.ogr_write" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write features to shapefile using OGR backend. Features are
 __geo_interface__ Feature mappings.</p>
 </dd></dl>
 
 <dl class="function">
-<dt id="karta.vector.shp.ogr_write_feature">
-<code class="descclassname">karta.vector.shp.</code><code class="descname">ogr_write_feature</code><span class="sig-paren">(</span><em>lyr</em>, <em>gi</em>, <em>id=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/shp.html#ogr_write_feature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.shp.ogr_write_feature" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._shp.ogr_write_feature">
+<code class="descclassname">karta.vector._shp.</code><code class="descname">ogr_write_feature</code><span class="sig-paren">(</span><em>lyr</em>, <em>gi</em>, <em>id=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_shp.html#ogr_write_feature"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._shp.ogr_write_feature" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write the geometry encoded in a __geointerface__ dictionary to an OGR
 Layer.</p>
 </dd></dl>
 
 </div>
 </div>
-<div class="section" id="module-karta.vector.gpx">
-<span id="gps-exchange"></span><h4>GPS Exchange<a class="headerlink" href="#module-karta.vector.gpx" title="Permalink to this headline">¶</a></h4>
+<div class="section" id="module-karta.vector._gpx">
+<span id="gps-exchange"></span><h4>GPS Exchange<a class="headerlink" href="#module-karta.vector._gpx" title="Permalink to this headline">¶</a></h4>
 <p>GPX IO and manipulation (UNDER DEVELOPMENT)</p>
-<div class="section" id="id3">
-<h5>Overview<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h5>
+<div class="section" id="id2">
+<h5>Overview<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h5>
 <p><cite>GPX</cite> represents a GPX document that can be written to or read from</p>
 <dl class="docutils">
 <dt>To do:</dt>
@@ -3519,15 +3314,15 @@ Layer.</p>
 </dd>
 </dl>
 <dl class="class">
-<dt id="karta.vector.gpx.GPX">
-<em class="property">class </em><code class="descclassname">karta.vector.gpx.</code><code class="descname">GPX</code><span class="sig-paren">(</span><em>f=None</em>, <em>waypoints=None</em>, <em>tracks=None</em>, <em>routes=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.GPX">
+<em class="property">class </em><code class="descclassname">karta.vector._gpx.</code><code class="descname">GPX</code><span class="sig-paren">(</span><em>f=None</em>, <em>waypoints=None</em>, <em>tracks=None</em>, <em>routes=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_gpx.html#GPX"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._gpx.GPX" title="Permalink to this definition">¶</a></dt>
 <dd><p>Represents a GPX document, with an internal representation of
 waypoints, tracks, and route that loosely approximates the XML structure.
 Provides methods to easily add Point-like and Line-like objects as GPX
 types.</p>
 <dl class="method">
-<dt id="karta.vector.gpx.GPX.add_route">
-<code class="descname">add_route</code><span class="sig-paren">(</span><em>route</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.add_route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.add_route" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.GPX.add_route">
+<code class="descname">add_route</code><span class="sig-paren">(</span><em>route</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_gpx.html#GPX.add_route"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._gpx.GPX.add_route" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a Multipoint-like object as a route. Properties and extension
 types for the route are taken from the <cite>properties</cite> attribute of the
 Multipoint-like object.</p>
@@ -3540,8 +3335,8 @@ and trkpt levels</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.gpx.GPX.add_track">
-<code class="descname">add_track</code><span class="sig-paren">(</span><em>*tracks</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.add_track"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.add_track" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.GPX.add_track">
+<code class="descname">add_track</code><span class="sig-paren">(</span><em>*tracks</em>, <em>**kw</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_gpx.html#GPX.add_track"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._gpx.GPX.add_track" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add Multipoint-like objects as segments of a track. Dictionaries of
 properties and extension types for the track are accepted as keyword
 arguments.</p>
@@ -3556,128 +3351,128 @@ and trkpt levels</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.gpx.GPX.add_waypoint">
-<code class="descname">add_waypoint</code><span class="sig-paren">(</span><em>waypoint</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.add_waypoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.add_waypoint" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.GPX.add_waypoint">
+<code class="descname">add_waypoint</code><span class="sig-paren">(</span><em>waypoint</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_gpx.html#GPX.add_waypoint"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._gpx.GPX.add_waypoint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Add a Point-like object as a waypoint. Properties and extension
 types are taken from waypoint.properties attribute.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.gpx.GPX.as_string">
-<code class="descname">as_string</code><span class="sig-paren">(</span><em>waypts=True</em>, <em>tracks=True</em>, <em>routes=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.as_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.as_string" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.GPX.as_string">
+<code class="descname">as_string</code><span class="sig-paren">(</span><em>waypts=True</em>, <em>tracks=True</em>, <em>routes=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_gpx.html#GPX.as_string"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._gpx.GPX.as_string" title="Permalink to this definition">¶</a></dt>
 <dd><p>Write GPX object to a string. Writes all waypoints, tracks, and
 routes by default, which can be changed by changing the kwargs to
 False.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.gpx.GPX.fromfile">
-<code class="descname">fromfile</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.fromfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.fromfile" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.GPX.fromfile">
+<code class="descname">fromfile</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_gpx.html#GPX.fromfile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._gpx.GPX.fromfile" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read a GPX document from <em>f</em>, which may be a filename or a
 file-like object.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.gpx.GPX.parse_trk">
-<code class="descname">parse_trk</code><span class="sig-paren">(</span><em>trk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.parse_trk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.parse_trk" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.GPX.parse_trk">
+<code class="descname">parse_trk</code><span class="sig-paren">(</span><em>trk</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_gpx.html#GPX.parse_trk"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._gpx.GPX.parse_trk" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse a &lt;trk&gt; node, updating self.tracks.</p>
 </dd></dl>
 
 <dl class="method">
-<dt id="karta.vector.gpx.GPX.parse_wpt">
-<code class="descname">parse_wpt</code><span class="sig-paren">(</span><em>wpt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/gpx.html#GPX.parse_wpt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.gpx.GPX.parse_wpt" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.GPX.parse_wpt">
+<code class="descname">parse_wpt</code><span class="sig-paren">(</span><em>wpt</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_gpx.html#GPX.parse_wpt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._gpx.GPX.parse_wpt" title="Permalink to this definition">¶</a></dt>
 <dd><p>Parse a &lt;wpt&gt; node, updating self.waypoints.</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="karta.vector.gpx.Point">
-<em class="property">class </em><code class="descclassname">karta.vector.gpx.</code><code class="descname">Point</code><span class="sig-paren">(</span><em>lonlat</em>, <em>properties</em>, <em>extensions</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.gpx.Point" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Point">
+<em class="property">class </em><code class="descclassname">karta.vector._gpx.</code><code class="descname">Point</code><span class="sig-paren">(</span><em>lonlat</em>, <em>properties</em>, <em>extensions</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector._gpx.Point" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
-<dt id="karta.vector.gpx.Point.extensions">
-<code class="descname">extensions</code><a class="headerlink" href="#karta.vector.gpx.Point.extensions" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Point.extensions">
+<code class="descname">extensions</code><a class="headerlink" href="#karta.vector._gpx.Point.extensions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="karta.vector.gpx.Point.lonlat">
-<code class="descname">lonlat</code><a class="headerlink" href="#karta.vector.gpx.Point.lonlat" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Point.lonlat">
+<code class="descname">lonlat</code><a class="headerlink" href="#karta.vector._gpx.Point.lonlat" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="karta.vector.gpx.Point.properties">
-<code class="descname">properties</code><a class="headerlink" href="#karta.vector.gpx.Point.properties" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Point.properties">
+<code class="descname">properties</code><a class="headerlink" href="#karta.vector._gpx.Point.properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="karta.vector.gpx.Route">
-<em class="property">class </em><code class="descclassname">karta.vector.gpx.</code><code class="descname">Route</code><span class="sig-paren">(</span><em>rtepts</em>, <em>properties</em>, <em>extensions</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.gpx.Route" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Route">
+<em class="property">class </em><code class="descclassname">karta.vector._gpx.</code><code class="descname">Route</code><span class="sig-paren">(</span><em>rtepts</em>, <em>properties</em>, <em>extensions</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector._gpx.Route" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
-<dt id="karta.vector.gpx.Route.extensions">
-<code class="descname">extensions</code><a class="headerlink" href="#karta.vector.gpx.Route.extensions" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Route.extensions">
+<code class="descname">extensions</code><a class="headerlink" href="#karta.vector._gpx.Route.extensions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="karta.vector.gpx.Route.properties">
-<code class="descname">properties</code><a class="headerlink" href="#karta.vector.gpx.Route.properties" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Route.properties">
+<code class="descname">properties</code><a class="headerlink" href="#karta.vector._gpx.Route.properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="karta.vector.gpx.Route.rtepts">
-<code class="descname">rtepts</code><a class="headerlink" href="#karta.vector.gpx.Route.rtepts" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Route.rtepts">
+<code class="descname">rtepts</code><a class="headerlink" href="#karta.vector._gpx.Route.rtepts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="karta.vector.gpx.Track">
-<em class="property">class </em><code class="descclassname">karta.vector.gpx.</code><code class="descname">Track</code><span class="sig-paren">(</span><em>trksegs</em>, <em>properties</em>, <em>extensions</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.gpx.Track" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Track">
+<em class="property">class </em><code class="descclassname">karta.vector._gpx.</code><code class="descname">Track</code><span class="sig-paren">(</span><em>trksegs</em>, <em>properties</em>, <em>extensions</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector._gpx.Track" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
-<dt id="karta.vector.gpx.Track.extensions">
-<code class="descname">extensions</code><a class="headerlink" href="#karta.vector.gpx.Track.extensions" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Track.extensions">
+<code class="descname">extensions</code><a class="headerlink" href="#karta.vector._gpx.Track.extensions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="karta.vector.gpx.Track.properties">
-<code class="descname">properties</code><a class="headerlink" href="#karta.vector.gpx.Track.properties" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Track.properties">
+<code class="descname">properties</code><a class="headerlink" href="#karta.vector._gpx.Track.properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="karta.vector.gpx.Track.trksegs">
-<code class="descname">trksegs</code><a class="headerlink" href="#karta.vector.gpx.Track.trksegs" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Track.trksegs">
+<code class="descname">trksegs</code><a class="headerlink" href="#karta.vector._gpx.Track.trksegs" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 
 </dd></dl>
 
 <dl class="class">
-<dt id="karta.vector.gpx.Trkseg">
-<em class="property">class </em><code class="descclassname">karta.vector.gpx.</code><code class="descname">Trkseg</code><span class="sig-paren">(</span><em>trkpts</em>, <em>properties</em>, <em>extensions</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.gpx.Trkseg" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Trkseg">
+<em class="property">class </em><code class="descclassname">karta.vector._gpx.</code><code class="descname">Trkseg</code><span class="sig-paren">(</span><em>trkpts</em>, <em>properties</em>, <em>extensions</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector._gpx.Trkseg" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="attribute">
-<dt id="karta.vector.gpx.Trkseg.extensions">
-<code class="descname">extensions</code><a class="headerlink" href="#karta.vector.gpx.Trkseg.extensions" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Trkseg.extensions">
+<code class="descname">extensions</code><a class="headerlink" href="#karta.vector._gpx.Trkseg.extensions" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 2</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="karta.vector.gpx.Trkseg.properties">
-<code class="descname">properties</code><a class="headerlink" href="#karta.vector.gpx.Trkseg.properties" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Trkseg.properties">
+<code class="descname">properties</code><a class="headerlink" href="#karta.vector._gpx.Trkseg.properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 1</p>
 </dd></dl>
 
 <dl class="attribute">
-<dt id="karta.vector.gpx.Trkseg.trkpts">
-<code class="descname">trkpts</code><a class="headerlink" href="#karta.vector.gpx.Trkseg.trkpts" title="Permalink to this definition">¶</a></dt>
+<dt id="karta.vector._gpx.Trkseg.trkpts">
+<code class="descname">trkpts</code><a class="headerlink" href="#karta.vector._gpx.Trkseg.trkpts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Alias for field number 0</p>
 </dd></dl>
 
@@ -3734,21 +3529,20 @@ spheroid definition.</p>
 <div class="section" id="module-karta.crs">
 <span id="crs-karta-crs"></span><h3>CRS (<code class="docutils literal"><span class="pre">karta.crs</span></code>)<a class="headerlink" href="#module-karta.crs" title="Permalink to this headline">¶</a></h3>
 <p>Coordinate reference systems</p>
-<p>Implements CRS classes for different kinds of spatial reference systems:</p>
+<p>Implements <cite>CRS</cite> bass class and subclasses for different kinds of spatial
+reference systems:</p>
 <blockquote>
 <div><ul class="simple">
-<li>CartesianCRS</li>
-<li>GeographicalCRS</li>
-<li>SphericalCRS</li>
-<li>EllipsoidalCRS</li>
-<li>ProjectedCRS</li>
+<li><cite>CartesianCRS</cite></li>
+<li><cite>GeographicalCRS</cite></li>
+<li><cite>ProjectedCRS</cite></li>
 </ul>
 </div></blockquote>
 <p>Coordinate reference system (CRS) objects represent mappings geographical
 positions to an x, y representation, and contain both projection and geodetic
-information. CRS objects should be treated is immutable. It is possible for
-multiple CRS objects to implement the same system, and tests for equality may
-fail.</p>
+information. See <cite>CRS</cite> for information on subclassing.</p>
+<p>CRS objects should be immutable. It is possible for multiple CRS objects to
+implement the same system, and tests for equality may fail.</p>
 <dl class="class">
 <dt id="karta.crs.CRS">
 <em class="property">class </em><code class="descclassname">karta.crs.</code><code class="descname">CRS</code><a class="reference internal" href="_modules/karta/crs.html#CRS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.CRS" title="Permalink to this definition">¶</a></dt>
@@ -3756,23 +3550,23 @@ fail.</p>
 <p>Subclasses should define:</p>
 <ul class="simple">
 <li>name attribute</li>
-<li>project(x, y) method</li>
+<li>project(x, y, inverse=False) method</li>
 <li>transform(other, x, y) method</li>
 <li>forward(x, y, azimuth, distance) method</li>
 <li>inverse(x0, y0, x1, y1) method</li>
 </ul>
 <p><em>project</em> transforms between world and projected coordinates, and takes the
 optional boolean parameter <em>inverse</em> (default <cite>False</cite>)</p>
-<p><em>forward</em> performs a forward geodetic calculation and returns world
-coordinates</p>
+<p><em>transform</em> converts from own CRS coordinates to coordinates in another CRS</p>
+<p><em>forward</em> performs a forward geodetic calculation and returns coordinates</p>
 <p><em>inverse</em> performs an inverse geodetic calculation and returns an azimuth,
 a back azimuth, and a distance</p>
-<p>A CRS subclass may optionally also provide string attributes:</p>
+<p>A CRS subclass may optionally also provide string attributes to provide
+interoperability with other systems.</p>
 <ul class="simple">
 <li>ref_proj4</li>
 <li>ref_wkt</li>
 </ul>
-<p>which are used to provide interoperability with other systems.</p>
 </dd></dl>
 
 <dl class="class">
@@ -3788,42 +3582,6 @@ a back azimuth, and a distance</p>
 <dl class="staticmethod">
 <dt id="karta.crs.CartesianCRS.inverse">
 <em class="property">static </em><code class="descname">inverse</code><span class="sig-paren">(</span><em>x1</em>, <em>y1</em>, <em>x2</em>, <em>y2</em>, <em>radians=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/crs.html#CartesianCRS.inverse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.CartesianCRS.inverse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Inverse geodetic problem to find the geodesic between points</p>
-</dd></dl>
-
-</dd></dl>
-
-<dl class="class">
-<dt id="karta.crs.EllipsoidalCRS">
-<em class="property">class </em><code class="descclassname">karta.crs.</code><code class="descname">EllipsoidalCRS</code><span class="sig-paren">(</span><em>a</em>, <em>b</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/crs.html#EllipsoidalCRS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.EllipsoidalCRS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Ellipsoidal geographic coordinate system defined by equatorial and
-polar radii.</p>
-<p><strong>DEPRECATED</strong></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>a</strong> : float</p>
-<blockquote>
-<div><p>ellipsoid major axis dimension</p>
-</div></blockquote>
-<p><strong>b</strong> : float</p>
-<blockquote class="last">
-<div><p>ellipsoid minor axis dimension</p>
-</div></blockquote>
-</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="karta.crs.EllipsoidalCRS.forward">
-<code class="descname">forward</code><span class="sig-paren">(</span><em>x</em>, <em>y</em>, <em>azimuth</em>, <em>distance</em>, <em>radians=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/crs.html#EllipsoidalCRS.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.EllipsoidalCRS.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Forward geodetic problem from a point</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="karta.crs.EllipsoidalCRS.inverse">
-<code class="descname">inverse</code><span class="sig-paren">(</span><em>x1</em>, <em>y1</em>, <em>x2</em>, <em>y2</em>, <em>radians=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/crs.html#EllipsoidalCRS.inverse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.EllipsoidalCRS.inverse" title="Permalink to this definition">¶</a></dt>
 <dd><p>Inverse geodetic problem to find the geodesic between points</p>
 </dd></dl>
 
@@ -3867,8 +3625,8 @@ polar radii.</p>
 <dl class="class">
 <dt id="karta.crs.ProjectedCRS">
 <em class="property">class </em><code class="descclassname">karta.crs.</code><code class="descname">ProjectedCRS</code><span class="sig-paren">(</span><em>proj</em>, <em>name=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/crs.html#ProjectedCRS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.ProjectedCRS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Custom reference systems, which may be backed by a <em>pypoj.Proj</em> instance
-or a custom projection function.</p>
+<dd><p>Projected reference systems backed by a <em>pypoj.Proj</em> instance or a
+custom projection function.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -3896,33 +3654,6 @@ or a custom projection function.</p>
 
 </dd></dl>
 
-<dl class="class">
-<dt id="karta.crs.SphericalCRS">
-<em class="property">class </em><code class="descclassname">karta.crs.</code><code class="descname">SphericalCRS</code><span class="sig-paren">(</span><em>radius</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/crs.html#SphericalCRS"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.SphericalCRS" title="Permalink to this definition">¶</a></dt>
-<dd><p>Spherical geographic coordinate system defined by a radius.</p>
-<p><strong>DEPRECATED</strong></p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>radius</strong> : float</td>
-</tr>
-</tbody>
-</table>
-<dl class="method">
-<dt id="karta.crs.SphericalCRS.forward">
-<code class="descname">forward</code><span class="sig-paren">(</span><em>lons</em>, <em>lats</em>, <em>az</em>, <em>dist</em>, <em>radians=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/crs.html#SphericalCRS.forward"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.SphericalCRS.forward" title="Permalink to this definition">¶</a></dt>
-<dd><p>Forward geodetic problem from a point</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="karta.crs.SphericalCRS.inverse">
-<code class="descname">inverse</code><span class="sig-paren">(</span><em>lons1</em>, <em>lats1</em>, <em>lons2</em>, <em>lats2</em>, <em>radians=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/crs.html#SphericalCRS.inverse"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.crs.SphericalCRS.inverse" title="Permalink to this definition">¶</a></dt>
-<dd><p>Inverse geodetic problem to find the geodesic between points</p>
-</dd></dl>
-
-</dd></dl>
-
 </div>
 <div class="section" id="geodesy-karta-geodesy">
 <h3>Geodesy (<code class="docutils literal"><span class="pre">karta.geodesy</span></code>)<a class="headerlink" href="#geodesy-karta-geodesy" title="Permalink to this headline">¶</a></h3>
@@ -3938,19 +3669,19 @@ subclass rather than directly.</p>
 <dl class="function">
 <dt id="karta.geodesy.ellipsoidal_area">
 <code class="descclassname">karta.geodesy.</code><code class="descname">ellipsoidal_area</code><span class="sig-paren">(</span><em>a</em>, <em>b</em>, <em>x1</em>, <em>y1</em>, <em>x2</em>, <em>y2</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/geodesy.html#ellipsoidal_area"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.geodesy.ellipsoidal_area" title="Permalink to this definition">¶</a></dt>
-<dd><p>Area of a single quatrilateral defined by two meridians, the equator,
+<dd><p>Area of a single quadrilateral defined by two meridians, the equator,
 and another geodesic.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>a</strong> : float (degrees)</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>a</strong> : float</p>
 <blockquote>
-<div><p>longitude of first meridian</p>
+<div><p>equatorial radius</p>
 </div></blockquote>
-<p><strong>b</strong> : float (degrees)</p>
+<p><strong>b</strong> : float</p>
 <blockquote>
-<div><p>longitude of second meridian</p>
+<div><p>polar radius</p>
 </div></blockquote>
 <p><strong>x1</strong> : float (degrees)</p>
 <blockquote>
@@ -4283,7 +4014,7 @@ corresponding problem on a sphere.</p>
   <div role="contentinfo">
     <p>
         &copy; Copyright 2016, Nat Wilson.
-      Last updated on Aug 29, 2016.
+      Last updated on Jan 15, 2017.
 
     </p>
   </div>
@@ -4305,7 +4036,7 @@ corresponding problem on a sphere.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.7.2',
+            VERSION:'0.8b1',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
             HAS_SOURCE:  true
