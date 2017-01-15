@@ -484,7 +484,8 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(gc.data_mask.sum(), 20)
         return
 
-    def test_mask_poly_multipl(self):
+    def test_mask_poly_multiple(self):
+        # mask by multiple polygons
         t = -np.linspace(0, 2*np.pi, 200)
         xp = ((2+np.cos(7*t)) * np.cos(t+0.3) + 4) * 4 + 15
         yp = ((2+np.cos(7*t)) * np.sin(t+0.2) + 4) * 4 + 72
@@ -497,6 +498,20 @@ class RegularGridTests(unittest.TestCase):
                            crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly([poly, poly2])
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 47081206720)
+        return
+
+    def test_mask_poly_multiband(self):
+        t = -np.linspace(0, 2*np.pi, 200)
+        xp = ((2+np.cos(7*t)) * np.cos(t+0.3) + 4) * 12
+        yp = ((2+np.cos(7*t)) * np.sin(t+0.2) + 4) * 12
+        poly = karta.Polygon(zip(xp, yp), crs=karta.crs.Cartesian)
+        grid = RegularGrid([0.0, 0.0, 0.1, 0.1, 0.0, 0.0],
+                           values=np.broadcast_to(
+                               np.atleast_3d(np.arange(1e6).reshape(1000, 1000)),
+                               (1000, 1000, 3)),
+                           crs=karta.crs.Cartesian)
+        masked_grid = grid.mask_by_poly(poly)
+        self.assertEqual(int(np.nansum(masked_grid[:,:])), 97048730546*3)
         return
 
     def test_get_positions(self):

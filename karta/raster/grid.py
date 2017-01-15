@@ -636,6 +636,7 @@ class RegularGrid(Grid):
             polys = [polys]
 
         msk = None
+        ny, nx = self.size
         for poly in polys:
 
             x, y = poly.get_coordinate_lists(self.crs)[:2]
@@ -643,7 +644,6 @@ class RegularGrid(Grid):
                 x = x[::-1]
                 y = y[::-1]
 
-            ny, nx = self.size
             _msk = mask_poly(x, y, nx, ny, self.transform)
 
             if msk is None:
@@ -658,6 +658,8 @@ class RegularGrid(Grid):
                 band[:,:] = data
             return self
         else:
+            if self.nbands != 1:
+                msk = np.broadcast_to(np.atleast_3d(msk), [ny, nx, self.nbands])
             return RegularGrid(self.transform,
                                values=np.where(msk, self[:,:], self.nodata),
                                crs=self.crs, nodata_value=self.nodata)
