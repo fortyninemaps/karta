@@ -26,7 +26,7 @@ from . import contains as _ccontains
 from .. import geodesy
 from ..crs import Cartesian, CartesianCRS, GeographicalCRS, LonLatWGS84
 from ..crs import SphericalEarth
-from ..errors import GeometryError, GGeoError, CRSError
+from ..errors import GeometryError, CRSError
 
 class Geometry(object):
     """ Abstract base class for all geometry types """
@@ -509,7 +509,7 @@ class MultiVertexMixin(object):
                         1
         """
         if len(self.vertices) == 0:
-            raise GGeoError("cannot transform zero length geometry")
+            raise ValueError("cannot transform zero length geometry")
 
         if M.shape == (2, 3):
             N = np.zeros((3, 4), dtype=np.float64)

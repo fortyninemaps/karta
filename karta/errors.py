@@ -1,29 +1,23 @@
 
 class GeometryError(Exception):
-    """ Base class for geometry module errors. """
-    def __init__(self, message=''):
-        self.message = message
-    def __str__(self):
-        return self.message
-
-class GGeoError(GeometryError):
-    """ Exception to raise when a geometry object attempts an invalid transform. """
+    """ Indicates invalid geometrical operations """
     def __init__(self, message=''):
         self.message = message
     def __str__(self):
         return self.message
 
 class CRSError(Exception):
-    """ Exception to raise for invalid geodetic operations. """
+    """ Indicates invalid CRS parameters or operations """
     def __init__(self, message=''):
         self.message = message
 
 class NoIntersection(Exception):
-    """ Exception to raise when segments have no intersection. """
+    """ Indicates that no intersection exists between segments """
     def __init__(self, message=''):
         self.message = message
 
 class GridError(Exception):
+    """ Indicates invalid Grid initialization, referencing, or transformation """
     def __init__(self, message=''):
         self.message = message
     def __str__(self):

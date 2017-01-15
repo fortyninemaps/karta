@@ -149,7 +149,7 @@ class RegularGrid(Grid):
                                float(transform[2]), float(transform[3]), 0, 0)
         else:
             raise errors.GridError("RegularGrid must be initialized with a "
-                                   " transform iterable or dictionary")
+                                   "transform iterable or dictionary")
 
         if bands is not None:
             self._bndcls = type(bands[0])
@@ -198,7 +198,7 @@ class RegularGrid(Grid):
                                values=self[:,:]+other[:,:],
                                crs=self.crs, nodata_value=self.nodata)
         else:
-            raise errors.GridError(self, other)
+            raise ValueError(self, other)
 
     def __sub__(self, other):
         if self._equivalent_structure(other):
@@ -206,7 +206,7 @@ class RegularGrid(Grid):
                                values=self[:,:]-other[:,:],
                                crs=self.crs, nodata_value=self.nodata)
         else:
-            raise errors.GridError(self, other)
+            raise ValueError(self, other)
 
     def __getitem__(self, key):
         return self._bandindexer[key]
@@ -734,7 +734,7 @@ class RegularGrid(Grid):
 
         Raises
         ------
-        GridError
+        IndexError
             points outside of Grid bbox
         """
         ny, nx = self.size
@@ -744,12 +744,12 @@ class RegularGrid(Grid):
 
         if hasattr(i, "__iter__"):
             if i.min() < 0 or i.max() > ny-1 or j.min() < 0 or j.max() > nx-1:
-                raise errors.GridError("coordinates outside grid region "
-                                       "({0})".format(self.bbox))
+                raise IndexError("coordinates outside grid region "
+                                 "({0})".format(self.bbox))
         else:
             if i < 0 or i > ny-1 or j < 0 or j > nx-1:
-                raise errors.GridError("coordinate outside grid region "
-                                       "({0})".format(self.bbox))
+                raise IndexError("coordinate outside grid region "
+                                 "({0})".format(self.bbox))
         return i,j
 
     def sample_nearest(self, x, y):
@@ -771,7 +771,7 @@ class RegularGrid(Grid):
 
         Raises
         ------
-        GridError
+        IndexError
             points outside of Grid bbox
         """
         if not hasattr(x, "__iter__"):
@@ -824,7 +824,7 @@ class RegularGrid(Grid):
 
         Raises
         ------
-        GridError
+        IndexError
             points outside of Grid bbox
         """
         if not hasattr(x, "__iter__"):
@@ -909,7 +909,7 @@ class RegularGrid(Grid):
 
         Raises
         ------
-        GridError
+        IndexError
             points outside of Grid bbox
         """
         crs = kwargs.get("crs", None)
@@ -1086,7 +1086,7 @@ def merge(grids, weights=None):
     for i, grid in enumerate(grids[1:]):
         if grid.transform[2:6] != T[2:6]:
             raise errors.GridError("grid %d transform stretch and skew "
-                    "does not match grid 1" % (i+2,))
+                                   "does not match grid 1" % (i+2,))
 
     # Check grid offset
     excmsg = "grid %d not an integer translation from grid 1"
