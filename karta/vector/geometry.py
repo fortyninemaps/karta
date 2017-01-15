@@ -1197,10 +1197,16 @@ class Multipart(Geometry):
 
     def __init__(self, vertices, data=None, **kwargs):
         super(Multipart, self).__init__(**kwargs)
-
-        if (data is None):
+        if data is None or len(data) == 0:
             self.data = Table(size=len(self.vertices))
+        elif isinstance(data, Table):
+            self.data = data
         else:
+            for k, v in data.items():
+                if len(v) != len(vertices):
+                    raise ValueError("length of `data` member '{k}' ({n}) not "
+                                     "equal to length of vertices ({m})".format(
+                                         k=k, n=len(v), m=len(vertices)))
             self.data = Table(data)
         return
 
@@ -1615,7 +1621,6 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
     crs : karta.crs.CRS subclass
         [default Cartesian]
     """
-
     def __init__(self, vertices, build_index=True, **kwargs):
         if len(vertices) == 0:
             self.vertices = []
@@ -1758,9 +1763,11 @@ def multipart_from_singleparts(parts, crs=None):
     if gt == "Point":
         cls = Multipoint
         vertices = [part.get_vertex(crs=crs) for part in parts]
+        return Multipoint(vertices, data=data, crs=crs)
     elif gt == "Line":
         cls = Multiline
         vertices = [part.get_vertices(crs=crs) for part in parts]
+        return Multiline(vertices, data=data, crs=crs)
     elif gt == "Polygon":
         cls = Multipolygon
         vertices = []
@@ -1768,11 +1775,10 @@ def multipart_from_singleparts(parts, crs=None):
             part_vertices = [part.get_vertices(crs=crs)]
             for sub in part.subs:
                 part_vertices.append(sub.get_vertices(crs=crs))
-        vertices.append(part_vertices)
+            vertices.append(part_vertices)
+        return Multipolygon(vertices, data=data, crs=crs)
     else:
         raise GeometryError("cannot convert type '{0}' to multipart".format(gt))
-
-    return cls(vertices, data=data, crs=crs)
 
 def merge_multiparts(*multiparts, **kw):
 

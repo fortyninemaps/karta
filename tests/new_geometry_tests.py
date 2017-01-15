@@ -72,13 +72,13 @@ class TestMultipartGeometry(unittest.TestCase):
 
     def test_multiline(self):
         vertices = []
-        data = []
+        data = {"a":[]}
         for i in range(5):
             sub = []
             for j in range(5):
                 sub.append((2*j+i, -1.5*j+2*i))
             vertices.append(sub)
-            data.append(i*j)
+            data["a"].append(i*j)
 
         Multiline(vertices, data=data)
         return
@@ -112,15 +112,28 @@ class TestMultipartGeometry(unittest.TestCase):
 
     def test_multipolygon(self):
         vertices = []
-        data = []
+        data = {"a":[]}
         for i in range(5):
             sub = []
             for j in range(5):
                 sub.append((2*j+i, -1.5*j+2*i))
             vertices.append([sub])
-            data.append(i*j)
+            data["a"].append(i*j)
 
         Multipolygon(vertices, data=data)
+        return
+
+    def test_multipolygon_empty_data(self):
+        vertices = []
+        for i in range(5):
+            sub = []
+            for j in range(5):
+                sub.append((2*j+i, -1.5*j+2*i))
+            vertices.append([sub])
+
+        mp = Multipolygon(vertices, data={})
+        # constructor should override empty data dictionary to allow indexing
+        [mp[i] for i in range(len(mp))]
         return
 
     def test_multipolygon_from_polygons_constructor(self):
@@ -172,10 +185,10 @@ class TestMultipartGeometry(unittest.TestCase):
         return
 
     def test_merge_multipoints(self):
-        mp1 = Multipoint(zip(np.arange(0, 5), np.arange(3, 6)),
+        mp1 = Multipoint(zip(np.arange(0, 5), np.arange(3, 8)),
                          properties={"a": 1, "b": 2},
                          data={"A": np.arange(5), "B": np.arange(10, 15)})
-        mp2 = Multipoint(zip(np.arange(0, 5)+1, np.arange(3, 6)-2),
+        mp2 = Multipoint(zip(np.arange(0, 5)+1, np.arange(3, 8)-2),
                          properties={"a": 1, "c": 3},
                          data={"A": np.arange(5), "C": np.arange(15, 20)})
         mp = merge_multiparts(mp1, mp2)
@@ -185,11 +198,11 @@ class TestMultipartGeometry(unittest.TestCase):
         self.assertEqual(mp.properties["a"], 1)
 
     def test_merge_multipoints_different_crs(self):
-        mp1 = Multipoint(zip(np.arange(0, 5), np.arange(3, 6)),
+        mp1 = Multipoint(zip(np.arange(0, 5), np.arange(3, 8)),
                          properties={"a": 1, "b": 2},
                          data={"A": np.arange(5), "B": np.arange(10, 15)},
                          crs=LonLatWGS84)
-        mp2 = Multipoint(zip(np.arange(0, 5)+1, np.arange(3, 6)-2),
+        mp2 = Multipoint(zip(np.arange(0, 5)+1, np.arange(3, 8)-2),
                          properties={"a": 1, "c": 3},
                          data={"A": np.arange(5), "C": np.arange(15, 20)},
                          crs=WebMercator)
@@ -200,18 +213,24 @@ class TestMultipartGeometry(unittest.TestCase):
         self.assertEqual(mp.properties["a"], 1)
         self.assertEqual(mp.crs, WebMercator)
         self.assertTrue(np.allclose(mp.coordinates,
-                np.array([[0.0,  1.11319491e+05, 2.22638982e+05, 1.0, 2.0, 3.0],
-                          [3.34111171e+05, 4.45640110e+05, 5.57305257e+05, 1.0, 2.0, 3.0]])))
+            np.array([[0.00000000e+00, 1.11319491e+05, 2.22638982e+05,
+                       3.33958472e+05, 4.45277963e+05, 1.00000000e+00,
+                       2.00000000e+00, 3.00000000e+00,   4.00000000e+00,
+                       5.00000000e+00],
+                      [3.34111171e+05, 4.45640110e+05, 5.57305257e+05,
+                       6.69141057e+05, 7.81182214e+05, 1.00000000e+00,
+                       2.00000000e+00, 3.00000000e+00, 4.00000000e+00,
+                       5.00000000e+00]])))
 
     def test_merge_multilines(self):
         x = np.arange(5)
         y = np.arange(5, 10)
         mp1 = Multiline([list(zip(x, y)), list(zip(-x, -y)), list(zip(x, -y))],
                          properties={"a": 1, "b": 2},
-                         data={"A": np.arange(5), "B": np.arange(10, 15)})
+                         data={"A": np.arange(3), "B": np.arange(10, 13)})
         mp2 = Multiline([list(zip(x, 2*y)), list(zip(-2*x, y)), list(zip(1.5*x, y))],
                          properties={"a": 1, "c": 3},
-                         data={"A": np.arange(5), "C": np.arange(15, 20)})
+                         data={"A": np.arange(3), "C": np.arange(15, 18)})
         mp = merge_multiparts(mp1, mp2)
         self.assertTrue(len(mp), 10)
         self.assertEqual(set(mp.data.fields), set(["A"]))

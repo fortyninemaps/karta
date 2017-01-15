@@ -26,8 +26,8 @@ class TestGeometry(unittest.TestCase):
                          (4.0, 5.0, 7.0), (9.0, 9.0, 4.0), (1.0, 4.0, 7.0),
                          (1.0, 7.0, 8.0), (9.0, 1.0, 6.0)]
 
-        self.data = [99.0, 2.0, 60.0, 75.0, 71.0, 34.0, 1.0, 49.0, 4.0, 36.0,
-                     47.0, 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]
+        self.data = {"a": [99.0, 2.0, 60.0, 75.0, 71.0, 34.0, 1.0, 49.0, 4.0,
+            36.0, 47.0, 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]}
         return
 
     def test_point_equality(self):
@@ -82,30 +82,30 @@ class TestGeometry(unittest.TestCase):
 
     def test_multipoint_get(self):
         mp = Multipoint(self.vertices, data=self.data)
-        point = Point(self.vertices[0], properties={"value": 99.0})
+        point = Point(self.vertices[0], properties={"a": 99.0})
         self.assertEqual(mp[0], point)
         return
 
     def test_multipoint_set(self):
         mp1 = Multipoint([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
                          (4.0, 4.0), (0.0, 1.0)],
-                         data=["rankin", "corbet", "arviat",
-                               "severn", "churchill"])
+                         data={"name": ["rankin", "corbet", "arviat",
+                                        "severn", "churchill"]})
         mp2 = Multipoint([(3.0, 3.0), (5.0, 1.0), (4.0, 5.0),
                          (4.0, 4.0), (0.0, 1.0)],
-                         data=["rankin", "corbet", "umiujaq",
-                               "severn", "churchill"])
+                         data={"name": ["rankin", "corbet", "umiujaq",
+                                        "severn", "churchill"]})
         mp1[2] = (4.0, 5.0)
         self.assertNotEqual(mp1, mp2)
-        mp1[2] = Point((4.0, 5.0), properties={"value": "umiujaq"})
+        mp1[2] = Point((4.0, 5.0), properties={"name": "umiujaq"})
         self.assertEqual(mp1, mp2)
         return
 
     def test_multipoint_iterator(self):
         mp = Multipoint([(3.0, 3.0), (5.0, 1.0), (3.0, 1.0),
                          (4.0, 4.0), (0.0, 1.0)],
-                         data=["rankin", "corbet", "arviat",
-                               "severn", "churchill"])
+                         data={"name": ["rankin", "corbet", "arviat",
+                                        "severn", "churchill"]})
         for i, pt in enumerate(mp):
             self.assertEqual(mp[i], pt)
         return
@@ -121,12 +121,12 @@ class TestGeometry(unittest.TestCase):
 
     def test_multipoint_slicing1(self):
         mp = Multipoint(self.vertices, data=self.data)
-        submp = Multipoint(self.vertices[5:10], data=self.data[5:10])
+        submp = Multipoint(self.vertices[5:10], data={"a": self.data["a"][5:10]})
         self.assertEqual(mp[5:10], submp)
 
     def test_multipoint_slicing2(self):
         mp = Multipoint(self.vertices, data=self.data)
-        submp = Multipoint(self.vertices[5:], data=self.data[5:])
+        submp = Multipoint(self.vertices[5:], data={"a": self.data["a"][5:]})
         self.assertEqual(mp[5:], submp)
         return
 
@@ -188,8 +188,8 @@ class TestGeometryAnalysis(unittest.TestCase):
                          (4.0, 5.0, 7.0), (9.0, 9.0, 4.0), (1.0, 4.0, 7.0),
                          (1.0, 7.0, 8.0), (9.0, 1.0, 6.0)]
 
-        self.data = [99.0, 2.0, 60.0, 75.0, 71.0, 34.0, 1.0, 49.0, 4.0, 36.0,
-                     47.0, 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]
+        self.data = {"a" :[99.0, 2.0, 60.0, 75.0, 71.0, 34.0, 1.0, 49.0, 4.0,
+            36.0, 47.0, 58.0, 65.0, 72.0, 4.0, 27.0, 52.0, 37.0, 95.0, 17.0]}
         return
 
     def test_point_azimuth(self):
