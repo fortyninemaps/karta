@@ -19,7 +19,7 @@ import warnings
 def recurse_iterables(f, *args, **kwargs):
     def func(*args, **kwargs):
         if hasattr(args[0], "__iter__"):
-            return np.array([f(*argsset, **kwargs) for argset in zip(*args)])
+            return np.array([f(*argset, **kwargs) for argset in zip(*args)])
         else:
             return f(*args, **kwargs)
     return func
@@ -93,7 +93,7 @@ def plane_azimuth(x1, y1, x2, y2):
 # ---------------------------------
 
 @recurse_iterables
-def sphere_distance(lons1, lats1, lons2, lats2, radius=1.0):
+def sphere_distance(lon1, lat1, lon2, lat2, radius=1.0):
     dx = abs(lon1-lon2)
     dy = abs(lat1-lat2)
 

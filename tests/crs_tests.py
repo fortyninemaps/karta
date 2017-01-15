@@ -291,33 +291,6 @@ class TestCRS(unittest.TestCase):
         for key in ("+proj", "+lat_0", "+lon_0", "+lat_ts", "+datum"):
             self.assertEqual(crsdict1[key], crsdict2[key])
 
-    def test_brent1(self):
-        def forsythe(x):
-            return x**3 - 2*x - 5
-        self.assertAlmostEqual(2.094551482,
-                geodesy.fzero_brent(2, 3, forsythe, 1e-12))
-        return
-
-    def test_brent2(self):
-        self.assertAlmostEqual(0.7390851332,
-                geodesy.fzero_brent(0, 1, lambda x: math.cos(x)-x, 1e-12))
-        return
-
-    def test_brent3(self):
-        self.assertAlmostEqual(0.0,
-                geodesy.fzero_brent(-1, 1, lambda x: math.sin(x)-x, 1e-12))
-        return
-
-    def test_brent4(self):
-        self.assertAlmostEqual(0.0,
-                geodesy.fzero_brent(0, 1, lambda x: math.sin(x)-x, 1e-12))
-        return
-
-    def test_brent_bracket_error(self):
-        self.assertRaises(ValueError,
-                geodesy.fzero_brent, 0.2, 2, lambda x: math.sin(x)-x, 1e-12)
-        return
-
     def test_datum_transform(self):
         lng, lat = crs.LonLatNAD27.transform(crs.LonLatNAD83, -107.5, 43.14)
         self.assertAlmostEqual(lng, -107.50062798611111, places=3)
@@ -395,6 +368,32 @@ class TestGeodesyFuncs(unittest.TestCase):
         self.assertAlmostEqual(d, d_, places=4)
         return
 
+    def test_brent1(self):
+        def forsythe(x):
+            return x**3 - 2*x - 5
+        self.assertAlmostEqual(2.094551482,
+                geodesy.fzero_brent(2, 3, forsythe, 1e-12))
+        return
+
+    def test_brent2(self):
+        self.assertAlmostEqual(0.7390851332,
+                geodesy.fzero_brent(0, 1, lambda x: math.cos(x)-x, 1e-12))
+        return
+
+    def test_brent3(self):
+        self.assertAlmostEqual(0.0,
+                geodesy.fzero_brent(-1, 1, lambda x: math.sin(x)-x, 1e-12))
+        return
+
+    def test_brent4(self):
+        self.assertAlmostEqual(0.0,
+                geodesy.fzero_brent(0, 1, lambda x: math.sin(x)-x, 1e-12))
+        return
+
+    def test_brent_bracket_error(self):
+        self.assertRaises(ValueError,
+                geodesy.fzero_brent, 0.2, 2, lambda x: math.sin(x)-x, 1e-12)
+        return
 
 if __name__ == "__main__":
     unittest.main()

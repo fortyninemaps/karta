@@ -1,4 +1,4 @@
-from .vector import Point, Multipoint, Line, Polygon
+from .vector import Point, Polygon
 from .crs import LonLatWGS84, NSIDCNorth
 
 us_capitols = [Point((-112.1, 33.57), properties={"n": "Phoenix, Arizona, United States"}, crs=LonLatWGS84),
