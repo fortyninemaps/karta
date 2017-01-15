@@ -514,6 +514,19 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 97048730546*3)
         return
 
+    def test_mask_poly_inverted(self):
+        # grids where transform dy is negative (common for geotiffs)
+        t = -np.linspace(0, 2*np.pi, 200)
+        xp = ((2+np.cos(7*t)) * np.cos(t+0.3) + 4) * 12
+        yp = ((2+np.cos(7*t)) * np.sin(t+0.2) + 4) * 12
+        poly = karta.Polygon(zip(xp, yp), crs=karta.crs.Cartesian)
+        grid = RegularGrid([0.0, 100, 0.1, -0.1, 0.0, 0.0],
+                           values=np.arange(1e6).reshape(1000, 1000),
+                           crs=karta.crs.Cartesian)
+        masked_grid = grid.mask_by_poly(poly)
+        self.assertEqual(int(np.nansum(masked_grid[:,:])), 97048730546)
+        return
+
     def test_get_positions(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.zeros((3,3)))

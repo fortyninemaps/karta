@@ -1240,12 +1240,13 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
     """
     mask = np.zeros((ny, nx), dtype=np.int8)
 
-    # find southernmost index (will start and end on this point)
-    v = ypoly[0]
+    # find left southernmost index (will start and end on this point)
+    x0, y0 = xpoly[0], ypoly[0]
     i_bot = 0
     for i in range(1, len(ypoly)):
-        if ypoly[i] < v:
-            v = ypoly[i]
+        if ypoly[i] < y0 or (ypoly[i] == y0 and xpoly[i] < x0):
+            x0 = xpoly[i]
+            y0 = ypoly[i]
             i_bot = i
 
     x0 = xpoly[i_bot]
@@ -1253,6 +1254,16 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
 
     # compute the grid indices of the starting point
     ta, tb, tc, td, te, tf = transform
+
+    # normalize grid transform so increasing i, j corresponds to north, east
+    if tc < 0:
+        ta = ta + nx*tc
+        tc = -tc
+
+    if td < 0:
+        tb = tb + ny*td
+        td = -td
+
     i0 = int(round((y0-tb - tf/tc*(x0-ta)) / (td - tf*te/tc)))
     j0 = int(round((x0-ta - te/td*(y0-tb)) / (tc - te*tf/td)))
 
