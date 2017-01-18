@@ -497,7 +497,7 @@ def intersects_sph(CoordString a, CoordString b):
 
     return False
 
-cdef inline bool _intersects(tuple seg1, tuple seg2):
+cdef bool _intersects(tuple seg1, tuple seg2):
     """ Test whether two segments have an intersection. """
     cdef tuple interx
     if seg1[4] == seg2[4]:
@@ -512,15 +512,15 @@ cdef inline bool _intersects(tuple seg1, tuple seg2):
         return False
     return True
 
-#cdef inline Vector2 _project_gnomonic(Vector2 lonlat, lon0, R):
+#cdef Vector2 _project_gnomonic(Vector2 lonlat, lon0, R):
 #    cdef double x = R*tan(lonlat.x - lon0)
 #    cdef double y = R*tan(lonlat.y)/cos(lonlat.x-lon0)
 #    return Vector2(x, y)
 #
-#cdef inline Vector2 _invproject_gnomonic(Vector2 xy, lon0, R):
+#cdef Vector2 _invproject_gnomonic(Vector2 xy, lon0, R):
 #    return
 
-cdef inline bool overlaps(double a0, double a1, double b0, double b1):
+cdef bool overlaps(double a0, double a1, double b0, double b1):
     if (a0 <= b0 <= a1) or (a0 <= b1 <= a1) or (b0 <= a0 <= b1) or (b0 <= a1 <= b1):
         return True
     else:

@@ -16,16 +16,16 @@ cdef struct Vector3:
     double y
     double z
 
-cdef inline double dot2(Vector2 u, Vector2 v) nogil:
+cdef double dot2(Vector2 u, Vector2 v) nogil:
     return u.x*v.x + u.y*v.y
 
-cdef inline double dot3(Vector3 u, Vector3 v) nogil:
+cdef double dot3(Vector3 u, Vector3 v) nogil:
     return u.x*v.x + u.y*v.y + u.z*v.z
 
-cdef inline double cross2(Vector2 u, Vector2 v) nogil:
+cdef double cross2(Vector2 u, Vector2 v) nogil:
     return u.x*v.y - u.y*v.x
 
-cdef inline Vector3 cross3(Vector3 u, Vector3 v):
+cdef Vector3 cross3(Vector3 u, Vector3 v):
     return Vector3(u.y*v.z - u.z*v.y, u.x*v.z - u.z*v.x, u.x*v.y - u.y*v.x)
 
 cdef Vector2 proj2(Vector2 u, Vector2 v):
@@ -33,7 +33,7 @@ cdef Vector2 proj2(Vector2 u, Vector2 v):
     uv_vv = dot2(u, v) / dot2(v, v)
     return Vector2(uv_vv*v.x, uv_vv*v.y)
 
-cdef inline double dist2(Vector2 pt0, Vector2 pt1) nogil:
+cdef double dist2(Vector2 pt0, Vector2 pt1) nogil:
     return sqrt((pt0.x-pt1.x)**2 + (pt0.y-pt1.y)**2)
 
 @cython.cdivision(True)
@@ -129,7 +129,7 @@ def bbox(CoordString cs):
     return (xmin, ymin, xmax, ymax)
 
 @cython.cdivision(True)
-cdef inline Vector3 sph2cart(Vector2 a):
+cdef Vector3 sph2cart(Vector2 a):
     """ Convert a (lambda, phi) coordinate on a sphere with an origin at
     (0, 0, 0) to an (x, y, z) coordinate. """
     cdef double theta = 90.0 - a.y
@@ -138,7 +138,7 @@ cdef inline Vector3 sph2cart(Vector2 a):
                    cos(M_PI*theta/180.0))
 
 @cython.cdivision(True)
-cdef inline Vector2 cart2sph(Vector3 a):
+cdef Vector2 cart2sph(Vector3 a):
     """ Convert an (x, y, z) coordinate to a (lambda, phi) coordinate on a
     sphere with an origin at (0, 0, 0). """
     cdef double lon = 0.0
