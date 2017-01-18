@@ -1,5 +1,8 @@
 environment:
 
+  global:
+    GDAL_HOME: "C:\\gdal"
+
   matrix:
 
     # For Python versions available on Appveyor, see
@@ -10,18 +13,30 @@ environment:
     - PYTHON: "C:\\Python27"
     - PYTHON: "C:\\Python34"
     - PYTHON: "C:\\Python35"
+    - PYTHON: "C:\\Python36"
     - PYTHON: "C:\\Python27-x64"
     - PYTHON: "C:\\Python34-x64"
       DISTUTILS_USE_SDK: "1"
     - PYTHON: "C:\\Python35-x64"
+    - PYTHON: "C:\\Python36-x64"
 
 
 install:
-  - "%PYTHON%\\python.exe -m pip install setuptools numpy picogeojson pyproj gdal blosc"
-  - "cd karta"
-  - "%PYTHON%\\python.exe -m pip install ."
 
-build: off
+  # Borrows from the Fiona build script
+  - ps: mkdir C:\build | out-null
+  - ps: mkdir C:\gdal | out-null
+
+  - curl http://download.gisinternals.com/sdk/downloads/release-1600-x64-gdal-1-11-4-mapserver-6-4-3.zip --output gdalbin.zip
+  - 7z x gdalbin.zip -oC:\gdal
+  - curl http://download.gisinternals.com/sdk/downloads/release-1600-x64-gdal-1-11-4-mapserver-6-4-3-libs.zip --output gdallibs.zip
+  - 7z x gdallibs.zip -oC:\gdal
+  - "SET PATH=C:\\gdal;C:\\gdal\\bin;C:\\gdal\\data;C:\\gdal\\bin\\gdal\\apps;%PATH%"
+  - "SET GDAL_DATA=C:\\gdal\\bin\\gdal-data"
+
+  - "%PYTHON%\\python.exe -m pip install setuptools numpy picogeojson pyproj gdal blosc shapely"
+  - "cd C:\\projects\\karta"
+  - "%PYTHON%\\python.exe -m pip install ."
 
 test_script:
   - "build.cmd %PYTHON%\\python.exe tests\\runtests.py"
