@@ -106,22 +106,21 @@ class TestGeoJSONOutput(unittest.TestCase):
     def test_point_write_cartesian(self):
         p = Point((100.0, 0.0), crs=Cartesian)
         s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806", force_wgs84=False)
-        ans = """{"properties": {}, "geometry": {"coordinates": [100.0, 0.0], "crs": {"properties": {"name": "urn:ogc:def:crs:EPSG::5806"}, "type": "name"}, "type": "Point"}, "type": "Feature"}"""
+        ans = """{"properties": {},"bbox": [100.0, 0.0, 100.0, 0.0], "geometry": {"coordinates": [100.0, 0.0],"bbox": [100.0, 0.0, 100.0, 0.0], "crs": {"properties": {"name": "urn:ogc:def:crs:EPSG::5806"}, "type": "name"}, "type": "Point"}, "type": "Feature"}"""
         self.verifyJson(s, ans)
         return
 
     def test_point_write(self):
         p = Point((100.0, 0.0), crs=LonLatWGS84)
         s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
-        ans = """{"properties": {}, "geometry": {"coordinates": [100.0, 0.0], "crs": {"properties": {"name": "urn:ogc:def:crs:EPSG::5806"}, "type": "name"}, "type": "Point"}, "type": "Feature"}"""
+        ans = """{"properties": {}, "bbox": [100.0, 0.0, 100.0, 0.0], "geometry": {"coordinates": [100.0, 0.0], "bbox": [100.0, 0.0, 100.0, 0.0], "crs": {"properties": {"name": "urn:ogc:def:crs:EPSG::5806"}, "type": "name"}, "type": "Point"}, "type": "Feature"}"""
         self.verifyJson(s, ans)
         return
 
     def test_line_write(self):
         p = Line([(100.0, 0.0), (101.0, 1.0)], crs=LonLatWGS84)
         s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
-        ans = """{ "type": "Feature", "properties": {}, "geometry": { "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ 100.0, 0.0 ], [ 101.0, 1.0 ] ], "type": "LineString" } }"""
-
+        ans = """{"type": "Feature", "geometry": {"coordinates": [[100.0, 0.0], [101.0, 1.0]], "type": "LineString", "bbox": [100.0, 0.0, 101.0, 1.0], "crs": {"type": "name", "properties": {"name": "urn:ogc:def:crs:EPSG::5806"}}}, "properties": {}, "bbox": [100.0, 0.0, 101.0, 1.0]}"""
         self.verifyJson(s, ans)
         return
 
@@ -129,7 +128,7 @@ class TestGeoJSONOutput(unittest.TestCase):
         p = Polygon([[100.0, 0.0], [101.0, 0.0], [101.0, 1.0],
                      [100.0, 1.0]], crs=LonLatWGS84)
         s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
-        ans = """{ "properties": {}, "geometry": { "type": "Polygon", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ [ 100.0, 0.0 ], [ 101.0, 0.0 ], [ 101.0, 1.0 ], [ 100.0, 1.0 ], [ 100.0, 0.0 ] ] ] }, "type": "Feature" }"""
+        ans = """{ "properties": {}, "bbox": [100.0, 0.0, 101.0, 1.0], "geometry": { "type": "Polygon", "bbox": [100.0, 0.0, 101.0, 1.0], "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ [ 100.0, 0.0 ], [ 101.0, 0.0 ], [ 101.0, 1.0 ], [ 100.0, 1.0 ], [ 100.0, 0.0 ] ] ] }, "type": "Feature" }"""
 
         self.verifyJson(s, ans)
         return
@@ -137,7 +136,7 @@ class TestGeoJSONOutput(unittest.TestCase):
     def test_multiline_write(self):
         p = Multiline([[(100, 0), (101, 1)], [(102, 2), (103, 3)]], crs=LonLatWGS84)
         s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
-        ans = """{"type": "Feature", "properties": {}, "geometry" : { "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "type": "MultiLineString", "coordinates": [ [ [100.0, 0.0], [101.0, 1.0] ], [ [102.0, 2.0], [103.0, 3.0] ] ] } }"""
+        ans = """{"type": "Feature", "properties": {}, "bbox": [100.0, 0.0, 103.0, 3.0], "geometry" : { "bbox": [100.0, 0.0, 103.0, 3.0], "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "type": "MultiLineString", "coordinates": [ [ [100.0, 0.0], [101.0, 1.0] ], [ [102.0, 2.0], [103.0, 3.0] ] ] } }"""
 
         self.verifyJson(s, ans)
 
@@ -147,7 +146,8 @@ class TestGeoJSONOutput(unittest.TestCase):
                            [(100.2, 0.2), (100.8, 0.2), (100.8, 0.8), (100.2, 0.8)]]],
                           crs=LonLatWGS84)
         s = p.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
-        ans = """{"type": "Feature", "properties": {}, "geometry" : { "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "type": "MultiPolygon",
+        ans = """{"type": "Feature", "properties": {},"bbox": [100.0, 0.0, 103.0, 3.0], "geometry" : { "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "type": "MultiPolygon",
+    "bbox": [100.0, 0.0, 103.0, 3.0],
     "coordinates": [
       [[[102.0, 2.0], [103.0, 2.0], [103.0, 3.0], [102.0, 3.0], [102.0, 2.0]]],
       [[[100.0, 0.0], [101.0, 0.0], [101.0, 1.0], [100.0, 1.0], [100.0, 0.0]],
@@ -162,7 +162,9 @@ class TestGeoJSONOutput(unittest.TestCase):
         p = Line([(1e6, 1e6), (1.2e6, 1.4e6)], crs=WebMercator)
         s = p.as_geojson()
         ans = """{ "type": "Feature", "properties": {},
+            "bbox": [8.983152841195214, 8.946573850543412, 10.779783409434257, 12.476624651238847],
             "geometry": {
+                "bbox": [8.983152841195214, 8.946573850543412, 10.779783409434257, 12.476624651238847],
                 "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
                 "coordinates": [[8.983152841195214, 8.946573850543412],
                                 [10.779783409434257, 12.476624651238847]],
@@ -186,7 +188,7 @@ class TestGeoJSONOutput(unittest.TestCase):
                                       "Lincoln, Nebraska"]},
                         crs=LonLatWGS84)
         s = capitols.as_geojson(urn="urn:ogc:def:crs:EPSG::5806")
-        ans = """{ "properties": { "n": [ "Phoenix, Arizona", "Sacramento, California", "Atlanta, Georgia", "Indianapolis, Indiana", "Helena, Montana", "Columbus, Ohio", "Richmond, Virginia", "Topeka, Kansas", "Boston, Massachusetts", "Lincoln, Nebraska" ] }, "type": "Feature", "geometry": { "type": "MultiPoint", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ -112.1, 33.57 ], [ -121.5, 38.57 ], [ -84.42, 33.76 ], [ -86.15, 39.78 ], [ -112.0, 46.6 ], [ -82.99, 39.98 ], [ -77.48, 37.53 ], [ -95.69, 39.04 ], [ -71.02, 42.33 ], [ -96.68, 40.81 ] ] } } """
+        ans = """{"bbox": [-121.5, 33.57, -71.02, 46.6], "properties": { "n": [ "Phoenix, Arizona", "Sacramento, California", "Atlanta, Georgia", "Indianapolis, Indiana", "Helena, Montana", "Columbus, Ohio", "Richmond, Virginia", "Topeka, Kansas", "Boston, Massachusetts", "Lincoln, Nebraska" ] }, "type": "Feature", "geometry": {"bbox": [-121.5, 33.57, -71.02, 46.6], "type": "MultiPoint", "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::5806" } }, "coordinates": [ [ -112.1, 33.57 ], [ -121.5, 38.57 ], [ -84.42, 33.76 ], [ -86.15, 39.78 ], [ -112.0, 46.6 ], [ -82.99, 39.98 ], [ -77.48, 37.53 ], [ -95.69, 39.04 ], [ -71.02, 42.33 ], [ -96.68, 40.81 ] ] } } """
         self.verifyJson(s, ans)
         return
 
