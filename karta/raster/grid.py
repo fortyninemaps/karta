@@ -690,6 +690,10 @@ class RegularGrid(Grid):
         method : str, optional
             interpolation method, currently 'nearest' and 'linear' supported
         """
+        if dx <= 0 or dy <= 0:
+            raise ValueError("resolution must be positive "
+                             "(got {0}, {1})".format(dx, dy))
+
         xmin, xmax, ymin, ymax = self.get_extent()
         if method == 'nearest':
             X, Y = np.meshgrid(np.arange(xmin, xmax, dx),
