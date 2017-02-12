@@ -159,6 +159,9 @@ class RegularGrid(Grid):
             self._bndcls = bandclass
 
         if bands is not None:
+            if any(bands[0].size != b.size for b in bands[1:]):
+                size_str = " ".join(set(str(b.size) for b in bands))
+                raise ValueError("bands have mismatching size: {0}".format(size_str))
             self.bands = bands
         else:
             self.bands = []
