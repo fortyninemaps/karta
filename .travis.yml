@@ -20,10 +20,9 @@ before_install:
   - "conda info -a"
 
 install:
-  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=8.1 numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 coverage>=4.2"
+  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=8.1 numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 coverage>=4.2 shapely>=1.5"
   - "source activate test-env"
   - "pip install -r requirements.txt"
-  - "pip install shapely"
   - "pip install coveralls"
   - "pip install . --no-deps"
   - "rm -rf karta/"   # clean-up to workaround coverage.py scanning karta/ dir
