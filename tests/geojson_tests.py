@@ -19,6 +19,12 @@ from karta.crs import LonLatWGS84, WebMercator, Cartesian
 
 class TestGeoJSON(unittest.TestCase):
 
+    def test_read_scalar_properties(self):
+        path = os.path.join(TESTDATA, "geojson_input/california.geojson")
+        geoms = vector.read_geojson(path)
+        self.assertEqual(geoms[0].properties, {'featurecla': 'Land', 'scalerank': 0})
+        return
+
     def test_geometrycollection2geometry(self):
         path = os.path.join(TESTDATA, "geojson_input/geometrycollection.json")
         geoms = vector.read_geojson(path)

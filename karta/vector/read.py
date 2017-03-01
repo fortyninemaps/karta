@@ -119,9 +119,12 @@ def read_geojson(f, crs=LonLatWGS84):
                                       picogeojson.MultiPolygon)):
             n = len(feat.geometry.coordinates)
             for k, v in feat.properties.items():
-                if len(v) == n:
-                    data[k] = v
-                else:
+                try:
+                    if len(v) == n:
+                        data[k] = v
+                    else:
+                        properties[k] = v
+                except TypeError:
                     properties[k] = v
         else:
             properties.update(feat.properties)
