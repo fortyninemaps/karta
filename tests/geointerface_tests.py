@@ -2,7 +2,12 @@
 
 import unittest
 import numpy as np
-import shapely.geometry
+
+try:
+    import shapely.geometry
+    HAS_SHAPELY = True
+except ImportError:
+    HAS_SHAPELY = False
 
 import karta.vector as vector
 from karta.vector.geometry import Point, Multipoint, Line, Polygon
@@ -42,6 +47,7 @@ class TestGeoInterface(unittest.TestCase):
                           "coordinates": _as_nested_lists(zip(x[:5],y[:5]))})
 
 
+    @unittest.skipIf(not HAS_SHAPELY, "shapely required")
     def test_point_output(self):
         p = Point((4, 2))
         sp = shapely.geometry.shape(p.geomdict)
@@ -49,6 +55,7 @@ class TestGeoInterface(unittest.TestCase):
         self.assertEqual(sp.y, p.y)
         return
 
+    @unittest.skipIf(not HAS_SHAPELY, "shapely required")
     def test_multipoint_output(self):
         p = Multipoint([(4, 2), (3, 5), (3, 2), (7, 3)])
         sp = shapely.geometry.shape(p.geomdict)
@@ -57,6 +64,7 @@ class TestGeoInterface(unittest.TestCase):
         self.assertTrue(np.all(y == np.array([el.y for el in sp])))
         return
 
+    @unittest.skipIf(not HAS_SHAPELY, "shapely required")
     def test_line_output(self):
         p = Line([(4, 2), (3, 5), (3, 2), (7, 3)])
         sp = shapely.geometry.shape(p.geomdict)
@@ -66,12 +74,14 @@ class TestGeoInterface(unittest.TestCase):
         self.assertTrue(np.all(y == np.array(sy)))
         return
 
+    @unittest.skipIf(not HAS_SHAPELY, "shapely required")
     def test_poly_output(self):
         p = Polygon([(4, 2), (3, 5), (3, 2), (7, 3)])
         sp = shapely.geometry.shape(p.geomdict)
         self.assertEqual(p.bbox, sp.bounds)
         return
 
+    @unittest.skipIf(not HAS_SHAPELY, "shapely required")
     def test_point_input(self):
         sp = shapely.geometry.Point((3,4))
         p = vector.read.from_shape(sp)
@@ -79,6 +89,7 @@ class TestGeoInterface(unittest.TestCase):
         self.assertEqual(p.y, sp.y)
         return
 
+    @unittest.skipIf(not HAS_SHAPELY, "shapely required")
     def test_line_input(self):
         sp = shapely.geometry.LineString([(3,4), (6,2), (2,5)])
         p = vector.read.from_shape(sp)
@@ -88,12 +99,14 @@ class TestGeoInterface(unittest.TestCase):
         self.assertTrue(np.all(y == np.array(sy)))
         return
 
+    @unittest.skipIf(not HAS_SHAPELY, "shapely required")
     def test_poly_input(self):
         sp = shapely.geometry.Polygon([(4, 2), (3, 5), (3, 2), (7, 3)])
         p = vector.read.from_shape(sp)
         self.assertEqual(p.bbox, sp.bounds)
         return
 
+    @unittest.skipIf(not HAS_SHAPELY, "shapely required")
     def test_multipoly_input(self):
         sp1 = shapely.geometry.Polygon([(4, 2), (3, 5), (3, 2), (7, 3)])
         sp2 = shapely.geometry.Polygon([(7, 3), (9, 7), (2, 7), (2, 0)])
@@ -104,6 +117,7 @@ class TestGeoInterface(unittest.TestCase):
         self.assertEqual(p2.bbox, sp2.bounds)
         return
 
+    @unittest.skipIf(not HAS_SHAPELY, "shapely required")
     def test_multiline_input(self):
         sp1 = shapely.geometry.LineString([(4, 2), (3, 5), (3, 2), (7, 3)])
         sp2 = shapely.geometry.LineString([(7, 3), (9, 7), (2, 7), (2, 0)])
