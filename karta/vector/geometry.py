@@ -45,7 +45,26 @@ class Geometry(object):
         self._geotype = None
         return
 
-class Point(Geometry, GeoJSONOutMixin, ShapefileOutMixin):
+class Rotatable(object):
+
+    def rotate(self, thetad, origin=(0, 0)):
+        """ Rotate rank 2 geometry.
+
+        Parameters
+        ----------
+        thetad : float
+            degreesof rotation
+        origin : tuple of two floats, optional
+            pivot for rotation (default (0, 0))
+        """
+        ct = math.cos(thetad*math.pi / 180.0)
+        st = math.sin(thetad*math.pi / 180.0)
+        x, y = origin
+        M = np.array([[ct, -st, -x*ct + y*st + x],
+                      [st, ct, -x*st - y*ct + y]], dtype=np.float64)
+        return self.apply_transform(M)
+
+class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
     """ Point object instantiated with:
 
     Parameters
@@ -550,23 +569,6 @@ class MultiVertexMixin(object):
                               [0, 1, shift_vector[1]]], dtype=np.float64)
         return self.apply_transform(trans_mat)
 
-    def rotate(self, thetad, origin=(0, 0)):
-        """ Rotate rank 2 geometry.
-
-        Parameters
-        ----------
-        thetad : float
-            degreesof rotation
-        origin : tuple of two floats, optional
-            pivot for rotation (default (0, 0))
-        """
-        ct = math.cos(thetad*math.pi / 180.0)
-        st = math.sin(thetad*math.pi / 180.0)
-        x, y = origin
-        M = np.array([[ct, -st, -x*ct + y*st + x],
-                      [st, ct, -x*st - y*ct + y]], dtype=np.float64)
-        return self.apply_transform(M)
-
     def _subset(self, idxs):
         """ Return a subset defined by indices. """
         vertices = [self.vertices[i] for i in idxs]
@@ -832,7 +834,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
 
         return any(_seg_crosses_dateline(seg) for seg in self.segments)
 
-class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
+class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
     """ Line composed of connected vertices.
 
     Parameters
@@ -986,7 +988,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, Shapefil
         """ Returns a polygon. """
         return Polygon(self.vertices, properties=self.properties, crs=self.crs)
 
-class Polygon(MultiVertexBase, ConnectedMultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
+class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
     """ Polygon, composed of a closed sequence of vertices.
 
     Parameters
@@ -1244,7 +1246,7 @@ class Multipart(Geometry):
         return len(self.vertices)
 
 
-class Multipoint(Multipart, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
+class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
     """ Point cloud with associated attributes.
 
     Parameters
