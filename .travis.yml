@@ -4,6 +4,7 @@ python:
   - "2.7"
   - "3.4"
   - "3.5"
+  - "3.6"
 
 addons:
   apt:
@@ -19,8 +20,10 @@ before_install:
   - "conda info -a"
 
 install:
-  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=8.1 numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 coverage>=4.2 shapely>=1.5"
+  - "conda config --add channels conda-forge"
+  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=8.1 numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 coverage>=4.2"
   - "source activate test-env"
+  - "conda install shapely>=1.5 || echo 'shapely could not be installed'"
   - "pip install -r requirements.txt"
   - "pip install coveralls"
   - "pip install . --no-deps"
