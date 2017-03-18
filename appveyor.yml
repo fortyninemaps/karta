@@ -27,7 +27,7 @@ install:
   - "conda config --set always_yes yes --set changeps1 no"
   - "conda update -q conda"
   - "conda info -a"
-  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy cython setuptools"
+  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy cython vs2015_runtime setuptools"
   - "activate test-environment"
   - "conda install -c conda-forge gdal=2.1.3"
 
