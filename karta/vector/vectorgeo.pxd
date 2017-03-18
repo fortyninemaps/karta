@@ -11,13 +11,13 @@ cdef struct Vector3:
 
 cdef int fsign(double)
 
-cdef inline double dot2(Vector2, Vector2) nogil
-cdef inline double dot3(Vector3, Vector3) nogil
-cdef inline double cross2(Vector2, Vector2) nogil
-cdef inline Vector3 cross3(Vector3, Vector3)
+cdef double dot2(Vector2, Vector2) nogil
+cdef double dot3(Vector3, Vector3) nogil
+cdef double cross2(Vector2, Vector2) nogil
+cdef Vector3 cross3(Vector3, Vector3)
 
 cdef Vector2 proj2(Vector2, Vector2)
-cdef inline double dist2(Vector2, Vector2) nogil
+cdef double dist2(Vector2, Vector2) nogil
 cdef double dist_sph(Vector2, Vector2) nogil
 cdef double azimuth(Vector2, Vector2)
 cdef double azimuth_sph(Vector2, Vector2)
