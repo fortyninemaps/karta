@@ -10,24 +10,32 @@ environment:
     - PYTHON: "C:\\Python27"
       PYTHON_VERSION: "2.7"
       MINICONDA: "C:\\Miniconda"
+
     - PYTHON: "C:\\Python34"
       PYTHON_VERSION: "3.4"
       MINICONDA: "C:\\Miniconda3"
+
     - PYTHON: "C:\\Python35"
       PYTHON_VERSION: "3.5"
       MINICONDA: "C:\\Miniconda3"
+
     - PYTHON: "C:\\Python36"
       PYTHON_VERSION: "3.6"
       MINICONDA: "C:\\Miniconda3"
+
     - PYTHON: "C:\\Python27-x64"
       PYTHON_VERSION: "2.7"
       MINICONDA: "C:\\Miniconda-x64"
+
     - PYTHON: "C:\\Python34-x64-x64"
       PYTHON_VERSION: "3.4"
       DISTUTILS_USE_SDK: "1"
+      MINICONDA: "C:\\Miniconda3-x64"
+
     - PYTHON: "C:\\Python35-x64"
       PYTHON_VERSION: "3.5"
       MINICONDA: "C:\\Miniconda3-x64"
+
     - PYTHON: "C:\\Python36-x64"
       PYTHON_VERSION: "3.6"
       MINICONDA: "C:\\Miniconda3-x64"
@@ -35,18 +43,16 @@ environment:
 
 install:
 
-  - "%PYTHON%\\python.exe -m pip install setuptools picogeojson blosc"
-
   - "ECHO %PYTHON_VERSION% %MINICONDA%"
   - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
   - "conda config --set always_yes yes --set changeps1 no"
   - "conda update -q conda"
   - "conda info -a"
-  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy"
+  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy cython"
   - "activate test-environment"
   - "conda install -c conda-forge gdal=2.1.3"
 
-  - "pip install coverage"
+  - "%PYTHON%\\python.exe -m pip install -U setuptools picogeojson blosc coverage"
   - "cd C:\\projects\\karta"
   - "%PYTHON%\\python.exe -m pip install . --no-deps"
 
