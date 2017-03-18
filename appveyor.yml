@@ -48,14 +48,14 @@ install:
   - "conda config --set always_yes yes --set changeps1 no"
   - "conda update -q conda"
   - "conda info -a"
-  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy cython"
+  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy cython pip"
   - "activate test-environment"
   - "conda install -c conda-forge gdal=2.1.3"
 
-  - "%PYTHON%\\python.exe -m pip install -U setuptools picogeojson blosc coverage"
+  - "pip install -U setuptools picogeojson blosc coverage"
   - "cd C:\\projects\\karta"
-  - "%PYTHON%\\python.exe -m pip install . --no-deps"
+  - "pip install . --no-deps"
 
 test_script:
-  - "build.cmd %PYTHON%\\python.exe tests\\runtests.py"
+  - "build.cmd python tests\\runtests.py"
 
