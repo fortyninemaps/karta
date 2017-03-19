@@ -1,9 +1,15 @@
 language: python
 
-python:
-  - "2.7"
-  - "3.5"
-  - "3.6"
+matrix:
+  include:
+    - python: "2.7"
+      env: CHANNEL=defaults
+    - python: "3.4"
+      env: CHANNEL=defaults
+    - python: "3.5"
+      env: CHANNEL=defaults
+    - python: "3.6"
+      env: CHANNEL=conda-forge
 
 before_install:
   - "wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh"
@@ -14,7 +20,7 @@ before_install:
   - "conda info --all"
 
 install:
-  - "conda create --yes --name test-env --channel conda-forge python=$TRAVIS_PYTHON_VERSION numpy cython gdal pyproj shapely coverage"
+  - "conda create --yes --name test-env --channel $CHANNEL python=$TRAVIS_PYTHON_VERSION numpy cython gdal pyproj shapely coverage"
   - "source activate test-env"
   - "pip install -r requirements.txt"
   - "pip install coveralls"
