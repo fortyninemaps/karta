@@ -16,9 +16,9 @@ before_install:
 
 install:
   - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=9.0 coverage>=4.2"
-  - "conda config --add channels conda-forge"
-  - "conda install numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 shapely>=1.5"
   - "source activate test-env"
+  - "conda config --add channels conda-forge"
+  - "conda install --yes numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 shapely>=1.5"
   - "conda list"
   - "pip install -r requirements.txt"
   - "pip install coveralls"
