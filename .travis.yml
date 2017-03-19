@@ -6,11 +6,6 @@ python:
   - "3.5"
   - "3.6"
 
-addons:
-  apt:
-    packages:
-      - libproj-dev   # otherwise gdal raises an error
-
 before_install:
   - "wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh"
   - "chmod +x miniconda.sh"
@@ -20,9 +15,11 @@ before_install:
   - "conda info -a"
 
 install:
+  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=9.0 coverage>=4.2"
   - "conda config --add channels conda-forge"
-  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=8.1 numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 shapely>=1.5 coverage>=4.2"
+  - "conda install numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 shapely>=1.5"
   - "source activate test-env"
+  - "conda list"
   - "pip install -r requirements.txt"
   - "pip install coveralls"
   - "pip install . --no-deps"
