@@ -2,13 +2,8 @@ language: python
 
 python:
   - "2.7"
-  - "3.4"
   - "3.5"
-
-addons:
-  apt:
-    packages:
-      - libproj-dev   # otherwise gdal raises an error
+  - "3.6"
 
 before_install:
   - "wget http://repo.continuum.io/miniconda/Miniconda-latest-Linux-x86_64.sh -O miniconda.sh"
@@ -16,10 +11,10 @@ before_install:
   - "./miniconda.sh -b"
   - "export PATH=/home/travis/miniconda2/bin:$PATH"
   - "conda update --yes conda"
-  - "conda info -a"
+  - "conda info --all"
 
 install:
-  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=8.1 numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 coverage>=4.2 shapely>=1.5"
+  - "conda create --yes --name test-env --channel conda-forge python=$TRAVIS_PYTHON_VERSION numpy cython gdal pyproj shapely coverage"
   - "source activate test-env"
   - "pip install -r requirements.txt"
   - "pip install coveralls"
@@ -27,11 +22,7 @@ install:
   - "rm -rf karta/"   # clean-up to workaround coverage.py scanning karta/ dir
                       # while karta module is installed by pip elsewhere
 
-script:
-  coverage run --source=karta tests/runtests.py && coverage report
+script: coverage run --source=karta tests/runtests.py && coverage report
+after_success: coveralls
+sudo: false   # container-based testing
 
-after_success:
-  coveralls
-
-sudo:   # container-based testing
-  false
