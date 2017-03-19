@@ -1,4 +1,5 @@
 [![Build Status](https://travis-ci.org/fortyninemaps/karta.svg?branch=master)](https://travis-ci.org/fortyninemaps/karta)
+[![Build status](https://ci.appveyor.com/api/projects/status/viiimwp5pu7ff2bp?svg=true)](https://ci.appveyor.com/project/njwilson23/karta)
 [![Coverage Status](https://coveralls.io/repos/github/fortyninemaps/karta/badge.svg?branch=master)](https://coveralls.io/github/fortyninemaps/karta?branch=master)
 
 ![Karta](https://raw.githubusercontent.com/fortyninemaps/karta/gh-pages/images/karta_logo.png)
@@ -38,7 +39,7 @@ grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
 The latest release is on PyPI (see [Installation](#installation)). Suggestions,
 bug reports, test cases, and pull requests are welcome.
 
-The latest stable release is 0.7.4. The repository master branch is considered a
+The latest stable release is 0.8. The repository master branch is considered a
 moderately-unstable development branch.
 
 ## Documentation

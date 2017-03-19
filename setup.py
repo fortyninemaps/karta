@@ -54,17 +54,28 @@ class build_ext(_build_ext):
         return
 
 # File extension is added to sources at overloaded build_ext.run()
-extensions = [Extension("karta.raster.crfuncs", ["karta/raster/crfuncs.pyx"]),
-              Extension("karta.vector.coordstring", ["karta/vector/coordstring.pyx"]),
-              Extension("karta.vector.vectorgeo", ["karta/vector/vectorgeo.pyx"]),
-              Extension("karta.vector.dateline", ["karta/vector/dateline.pyx"]),
-              Extension("karta.vector.intersection", ["karta/vector/intersection.pyx"]),
-              Extension("karta.vector.convexhull", ["karta/vector/convexhull.pyx"]),
-              Extension("karta.vector.contains", ["karta/vector/contains.pyx"]),
-              Extension("karta.vector.quadtree", ["karta/vector/quadtree.pyx"],
+extensions = [
+        Extension("karta.raster.crfuncs", ["karta/raster/crfuncs.pyx"]),
+
+        Extension("karta.vector.coordstring", ["karta/vector/coordstring.pyx"]),
+
+        Extension("karta.vector.vectorgeo", ["karta/vector/vectorgeo.pyx"],
+                  extra_compile_args=["-std=c99"]),
+
+        Extension("karta.vector.dateline", ["karta/vector/dateline.pyx"]),
+
+        Extension("karta.vector.intersection", ["karta/vector/intersection.pyx"]),
+
+        Extension("karta.vector.convexhull", ["karta/vector/convexhull.pyx"]),
+
+        Extension("karta.vector.contains", ["karta/vector/contains.pyx"]),
+
+        Extension("karta.vector.quadtree", ["karta/vector/quadtree.pyx"],
                         extra_compile_args=["-std=c99"]),
-              Extension("karta.vector.rtree", ["karta/vector/rtree.pyx"],
-                        extra_compile_args=["-std=c99"])]
+
+        Extension("karta.vector.rtree", ["karta/vector/rtree.pyx"],
+                  extra_compile_args=["-std=c99"])
+        ]
 
 setup(
     name = "karta",

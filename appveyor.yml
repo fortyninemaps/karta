@@ -1,0 +1,44 @@
+build: off
+
+environment:
+
+  matrix:
+
+    # Can only test with Python 3.5 and later, because previous versions
+    # use versions of MSVC prior to 2013, which don't suppotr basic parts
+    # of the C99 spec.
+    #
+    # It's still possible to install Karta with Python 2.7, but an alternative
+    # compiler such as MinGW should be used instead.
+
+    - PYTHON_VERSION: "3.5"
+      MINICONDA: "C:\\Miniconda3"
+
+    - PYTHON_VERSION: "3.6"
+      MINICONDA: "C:\\Miniconda3"
+
+    - PYTHON_VERSION: "3.5"
+      MINICONDA: "C:\\Miniconda3-x64"
+
+    - PYTHON_VERSION: "3.6"
+      MINICONDA: "C:\\Miniconda3-x64"
+
+install:
+
+  - "ECHO %PYTHON_VERSION% %MINICONDA%"
+  - "set PATH=%MINICONDA%;%MINICONDA%\\Scripts;%PATH%"
+  - "conda config --set always_yes yes --set changeps1 no"
+  - "conda update -q conda"
+  - "conda info -a"
+  - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy cython setuptools"
+  - "activate test-environment"
+  - "conda install -c conda-forge gdal=2.1.3 pyproj"
+
+  - "pip install -U picogeojson blosc coverage"
+  - "cd C:\\projects\\karta"
+  - "pip install . --no-deps"
+
+test_script:
+  - "python tests\\runtests.py"
+
+
