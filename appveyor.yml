@@ -31,7 +31,7 @@ install:
   - "conda info -a"
   - "conda create -q -n test-environment python=%PYTHON_VERSION% numpy cython vs2015_runtime setuptools"
   - "activate test-environment"
-  - "conda install -c conda-forge gdal=2.1.3"
+  - "conda install -c conda-forge gdal=2.1.3 pyproj"
 
   - "pip install -U picogeojson blosc coverage"
   - "cd C:\\projects\\karta"
