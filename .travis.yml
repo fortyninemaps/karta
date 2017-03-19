@@ -21,9 +21,8 @@ before_install:
 
 install:
   - "conda config --add channels conda-forge"
-  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=8.1 numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 coverage>=4.2"
+  - "conda create --yes -n test-env python=$TRAVIS_PYTHON_VERSION pip>=8.1 numpy>=1.10 cython>=0.25 pyproj>=1.9 gdal>=2.1 libgdal>=2.1 shapely>=1.5 coverage>=4.2"
   - "source activate test-env"
-  - "conda install shapely>=1.5 || echo 'shapely could not be installed'"
   - "pip install -r requirements.txt"
   - "pip install coveralls"
   - "pip install . --no-deps"
