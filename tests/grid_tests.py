@@ -132,7 +132,7 @@ class RegularGridTests(unittest.TestCase):
         xx, yy = np.meshgrid(np.linspace(0, 1, 50), np.linspace(0, 1, 30))
         zz = 2.0*xx**2 - 3.0*yy**2
         grid = RegularGrid((27, 53, 5, 5, 0, 0), values=zz)
-        new_grid = grid.align_origin(5, 5, method='linear')
+        new_grid = grid._align_origin(5, 5, method='linear')
         self.assertEqual(new_grid.origin, (25, 55))
         self.assertTrue(np.isnan(new_grid.values[0, 0]))
         return
