@@ -147,9 +147,9 @@ class RegularGridTests(unittest.TestCase):
             return RegularGrid((0.0, 0.0, res, res, 0.0, 0.0), values=zz)
 
         # node numbers from a line with extreme edges at [0, 1]
-        g = makegrid(0.0, 1.0-2.0/300, 150, 1.0)
-        sol = makegrid(0.0, 1.0-6.0/300, 50, 3.0)
-        gnew = g.resample(3.0, 3.0, method='nearest')
+        g = makegrid(0.0, 1.0-2.0/300, 150, 2.0)
+        sol = makegrid(0.0, 1.0-6.0/300, 50, 6.0)
+        gnew = g.resample(6.0, 6.0, method='nearest')
         residue = gnew[:,:] - sol[:,:]
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return
@@ -164,9 +164,9 @@ class RegularGridTests(unittest.TestCase):
             return RegularGrid((0.0, 0.0, res, res, 0.0, 0.0), values=zz)
 
         # node numbers from a line with extreme edges at [0, 1]
-        g = makegrid(0.0, 1.0-2.0/300, 150, 1.0)
-        sol = makegrid(0.0, 1.0-6.0/300, 50, 3.0)
-        gnew = g.resample(3.0, 3.0, method='linear')
+        g = makegrid(0.0, 1.0-2.0/300, 150, 2.0)
+        sol = makegrid(0.0, 1.0-6.0/300, 50, 6.0)
+        gnew = g.resample(6.0, 6.0, method='linear')
         residue = gnew[:,:] - sol[:,:]
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return

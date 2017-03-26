@@ -756,8 +756,8 @@ class RegularGrid(Grid):
                              "(got {0}, {1})".format(dx, dy))
 
         xmin, xmax, ymin, ymax = self.get_extent()
-        ny = int((ymax - ymin) // (dy / self.resolution[1])) + 1
-        nx = int((xmax - xmin) // (dx / self.resolution[0])) + 1
+        ny = int((ymax - ymin) // dy) + 1
+        nx = int((xmax - xmin) // dx) + 1
 
         t = self._transform
         tnew = (xmin-0.5*dx-0.5*t[4], ymin-0.5*dy-0.5*t[5], dx, dy, t[4], t[5])
