@@ -128,6 +128,15 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(np.nansum(grid3_mosaic[:,:,2]), 1288)
         return
 
+    def test_align_origin(self):
+        xx, yy = np.meshgrid(np.linspace(0, 1, 50), np.linspace(0, 1, 30))
+        zz = 2.0*xx**2 - 3.0*yy**2
+        grid = RegularGrid((27, 53, 5, 5, 0, 0), values=zz)
+        new_grid = grid.align_origin(5, 5, method='linear')
+        self.assertEqual(new_grid.origin, (25, 55))
+        self.assertTrue(np.isnan(new_grid.values[0, 0]))
+        return
+
     def test_resample_nearest(self):
         # use linear function so that nearest neighbour and linear interp are
         # exact

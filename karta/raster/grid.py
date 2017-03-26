@@ -238,6 +238,10 @@ class RegularGrid(Grid):
     def nbands(self):
         return len(self.bands)
 
+    @property
+    def nodata_value(self):
+        return self._nodata
+
     def set_nodata_value(self, val):
         """ Redefine value used to indicate nodata.
 
@@ -680,6 +684,60 @@ class RegularGrid(Grid):
                                values=np.where(msk, self[:,:], self.nodata),
                                crs=self.crs, nodata_value=self.nodata)
 
+    def _resample_transform(self, transform, method='nearest'):
+        """ Resample grid to match a new transform.
+
+        Arguments
+        ---------
+        transform : iterable
+        method : str, optional
+            default 'nearest'
+
+        Returns
+        -------
+        RegularGrid
+        """
+        cg = CoordinateGenerator(transform, self.size, self.crs, self.crs)
+        X, Y = cg[:,:]
+        if method == 'nearest':
+            values = self.sample_nearest(X, Y)
+        elif method == 'linear':
+            values = self.sample_bilinear(X, Y)
+        else:
+            raise NotImplementedError('method "{0}" unavailable'.format(method))
+        if values.ndim == 3:
+            values = values.transpose(1, 2, 0)
+        return RegularGrid(transform, values=values, crs=self.crs,
+                           nodata_value=self.nodata)
+
+    def _align_origin(self, x, y, method='nearest'):
+        """ Shift the grid so that the transform anchor is an integer multiple
+        of x, y from the coordinate system origin at (0, 0).
+
+        For example, if a grid has transform [3.2, 3.2, 1, 1, 0, 0] (raster
+        pixels of dimension 1x1, with a lower left outer corner at 3.2, 3.2),
+        calling `align_origin(1, 1)` will resample the grid to have transform
+        [3, 3, 1, 1, 0, 0], while `align_origin(5, 5)` with resample the grid
+        to [5, 5, 1, 1, 0, 0]. In both cases, the grid reference has been
+        shifted.
+
+        Arguments
+        ---------
+        x, y : float
+        method : str, optional
+
+        Returns
+        -------
+        RegularGrid
+        """
+        t = [x * round(self._transform[0] / x),
+             y * round(self._transform[1] / y),
+             self._transform[2],
+             self._transform[3],
+             self._transform[4],
+             self._transform[5]]
+        return self._resample_transform(t, method=method)
+
     def resample(self, dx, dy, method='nearest'):
         """ Resample array to have spacing *dx*, *dy*. The grid origin remains
         in the same position.
@@ -885,11 +943,11 @@ class RegularGrid(Grid):
         for i, band in enumerate(self.bands):
             v = self[Imn:Imx,Jmn:Jmx,i]
             if band.dtype in (np.float32, np.float64):
-                data.append(crfuncs.sample_bilinear_double(I, J, v.astype(np.float64)))
+                data.append(crfuncs.sample_bilinear_double(I, J, v.astype(np.float64), self.nodata_value))
             elif band.dtype in (np.int16, np.int32, np.int64):
-                data.append(crfuncs.sample_bilinear_int(I, J, v.astype(np.int32)))
+                data.append(crfuncs.sample_bilinear_int(I, J, v.astype(np.int32), self.nodata_value))
             elif band.dtype in (np.uint8, np.uint16, np.uint32):
-                data.append(crfuncs.sample_bilinear_uint(I, J, v.astype(np.uint16)))
+                data.append(crfuncs.sample_bilinear_uint(I, J, v.astype(np.uint16), self.nodata_value))
             else:
                 raise NotImplementedError("no sample_bilinear method for dtype:"
                                           " {0}".format(band.dtype))

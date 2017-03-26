@@ -33,7 +33,7 @@ def get_positions_vec(tuple T, double[:] x not None, double[:] y not None):
     return I, J
 
 def sample_bilinear_uint(double[:] I not None, double[:] J not None,
-                         np.uint16_t[:,:] Z not None):
+                         np.uint16_t[:,:] Z not None, unsigned int na):
     cdef int cnt = 0
     cdef int L = len(I)
     cdef double i = 0.0, j = 0.0
@@ -66,14 +66,17 @@ def sample_bilinear_uint(double[:] I not None, double[:] J not None,
             j0 = int(j)
             j1 = int(j + 1.0)
 
-        out[cnt] = int(float(Z[i0,j0]) * (i1-i) * (j1-j)
-                     + float(Z[i1,j0]) * (i-i0) * (j1-j) \
-                     + float(Z[i0,j1]) * (i1-i) * (j-j0) \
-                     + float(Z[i1,j1]) * (i-i0) * (j-j0))
+        if i0 >= 0 and i1 < m and j0 >= 0 and j1 < n:
+            out[cnt] = int(float(Z[i0,j0]) * (i1-i) * (j1-j)
+                         + float(Z[i1,j0]) * (i-i0) * (j1-j) \
+                         + float(Z[i0,j1]) * (i1-i) * (j-j0) \
+                         + float(Z[i1,j1]) * (i-i0) * (j-j0))
+        else:
+            out[cnt] = na
     return out
 
 def sample_bilinear_int(double[:] I not None, double[:] J not None,
-                         np.int32_t[:,:] Z not None):
+                         np.int32_t[:,:] Z not None, int na):
     cdef int cnt = 0
     cdef int L = len(I)
     cdef double i = 0.0, j = 0.0
@@ -113,7 +116,7 @@ def sample_bilinear_int(double[:] I not None, double[:] J not None,
     return out
 
 def sample_bilinear_double(double[:] I not None, double[:] J not None,
-                           np.float64_t[:,:] Z not None):
+                           np.float64_t[:,:] Z not None, double na):
     cdef int cnt = 0
     cdef int L = len(I)
     cdef double i = 0.0, j = 0.0
@@ -146,8 +149,11 @@ def sample_bilinear_double(double[:] I not None, double[:] J not None,
             j0 = int(j)
             j1 = int(j + 1.0)
 
-        out[cnt] = Z[i0,j0]*(i1-i)*(j1-j) + Z[i1,j0]*(i-i0)*(j1-j) \
-                 + Z[i0,j1]*(i1-i)*(j-j0) + Z[i1,j1]*(i-i0)*(j-j0)
+        if i0 >= 0 and i1 < m and j0 >= 0 and j1 < n:
+            out[cnt] = Z[i0,j0]*(i1-i)*(j1-j) + Z[i1,j0]*(i-i0)*(j1-j) \
+                     + Z[i0,j1]*(i1-i)*(j-j0) + Z[i1,j1]*(i-i0)*(j-j0)
+        else:
+            out[cnt] = na
     return out
 
 @cython.cdivision(True)
