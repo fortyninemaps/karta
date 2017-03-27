@@ -41,7 +41,7 @@ class BandIndexer(object):
             if isinstance(key, np.ndarray):
                 return self.bands[0][:,:][key]
             elif isinstance(key, tuple):
-                if (len(key) == 3) and (key[2] != 0):
+                if (len(key) == 3) and (key[2] != 0) and not isinstance(key[2], slice):
                     raise IndexError("third element of key exceeds number of bands")
                 return self.bands[0][key[:2]]
             else:

@@ -36,11 +36,7 @@ grid.profile(line)              # Collect data along a line
 grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
 ```
 
-The latest release is on PyPI (see [Installation](#installation)). Suggestions,
-bug reports, test cases, and pull requests are welcome.
-
-The latest stable release is 0.8. The repository master branch is considered a
-moderately-unstable development branch.
+Pull requests are welcome.
 
 ## Documentation
 

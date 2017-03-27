@@ -171,6 +171,22 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
         return
 
+    def test_sample_nearest_out_of_bounds(self):
+        g = RegularGrid([0, 0, 1, 1, 0, 0], values=np.ones((10, 10)))
+        v = g.sample_nearest(np.array([7, 9, 12, 15]), np.array([3, 1, -1, 1]))
+        self.assertEqual(v[0][0], 1.0)
+        self.assertEqual(v[0][1], 1.0)
+        self.assertTrue(np.isnan(v[0][2]))
+        self.assertTrue(np.isnan(v[0][3]))
+
+    def test_sample_linear_out_of_bounds(self):
+        g = RegularGrid([0, 0, 1, 1, 0, 0], values=np.ones((10, 10)))
+        v = g.sample_bilinear(np.array([7, 9, 12, 15]), np.array([3, 1, -1, 1]))
+        self.assertEqual(v[0][0], 1.0)
+        self.assertEqual(v[0][1], 1.0)
+        self.assertTrue(np.isnan(v[0][2]))
+        self.assertTrue(np.isnan(v[0][3]))
+
     def test_resample_multiband(self):
         grid = RegularGrid((0, 0, 1, 1, 0, 0),
                            values=np.dstack([np.ones((64, 64)),

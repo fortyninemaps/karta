@@ -802,6 +802,21 @@ class RegularGrid(Grid):
             I, J = crfuncs.get_positions_vec(self.transform, x, y)
             return I[0], J[0]
 
+    def _get_indices(self, x, y):
+        """ Return the integer row and column indices for the point nearest
+        geographical coordinates. Unlike `get_positions()`, this method raises
+        and exception when points are out of range.
+
+        Parameters
+        ----------
+        x, y : float or vector
+            vertices of points to compute indices for
+        """
+        i, j = self.get_positions(x, y)
+        i = np.round(i).astype(np.int32)
+        j = np.round(j).astype(np.int32)
+        return i,j
+
     def get_indices(self, x, y):
         """ Return the integer row and column indices for the point nearest
         geographical coordinates. Unlike `get_positions()`, this method raises
@@ -818,10 +833,7 @@ class RegularGrid(Grid):
             points outside of Grid bbox
         """
         ny, nx = self.size
-        i, j = self.get_positions(x, y)
-        i = np.round(i).astype(np.int32)
-        j = np.round(j).astype(np.int32)
-
+        i, j = self._get_indices(x, y)
         if hasattr(i, "__iter__"):
             if i.min() < 0 or i.max() > ny-1 or j.min() < 0 or j.max() > nx-1:
                 raise IndexError("coordinates outside grid region "
@@ -844,26 +856,34 @@ class RegularGrid(Grid):
         Returns
         -------
         float or vector
-            The size of the output has one more dimension than the input. If
-            the input are scalar, the output is a p-vector representing band
-            values. If the input is a n-vector, the ouput is p x n. If the
-            input is an m x n array, the output is p x m x n.
+            the size of the output has one more dimension than the input. if
+            the input are scalar, the output is a vector length p representing
+            band values. if the input is a vector length n, the ouput is p x n.
+            if the input is an m x n array, the output is p x m x n.
 
         Raises
         ------
         IndexError
             points outside of Grid bbox
         """
+        m, n = self.size
+
         if not hasattr(x, "__iter__"):
-            i, j = self.get_indices(x, y)
-            return np.atleast_1d(self[i,j])
+            i, j = self._get_indices(x, y)
+            if (0 <= i < m) and (0 <= j < n):
+                return np.atleast_1d(self[i,j])
+            else:
+                return self.nodata_value
 
         if not isinstance(x, np.ndarray):
             x = np.array(x)
             y = np.array(y)
 
         dim = x.ndim
-        I, J = self.get_indices(x.ravel(), y.ravel())
+        I, J = self._get_indices(x.ravel(), y.ravel())
+        out_of_bounds_mask = (I < 0) | (I >= m) | (J < 0) | (J >= n)
+        I = I[~out_of_bounds_mask]
+        J = J[~out_of_bounds_mask]
 
         Imn = int(np.floor(I.min())-1)
         Imx = int(np.ceil(I.max()+1))
@@ -878,12 +898,16 @@ class RegularGrid(Grid):
         I -= Imn
         J -= Jmn
 
-        data = np.atleast_3d(self[Imn:Imx,Jmn:Jmx][I,J])
-        if dim == 1:
-            return data[:,:,0]
-        elif dim == 2:
-            m, n = x.shape
-            return data.T.reshape((self.nbands, m, n))
+        data = np.empty((out_of_bounds_mask.shape[0], self.nbands),
+                        dtype=self.bands[0].dtype)
+
+        data[out_of_bounds_mask, :] = self.nodata_value
+        data[~out_of_bounds_mask, :] = self[Imn:Imx,Jmn:Jmx][I,J].reshape(sum(~out_of_bounds_mask), self.nbands)
+
+        if x.ndim == 1:
+            return data.reshape(self.nbands, x.shape[0])
+        else:
+            return data.reshape(self.nbands, x.shape[0], x.shape[1])
 
     def sample_bilinear(self, x, y):
         """ Return the value nearest to coordinates using a bi-linear sampling
@@ -897,10 +921,10 @@ class RegularGrid(Grid):
         Returns
         -------
         float or vector
-            The size of the output has one more dimension than the input. If
-            the input are scalar, the output is a p-vector representing band
-            values. If the input is a n-vector, the ouput is p x n. If the
-            input is an m x n array, the output is p x m x n.
+            the size of the output has one more dimension than the input. if
+            the input are scalar, the output is a vector length p representing
+            band values. if the input is a vector length n, the ouput is p x n.
+            if the input is an m x n array, the output is p x m x n.
 
         Raises
         ------
