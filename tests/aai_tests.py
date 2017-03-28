@@ -10,6 +10,8 @@ class AAITests(unittest.TestCase):
         pe = peaks(n=49)
         control = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
         grid = karta.read_aai(os.path.join(TESTDATA, "peaks49_corner.asc"))
+        print(grid[::-1][:8,:8])
+        print(control[:8,:8])
         self.assertTrue(np.all(grid[::-1] == control[:,:]))
         return
 
@@ -17,6 +19,8 @@ class AAITests(unittest.TestCase):
         pe = peaks(n=49)
         control = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
         grid = karta.read_aai(os.path.join(TESTDATA, "peaks49_center.asc"))
+        print(grid[::-1][:8,:8])
+        print(control[:8,:8])
         self.assertTrue(np.all(grid[::-1] == control[:,:]))
         return
 
