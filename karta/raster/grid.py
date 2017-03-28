@@ -879,7 +879,6 @@ class RegularGrid(Grid):
             x = np.array(x)
             y = np.array(y)
 
-        dim = x.ndim
         I, J = self._get_indices(x.ravel(), y.ravel())
         out_of_bounds_mask = (I < 0) | (I >= m) | (J < 0) | (J >= n)
         I = I[~out_of_bounds_mask]
