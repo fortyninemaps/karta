@@ -91,11 +91,84 @@ setup(
     packages = ["karta", "karta.vector", "karta.raster"],
     url = "http://www.fortyninemaps.com/karta.html",
     description = "Geospatial analysis in Python",
-    long_description = """*Karta* is a package for spatial analysis in Python. It streamlines data
-processing by providing efficient generic geographical types for vector
-and raster sources as well as a selection of analysis functions.
+    long_description = """
+|Build Status| |Build status| |Coverage Status|
 
-For example, read or create vector geometries:
+.. figure:: https://raw.githubusercontent.com/fortyninemaps/karta/gh-pages/images/karta_logo.png
+   :alt: Karta
+
+   Karta
+
+*Karta* is a package for spatial analysis in Python. It simplifies
+geospatial data processing by providing efficient generic classes for
+vector and raster data sources, as well as a selection of analysis
+functions.
+
+Vector data types
+-----------------
+
+Data are represented as ``Point``, ``Line``, ``Polygon``,
+``Multipoint``, ``Multiline``, and ``Multipolygon`` instances.
+
+All data contain a ``.crs`` member encoding coordinate reference
+information. All vector geometries possess a ``.properties`` dict
+containing free-form metadata. *Multipart* geometries additionally
+possess a ``.data`` member which is a simple typed table-like data
+structure.
+
+Geometries implement methods for computing distances, directions, and
+spatial characteristics. *Multipart* geometries support fast spatial
+indexing through quadtrees and r-trees.
+
+GeoJSON and ESRI shapefile formats are supported for reading and
+writing. Experimental support for GPX XML files is in the
+``karta.vector.gpx`` submodule.
+
+Vector geometries implement the Python ```__geo_interface__``
+attribute <https://gist.github.com/sgillies/2217756>`__ for vector
+geometries. This permits data to be exchanged between *Karta* and
+external modules that also implement ``__geo_interface__`` (e.g.
+`shapely <https://github.com/Toblerity/Shapely>`__,
+`fastkml <https://fastkml.readthedocs.org/en/latest/>`__).
+
+Raster data types
+-----------------
+
+The primary raster data type is the ``RegularGrid``, which represents
+one or more 2-d arrays of pixels spaced via an affine transformation.
+``RegularGrids`` are backed by one of several ``Band`` implementations,
+with the default implementation using the
+`blosc <http://www.blosc.org/>`__ compression library for efficient
+in-memory storage. There is experimental support for disk-backed storage
+via GDAL.
+
+Grids may be queried, resampled, sliced, masked, and merged. Arbitrary
+array-based functions may be mapped to raster data with
+``RegularGrid.apply()``. Raster functions including slope, gradient, and
+hillshade are in the ``karta.raster.misc`` submodule.
+
+GeoTIFF images are the primary supported format, however ESRI ASCII
+grids may also be used (with limitations due to the format).
+
+Coordinate reference systems
+----------------------------
+
+Data in Karta is referenced to positions on earth via ``CRS`` objects
+that implement projection and geodetic methods. Coordinate reference
+systems may be either geographical or projected.
+
+**Geographical CRS** objects return spatial relationships in terms of
+the true computed distances and azimuths on a spherical or ellipsoidal
+Earth.
+
+**Projected CRS** objects (e.g. UTM, Polar Stereographic, and Web
+Mercator) return spatial relationships in terms of a flat plane,
+dependent on the projection.
+
+Examples
+--------
+
+Read or create vector geometries:
 
 .. code:: python
 
@@ -127,59 +200,6 @@ Load and manipulate raster data:
     grid.profile(line)              # Collect data along a line
     grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
 
-Documentation
--------------
-
-See the `online
-manual <http://www.fortyninemaps.com/kartadocs/introduction.html>`__,
-the
-`tutorial <http://www.fortyninemaps.com/kartadocs/_static/tutorial.html>`__,
-or read the `API
-documentation <http://www.fortyninemaps.com/kartadocs/reference.html>`__.
-
-The manual can be built offline using
-`Sphinx <http://sphinx-doc.org/>`__. Building the documentation requires
-`numpydoc <https://github.com/numpy/numpydoc>`__.
-
-Package Overview
-----------------
-
--  **karta.crs**: framework for coordinate reference systems and
-   geodetic calculations
-
--  **karta.vector.geometry**: geometry classes ``Point``,
-   ``Multipoint``, ``Line``, and ``Polygon`` with associated methods
-   such as length, area, intersections, membership testing, convex
-   hulls, and affine transformations
-
--  **karta.raster.grid**: ``RegularGrid`` class
-
--  **tests**: unit tests, to be run with ``python tests/runtests.py``
-
-Formats
--------
-
-*Karta* provides a basic working interface to several of common file
-formats. Currently implemented are:
-
--  vector
-
-   -  GeoJSON (r,w)
-   -  ESRI Shapefiles (via GDAL) (r,w)
-   -  GPS eXchange (GPX) (r,w)
-
--  raster
-
-   -  GeoTiff (via GDAL) (r,w)
-   -  ESRI ASCII Grid (r,w)
-
-*Karta* implements the Python ```__geo_interface__``
-attribute <https://gist.github.com/sgillies/2217756>`__ for vector
-geometries. This permits data to be exchanged between *Karta* and
-external modules that also implement ``__geo_interface__`` (e.g.
-`shapely <https://github.com/Toblerity/Shapely>`__,
-`fastkml <https://fastkml.readthedocs.org/en/latest/>`__).
-
 Installation
 ------------
 
@@ -210,20 +230,46 @@ Then, clone the repository and install:
 ::
 
     git clone https://github.com/fortyninemaps/karta.git karta
-    pip install -r karta/requirements.txt
     pip install karta/
 
 Dependencies
-------------
+~~~~~~~~~~~~
 
--  numpy >= >1.7
+-  numpy >= 1.10
 -  gdal >= 1.10
 -  picogeojson >= 0.2
 -  pyproj >= 1.9
 -  blosc >= 1.2
 -  C99-compliant compiler
 
-*Karta* supports Python 2.7 and Python 3.4+.
+*Karta* currently supports Python 2.7 and Python 3.4+.
+
+Documentation
+-------------
+
+See the `online
+manual <http://www.fortyninemaps.com/kartadocs/introduction.html>`__,
+the
+`tutorial <http://www.fortyninemaps.com/kartadocs/_static/tutorial.html>`__,
+or read the `API
+documentation <http://www.fortyninemaps.com/kartadocs/reference.html>`__.
+
+Contributing
+------------
+
+Bug reports, feature requests, and pull requests are welcome.
+
+Run unit tests with ``python tests/runtests.py``.
+
+The manual is built using `Sphinx <http://sphinx-doc.org/>`__ and
+requires `numpydoc <https://github.com/numpy/numpydoc>`__.
+
+.. |Build Status| image:: https://travis-ci.org/fortyninemaps/karta.svg?branch=master
+   :target: https://travis-ci.org/fortyninemaps/karta
+.. |Build status| image:: https://ci.appveyor.com/api/projects/status/viiimwp5pu7ff2bp?svg=true
+   :target: https://ci.appveyor.com/project/njwilson23/karta
+.. |Coverage Status| image:: https://coveralls.io/repos/github/fortyninemaps/karta/badge.svg?branch=master
+   :target: https://coveralls.io/github/fortyninemaps/karta?branch=master
 """,
     classifiers = ["Programming Language :: Python :: 2",
                    "Programming Language :: Python :: 2.7",
