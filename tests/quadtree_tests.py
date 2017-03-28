@@ -1,6 +1,5 @@
-""" Unit tests for vector functions """
-
 import unittest
+import sys
 import ctypes
 from ctypes import c_int, c_double, c_char_p, c_bool
 import numpy as np
@@ -21,6 +20,7 @@ class TestCQuadTree(unittest.TestCase):
     def setUp(self):
         self.qt = ctypes.CDLL(karta.vector.quadtree.__file__)
 
+    @unittest.skipIf(sys.platform.startswith("win"), "false positive on Windows")
     def test_iswithin(self):
         self.qt.iswithin.restype = c_bool
         self.qt.qt_new_bbox.restype = ctypes.POINTER(BBOX)
