@@ -144,9 +144,6 @@ class RegularGrid(Grid):
                     ("xllcorner", "yllcorner", "dx", "dy", "sx", "sy")])
         elif len(transform) == 6:
             self._transform = tuple(float(a) for a in transform)
-        elif len(transform) == 4:
-            self._transform = (float(transform[0]), float(transform[1]),
-                               float(transform[2]), float(transform[3]), 0, 0)
         else:
             raise errors.GridError("RegularGrid must be initialized with a "
                                    "transform iterable or dictionary")
@@ -1120,13 +1117,15 @@ class RegularGrid(Grid):
             raise errors.GridError("reference in AAIGrid.tofile() must be 'center' or "
                            "'corner'")
 
-        if np.any(self._transform[4:] != (0.0, 0.0)):
-            raise errors.GridError("ESRI ASCII grids do not support skewed grids")
+        dx, dy = self.resolution
+        if dx != dy:
+            raise errors.GridError("ESRI ASCII grids require isometric grid cells")
+
+        sx, sy = self.skew
+        if sx != sy != 0.0:
+            raise errors.GridError("skewed grids cannot be written as ESRI ASCII")
 
         ny, nx = self.bands[0].size
-        x0, y0, dx, dy = self._transform[:4]
-        if dx != dy:
-            raise errors.GridError("ASCII grids require isometric grid cells")
 
         if not hasattr(f, 'read'):
             f = open(f, "w")
@@ -1138,12 +1137,13 @@ class RegularGrid(Grid):
             f.write("NCOLS {0}\n".format(nx))
             f.write("NROWS {0}\n".format(ny))
             if reference == 'center':
-                f.write("XLLCENTER {0}\n".format(x0))
-                f.write("YLLCENTER {0}\n".format(y0))
+                xll, yll = self.center_llref()
+                f.write("XLLCENTER {0}\n".format(xll))
+                f.write("YLLCENTER {0}\n".format(yll))
             elif reference == 'corner':
-                xllcorner, yllcorner = self.corner_llref()
-                f.write("XLLCORNER {0}\n".format(xllcorner))
-                f.write("YLLCORNER {0}\n".format(yllcorner))
+                xll, yll = self.corner_llref()
+                f.write("XLLCORNER {0}\n".format(xll))
+                f.write("YLLCORNER {0}\n".format(yll))
             f.write("CELLSIZE {0}\n".format(dx))
             f.write("NODATA_VALUE {0}\n".format(nodata_value))
             f.writelines([str(row).replace(',','')[1:-1] +

@@ -11,14 +11,12 @@ class AAITests(unittest.TestCase):
         control = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
         grid = karta.read_aai(os.path.join(TESTDATA, "peaks49_corner.asc"))
         self.assertTrue(np.allclose(grid[::-1], control[:,:]))
-        return
 
     def test_read_aai_center(self):
         pe = peaks(n=49)
         control = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
         grid = karta.read_aai(os.path.join(TESTDATA, "peaks49_center.asc"))
         self.assertTrue(np.allclose(grid[::-1], control[:,:]))
-        return
 
     def test_write_aai(self):
         pe = peaks(n=49)
@@ -34,7 +32,21 @@ YLLCORNER 0.0
 CELLSIZE 30.0
 NODATA_VALUE -9999
 """)
-        return
+
+    def test_write_aai_centered(self):
+        pe = peaks(n=49)
+        grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
+        grid.to_aai(os.path.join(TMPDATA, "peaks49.asc"), reference="center")
+        with open(os.path.join(TMPDATA, "peaks49.asc")) as f:
+            lines = f.readlines()
+        self.assertEqual(len(lines), 55)
+        self.assertEqual("".join(lines[:6]), """NCOLS 49
+NROWS 49
+XLLCENTER 15.0
+YLLCENTER 15.0
+CELLSIZE 30.0
+NODATA_VALUE -9999
+""")
 
 def peaks(n=49):
     """ 2d peaks function of MATLAB logo fame. """

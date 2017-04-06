@@ -13,26 +13,41 @@ class RegularGridTests(unittest.TestCase):
     def setUp(self):
         pe = peaks(n=49)
         self.rast = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
-        return
 
     def test_get_resolution(self):
         grid = RegularGrid([0.0, 0.0, 25.0, 35.0, 10.0, 10.0])
         self.assertEqual(grid.resolution, (25.0, 35.0))
-        return
+
+    def test_get_coordinates(self):
+        cg = self.rast.coordinates()
+        self.assertTrue(isinstance(cg, karta.raster.coordgen.CoordinateGenerator))
+        self.assertEqual(cg.transform, self.rast.transform)
+
+    def test_bbox(self):
+        pe = peaks(n=49)
+        pe[40:,:] = np.nan
+        pe[:,:5] = np.nan
+        grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
+        self.assertEqual(grid.bbox, (0, 0, 30*49, 30*49))
+
+    def test_data_bbox(self):
+        pe = peaks(n=49)
+        pe[40:,:] = np.nan
+        pe[:,:5] = np.nan
+        grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
+        self.assertEqual(grid.data_bbox, (5*30, 0, 30*49, 30*40))
 
     def test_add_rgrid(self):
         rast2 = RegularGrid(self.rast.transform,
                             values=np.random.random(self.rast.size))
         res = self.rast + rast2
         self.assertTrue(np.all(res[:,:] == self.rast[:,:]+rast2[:,:]))
-        return
 
     def test_sub_rgrid(self):
         rast2 = RegularGrid(self.rast.transform,
                             values=np.random.random(self.rast.size))
         res = self.rast - rast2
         self.assertTrue(np.all(res[:,:] == self.rast[:,:]-rast2[:,:]))
-        return
 
     def test_center_coords(self):
         grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0),
@@ -41,7 +56,6 @@ class RegularGridTests(unittest.TestCase):
                           np.arange(15.0, 1471.0, 30.0))
         self.assertEqual(0.0, np.sum(grid.center_coords()[0] - ans[0]))
         self.assertEqual(0.0, np.sum(grid.center_coords()[1] - ans[1]))
-        return
 
     def test_center_coords_skewed(self):
         grid = RegularGrid((15.0, 15.0, 30.0, 30.0, 20.0, 10.0),
@@ -53,13 +67,11 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(Y[-1,0], 155.0)
         self.assertEqual(X[-1,-1], 240.0)
         self.assertEqual(Y[-1,-1], 195.0)
-        return
 
     def test_aschunks(self):
         grid = RegularGrid((0, 0, 1, 1, 0, 0), values=peaks(512))
         for chunk in grid.aschunks(size=(64, 64)):
             self.assertEqual(chunk.size, (64, 64))
-        return
 
     def test_aschunks_overlap(self):
         grid = RegularGrid((0, 0, 1, 1, 0, 0), values=peaks(512))
@@ -67,7 +79,6 @@ class RegularGridTests(unittest.TestCase):
         for chunk in grid.aschunks(size=(64, 64), overlap=(32, 32)):
             count += 1
         self.assertEqual(count, 256)
-        return
 
     def test_apply(self):
         msk = np.zeros([8, 8], dtype=np.bool)
@@ -81,7 +92,6 @@ class RegularGridTests(unittest.TestCase):
 
         self.assertTrue(np.all(newgrid[:,:][msk] == -1))
         self.assertTrue(np.all(newgrid[:,:][~msk] == val_[~msk]**2))
-        return
 
     def test_apply_inplace(self):
         msk = np.zeros([8, 8], dtype=np.bool)
@@ -95,7 +105,6 @@ class RegularGridTests(unittest.TestCase):
 
         self.assertTrue(np.all(grid[:,:][msk] == -1))
         self.assertTrue(np.all(grid[:,:][~msk] == val_[~msk]**2))
-        return
 
     def test_merge(self):
         grid1 = RegularGrid([10, 20, 1, 1, 0, 0], values=np.ones([8, 8]))
@@ -105,7 +114,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid_combined.transform, (7.0, 15.0, 1.0, 1.0, 0.0, 0.0))
         self.assertEqual(grid_combined.size, (13, 11))
         self.assertEqual(np.sum(np.isnan(grid_combined[:,:])), 42)
-        return
 
     def test_merge_weighted(self):
         grid1 = RegularGrid([10, 20, 1, 1, 0, 0], values=np.ones([8, 8]))
@@ -115,7 +123,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertAlmostEqual(grid_combined[4,4], 1.66666666666)
         self.assertAlmostEqual(grid_combined[2,8], 2.5)
         self.assertAlmostEqual(grid_combined[4,5], 2.33333333333)
-        return
 
     def test_merge_multiband(self):
         grid3a = RegularGrid([0, 0, 1, 1, 0, 0],
@@ -126,7 +133,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(np.nansum(grid3_mosaic[:,:,0]), 552)
         self.assertEqual(np.nansum(grid3_mosaic[:,:,1]), 920)
         self.assertEqual(np.nansum(grid3_mosaic[:,:,2]), 1288)
-        return
 
     def test_align_origin(self):
         xx, yy = np.meshgrid(np.linspace(0, 1, 50), np.linspace(0, 1, 30))
@@ -135,7 +141,6 @@ class RegularGridTests(unittest.TestCase):
         new_grid = grid._align_origin(5, 5, method='linear')
         self.assertEqual(new_grid.origin, (25, 55))
         self.assertTrue(np.isnan(new_grid.values[0, 0]))
-        return
 
     def test_resample_nearest(self):
         # use linear function so that nearest neighbour and linear interp are
@@ -152,7 +157,6 @@ class RegularGridTests(unittest.TestCase):
         gnew = g.resample(6.0, 6.0, method='nearest')
         residue = gnew[:,:] - sol[:,:]
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
-        return
 
     def test_resample_linear(self):
         # use linear function so that nearest neighbour and linear interp are
@@ -169,7 +173,6 @@ class RegularGridTests(unittest.TestCase):
         gnew = g.resample(6.0, 6.0, method='linear')
         residue = gnew[:,:] - sol[:,:]
         self.assertTrue(np.max(np.abs(residue)) < 1e-12)
-        return
 
     def test_sample_nearest_out_of_bounds(self):
         g = RegularGrid([0, 0, 1, 1, 0, 0], values=np.ones((10, 10)))
@@ -196,7 +199,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid2[0,0,0], 1.0)
         self.assertEqual(grid2[0,0,1], 2.0)
         self.assertEqual(grid2[0,0,2], 3.0)
-        return
 
     def test_sample_nearest(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
@@ -205,14 +207,12 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid.sample_nearest(0.6, 1.3), 1.0)
         self.assertEqual(grid.sample_nearest(1.4, 0.3), 1.0)
         self.assertEqual(grid.sample_nearest(1.6, 1.3), 0.5)
-        return
 
     def test_sample_nearest_vector(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                            values=np.arange(64).reshape([8,8]))
         res = grid.sample_nearest(np.arange(1,7,0.5), np.arange(2,5,0.25))
         self.assertEqual(res.shape, (1, 12))
-        return
 
     def test_sample_nearest_array(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
@@ -220,7 +220,6 @@ class RegularGridTests(unittest.TestCase):
         X, Y = np.meshgrid(np.arange(1, 7, 0.5), np.arange(2, 5, 0.25))
         res = grid.sample_nearest(X, Y)
         self.assertEqual(res.shape, (1, 12, 12))
-        return
 
     def test_sample_nearest_array_order(self):
         grid = RegularGrid((0, 0, 1, 1, 0, 0),
@@ -233,7 +232,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(val[0,0,0], 1.0)
         self.assertEqual(val[1,0,0], 2.0)
         self.assertEqual(val[2,0,0], 3.0)
-        return
 
     def test_sample_nearest_skewed(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
@@ -242,20 +240,17 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(grid.sample_nearest(1.5, 1.05), 1.0)
         self.assertEqual(grid.sample_nearest(1.2, 1.4), 1.0)
         self.assertEqual(grid.sample_nearest(2.0, 1.7), 0.5)
-        return
 
     def test_sample_bilinear(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                            values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 0.625)
-        return
 
     def test_sample_bilinear_vector(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                            values=np.arange(64, dtype=np.float64).reshape([8,8]))
         res = grid.sample_bilinear(np.arange(1,7,0.5), np.arange(2,5,0.25))
         self.assertEqual(res.shape, (1, 12))
-        return
 
     def test_sample_bilinear_array(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
@@ -263,39 +258,33 @@ class RegularGridTests(unittest.TestCase):
         X, Y = np.meshgrid(np.arange(1, 7, 0.5), np.arange(2, 5, 0.25))
         res = grid.sample_bilinear(X, Y)
         self.assertEqual(res.shape, (1, 12, 12))
-        return
 
 
     def test_sample_bilinear_int(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                            values=np.array([[0, 2], [2, 1]], dtype=np.int32))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
-        return
 
     def test_sample_bilinear_uint(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                            values=np.array([[0, 2], [2, 1]], dtype=np.uint16))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
-        return
 
     def test_sample_bilinear_uint8(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                            values=np.array([[0, 2], [2, 1]], dtype=np.uint8))
         self.assertEqual(grid.sample_bilinear(1.0, 1.0), 1)
-        return
 
     def test_sample_bilinear_multiband(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                            values=np.dstack([[[0, 1], [1, 0.5]], [[1, 2], [2, 1.5]]]))
         res = grid.sample_bilinear(1.0, 1.0)
         self.assertTrue(np.all(res == np.array([0.625, 1.625])))
-        return
 
     def test_sample_bilinear_skewed(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.5, 0.2],
                            values=np.array([[0, 1], [1, 0.5]]))
         self.assertEqual(grid.sample_bilinear(1.5, 1.2), 0.625)
-        return
 
     def test_sample_bilinear2(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
@@ -305,7 +294,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual([z[400], z[1200], z[1550], z[2120]],
                          [0.16326530612244894, 0.48979591836734693,
                           0.63265306122448983, 0.74052478134110788])
-        return
 
     def test_sample_multipoint(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
@@ -314,7 +302,6 @@ class RegularGridTests(unittest.TestCase):
                               crs=grid.crs)
         self.assertTrue(np.all(np.allclose(grid.sample(mp, method="nearest"),
                                            np.array([0.0, 1.0, 1.0, 0.5]))))
-        return
 
     def test_sample_2d_array(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
@@ -323,7 +310,6 @@ class RegularGridTests(unittest.TestCase):
         yi = np.array([[0.7, 0.7], [1.3, 1.3]])
         z = grid.sample(xi, yi, method="nearest")
         self.assertTrue(np.all(z == np.array([[0, 1], [1, 0.5]])))
-        return
 
     def test_vertex_coords(self):
         grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=np.zeros([49, 49]))
@@ -331,7 +317,6 @@ class RegularGridTests(unittest.TestCase):
                           np.arange(15.0, 1486.0, 30.0))
         self.assertTrue(np.sum(grid.vertex_coords()[0] - ans[0]) < 1e-10)
         self.assertTrue(np.sum(grid.vertex_coords()[1] - ans[1]) < 1e-10)
-        return
 
     def test_vertex_coords_skewed(self):
         grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 20.0, 10.0), values=np.zeros([5, 5]))
@@ -339,14 +324,12 @@ class RegularGridTests(unittest.TestCase):
                           np.arange(15.0, 1486.0, 30.0))
         self.assertTrue(np.sum(self.rast.vertex_coords()[0] - ans[0]) < 1e-10)
         self.assertTrue(np.sum(self.rast.vertex_coords()[1] - ans[1]) < 1e-10)
-        return
 
     def test_get_extent(self):
         ereg = (0.0, 1470.0, 0.0, 1470.0)
         creg = (15.0, 1455.0, 15.0, 1455.0)
         self.assertEqual(self.rast.get_extent(reference='center'), creg)
         self.assertEqual(self.rast.get_extent(reference='edge'), ereg)
-        return
 
     def test_get_extent_crs(self):
         pe = peaks(n=49)
@@ -360,7 +343,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertAlmostEqual(b, -111.13480112)
         self.assertAlmostEqual(c, 0.0450996517)
         self.assertAlmostEqual(d, 4.3878488543)
-        return
 
     def test_get_data_extent(self):
         grid = RegularGrid((0, 0, 1, 1, 0, 0), values=np.zeros((128, 128), dtype=np.float64))
@@ -370,7 +352,6 @@ class RegularGridTests(unittest.TestCase):
         grid[-17:,:] = grid.nodata
         self.assertEqual(grid.get_data_extent("edge"), (4, 121, 21, 111))
         self.assertEqual(grid.get_data_extent("center"), (4.5, 120.5, 21.5, 110.5))
-        return
 
     def test_minmax_nodata(self):
         values = np.array([[4, 5, 3], [4, 2, -9], [3, 6, 1]])
@@ -379,7 +360,6 @@ class RegularGridTests(unittest.TestCase):
                                 values=values, nodata_value=-9)
         minmax = self.rast.minmax()
         self.assertEqual(minmax, (1, 6))
-        return
 
     def test_minmax_nodata2(self):
         values = -9*np.ones([3,3])
@@ -389,12 +369,16 @@ class RegularGridTests(unittest.TestCase):
         minmax = self.rast.minmax()
         self.assertTrue(np.isnan(minmax[0]))
         self.assertTrue(np.isnan(minmax[1]))
-        return
 
     def test_minmax(self):
+        mx = self.rast.max()
+        self.assertEqual(mx, 8.075173545159231)
+
+        mn = self.rast.min()
+        self.assertEqual(mn, -6.5466445243204294)
+
         minmax = self.rast.minmax()
         self.assertEqual(minmax, (-6.5466445243204294, 8.075173545159231))
-        return
 
     def test_clip(self):
         clipped = self.rast.clip(500, 950, 500, 950)
@@ -405,7 +389,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(X[0,-1], 945)
         self.assertEqual(Y[0,0], 525)
         self.assertEqual(Y[-1,0], 945)
-        return
 
     def test_clip_to_extent(self):
         proto = RegularGrid((500, 500, 30, 30, 0, 0), np.zeros((15,15)))
@@ -417,14 +400,12 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(X[0,-1], 945)
         self.assertEqual(Y[0,0], 525)
         self.assertEqual(Y[-1,0], 945)
-        return
 
     def test_resize_smaller(self):
         proto = RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([620, 650, 1370, 1310])
         self.assertEqual(newgrid.transform, (620.0, 650.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid[:,:] == proto[5:27,4:29]))
-        return
 
     def test_resize_larger(self):
         proto = RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
@@ -432,21 +413,18 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid[6:56,4:54] == proto[:,:]))
         self.assertTrue(np.isnan(newgrid[0,0]))
-        return
 
     def test_resize_lower_left(self):
         proto = RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([380, 320, 380+30*30, 320+30*32])
         self.assertEqual(newgrid.transform, (380.0, 320.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid[6:,4:] == proto[:26,:26]))
-        return
 
     def test_resize_upper_right(self):
         proto = RegularGrid((500, 500, 30, 30, 0, 0), values=peaks(50))
         newgrid = proto.resize([1940, 1910, 1940+30*10, 1910+30*7])
         self.assertEqual(newgrid.transform, (1940.0, 1910.0, 30.0, 30.0, 0.0, 0.0))
         self.assertTrue(np.all(newgrid[:3,:2] == proto[-3:,-2:]))
-        return
 
     def test_data_mask_nan(self):
         T = [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]
@@ -454,7 +432,6 @@ class RegularGridTests(unittest.TestCase):
         v[0,2:7] = np.nan
         g = RegularGrid(T, values=v, nodata_value=np.nan)
         self.assertEqual(np.sum(g.data_mask), 59)
-        return
 
     def test_data_mask_nonnan(self):
         T = [0.0, 0.0, 1.0, 1.0, 0.0, 0.0]
@@ -462,7 +439,6 @@ class RegularGridTests(unittest.TestCase):
         v[0,2:7] = -1
         g = RegularGrid(T, values=v, nodata_value=-1)
         self.assertEqual(np.sum(g.data_mask), 59)
-        return
 
     def test_mask_poly(self):
         t = -np.linspace(0, 2*np.pi, 200)
@@ -474,7 +450,6 @@ class RegularGridTests(unittest.TestCase):
                            crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 97048730546)
-        return
 
     def test_mask_poly_inplace(self):
         t = -np.linspace(0, 2*np.pi, 200)
@@ -486,7 +461,6 @@ class RegularGridTests(unittest.TestCase):
                            crs=karta.crs.Cartesian)
         grid.mask_by_poly(poly, inplace=True)
         self.assertEqual(int(np.nansum(grid[:,:])), 97048730546)
-        return
 
     def test_mask_poly_partial(self):
         t = -np.linspace(0, 2*np.pi, 200)
@@ -498,7 +472,6 @@ class RegularGridTests(unittest.TestCase):
                            crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
         self.assertEqual(masked_grid.data_mask.sum(), 181424)
-        return
 
     def test_mask_poly_partial2(self):
         # this case has the first transect begin off-grid, which has caused
@@ -507,7 +480,6 @@ class RegularGridTests(unittest.TestCase):
         p = karta.Polygon([(-2, 3), (8, -5), (8, -1), (-2, 7)])
         gc = g.mask_by_poly(p)
         self.assertEqual(gc.data_mask.sum(), 20)
-        return
 
     def test_mask_poly_multiple(self):
         # mask by multiple polygons
@@ -523,7 +495,6 @@ class RegularGridTests(unittest.TestCase):
                            crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly([poly, poly2])
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 47081206720)
-        return
 
     def test_mask_poly_multiband(self):
         t = -np.linspace(0, 2*np.pi, 200)
@@ -537,7 +508,6 @@ class RegularGridTests(unittest.TestCase):
                            crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 97048730546*3)
-        return
 
     def test_mask_poly_inverted(self):
         # grids where transform dy is negative (common for geotiffs)
@@ -550,7 +520,6 @@ class RegularGridTests(unittest.TestCase):
                            crs=karta.crs.Cartesian)
         masked_grid = grid.mask_by_poly(poly)
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 97048730546)
-        return
 
     def test_mask_multipoly(self):
         t = -np.linspace(0, 2*np.pi, 200)
@@ -568,7 +537,6 @@ class RegularGridTests(unittest.TestCase):
         masked_grid = grid.mask_by_poly(poly)
 
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 73399874364)
-        return
 
     def test_get_positions(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
@@ -577,21 +545,18 @@ class RegularGridTests(unittest.TestCase):
         self.assertEqual((i,j), (1.0, 1.0))
         (i, j) = grid.get_positions(2.0, 1.5)
         self.assertEqual((i,j), (1.0, 1.5))
-        return
 
     def test_get_indices(self):
         ind = self.rast.get_indices(15.0, 15.0)
         self.assertEqual(tuple(ind), (0, 0))
         ind = self.rast.get_indices(1455.0, 1455.0)
         self.assertEqual(tuple(ind), (48, 48))
-        return
 
     def test_get_indices_onevec(self):
         ind = self.rast.get_indices([15.0], [15.0])
         self.assertEqual(tuple(ind), (0, 0))
         ind = self.rast.get_indices(1455.0, 1455.0)
         self.assertEqual(tuple(ind), (48, 48))
-        return
 
     def test_get_indices_vec(self):
         ind = self.rast.get_indices(np.arange(15.0, 1470, 5),
@@ -638,7 +603,6 @@ class RegularGridTests(unittest.TestCase):
 
         self.assertTrue(np.all(ind[0] == xi))
         self.assertTrue(np.all(ind[1] == yi))
-        return
 
     def test_profile(self):
         path = karta.Line([(15.0, 15.0), (1484.0, 1484.0)], crs=karta.crs.Cartesian)
@@ -646,9 +610,9 @@ class RegularGridTests(unittest.TestCase):
         expected = self.rast[:,:].diagonal()
         self.assertEqual(len(pts), 49)
         self.assertTrue(np.allclose(z, expected))
-        return
 
-    def test_gridpoints(self):
+    def test_gridpoints_float64(self):
+        # should use fast C version
         np.random.seed(49)
         x = np.random.rand(20000)*10.0-5.0
         y = np.random.rand(20000)*10.0-5.0
@@ -659,7 +623,19 @@ class RegularGridTests(unittest.TestCase):
 
         Xg, Yg = grid.center_coords()
         self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid[:,:]))/Xg.size < 0.45)
-        return
+
+    def test_gridpoints_float32(self):
+        # should use Python fallback
+        np.random.seed(49)
+        x = np.random.rand(20000).astype(np.float32)*10.0-5.0
+        y = np.random.rand(20000).astype(np.float32)*10.0-5.0
+        z = x**2+y**3
+
+        T = [-5.0, -5.0, 0.25, 0.25, 0.0, 0.0]
+        grid = karta.raster.gridpoints(x, y, z, T, karta.crs.Cartesian)
+
+        Xg, Yg = grid.center_coords()
+        self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid[:,:]))/Xg.size < 0.45)
 
     def test_set_nodata(self):
         v = np.arange(64, dtype=np.float64).reshape([8,8])
@@ -670,7 +646,6 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.isnan(grid.nodata))
         self.assertEqual(np.sum(np.isnan(grid[:,:])), 4)
         self.assertEqual(np.sum(grid[:,:] == -1.0), 0)
-        return
 
 #class TestInterpolation(unittest.TestCase):
 #
@@ -706,7 +681,6 @@ class RegularGridTests(unittest.TestCase):
 #                            6.63857194,  6.9936249 ,  8.99999996,  6.97005635,
 #                            6.58706897,  6.37686191,  6.24425398,  6.15677403,
 #                            6.09829941]))
-#        return
 
 def peaks(n=49):
     """ 2d peaks function of MATLAB logo fame. """
