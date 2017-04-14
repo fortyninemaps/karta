@@ -13,8 +13,6 @@ ASCII grids and GeoTiff files. The most commonly used *Grid* subclass is
 offsets between nodes. *Grids* support geographically-aware clipping, sampling,
 and profile extraction.
 
-A more specialized grid class, *WarpedGrid*, is experimental.
-
 .. automodule:: karta.raster.grid
 
 .. autoclass:: karta.raster.grid.Grid
@@ -70,7 +68,7 @@ The package ``karta.vector`` provides a *Geometry* class, subclasses for
 as readers and writers for ESRI shapefiles, GeoJSON, and GPX files.
 
 All concrete geometries support the `__geo_interface__`_ attribute, and map to
-*Point*, *MultiPoint*, *LineString*, and *Polygon* types, respectively.
+*Feature* types.
 
 .. _`__geo_interface__`: https://gist.github.com/sgillies/2217756
 
