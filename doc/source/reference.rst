@@ -162,19 +162,19 @@ Vector IO modules
 GeoJSON
 +++++++
 
-.. automodule:: karta.vector.geojson
+.. automodule:: karta.vector._geojson
     :members:
 
 ESRI shapefile (GDAL interface)
 +++++++++++++++++++++++++++++++
 
-.. automodule:: karta.vector.shp
+.. automodule:: karta.vector._shp
     :members:
 
 GPS Exchange
 ++++++++++++
 
-.. automodule:: karta.vector.gpx
+.. automodule:: karta.vector._gpx
     :members:
 
 Managing coordinate systems
@@ -223,11 +223,10 @@ spheroid definition.
 
 ::
 
-    from karta.crs import Proj4CRS
-    my_crs = Proj4CRS("+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
-                      "+lon_0=-126 +x_0=1000000 +y_0=0 "
-                      "+ellps=GRS80 +datum=NAD83 +units=m +no_defs",
-                      "+ellps=GRS80")
+    from karta.crs import ProjectedCRS
+    my_crs = ProjectedCRS("+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
+                          "+lon_0=-126 +x_0=1000000 +y_0=0 "
+                          "+ellps=GRS80 +datum=NAD83 +units=m +no_defs")
 
 See the proj.4_ documentation for more details.
 
