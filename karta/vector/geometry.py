@@ -273,7 +273,7 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
 
         If the coordinate system is geographical and a third (z) coordinate
         exists, it is assumed to have the same units as the real-world
-        horizontal distance (i.e. meters).
+        horizontal coordinates (e.g. meters).
 
         Parameters
         ----------
@@ -307,10 +307,10 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
             lon1, lat1 = other.crs.project(other.x, other.y, inverse=True)
             _, _, dist = self.crs.inverse(lon0, lat0, lon1, lat1)
 
-        if 2 == len(self.vertex) == len(other.vertex):
-            return dist
-        else:
-            return math.sqrt(dist**2. + (self.z-other.z)**2.)
+        if 3 == len(self.vertex) == len(other.vertex):
+            dz = self.z - other.z
+            dist = math.sqrt(dist*dist + dz*dz)
+        return dist
 
     def shift(self, shift_vector):
         """ Shift point in space.

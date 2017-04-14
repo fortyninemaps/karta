@@ -8,8 +8,8 @@ import numpy as np
 from karta.vector.geometry import (Point, Line, Polygon,
                                    Multipoint, Multiline, Multipolygon)
 from karta.vector.geometry import affine_matrix, _flatten
-from karta.crs import (Cartesian, SphericalEarth,
-                       LonLatWGS84, NSIDCNorth, ProjectedCRS)
+from karta.crs import (Cartesian, SphericalEarth, ProjectedCRS,
+                       LonLatWGS84, NSIDCNorth, NSIDCSouth, GallPetersEqualArea)
 from karta.errors import CRSError
 
 class TestGeometry(unittest.TestCase):
@@ -32,17 +32,39 @@ class TestGeometry(unittest.TestCase):
 
     def test_point_equality(self):
         pt1 = Point((3.0, 4.0))
+
         pt2 = Point((3.0, 4.0, 5.0))
-        pt3 = Point((3.0, 4.0, 5.0), properties={"species":"T. officianale", "density":"high"})
         self.assertFalse(pt1 == pt2)
+        self.assertTrue(pt1 != pt2)
+
+        pt3 = Point((3.0, 4.0, 5.0), properties={"species":"T. officianale"})
         self.assertFalse(pt1 == pt3)
         self.assertFalse(pt2 == pt3)
+        self.assertTrue(pt1 != pt2)
+        self.assertTrue(pt2 != pt3)
+
+        pt4 = Point((3.0, 4.0))
+        self.assertEqual(pt1, pt4)
+
+        self.assertFalse(pt1 == (3.0, 4.0))
+        self.assertTrue(pt1 != (3.0, 4.0))
         return
 
     def test_point_vertex(self):
-        point = Point((1.0, 2.0, 3.0), properties={"type": "apple", "color": (43,67,10)})
+        point = Point((1.0, 2.0, 3.0))
         self.assertEqual(point.get_vertex(), (1.0, 2.0, 3.0))
         return
+
+    def test_point_index(self):
+        point = Point((1.0, 2.0, 3.0))
+        self.assertEqual(point[0], 1.0)
+        self.assertEqual(point[1], 2.0)
+        self.assertEqual(point[2], 3.0)
+        return
+
+    def test_point_repr(self):
+        point = Point((1.0, 2.0, 3.0))
+        self.assertEqual(repr(point), "Point(1.0, 2.0)")
 
     def test_point_add(self):
         ptA = Point((1, 2), crs=SphericalEarth)
@@ -214,20 +236,27 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertEqual(point.azimuth(other), -180.0)
         return
 
-    def test_point_azimuth2(self):
+    def test_point_azimuth_nan(self):
         point = Point((5.0, 2.0))
         other = Point((5.0, 2.0))
         self.assertTrue(np.isnan(point.azimuth(other)))
         return
 
-    def test_point_azimuth3(self):
+    def test_point_azimuth_projected(self):
         """ Verify with:
 
-        printf "0 -1000000\n100000 -900000" | proj +proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs -I -s | tr '\n' ' ' | invgeod +ellps=WGS84 -f "%.6f"
+        printf "0 -1000000\n100000 -900000" | proj +proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs -I -s -w6 | tr '\n' ' ' | invgeod +ellps=WGS84 -f "%.6f"
+
+        and
+
+        cat <(printf "0 -1000000" | proj +proj=stere +lat_0=90 +lat_ts=70 +lon_0=-45 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs -I -s -w6) <(printf "100000 -900000" | proj +proj=stere +lat_0=-90 +lat_ts=-70 +lon_0=0 +k=1 +x_0=0 +y_0=0 +units=m +datum=WGS84 +no_defs -I -s -w6) | tr '\n' ' ' | invgeod +ellps=WGS84 -f "%.6f"
         """
         point = Point((0.0, -10e5), crs=NSIDCNorth)
         other = Point((1e5, -9e5), crs=NSIDCNorth)
         self.assertAlmostEqual(point.azimuth(other, projected=False), 45.036973, places=6)
+
+        other = Point((1e5, -9e5), crs=NSIDCSouth)
+        self.assertAlmostEqual(point.azimuth(other, projected=False), -117.140678, places=6)
         return
 
     def test_nearest_to(self):
@@ -622,10 +651,25 @@ class TestGeometryProj(unittest.TestCase):
         d2 = self.vancouver.distance(self.whitehorse)
         d3 = self.whitehorse.distance(self.ottawa)
         d4 = self.whitehorse.distance(self.vancouver)
-        self.assertTrue(abs(d1 - 3549030.70541) < 1e-5)
-        self.assertTrue(abs(d2 - 1483327.53922) < 1e-5)
-        self.assertTrue(abs(d3 - 4151366.88185) < 1e-5)
-        self.assertTrue(abs(d4 - 1483327.53922) < 1e-5)
+        self.assertAlmostEqual(d1, 3549030.70541, places=5)
+        self.assertAlmostEqual(d2, 1483327.53922, places=5)
+        self.assertAlmostEqual(d3, 4151366.88185, places=5)
+        self.assertAlmostEqual(d4, 1483327.53922, places=5)
+        return
+
+    def test_greatcircle_projected(self):
+        van = Point(self.vancouver.get_vertex(GallPetersEqualArea), crs=GallPetersEqualArea)
+        whi = Point(self.whitehorse.get_vertex(GallPetersEqualArea), crs=GallPetersEqualArea)
+        ott = Point(self.ottawa.get_vertex(GallPetersEqualArea), crs=GallPetersEqualArea)
+
+        d1 = van.distance(ott, projected=False)
+        d2 = van.distance(whi, projected=False)
+        d3 = whi.distance(ott, projected=False)
+        d4 = whi.distance(van, projected=False)
+        self.assertAlmostEqual(d1, 3549030.70541, places=3)
+        self.assertAlmostEqual(d2, 1483327.53922, places=3)
+        self.assertAlmostEqual(d3, 4151366.88185, places=3)
+        self.assertAlmostEqual(d4, 1483327.53922, places=3)
         return
 
     def test_azimuth_lonlat(self):
@@ -654,9 +698,21 @@ class TestAffineTransforms(unittest.TestCase):
 
     def test_translate_point(self):
         pt = Point((0, 0), crs=Cartesian)
+
+        with self.assertRaises(ValueError):
+            newpt = pt.apply_transform(np.array([[0, 0, 1, 0], [0, 0, 2, 0]]))
+
         newpt = pt.apply_transform(np.array([[0, 0, 1], [0, 0, 2]]))
         self.assertEqual(newpt.x, 1.0)
         self.assertEqual(newpt.y, 2.0)
+        return
+
+    def test_translate_point_3(self):
+        pt = Point((0, 0, 3), crs=Cartesian)
+        newpt = pt.apply_transform(np.array([[0, 0, 1], [0, 0, 2]]))
+        self.assertEqual(newpt.x, 1.0)
+        self.assertEqual(newpt.y, 2.0)
+        self.assertEqual(newpt.z, 3.0)
         return
 
     def test_transform_multiline(self):

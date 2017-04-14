@@ -8,6 +8,20 @@ from karta.crs import LonLatWGS84, WebMercator
 
 class TestSinglepartGeometry(unittest.TestCase):
 
+    def test_point(self):
+        with self.assertRaises(TypeError):
+            pt = Point((1, 2), properties=5, crs=WebMercator)
+
+        # vertex must have 2-3 items
+        with self.assertRaises(TypeError):
+            pt = Point((1, 2, 3, 4), crs=WebMercator)
+
+        with self.assertRaises(TypeError):
+            pt = Point((1,), crs=WebMercator)
+
+        pt = Point((1, 2), properties={"id": 5}, crs=WebMercator)
+        self.assertTrue(isinstance(pt, Point))
+
     def test_line_from_points(self):
         x = range(-5, 5)
         y = [x_**2 for x_ in x]
@@ -20,7 +34,6 @@ class TestSinglepartGeometry(unittest.TestCase):
         line = Line([pt.vertex for pt in pts], crs=LonLatWGS84)
         ans = Line(vertices, crs=LonLatWGS84)
         self.assertEqual(line, ans)
-        return
 
     def test_polygon_from_points(self):
         x = range(-5, 5)
@@ -33,7 +46,6 @@ class TestSinglepartGeometry(unittest.TestCase):
         poly = Polygon([pt.vertex for pt in pts], crs=LonLatWGS84)
         ans = Polygon(vertices, crs=LonLatWGS84)
         self.assertEqual(poly, ans)
-        return
 
 class TestMultipartGeometry(unittest.TestCase):
 
@@ -54,7 +66,6 @@ class TestMultipartGeometry(unittest.TestCase):
                  50.0, 25.0, 11.0, 80.0, 59.0, 56.0, 32.0, 8.0, 88.0, 76.0]
 
         Multipoint(vertices, data={'d0':data0, 'd1':data1})
-        return
 
     def test_multipoint_from_points(self):
         x = range(-5, 5)
@@ -68,7 +79,6 @@ class TestMultipartGeometry(unittest.TestCase):
         mp = multipart_from_singleparts(pts)
         ans = Multipoint(vertices, data={"p":range(len(pts))}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)
-        return
 
     def test_multiline(self):
         vertices = []
@@ -81,7 +91,6 @@ class TestMultipartGeometry(unittest.TestCase):
             data["a"].append(i*j)
 
         Multiline(vertices, data=data)
-        return
 
     def test_multiline_from_lines_constructor(self):
         lines = []
@@ -95,7 +104,6 @@ class TestMultipartGeometry(unittest.TestCase):
         for l, l_ in zip(g, lines):
             self.assertTrue(np.all(l.vertices == l_.vertices))
         self.assertEqual(g.crs, LonLatWGS84)
-        return
 
     def test_multiline_from_lines(self):
         lines = []
@@ -108,7 +116,6 @@ class TestMultipartGeometry(unittest.TestCase):
         g = multipart_from_singleparts(lines)
         self.assertEqual(g.d["d"], [0, 4, 8, 12, 16])
         self.assertEqual(g.crs, LonLatWGS84)
-        return
 
     def test_multipolygon(self):
         vertices = []
@@ -121,7 +128,6 @@ class TestMultipartGeometry(unittest.TestCase):
             data["a"].append(i*j)
 
         Multipolygon(vertices, data=data)
-        return
 
     def test_multipolygon_empty_data(self):
         vertices = []
@@ -134,7 +140,6 @@ class TestMultipartGeometry(unittest.TestCase):
         mp = Multipolygon(vertices, data={})
         # constructor should override empty data dictionary to allow indexing
         [mp[i] for i in range(len(mp))]
-        return
 
     def test_multipolygon_from_polygons_constructor(self):
         polys = []
@@ -148,7 +153,6 @@ class TestMultipartGeometry(unittest.TestCase):
         for p, p_ in zip(g, polys):
             self.assertEqual(p.vertices, p_.vertices)
         self.assertEqual(g.crs, LonLatWGS84)
-        return
 
     def test_multipolygon_from_polygons(self):
         polys = []
@@ -161,28 +165,23 @@ class TestMultipartGeometry(unittest.TestCase):
         g = multipart_from_singleparts(polys)
         self.assertEqual(g.d["d"], [0, 4, 8, 12, 16])
         self.assertEqual(g.crs, LonLatWGS84)
-        return
 
     def test_empty_multpoint(self):
         mp = Multipoint([])
         self.assertEqual(len(mp), 0)
-        return
 
     def test_empty_multiline(self):
         ml = Multiline([])
         self.assertEqual(len(ml), 0)
-        return
 
     def test_empty_multipolygon(self):
         mp = Multipolygon([])
         self.assertEqual(len(mp), 0)
-        return
 
     def test_multipoint_zip_init(self):
         x = range(-10, 10)
         y = [_x**2 for _x in x]
         Line(zip(x, y))
-        return
 
     def test_merge_multipoints(self):
         mp1 = Multipoint(zip(np.arange(0, 5), np.arange(3, 8)),
