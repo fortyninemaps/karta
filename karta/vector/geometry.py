@@ -75,7 +75,7 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
     """
     def __init__(self, coords, properties=None, **kwargs):
         if len(coords) not in (2, 3):
-            raise TypeError("Point coordinates must be a sequence")
+            raise TypeError("Point coordinates must have length 2 or 3")
         super(Point, self).__init__(properties=properties, **kwargs)
         self.vertex = tuple(coords)
         self._geotype = "Point"
@@ -96,7 +96,7 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
             return False
 
     def __neq__(self, other):
-        return ~(self == other)
+        return not (self == other)
 
     def __hash__(self):
         ht = hash(self._geotype)
@@ -162,21 +162,18 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
         - If CRS is geographical, returns azimuth as defined by the CRS
           instance.
         """
-        x0, y0 = self.x, self.y
-        if self.crs != other.crs:
+        az = np.nan
+        if projected and not isinstance(self.crs, GeographicalCRS):
+            x0, y0 = self.get_vertex()[:2]
             x1, y1 = other.get_vertex(self.crs)[:2]
+            if (x0 != x1) or (y0 != y1):
+                az = 90.0 - math.atan2(y1-y0, x1-x0)*180.0/math.pi
+                az = (az+180) % 360 - 180
         else:
-            x1, y1 = other.x, other.y
-
-        if (x0, y0) == (x1, y1):
-            az = np.nan
-        elif projected and not isinstance(self.crs, GeographicalCRS):
-            az = 90.0 - math.atan2(y1-y0, x1-x0)*180.0/math.pi
-            az = (az+180) % 360 - 180
-        else:
-            lon0, lat0 = self.crs.project(x0, y0, inverse=True)
-            lon1, lat1 = self.crs.project(x1, y1, inverse=True)
-            az, _, _ = self.crs.inverse(lon0, lat0, lon1, lat1)
+            lon0, lat0 = self.crs.project(self.x, self.y, inverse=True)
+            lon1, lat1 = other.crs.project(other.x, other.y, inverse=True)
+            if (lon0 != lon1) or (lat0 == lat1):
+                az, _, _ = self.crs.inverse(lon0, lat0, lon1, lat1)
         return az
 
     def apply_transform(self, M):
