@@ -87,7 +87,7 @@ setup(
                         "blosc>=1.2.8",
                         "picogeojson>0.2.0"],
     author = "Nat Wilson",
-    author_email = "njwilson23@gmail.com",
+    author_email = "natw@fortyninemaps.com",
     packages = ["karta", "karta.vector", "karta.raster"],
     url = "http://www.fortyninemaps.com/karta.html",
     description = "Geospatial analysis in Python",
@@ -203,23 +203,20 @@ Load and manipulate raster data:
 Installation
 ------------
 
-The easiest way to install in production is via ``pip``. Installation
-requires a recent version of ``setuptools``:
+*Karta* currently supports Python 2.7 and Python 3.4+.
+
+The easiest way to install is via ``pip``. Installation requires a recent
+version of ``setuptools``.
 
 ::
 
     pip install -U setuptools
-
-Then, to install the latest release from PyPI:
-
-::
-
     pip install karta
 
 Building from source
 ~~~~~~~~~~~~~~~~~~~~
 
-Building from source requires Cython:
+Building from source requires Cython and a C99-compliant compiler:
 
 ::
 
@@ -230,19 +227,9 @@ Then, clone the repository and install:
 ::
 
     git clone https://github.com/fortyninemaps/karta.git karta
-    pip install karta/
+    cd karta/
+    python setup.py build
 
-Dependencies
-~~~~~~~~~~~~
-
--  numpy >= 1.10
--  gdal >= 1.10
--  picogeojson >= 0.2
--  pyproj >= 1.9
--  blosc >= 1.2
--  C99-compliant compiler
-
-*Karta* currently supports Python 2.7 and Python 3.4+.
 
 Documentation
 -------------

@@ -94,37 +94,25 @@ grid.resample(500.0, 500.0)     # Return a grid resampled at a new resolution
 
 ## Installation
 
-The easiest way to install in production is via `pip`. Installation requires a
-recent version of `setuptools`:
+*Karta* currently supports Python 2.7 and Python 3.4+.
+
+The easiest way to install is via `pip`. Installation requires a recent version
+of `setuptools`.
 
     pip install -U setuptools
-
-Then, to install the latest release from PyPI:
-
     pip install karta
 
 ### Building from source
 
-Building from source requires Cython:
+Building requires Cython and a C99-compliant compiler.
 
     pip install Cython
 
-Then, clone the repository and install:
+Clone the repository and install.
 
     git clone https://github.com/fortyninemaps/karta.git karta
-    pip install karta/
-
-### Dependencies
-
-- numpy >= 1.10
-- gdal >= 1.10
-- picogeojson >= 0.2
-- pyproj >= 1.9
-- blosc >= 1.2
-- C99-compliant compiler
-
-*Karta* currently supports Python 2.7 and Python 3.4+.
-
+    cd karta/
+    python setup.py build
 
 ## Documentation
 
