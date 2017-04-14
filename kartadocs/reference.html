@@ -8,12 +8,14 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Package reference &mdash; Karta 0.8b1 documentation</title>
+  <title>Package reference &mdash; Karta 0.8.3 documentation</title>
   
 
   
   
     <link rel="shortcut icon" href="_static/favicon.ico"/>
+  
+  
   
 
   
@@ -35,7 +37,7 @@
         <link rel="index" title="Index"
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="Karta 0.8b1 documentation" href="index.html"/>
+    <link rel="top" title="Karta 0.8.3 documentation" href="index.html"/>
         <link rel="prev" title="Installation" href="installation.html"/> 
 
   
@@ -45,6 +47,7 @@
 
 <body class="wy-body-for-nav" role="document">
 
+   
   <div class="wy-grid-for-nav">
 
     
@@ -85,7 +88,10 @@
           
             
             
-                <ul class="current">
+              
+            
+            
+              <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="introduction.html">Introduction</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Package reference</a><ul>
@@ -145,8 +151,10 @@
 
       
       <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
-        <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-        <a href="karta-manual.html">Karta</a>
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="karta-manual.html">Karta</a>
+        
       </nav>
 
 
@@ -155,23 +163,40 @@
         <div class="rst-content">
           
 
- 
+
+
+
+
+
+
+
+
+
+
+
 
 
 
 <div role="navigation" aria-label="breadcrumbs navigation">
+
   <ul class="wy-breadcrumbs">
-    <li><a href="karta-manual.html">Docs</a> &raquo;</li>
-      
-    <li>Package reference</li>
+    
+      <li><a href="karta-manual.html">Docs</a> &raquo;</li>
+        
+      <li>Package reference</li>
+    
+    
       <li class="wy-breadcrumbs-aside">
         
-          
+            
             <a href="_sources/reference.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
+    
   </ul>
+
+  
   <hr/>
 </div>
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
@@ -660,10 +685,10 @@ scheme.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">float or vector</p>
 <blockquote>
-<div><p>The size of the output has one more dimension than the input. If
-the input are scalar, the output is a p-vector representing band
-values. If the input is a n-vector, the ouput is p x n. If the
-input is an m x n array, the output is p x m x n.</p>
+<div><p>the size of the output has one more dimension than the input. if
+the input are scalar, the output is a vector length p representing
+band values. if the input is a vector length n, the ouput is p x n.
+if the input is an m x n array, the output is p x m x n.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -694,10 +719,10 @@ sampling scheme.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">float or vector</p>
 <blockquote>
-<div><p>The size of the output has one more dimension than the input. If
-the input are scalar, the output is a p-vector representing band
-values. If the input is a n-vector, the ouput is p x n. If the
-input is an m x n array, the output is p x m x n.</p>
+<div><p>the size of the output has one more dimension than the input. if
+the input are scalar, the output is a vector length p representing
+band values. if the input is a vector length n, the ouput is p x n.
+if the input is an m x n array, the output is p x m x n.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -1342,6 +1367,28 @@ instance (e.g. ellipsoidal or spherical).</li>
 <dt id="karta.vector.Point.get_vertex">
 <code class="descname">get_vertex</code><span class="sig-paren">(</span><em>crs=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/geometry.html#Point.get_vertex"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector.Point.get_vertex" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return the Point vertex as a tuple.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.vector.Point.rotate">
+<code class="descname">rotate</code><span class="sig-paren">(</span><em>thetad</em>, <em>origin=(0</em>, <em>0)</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Point.rotate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Rotate rank 2 geometry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>thetad</strong> : float</p>
+<blockquote>
+<div><p>degreesof rotation</p>
+</div></blockquote>
+<p><strong>origin</strong> : tuple of two floats, optional</p>
+<blockquote class="last">
+<div><p>pivot for rotation (default (0, 0))</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -3518,11 +3565,10 @@ more specialized systems employ <a class="reference external" href="http://jswhi
 <em>Karta</em>. To define their coordinate system.</p>
 <p>To create a specialized coordinate system, provide a <em>proj.4</em> string and a
 spheroid definition.</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">karta.crs</span> <span class="k">import</span> <span class="n">Proj4CRS</span>
-<span class="n">my_crs</span> <span class="o">=</span> <span class="n">Proj4CRS</span><span class="p">(</span><span class="s2">&quot;+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 &quot;</span>
-                  <span class="s2">&quot;+lon_0=-126 +x_0=1000000 +y_0=0 &quot;</span>
-                  <span class="s2">&quot;+ellps=GRS80 +datum=NAD83 +units=m +no_defs&quot;</span><span class="p">,</span>
-                  <span class="s2">&quot;+ellps=GRS80&quot;</span><span class="p">)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">karta.crs</span> <span class="k">import</span> <span class="n">ProjectedCRS</span>
+<span class="n">my_crs</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="s2">&quot;+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 &quot;</span>
+                      <span class="s2">&quot;+lon_0=-126 +x_0=1000000 +y_0=0 &quot;</span>
+                      <span class="s2">&quot;+ellps=GRS80 +datum=NAD83 +units=m +no_defs&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>See the <a class="reference external" href="http://trac.osgeo.org/proj/">proj.4</a> documentation for more details.</p>
@@ -3998,13 +4044,16 @@ corresponding problem on a sphere.</p>
 
 
            </div>
+           <div class="articleComments">
+            
+           </div>
           </div>
           <footer>
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
       
-        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
@@ -4014,7 +4063,7 @@ corresponding problem on a sphere.</p>
   <div role="contentinfo">
     <p>
         &copy; Copyright 2016, Nat Wilson.
-      Last updated on Jan 15, 2017.
+      Last updated on Apr 13, 2017.
 
     </p>
   </div>
@@ -4036,10 +4085,11 @@ corresponding problem on a sphere.</p>
     <script type="text/javascript">
         var DOCUMENTATION_OPTIONS = {
             URL_ROOT:'./',
-            VERSION:'0.8b1',
+            VERSION:'0.8.3',
             COLLAPSE_INDEX:false,
             FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true
+            HAS_SOURCE:  true,
+            SOURCELINK_SUFFIX: '.txt'
         };
     </script>
       <script type="text/javascript" src="_static/jquery.js"></script>
