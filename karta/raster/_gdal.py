@@ -65,48 +65,23 @@ def SRS_from_WKT(s):
         sr = None
     return sr
 
-def pytype(dt_int):
-    """ Return a fmt character based on a gdal type integer. """
-    if dt_int == 1:
-        return "B"
-    elif dt_int == 3:
-        return "h"
-    elif dt_int == 2:
-        return "H"
-    elif dt_int == 5:
-        return "i"
-    elif dt_int == 4:
-        return "I"
-    #elif dt_int == 5:
-    #    return "l"
-    #elif dt_int == 4:
-    #    return "L"
-    elif dt_int == 6:
-        return "f"
-    elif dt_int == 7:
-        return "d"
-    else:
-        raise KeyError("No Python type to coerce from GDT_Int %d" % dt_int)
+NUMPY_DTYPE = {"Byte": np.uint8,
+               "UInt16": np.uint16,
+               "Int16": np.int16,
+               "UInt32": np.uint32,
+               "Int32": np.int32,
+               "Float32": np.float32,
+               "Float64": np.float64,
+               "CInt16": np.complex64,
+               "CInt32": np.complex64,
+               "CFloat32": np.complex64,
+               "CFloat64": np.complex64}
 
 def numpy_dtype(dt_int):
     """ Return a numpy dtype that matches the band data type. """
     name = osgeo.gdal.GetDataTypeName(dt_int)
-    if name == "Byte":
-        return np.uint8
-    elif name == "UInt16":
-        return np.uint16
-    elif name == "Int16":
-        return np.int16
-    elif name == "UInt32":
-        return np.uint32
-    elif name == "Int32":
-        return np.int32
-    elif name == "Float32":
-        return np.float32
-    elif name == "Float64":
-        return np.float64
-    elif name in ("CInt16", "CInt32", "CFloat32", "CFloat64"):
-        return np.complex64
+    if name in NUMPY_DTYPE:
+        return NUMPY_DTYPE[name]
     else:
         raise TypeError("GDAL data type {0} unknown to karta".format(dt_int))
 
@@ -241,11 +216,7 @@ def write(fnm, grid, compress=None, tiled=False, **kw):
     t = grid.transform
     dataset.SetGeoTransform([t[0] + ny*t[4], t[2], -t[4],
                              t[1] + ny*t[3], t[5], -t[3]])
-    try:
-        srs = srs_from_crs(grid.crs)
-    except Exception as e:
-        sys.stderr.write("Writing GeoTiff failed:\n\t{0}\n".format(e))
-        return
+    srs = srs_from_crs(grid.crs)
     dataset.SetProjection(srs.ExportToWkt())
     for i, _ in enumerate(grid.bands):
         band = dataset.GetRasterBand(i+1)

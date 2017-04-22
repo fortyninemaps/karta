@@ -47,7 +47,7 @@ class Grid(object):
         else:
             return (np.nan, np.nan)
 
-    def apply(self, func, inplace=False):
+    def apply(self, func, inplace=False, band=None):
         """ Apply a vector function to grid values.
 
         Parameters
@@ -58,12 +58,19 @@ class Grid(object):
         inplace : boolean, optional
             whether to perform operation in place rather than returning a new
             grid instance (default False)
+        band : int, optional
+            if provided, only apply *func* to a specific band
 
         Returns
         -------
-        *gridclass* instance
+        instance of type(self)
         """
-        msk = self.data_mask_full
+        msk = self.data_mask
+        if band is not None:
+            if not isinstance(band, int) or not (0 <= band < self.nbands):
+                raise ValueError("band must be an integer in [0, nbands)")
+            msk *= np.array([i == band for i in range(self.nbands)])
+
         if not inplace:
             newgrid = self.copy()
             newgrid[msk] = func(self[msk])
@@ -1143,17 +1150,6 @@ class RegularGrid(Grid):
         finally:
             f.close()
         return
-
-    def gtiffwrite(self, *args, **kwargs):
-        warnings.warn("method `gtiffwrite` has been renamed `to_geotiff`",
-                FutureWarning)
-        return self.to_geotiff(*args, **kwargs)
-
-    def aaiwrite(self, *args, **kwargs):
-        warnings.warn("method `aaiwrite` has been renamed `to_aai`",
-                FutureWarning)
-        return self.to_aai(*args, **kwargs)
-
 
 def merge(grids, weights=None):
     """ Construct a grid mosiac by averaging multiple grids. Currently limited

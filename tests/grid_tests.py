@@ -80,6 +80,15 @@ class RegularGridTests(unittest.TestCase):
             count += 1
         self.assertEqual(count, 256)
 
+    def test_index_multiband(self):
+        p = peaks(512)
+        grid = RegularGrid((0, 0, 1, 1, 0, 0),
+                           values=np.dstack([p,
+                                             np.where(p > 0, p, np.nan),
+                                             p]),
+                            nodata_value = np.nan)
+        grid[grid.data_mask_full]
+
     def test_apply(self):
         msk = np.zeros([8, 8], dtype=np.bool)
         msk[3, 2] = True
