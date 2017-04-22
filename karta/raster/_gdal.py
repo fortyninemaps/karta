@@ -35,7 +35,11 @@ class GdalFileBand(object):
 
     def getblock(self, yoff, xoff, ny, nx):
         # Note that GDAL uses the alternative x,y convention
-        return self.gdalband.ReadAsArray(xoff, yoff, nx, ny)
+        grid_ny, grid_nx = self.size
+        chunk = self.gdalband.ReadAsArray(xoff, grid_ny - yoff - ny, nx, ny)
+        if chunk is None:
+            raise IOError("failure reading slice from GDAL backend")
+        return chunk[::-1]
 
     def setblock(self, yoff, xoff, array):
         raise NotImplementedError()

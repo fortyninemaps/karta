@@ -116,12 +116,12 @@ class GdalVirtualArrayTests(unittest.TestCase):
         self.grid[5:10:2, 7:15]
         self.grid[10:5:-1, 7:15]
 
-        a1 = self.grid[12, 7:15]
+        a1 = self.grid[12, 7:15, 0]
         self.assertEqual(a1.shape, (8,))
-        a2 = self.grid[5:10, 9]
+        a2 = self.grid[5:10, 9, 0]
         self.assertEqual(a2.shape, (5,))
 
-        b = self.grid[12, 13]
+        b = self.grid[12, 13, 0]
         self.assertEqual(type(b), np.float64)
         return
 

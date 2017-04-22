@@ -179,7 +179,7 @@ class BandIndexerTests(unittest.TestCase):
         mask[8:, 2:] = True
 
         indexer = BandIndexer(bands)
-        indexer[:,:] = np.zeros([16, 16])
+        indexer[:,:,:] = np.zeros([16, 16])
         indexer[mask] = np.ones(8*14)
 
         self.assertEqual(np.sum(indexer[:,:]), 336)

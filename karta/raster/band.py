@@ -34,7 +34,7 @@ The following methods are deprecated:
 
 import blosc
 import numpy as np
-from numbers import Integral
+from numbers import Real, Integral
 from math import ceil
 
 class BandIndexer(object):
@@ -44,7 +44,7 @@ class BandIndexer(object):
 
     def __getitem__(self, key):
         if isinstance(key, np.ndarray):
-            return self._mask_index(key)
+            return self._get_from_array_mask(key)
 
         if isinstance(key, slice):
             key = (key, slice(None, None, None), slice(None, None, None))
@@ -84,20 +84,20 @@ class BandIndexer(object):
             raise TypeError("third key item should be an integer or a slice")
 
         if ystep < 0:
-            ystart, yend = yend, ystart
-            ystep = -ystep
+            ystart, yend = yend+1, ystart+1
 
         if xstep < 0:
-            xstart, xend = xend, xstart
-            xstep = -xstep
+            xstart, xend = xend+1, xstart+1
 
-        out = np.empty([(yend-ystart)//ystep, (xend-xstart)//xstep, len(bands)],
+        out = np.empty([1 + (yend-ystart-1) // abs(ystep),
+                        1 + (xend-xstart-1) // abs(xstep),
+                        len(bands)],
                        dtype = self.bands[0].dtype)
 
-        results = []
         for i, iband in enumerate(bands):
             band = self.bands[iband]
-            out[:,:,i] = band.getblock(ystart, xstart, yend-ystart, xend-xstart)[::ystep, ::xstep]
+            band_values = band.getblock(ystart, xstart, yend-ystart, xend-xstart)
+            out[:,:,i] = band_values[::ystep,::xstep]
 
         if collapse_bands:
             out = out[:,:,0]
@@ -108,36 +108,81 @@ class BandIndexer(object):
 
         return out
 
-    def _mask_index(self, mask):
+    def __setitem__(self, key, value):
+        if isinstance(key, np.ndarray):
+            return self._set_from_array_mask(key, value)
+
+        if isinstance(key, slice):
+            key = (key, slice(None, None, None), slice(None, None, None))
+
+        if not isinstance(key, tuple):
+            raise TypeError("key should be an array or a tuple")
+
+        ny, nx = self.bands[0].size
+
+        if isinstance(key[0], Integral):
+            r = key[0] % ny
+            ystart, yend, ystep = (r, r+1, 1)
+        elif isinstance(key[0], slice):
+            ystart, yend, ystep = key[0].indices(ny)
+        else:
+            raise TypeError("first key item should be an integer or a slice")
+
+        if isinstance(key[1], Integral):
+            r = key[1] % nx
+            xstart, xend, xstep = (r, r+1, 1)
+        elif isinstance(key[1], slice):
+            xstart, xend, xstep = key[1].indices(nx)
+        else:
+            raise TypeError("second key item should be an integer or a slice")
+
+        if len(key) == 2:
+            bands = list(range(len(self.bands)))
+        elif len(key) == 3 and isinstance(key[2], Integral):
+            collapse_bands = True
+            bands = [key[2] % len(self.bands)]
+        elif len(key) == 3 and isinstance(key[2], slice):
+            bands = list(range(*key[2].indices(len(self.bands))))
+        else:
+            raise TypeError("third key item should be an integer or a slice")
+
+        if ystep < 0:
+            ystart, yend = yend+1, ystart+1
+
+        if xstep < 0:
+            xstart, xend = xend+1, xstart+1
+
+        shape = [1 + (yend-ystart-1) // abs(ystep),
+                 1 + (xend-xstart-1) // abs(xstep),
+                 len(bands)]
+
+        val_array = np.broadcast_to(np.atleast_3d(value), shape)
+
+        for i, iband in enumerate(bands):
+            band = self.bands[iband]
+            band.setblock(ystart, xstart, val_array[:,:,i])
+
+        return
+
+    def _get_from_array_mask(self, mask):
         # TODO: make this more memory efficient
         return self[:,:,:][mask]
 
-    def __setitem__(self, key, value):
-
+    def _set_from_array_mask(self, mask, value):
+        # TODO: make this more memory efficient
         for i, band in enumerate(self.bands):
 
-            if isinstance(value, np.ndarray) and len(value.shape) == 3:
-                v = value[:,:,i].squeeze()
+            if mask.ndim == 3:
+                mask_ = mask[:,:,i]
             else:
-                v = value
+                mask_ = mask
 
-            if isinstance(key, np.ndarray) and len(key.shape) == 3:
-                tmp = band[:,:]
-                tmp[key[:,:,i]] = v
-                band[:,:] = tmp
-            elif isinstance(key, np.ndarray) and len(key.shape) == 2:
-                tmp = band[:,:]
-                tmp[key] = v
-                band[:,:] = tmp
-            elif len(key) == 3 and isinstance(key[2], slice) and (i in range(*key[2].indices(len(self.bands)))):
-                band[key[:2]] = v
-            elif len(key) == 3 and isinstance(key[2], int) and (i == key[2]):
-                band[key[:2]] = v
-            elif len(key) == 2:
-                band[key] = v
+            tmp = band.getblock(0, 0, *band.size)
+            if isinstance(value, Real) or (value.ndim == 1):
+                tmp[mask_] = value
             else:
-                raise TypeError("illegal indexing with type {}".format(type(key)))
-        return
+                tmp[mask_] = value[:,i]
+            band.setblock(0, 0, tmp)
 
     def __iter__(self):
         for i in range(self.bands[0].size[0]):
