@@ -116,9 +116,9 @@ Clone the repository and install.
 
 ## Documentation
 
-See the [online manual](http://www.fortyninemaps.com/kartadocs/introduction.html),
-the [tutorial](http://www.fortyninemaps.com/kartadocs/_static/tutorial.html), or read the
-[API documentation](http://www.fortyninemaps.com/kartadocs/reference.html).
+See the [online manual](http://karta.fortyninemaps.com/kartadocs/karta-manual.html),
+the [tutorial](http://karta.fortyninemaps.com/kartadocs/_static/tutorial.html), or read the
+[API documentation](http://karta.fortyninemaps.com/kartadocs/reference.html).
 
 ## Contributing
 
