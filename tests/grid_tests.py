@@ -120,9 +120,9 @@ class RegularGridTests(unittest.TestCase):
         grid2 = RegularGrid([7, 22, 1, 1, 0, 0], values=2*np.ones([4, 6]))
         grid3 = RegularGrid([12, 19, 1, 1, 0, 0], values=3*np.ones([5, 5]))
         grid_combined = karta.raster.merge([grid1, grid2, grid3], weights=[1, 2, 3])
-        self.assertAlmostEqual(grid_combined[4,4], 1.66666666666)
-        self.assertAlmostEqual(grid_combined[2,8], 2.5)
-        self.assertAlmostEqual(grid_combined[4,5], 2.33333333333)
+        self.assertAlmostEqual(grid_combined[4,4,0], 1.66666666666)
+        self.assertAlmostEqual(grid_combined[2,8,0], 2.5)
+        self.assertAlmostEqual(grid_combined[4,5,0], 2.33333333333)
 
     def test_merge_multiband(self):
         grid3a = RegularGrid([0, 0, 1, 1, 0, 0],

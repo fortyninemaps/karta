@@ -14,6 +14,15 @@ Implementation
 --------------
 
 Bands are expected to implement the following methods:
+    - `__init__(self, size, dtype, initval=None)`
+    - `getblock(self, yoff, xoff, ny, nx)`
+    - `setblock(self, yoff, xoff, array)`
+
+Attributes:
+    - `dtype`
+    - `size`
+
+The following methods are deprecated:
     - `__getitem__(self, key)`, accepting as *key* any of
         - an int
         - a slice
@@ -21,9 +30,6 @@ Bands are expected to implement the following methods:
         - a 2-tuple of slices
     - `__setitem__(self, key, value)`, accepting as *key* the same
       possibilities as __getitem__
-
-Additionally, a Band should have a `dtype` attribute indicating the type of the
-stored data.
 """
 
 import blosc
@@ -37,40 +43,61 @@ class BandIndexer(object):
         self.bands = bands
 
     def __getitem__(self, key):
-        # Rules:
-        # key is a
-        # - ndarray
-        # - tuple of slices
-        # - tuple of ints
-        # - int
-        results = []
+        if isinstance(key, np.ndarray):
+            return self._mask_index(key)
 
-        for i, band in enumerate(self.bands):
-            if isinstance(key, np.ndarray) and len(key.shape) == 3:
-                tmp = band[:,:]
-                results.append(tmp[key[:,:,i]])
-            elif isinstance(key, np.ndarray) and len(key.shape) == 2:
-                tmp = band[:,:]
-                results.append(tmp[key])
-            elif len(key) == 3 and isinstance(key[2], slice):
-                if (i in range(*key[2].indices(len(self.bands)))):
-                    results.append(band[key[:2]])
-            elif len(key) == 3 and isinstance(key[2], int):
-                if i == key[2]:
-                    results.append(band[key[:2]])
-            elif len(key) == 2:
-                results.append(band[key])
-            else:
-                raise TypeError("illegal indexing with type {}".format(type(key)))
+        if not isinstance(key, tuple):
+            raise TypeError("key should be an array or a tuple")
 
-        if len(results) == 1 and ((isinstance(key, np.ndarray) and len(key.shape) == 3) or (isinstance(key, tuple) and len(key) == 3)):
-            return results[0]
-        elif all(isinstance(a, np.ndarray) for a in results):
-            return np.dstack(results)
-        elif len(results) == 1:
-            return results[0]
+        collapse_rows = collapse_cols = collapse_bands = False
+        ny, nx = self.bands[0].size
+
+        if isinstance(key[0], Integral):
+            collapse_rows = True
+            ystart, yend, ystep = (key[0], key[0]+1, 1)
+        elif isinstance(key[0], slice):
+            ystart, yend, ystep = key[0].indices(ny)
         else:
-            return np.array(results)
+            raise TypeError("first key item should be an integer or a slice")
+
+        if isinstance(key[1], Integral):
+            collapse_cols = True
+            xstart, xend, xstep = (key[1], key[1]+1, 1)
+        elif isinstance(key[1], slice):
+            xstart, xend, xstep = key[1].indices(nx)
+        else:
+            raise TypeError("second key item should be an integer or a slice")
+
+        if len(key) == 2:
+            bands = list(range(len(self.bands)))
+        elif len(key) == 3 and isinstance(key[2], Integral):
+            collapse_bands = True
+            bands = [key[2]]
+        elif len(key) == 3 and isinstance(key[2], slice):
+            bands = list(range(*key[2].indices(len(self.bands))))
+        else:
+            raise TypeError("third key item should be an integer or a slice")
+
+        out = np.empty([(yend-ystart)//ystep, (xend-xstart)//xstep, len(bands)],
+                       dtype = self.bands[0].dtype)
+
+        results = []
+        for i, iband in enumerate(bands):
+            band = self.bands[iband]
+            out[:,:,i] = band.getblock(ystart, xstart, yend-ystart, xend-xstart)
+
+        if collapse_bands:
+            out = out[:,:,0]
+        if collapse_cols:
+            out = out[:,0]
+        if collapse_rows:
+            out = out[0]
+
+        return out
+
+    def _mask_index(self, mask):
+        # TODO: make this more memory efficient
+        return self[:,:,:][mask]
 
     def __setitem__(self, key, value):
 
@@ -130,16 +157,24 @@ class SimpleBand(object):
     def __init__(self, size, dtype, initval=None):
         self.size = size
         if initval is None:
-            self.array = np.empty(size, dtype=dtype)
+            self._array = np.empty(size, dtype=dtype)
         else:
-            self.array = np.full(size, initval, dtype=dtype)
+            self._array = np.full(size, initval, dtype=dtype)
         self.dtype = dtype
 
+    def getblock(self, yoff, xoff, ny, nx):
+        return self._array[yoff:yoff+ny, xoff:xoff+nx]
+
+    def setblock(self, yoff, xoff, array):
+        (ny, nx) = array.shape
+        self._array[yoff:yoff+ny, xoff:xoff+nx] = array
+        return
+
     def __getitem__(self, key):
-        return self.array[key]
+        return self._array[key]
 
     def __setitem__(self, key, value):
-        self.array[key] = value
+        self._array[key] = value
         return
 
 class CompressedBand(object):
@@ -185,7 +220,7 @@ class CompressedBand(object):
         if isinstance(key, Integral):
             irow = key % self.size[0]
             icol = 0
-            return self._getblock(irow, icol, (1, self.size[1]))
+            return self.getblock(irow, icol, 1, self.size[1])
 
         elif isinstance(key, tuple):
 
@@ -227,9 +262,9 @@ class CompressedBand(object):
                                  "supported".format(type(kc)))
 
             if isinstance(kr, Integral) and isinstance(kc, Integral):
-                return self._getblock(yoff, xoff, (ny, nx))[0,0]
+                return self.getblock(yoff, xoff, ny, nx)[0,0]
             else:
-                return self._getblock(yoff, xoff, (ny, nx))[::ystride,::xstride]
+                return self.getblock(yoff, xoff, ny, nx)[::ystride,::xstride]
 
         elif isinstance(key, slice):
             start, stop, stride = key.indices(self.size[0])
@@ -237,7 +272,7 @@ class CompressedBand(object):
             if stride < 0:
                 yoff += 1
             ny = abs(stop-start)
-            return self._getblock(yoff, 0, (ny, self.size[1]))[::stride]
+            return self.getblock(yoff, 0, ny, self.size[1])[::stride]
 
         else:
             raise IndexError("indexing with instances of '{0}' not "
@@ -250,7 +285,7 @@ class CompressedBand(object):
             icol = 0
             if not hasattr(value, "__iter__"):
                 value = np.atleast_2d(value*np.ones(self.size[1], dtype=self.dtype))
-            self._setblock(irow, icol, value)
+            self.setblock(irow, icol, value)
 
         elif isinstance(key, tuple):
 
@@ -295,12 +330,12 @@ class CompressedBand(object):
                             vny=vny, vnx=vnx, ny=ny, nx=nx))
 
             if sy == sx == 1:
-                self._setblock(yoff, xoff, value)
+                self.setblock(yoff, xoff, value)
 
             else:
-                temp = self._getblock(yoff, xoff, (ny, nx))
+                temp = self.getblock(yoff, xoff, ny, nx)
                 temp[::sy,::sx] = value
-                self._setblock(yoff, xoff, temp)
+                self.setblock(yoff, xoff, temp)
 
         else:
             raise IndexError("indexing with instances of '{0}' not "
@@ -349,7 +384,7 @@ class CompressedBand(object):
 
             i+= 1
 
-    def _setblock(self, yoff, xoff, array):
+    def setblock(self, yoff, xoff, array):
         """ Store block of values in *array* starting at offset *yoff*, *xoff*.
         """
         size = array.shape[:2]
@@ -381,18 +416,18 @@ class CompressedBand(object):
             self._store(chunkdata, i)
         return
 
-    def _getblock(self, yoff, xoff, size):
+    def getblock(self, yoff, xoff, ny, nx):
         """ Retrieve values with dimensions *size*, starting at offset *yoff*,
         *xoff*.
         """
-        result = np.empty(size, self.dtype)
-        for i, yst, yen, xst, xen in self._getchunks(yoff, xoff, *size):
+        result = np.empty([ny, nx], self.dtype)
+        for i, yst, yen, xst, xen in self._getchunks(yoff, xoff, ny, nx):
 
             # Compute the bounds in the output
             oy0 = max(0, yst-yoff)
-            oy1 = min(size[0], yen-yoff)
+            oy1 = min(ny, yen-yoff)
             ox0 = max(0, xst-xoff)
-            ox1 = min(size[1], xen-xoff)
+            ox1 = min(nx, xen-xoff)
 
             if self.chunkstatus[i] == self.CHUNKUNSET:
                 result[oy0:oy1, ox0:ox1] = np.full((oy1-oy0, ox1-ox0),
@@ -402,9 +437,9 @@ class CompressedBand(object):
             else:
                 # Compute the extents from the chunk to retain
                 cy0 = max(yoff, yst) - yst
-                cy1 = min(yoff+size[0], yen) - yst
+                cy1 = min(yoff+ny, yen) - yst
                 cx0 = max(xoff, xst) - xst
-                cx1 = min(xoff+size[1], xen) - xst
+                cx1 = min(xoff+nx, xen) - xst
 
                 result[oy0:oy1, ox0:ox1] = self._retrieve(i)[cy0:cy1, cx0:cx1]
 

@@ -668,7 +668,7 @@ class RegularGrid(Grid):
                 band[:,:] = data
             return self
         else:
-            msk = np.broadcast_to(np.atleast_3d(msk), [ny, nx, self.nbands]).squeeze()
+            msk = np.broadcast_to(np.atleast_3d(msk), [ny, nx, self.nbands])
             return RegularGrid(self.transform,
                                values=np.where(msk, self[:,:,:], self.nodata),
                                crs=self.crs, nodata_value=self.nodata)
