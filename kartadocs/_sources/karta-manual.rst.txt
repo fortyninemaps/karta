@@ -8,6 +8,7 @@ Table of Contents
 
    Introduction <introduction>
    installation
+   raster-indexing
    reference
 
 Indices and tables

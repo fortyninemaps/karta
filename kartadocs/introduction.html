@@ -104,6 +104,7 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="raster-indexing.html">Raster indexing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">Package reference</a></li>
 </ul>
 
@@ -217,7 +218,32 @@ it, such as <a class="reference external" href="https://github.com/Toblerity/Sha
 </div>
 <div class="section" id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Permalink to this headline">¶</a></h2>
-<p><em>incomplete</em></p>
+<p>Read or create vector geometries:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">point</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">130.0</span><span class="p">,</span> <span class="mf">52.0</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+<span class="n">line</span> <span class="o">=</span> <span class="n">read_geojson</span><span class="p">(</span><span class="s2">&quot;linedata.json&quot;</span><span class="p">)</span>
+<span class="n">polygon</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">([(</span><span class="o">-</span><span class="mf">515005.78</span><span class="p">,</span> <span class="o">-</span><span class="mf">1301130.53</span><span class="p">),</span>
+                   <span class="p">(</span><span class="o">-</span><span class="mf">579174.89</span><span class="p">,</span> <span class="o">-</span><span class="mf">1282271.94</span><span class="p">),</span>
+                   <span class="p">(</span><span class="o">-</span><span class="mf">542977.83</span><span class="p">,</span> <span class="o">-</span><span class="mf">1221147.82</span><span class="p">),</span>
+                   <span class="p">(</span><span class="o">-</span><span class="mf">437864.05</span><span class="p">,</span> <span class="o">-</span><span class="mf">1251641.55</span><span class="p">),</span>
+                   <span class="p">(</span><span class="o">-</span><span class="mf">438160.72</span><span class="p">,</span> <span class="o">-</span><span class="mf">1252421.48</span><span class="p">),</span>
+                   <span class="p">(</span><span class="o">-</span><span class="mf">437961.28</span><span class="p">,</span> <span class="o">-</span><span class="mf">1285314.00</span><span class="p">)],</span>
+                   <span class="n">crs</span><span class="o">=</span><span class="n">NSIDCNorth</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Perform simple queries:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">point2</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">25.0</span><span class="p">,</span> <span class="mf">48.0</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+<span class="n">point</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">point2</span><span class="p">)</span>          <span class="c1"># Distance in geographical units</span>
+<span class="n">line</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">polygon</span><span class="p">)</span>        <span class="c1"># True or False</span>
+<span class="n">ch</span> <span class="o">=</span> <span class="n">polygon</span><span class="o">.</span><span class="n">convex_hull</span><span class="p">()</span>      <span class="c1"># Returns a new polygon</span>
+<span class="n">ch</span><span class="o">.</span><span class="n">to_shapefile</span><span class="p">(</span><span class="s2">&quot;poly.shp&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Load and manipulate raster data:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">grid</span> <span class="o">=</span> <span class="n">read_gtiff</span><span class="p">(</span><span class="s2">&quot;landsat_scene.tif&quot;</span><span class="p">)</span>  <span class="c1"># Leverages GDAL</span>
+<span class="n">grid</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>              <span class="c1"># Collect data along a line</span>
+<span class="n">grid</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mf">500.0</span><span class="p">,</span> <span class="mf">500.0</span><span class="p">)</span>     <span class="c1"># Return a grid resampled at a new resolution</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="license">
 <h2>License<a class="headerlink" href="#license" title="Permalink to this headline">¶</a></h2>
@@ -267,7 +293,7 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.</p>
   <div role="contentinfo">
     <p>
         &copy; Copyright 2016, Nat Wilson.
-      Last updated on Apr 13, 2017.
+      Last updated on Apr 22, 2017.
 
     </p>
   </div>
