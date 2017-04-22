@@ -44,73 +44,6 @@ class GdalFileBand(object):
     def setblock(self, yoff, xoff, array):
         raise NotImplementedError()
 
-    def __getitem__(self, idx):
-        ny, nx = self.size
-
-        if isinstance(idx, tuple):
-            iidx, jidx = idx
-        else:
-            iidx = idx
-            jidx = slice(0, nx, 1)
-
-        # Calculate start, end, step ranges for rows and columns
-        if isinstance(iidx, int):
-            ystart = iidx
-            yend = iidx+1
-            ystep = 1
-        else:
-            ystart, yend, ystep = iidx.indices(ny)
-
-        if isinstance(jidx, int):
-            xstart = jidx
-            xend = jidx+1
-            xstep = 1
-        else:
-            xstart, xend, xstep = jidx.indices(nx)
-
-        # Extract ...
-        if abs(yend-ystart) == 1:
-            # ... a row vector
-            x0 = min(xstart, xend)
-            y0 = min(ny-ystart, ny-yend)
-            ret = self.gdalband.ReadAsArray(x0, y0, abs(xend-xstart), 1)[0,::xstep]
-
-            if abs(xend-xstart) == 1:
-                ret = ret[0]
-
-        elif abs(xend-xstart) == 1:
-            # ... a column vector
-            x0 = min(xstart, xend)
-            y0 = min(ny-ystart, ny-yend)
-            ret = self.gdalband.ReadAsArray(x0, y0, 1, abs(yend-ystart))[::ystep].ravel()
-
-        elif (abs(xstep) == 1) and (abs(ystep) == 1):
-            # ... contiguous blocks (fast path)
-            x0 = min(xstart, xend)
-            y0 = min(ny-ystart, ny-yend)
-            ret = self.gdalband.ReadAsArray(x0, y0, abs(xend-xstart), abs(yend-ystart))
-            if xstep < 0:
-                ret = ret[:,::-1]
-
-            if ystep > 0:       # Flip from GDAL convention to karta convention
-                ret = ret[::-1]
-
-        else:
-            # Sparse extraction
-            t = self.gdalband.DataType
-            values = (self.gdalband.ReadRaster(x, ny-y-1, 1, 1, 1, 1, t)
-                        for y in range(ystart, yend, ystep)
-                        for x in range(xstart, xend, xstep))
-
-            # compute size of output
-            outnx = int(ceil(float(abs(xend - xstart)) / abs(xstep)))
-            outny = int(ceil(float(abs(yend - ystart)) / abs(ystep)))
-
-            pyt = pytype(t)
-            values_py = [struct.unpack(pyt, a) for a in values]
-            ret = np.array(values_py).reshape([outny, outnx])
-        return ret
-
     def __iter__(self):
         for i in range(self.dataset.RasterYSize):
             yield self[i,:]
@@ -268,7 +201,7 @@ def read(fnm, in_memory, ibands=ALL, bandclass=CompressedBand):
             bands = [bandclass((ny, nx), dtype) for _ in ibands]
             for i, rb in enumerate(rasterbands):
                 _arr = rb.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype))
-                bands[i][:,:] = _arr.squeeze()[::-1]
+                bands[i].setblock(0, 0, _arr.squeeze()[::-1])
         else:
             bands = [GdalFileBand(rb, dataset) for rb in rasterbands]
 
@@ -317,7 +250,10 @@ def write(fnm, grid, compress=None, tiled=False, **kw):
     for i, _ in enumerate(grid.bands):
         band = dataset.GetRasterBand(i+1)
         band.SetNoDataValue(grid.nodata)
-        band.WriteArray(grid.bands[i][::-1])
+
+        tmp = grid[:,:,i]
+        band.WriteArray(tmp)
+        grid[:,:,i] = tmp[::-1]
     band = None
     dataset = None
     return

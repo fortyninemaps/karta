@@ -166,12 +166,12 @@ class RegularGrid(Grid):
         if bands is None and (values is not None):
             if values.ndim == 2:
                 band = self._bndcls(values.shape, values.dtype.type)
-                band[:,:] = values
+                band.setblock(0, 0, values)
                 self.bands.append(band)
             elif values.ndim == 3:
                 for iband in range(values.shape[2]):
                     band = self._bndcls(values.shape[:2], values.dtype.type)
-                    band[:,:] = values[:,:,iband]
+                    band.setblock(0, 0, values[:,:,iband])
                     self.bands.append(band)
             else:
                 raise ValueError("`values` must have two or three dimensions")
@@ -615,7 +615,7 @@ class RegularGrid(Grid):
         for band in self.bands:
             newband = self._bndcls((nynew, nxnew), dtype=band.dtype,
                                    initval=self.nodata)
-            newband[i0new:i1new, j0new:j1new] = band[i0:i1, j0:j1]
+            newband.setblock(i0new, j0new, band.getblock(i0, j0, i1-i0, j1-j0))
             newbands.append(newband)
 
         gridnew = RegularGrid(Tnew, bands=newbands, crs=self.crs,
@@ -662,10 +662,10 @@ class RegularGrid(Grid):
             msk = (msk | _msk)
 
         if inplace:
-            for band in self.bands:
-                data = band[:,:]
+            for i in range(len(self.bands)):
+                data = self[:,:,i]
                 data[~msk] = self.nodata
-                band[:,:] = data
+                self[:,:,i] = data
             return self
         else:
             msk = np.broadcast_to(np.atleast_3d(msk), [ny, nx, self.nbands])
@@ -1232,7 +1232,7 @@ def merge(grids, weights=None):
             mask = grid.data_mask
             counts[offy:offy+_ny,offx:offx+_nx][mask] += weight
             _bnd = grid.bands[iband]
-            values[offy:offy+_ny,offx:offx+_nx][mask] += typ(_bnd[:,:][mask]) * weight
+            values[offy:offy+_ny,offx:offx+_nx][mask] += typ(_bnd.getblock(0, 0, *_bnd.size)[mask]) * weight
             del mask
 
         validcountmask = (counts!=0.0)
@@ -1240,7 +1240,7 @@ def merge(grids, weights=None):
         values[~validcountmask] = grids[0].nodata
 
         band = CompressedBand((ny, nx), typ, initval=grids[0].nodata)
-        band[:,:] = values
+        band.setblock(0, 0, values)
         outbands.append(band)
 
     Tmerge = [xmin, ymin] + list(T[2:])

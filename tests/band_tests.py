@@ -12,61 +12,46 @@ class GenericBandTests(object):
         self.assertEqual(band.dtype, np.float64)
         return
 
-    def test_setblock_getblock_full(self):
+    #def test_setblock_getblock_striped(self):
+    #    x, y = np.meshgrid(np.arange(832), np.arange(1024))
+    #    d = (x**2+np.sqrt(y))[::2, ::3]
 
+    #    band = self.type((1024, 1024), np.float64, **self.initkwargs)
+    #    bi = BandIndexer([band])
+    #    bi[::2, 128:960:3, 0] = d
+
+    #    self.assertEqual(np.sum(bi[::2, 128:960:3, 0]-d), 0.0)
+    #    return
+
+    def test_setblock_getblock_full(self):
         x, y = np.meshgrid(np.arange(1024), np.arange(1024))
         d = x**2+np.sqrt(y)
 
         band = self.type((1024, 1024), np.float64, **self.initkwargs)
-        band[:, :] = d
+        band.setblock(0, 0, d)
 
-        self.assertEqual(np.sum(band[:,:] - d), 0.0)
+        self.assertEqual(np.sum(band.getblock(0, 0, 1024, 1024) - d), 0.0)
         return
 
     def test_setblock_getblock_partial(self):
-
         x, y = np.meshgrid(np.arange(1024), np.arange(832))
         d = x**2+np.sqrt(y)
 
         band = self.type((1024, 1024), np.float64, **self.initkwargs)
-        band[128:960, :] = d
+        band.setblock(128, 0, d)
 
-        self.assertEqual(np.sum(band[128:960,:]-d), 0.0)
+        self.assertEqual(np.sum(band.getblock(128, 0, 832, 1024) - d), 0.0)
         return
-
-    def test_setblock_getblock_striped(self):
-
-        x, y = np.meshgrid(np.arange(832), np.arange(1024))
-        d = (x**2+np.sqrt(y))[::2, ::3]
-
-        band = self.type((1024, 1024), np.float64, **self.initkwargs)
-        band[::2, 128:960:3] = d
-
-        self.assertEqual(np.sum(band[::2,128:960:3]-d), 0.0)
-        return
-
-    def test_set_get_integer_key(self):
-        x, y = np.meshgrid(np.arange(832), np.arange(1024))
-        d = (x**2+np.sqrt(y))[::2, ::3]
-
-        band = self.type((1024, 1024), np.float64, **self.initkwargs)
-        band[231] = -1.0
-        self.assertTrue(np.all(band[231,:] == -1.0))
-        self.assertTrue(np.all(band[231] == -1.0))
-        return
-
 
     def test_get_scalar(self):
-
         x, y = np.meshgrid(np.arange(1024), np.arange(1024))
         d = x**2+np.sqrt(y)
 
         band = self.type((1024, 1024), np.float64, **self.initkwargs)
-        band[:, :] = d
+        band.setblock(0, 0, d)
 
-        self.assertEqual(band[4,3], 11.0)
-        self.assertTrue(band[4:5,3:4].shape, (1, 1))
-        self.assertEqual(band[-1,-1], d[-1,-1])
+        self.assertTrue(band.getblock(4, 3, 1, 1).shape, (1, 1))
+        self.assertEqual(band.getblock(4, 3, 1, 1)[0], 11.0)
         return
 
     def test_initval(self):
@@ -93,7 +78,7 @@ class BandIndexerTests(unittest.TestCase):
     def test_get_masked(self):
         values = np.ones([16, 16])
         band = CompressedBand((16, 16), np.float32)
-        band[:,:] = values
+        band.setblock(0, 0, values)
         indexer = BandIndexer([band])
 
         mask = np.zeros([16, 16], dtype=np.bool)
@@ -104,7 +89,7 @@ class BandIndexerTests(unittest.TestCase):
     def test_set_masked(self):
         values = np.ones([16, 16])
         band = CompressedBand((16, 16), np.float32)
-        band[:,:] = values
+        band.setblock(0, 0, values)
         indexer = BandIndexer([band])
 
         mask = np.zeros([16, 16], dtype=np.bool)
@@ -118,9 +103,9 @@ class BandIndexerTests(unittest.TestCase):
         bands = [CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32)]
-        bands[0][:,:] = values
-        bands[1][:,:] = 2*values
-        bands[2][:,:] = 3*values
+        bands[0].setblock(0, 0, values)
+        bands[1].setblock(0, 0, 2*values)
+        bands[2].setblock(0, 0, 3*values)
 
         indexer = BandIndexer(bands)
         result = indexer[4:7,2:8,:]
@@ -143,14 +128,14 @@ class BandIndexerTests(unittest.TestCase):
         indexer[:,:,0] = values
         indexer[:,:,1:] = 2*values
 
-        self.assertTrue(np.all(bands[0][:,:] == 1.0))
-        self.assertTrue(np.all(bands[1][:,:] == 2.0))
-        self.assertTrue(np.all(bands[2][:,:] == 2.0))
+        self.assertTrue(np.all(bands[0].getblock(0, 0, 16, 16) == 1.0))
+        self.assertTrue(np.all(bands[1].getblock(0, 0, 16, 16) == 2.0))
+        self.assertTrue(np.all(bands[2].getblock(0, 0, 16, 16) == 2.0))
 
         indexer[:,:,1:] = np.dstack([2*values, 3*values])
 
-        self.assertTrue(np.all(bands[1][:,:] == 2.0))
-        self.assertTrue(np.all(bands[2][:,:] == 3.0))
+        self.assertTrue(np.all(bands[1].getblock(0, 0, 16, 16) == 2.0))
+        self.assertTrue(np.all(bands[2].getblock(0, 0, 16, 16) == 3.0))
         return
 
     def test_set_multibanded_masked_scalar(self):

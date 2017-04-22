@@ -146,11 +146,14 @@ class BandIndexer(object):
         else:
             raise TypeError("third key item should be an integer or a slice")
 
-        if ystep < 0:
-            ystart, yend = yend+1, ystart+1
+        if not (xstep == ystep == 1):
+            raise NotImplementedError("setting band values with stepped slices")
 
-        if xstep < 0:
-            xstart, xend = xend+1, xstart+1
+            #if ystep < 0:
+            #    ystart, yend = yend+1, ystart+1
+
+            #if xstep < 0:
+            #    xstart, xend = xend+1, xstart+1
 
         shape = [1 + (yend-ystart-1) // abs(ystep),
                  1 + (xend-xstart-1) // abs(xstep),
@@ -185,11 +188,12 @@ class BandIndexer(object):
             band.setblock(0, 0, tmp)
 
     def __iter__(self):
+        nx = self.bands[0].size[1]
         for i in range(self.bands[0].size[0]):
             if len(self.bands) == 1:
-                yield self.bands[0][i,:]
+                yield self.bands[0].getblock(i, 0, 1, nx)
             else:
-                yield np.vstack([b[i,:] for b in self.bands])
+                yield np.vstack([b.getblock(i, 0, 1, nx) for b in self.bands])
 
     @property
     def shape(self):
@@ -226,13 +230,6 @@ class SimpleBand(object):
     def setblock(self, yoff, xoff, array):
         (ny, nx) = array.shape
         self._array[yoff:yoff+ny, xoff:xoff+nx] = array
-        return
-
-    def __getitem__(self, key):
-        return self._array[key]
-
-    def __setitem__(self, key, value):
-        self._array[key] = value
         return
 
 class CompressedBand(object):
@@ -272,135 +269,6 @@ class CompressedBand(object):
         # 1 => set
         self.chunkstatus = np.zeros(nchunks, dtype=np.int8)
         return
-
-    def __getitem__(self, key):
-
-        if isinstance(key, Integral):
-            irow = key % self.size[0]
-            icol = 0
-            return self.getblock(irow, icol, 1, self.size[1])
-
-        elif isinstance(key, tuple):
-
-            if len(key) != 2:
-                raise IndexError("band can only be indexed along two dimensions")
-
-            kr, kc = key
-
-            if isinstance(kr, Integral):
-                yoff = kr % self.size[0]
-                ny = 1
-                ystride = 1
-
-            elif isinstance(kr, slice):
-                ystart, ystop, ystride = kr.indices(self.size[0])
-                yoff = min(ystart, ystop)
-                ny = abs(ystop-ystart)
-                if ystride < 0:
-                    yoff += 1
-
-            else:
-                raise IndexError("slicing with instances of '{0}' not "
-                                 "supported".format(type(kr)))
-
-            if isinstance(kc, Integral):
-                xoff = kc % self.size[1]
-                nx = 1
-                xstride = 1
-
-            elif isinstance(kc, slice):
-                xstart, xstop, xstride = kc.indices(self.size[1])
-                xoff = min(xstart, xstop)
-                nx = abs(xstop-xstart)
-                if xstride < 0:
-                    xoff += 1
-
-            else:
-                raise IndexError("slicing with instances of '{0}' not "
-                                 "supported".format(type(kc)))
-
-            if isinstance(kr, Integral) and isinstance(kc, Integral):
-                return self.getblock(yoff, xoff, ny, nx)[0,0]
-            else:
-                return self.getblock(yoff, xoff, ny, nx)[::ystride,::xstride]
-
-        elif isinstance(key, slice):
-            start, stop, stride = key.indices(self.size[0])
-            yoff = min(start, stop)
-            if stride < 0:
-                yoff += 1
-            ny = abs(stop-start)
-            return self.getblock(yoff, 0, ny, self.size[1])[::stride]
-
-        else:
-            raise IndexError("indexing with instances of '{0}' not "
-                             "supported".format(type(key)))
-
-    def __setitem__(self, key, value):
-
-        if isinstance(key, Integral):
-            irow = key % self.size[0]
-            icol = 0
-            if not hasattr(value, "__iter__"):
-                value = np.atleast_2d(value*np.ones(self.size[1], dtype=self.dtype))
-            self.setblock(irow, icol, value)
-
-        elif isinstance(key, tuple):
-
-            if len(key) != 2:
-                raise IndexError("band can only be indexed along two dimensions")
-
-            kr, kc = key
-
-            if isinstance(kr, int):
-                yoff = kr
-                ny = 1
-                sy = 1
-
-            elif isinstance(kr, slice):
-                yoff, _ystop, sy = kr.indices(self.size[0])
-                ny = _ystop - yoff
-
-            else:
-                raise IndexError("slicing with instances of '{0}' not "
-                                 "supported".format(type(kr)))
-
-            if isinstance(kc, int):
-                xoff = kc
-                nx = 1
-                sx = 1
-
-            elif isinstance(kc, slice):
-                xoff, _xstop, sx = kc.indices(self.size[1])
-                nx = _xstop - xoff
-
-            else:
-                raise IndexError("slicing with instances of '{0}' not "
-                                 "supported".format(type(kc)))
-
-            if not hasattr(value, "shape"):
-                value = value*np.ones((ny, nx))
-
-            vny, vnx = value.shape[:2]
-            if (ceil(float(ny)/sy) != vny) or (ceil(float(nx)/sx) != vnx):
-                raise IndexError("Cannot insert array with size ({vny}, {vnx}))"
-                        " into slice with size ({ny}, {nx})".format(
-                            vny=vny, vnx=vnx, ny=ny, nx=nx))
-
-            if sy == sx == 1:
-                self.setblock(yoff, xoff, value)
-
-            else:
-                temp = self.getblock(yoff, xoff, ny, nx)
-                temp[::sy,::sx] = value
-                self.setblock(yoff, xoff, temp)
-
-        else:
-            raise IndexError("indexing with instances of '{0}' not "
-                             "supported".format(type(key)))
-
-        return
-
 
     def _store(self, array, index):
         self._data[index] = blosc.compress(array.tostring(),
