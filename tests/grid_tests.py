@@ -90,8 +90,8 @@ class RegularGridTests(unittest.TestCase):
         grid = RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
         newgrid = grid.apply(lambda x: x**2)
 
-        self.assertTrue(np.all(newgrid[:,:][msk] == -1))
-        self.assertTrue(np.all(newgrid[:,:][~msk] == val_[~msk]**2))
+        self.assertTrue(np.all(newgrid[msk] == -1))
+        self.assertTrue(np.all(newgrid[:,:,0][~msk] == val_[~msk]**2))
 
     def test_apply_inplace(self):
         msk = np.zeros([8, 8], dtype=np.bool)
@@ -103,8 +103,8 @@ class RegularGridTests(unittest.TestCase):
         grid = RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
         grid.apply(lambda x: x**2, inplace=True)
 
-        self.assertTrue(np.all(grid[:,:][msk] == -1))
-        self.assertTrue(np.all(grid[:,:][~msk] == val_[~msk]**2))
+        self.assertTrue(np.all(grid[:,:,0][msk] == -1))
+        self.assertTrue(np.all(grid[:,:,0][~msk] == val_[~msk]**2))
 
     def test_merge(self):
         grid1 = RegularGrid([10, 20, 1, 1, 0, 0], values=np.ones([8, 8]))
@@ -622,7 +622,7 @@ class RegularGridTests(unittest.TestCase):
         grid = karta.raster.gridpoints(x, y, z, T, karta.crs.Cartesian)
 
         Xg, Yg = grid.center_coords()
-        self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid[:,:]))/Xg.size < 0.45)
+        self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid[:,:,0]))/Xg.size < 0.45)
 
     def test_gridpoints_float32(self):
         # should use Python fallback
@@ -635,7 +635,7 @@ class RegularGridTests(unittest.TestCase):
         grid = karta.raster.gridpoints(x, y, z, T, karta.crs.Cartesian)
 
         Xg, Yg = grid.center_coords()
-        self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid[:,:]))/Xg.size < 0.45)
+        self.assertTrue(np.sum(np.abs(Xg**2+Yg**3-grid[:,:,0]))/Xg.size < 0.45)
 
     def test_set_nodata(self):
         v = np.arange(64, dtype=np.float64).reshape([8,8])

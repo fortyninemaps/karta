@@ -41,7 +41,7 @@ class Grid(object):
 
     def minmax(self):
         """ Return the minimum and maximum value of data array """
-        tmp = self[self.data_mask]
+        tmp = self[self.data_mask_full]
         if len(tmp) != 0:
             return (tmp.min(), tmp.max())
         else:
@@ -169,9 +169,9 @@ class RegularGrid(Grid):
                 band[:,:] = values
                 self.bands.append(band)
             elif values.ndim == 3:
-                for ibnd in range(values.shape[2]):
+                for iband in range(values.shape[2]):
                     band = self._bndcls(values.shape[:2], values.dtype.type)
-                    band[:,:] = values[:,:,ibnd]
+                    band[:,:] = values[:,:,iband]
                     self.bands.append(band)
             else:
                 raise ValueError("`values` must have two or three dimensions")
@@ -246,7 +246,7 @@ class RegularGrid(Grid):
         ----------
         val : number
         """
-        self[:,:] = np.where(self.data_mask_full, self[:,:], val)
+        self[:,:,:] = np.where(self.data_mask_full, self[:,:,:], val)
         self._nodata = val
         return
 
@@ -430,8 +430,8 @@ class RegularGrid(Grid):
         jvec = np.arange(nx)
 
         for i, row in enumerate(self[:,:]):
-            x = (x0 + jvec*dx + i*sx)[isdata(row)]
-            y = (y0 + i*dy + jvec*sy)[isdata(row)]
+            x = (x0 + jvec*dx + i*sx)[isdata(row.squeeze())]
+            y = (y0 + i*dy + jvec*sy)[isdata(row.squeeze())]
 
             if len(x) != 0:
 
@@ -475,15 +475,12 @@ class RegularGrid(Grid):
         else:
             def isdata(a):
                 return a != self.nodata
-        return isdata(self[:,:])
+        return np.atleast_3d(isdata(self[:,:]))
 
     @property
     def data_mask(self):
         """ 8-bit mask of valid data cells, collapsed across bands """
-        if len(self.bands) == 1:
-            return self.data_mask_full
-        else:
-            return np.all(self.data_mask_full, axis=-1)
+        return np.all(self.data_mask_full, axis=-1)
 
     def aschunks(self, size=(-1, -1), overlap=(0, 0), copy=True):
         """ Generator for grid chunks. This may be useful for parallel or
@@ -652,8 +649,8 @@ class RegularGrid(Grid):
 
         polys = unpack_multipolygons(polys)
 
-        msk = None
         ny, nx = self.size
+        msk = np.zeros([ny, nx], dtype=np.bool)
         for poly in polys:
 
             x, y = poly.get_coordinate_lists(self.crs)[:2]
@@ -662,11 +659,7 @@ class RegularGrid(Grid):
                 y = y[::-1]
 
             _msk = mask_poly(x, y, nx, ny, self.transform)
-
-            if msk is None:
-                msk = _msk
-            else:
-                msk = (msk | _msk)
+            msk = (msk | _msk)
 
         if inplace:
             for band in self.bands:
@@ -675,10 +668,9 @@ class RegularGrid(Grid):
                 band[:,:] = data
             return self
         else:
-            if self.nbands != 1:
-                msk = np.broadcast_to(np.atleast_3d(msk), [ny, nx, self.nbands])
+            msk = np.broadcast_to(np.atleast_3d(msk), [ny, nx, self.nbands]).squeeze()
             return RegularGrid(self.transform,
-                               values=np.where(msk, self[:,:], self.nodata),
+                               values=np.where(msk, self[:,:,:], self.nodata),
                                crs=self.crs, nodata_value=self.nodata)
 
     def _resample_transform(self, transform, method='nearest'):
@@ -898,7 +890,7 @@ class RegularGrid(Grid):
                         dtype=self.bands[0].dtype)
 
         data[out_of_bounds_mask, :] = self.nodata_value
-        data[~out_of_bounds_mask, :] = self[Imn:Imx,Jmn:Jmx][I,J].reshape(sum(~out_of_bounds_mask), self.nbands)
+        data[~out_of_bounds_mask, :] = self[Imn:Imx,Jmn:Jmx,:][I,J].reshape(sum(~out_of_bounds_mask), self.nbands)
 
         if x.ndim == 1:
             return data.reshape(self.nbands, x.shape[0])
@@ -963,7 +955,7 @@ class RegularGrid(Grid):
 
         data = []
         for i, band in enumerate(self.bands):
-            v = self[Imn:Imx,Jmn:Jmx,i]
+            v = self[Imn:Imx,Jmn:Jmx,i].squeeze()
             if band.dtype in (np.float32, np.float64):
                 data.append(crfuncs.sample_bilinear_double(I, J, v.astype(np.float64), self.nodata_value))
             elif band.dtype in (np.int16, np.int32, np.int64):
@@ -1299,17 +1291,14 @@ def gridpoints(x, y, z, transform, crs):
     """
     ny = int((np.max(y) - transform[1]) // transform[3]) + 1
     nx = int((np.max(x) - transform[0]) // transform[2]) + 1
-    grid = RegularGrid(transform,
-                       values=np.zeros([ny, nx]),
-                       crs=crs,
-                       nodata_value=np.nan,
-                       bandclass=SimpleBand)
-    counts = np.zeros([ny, nx], dtype=np.int16)
+    grid = RegularGrid(transform, values=np.empty([ny, nx]), crs=crs,
+                       nodata_value=np.nan)
 
+    array = np.zeros([ny, nx])
     (I, J) = grid.get_indices(x, y)
 
     try:
-        err = crfuncs.fillarray_double(grid[:,:],
+        err = crfuncs.fillarray_double(array,
                                        I.astype(np.int32),
                                        J.astype(np.int32), z, grid.nodata)
         if err != 0:
@@ -1317,14 +1306,16 @@ def gridpoints(x, y, z, transform, crs):
     except ValueError:
         # Fast version works when *z* is of type double (np.float64).
         # Python fallback for other types
+        counts = np.zeros([ny, nx], dtype=np.int16)
         for (i,j,z_) in zip(I, J, z):
-            grid[i,j] += z_
+            array[i,j] += z_
             counts[i,j] += 1
 
         m = counts!=0
-        grid[m] /= counts[m]
-        grid[~m] = grid.nodata
+        array[m] = array[m] / counts[m]
+        array[~m] = np.nan
 
+    grid[:,:,0] = array
     return grid
 
 def mask_poly(xpoly, ypoly, nx, ny, transform):
@@ -1340,6 +1331,10 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
     transform : list[float]
         affine transformation describing grid layout and origin
         ``T == [x0, y0, dx, dy, sx, sy]``
+
+    Returns
+    -------
+    ndarray
     """
     mask = np.zeros((ny, nx), dtype=np.int8)
 

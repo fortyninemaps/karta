@@ -37,62 +37,66 @@ class BandIndexer(object):
         self.bands = bands
 
     def __getitem__(self, key):
-        if len(self.bands) == 1:
-            if isinstance(key, np.ndarray):
-                return self.bands[0][:,:][key]
-            elif isinstance(key, tuple):
-                if (len(key) == 3) and (key[2] != 0) and not isinstance(key[2], slice):
-                    raise IndexError("third element of key exceeds number of bands")
-                return self.bands[0][key[:2]]
+        # Rules:
+        # key is a
+        # - ndarray
+        # - tuple of slices
+        # - tuple of ints
+        # - int
+        results = []
+
+        for i, band in enumerate(self.bands):
+            if isinstance(key, np.ndarray) and len(key.shape) == 3:
+                tmp = band[:,:]
+                results.append(tmp[key[:,:,i]])
+            elif isinstance(key, np.ndarray) and len(key.shape) == 2:
+                tmp = band[:,:]
+                results.append(tmp[key])
+            elif len(key) == 3 and isinstance(key[2], slice):
+                if (i in range(*key[2].indices(len(self.bands)))):
+                    results.append(band[key[:2]])
+            elif len(key) == 3 and isinstance(key[2], int):
+                if i == key[2]:
+                    results.append(band[key[:2]])
+            elif len(key) == 2:
+                results.append(band[key])
             else:
-                return self.bands[0][key]
+                raise TypeError("illegal indexing with type {}".format(type(key)))
+
+        if len(results) == 1 and ((isinstance(key, np.ndarray) and len(key.shape) == 3) or (isinstance(key, tuple) and len(key) == 3)):
+            return results[0]
+        elif all(isinstance(a, np.ndarray) for a in results):
+            return np.dstack(results)
+        elif len(results) == 1:
+            return results[0]
         else:
-            if isinstance(key, np.ndarray):
-                return np.dstack([b[:,:][key] for b in self.bands])
-            else:
-                if len(key) not in (2, 3):
-                    raise IndexError("indexing tuple must have length 2 or 3")
-                sr, sc = key[:2]
-                sb = slice(None, None, None) if len(key) == 2 else key[2]
-                if isinstance(sb, slice):
-                    return np.dstack([b[sr,sc] for b in self.bands[sb]])
-                else:
-                    return self.bands[sb][sr,sc]
+            return np.array(results)
 
     def __setitem__(self, key, value):
-        if len(self.bands) == 1:
-            if isinstance(key, np.ndarray):
-                tmp = self.bands[0][:,:]
-                tmp[key] = value
-                self.bands[0][:,:] = tmp
+
+        for i, band in enumerate(self.bands):
+
+            if isinstance(value, np.ndarray) and len(value.shape) == 3:
+                v = value[:,:,i].squeeze()
             else:
-                self.bands[0][key] = value
-        else:
-            if isinstance(key, np.ndarray):
-                if isinstance(value, np.ndarray):
-                    for b, v in zip(self.bands, value):
-                        tmp = b[:,:]
-                        tmp[key] = v
-                        b[:,:] = tmp
-                else:
-                    for b in self.bands:
-                        tmp = b[:,:]
-                        tmp[key] = value
-                        b[:,:] = tmp
+                v = value
+
+            if isinstance(key, np.ndarray) and len(key.shape) == 3:
+                tmp = band[:,:]
+                tmp[key[:,:,i]] = v
+                band[:,:] = tmp
+            elif isinstance(key, np.ndarray) and len(key.shape) == 2:
+                tmp = band[:,:]
+                tmp[key] = v
+                band[:,:] = tmp
+            elif len(key) == 3 and isinstance(key[2], slice) and (i in range(*key[2].indices(len(self.bands)))):
+                band[key[:2]] = v
+            elif len(key) == 3 and isinstance(key[2], int) and (i == key[2]):
+                band[key[:2]] = v
+            elif len(key) == 2:
+                band[key] = v
             else:
-                if len(key) not in (2, 3):
-                    raise IndexError("indexing tuple must have length 2 or 3")
-                sr, sc = key[:2]
-                sb = slice(None, None, None) if len(key) == 2 else key[2]
-                if isinstance(sb, slice):
-                    if len(value.shape) == 3:
-                        for ival, iband in enumerate(range(*sb.indices(len(self.bands)))):
-                            self.bands[iband][sr,sc] = value[:,:,ival]
-                    else:
-                        for b in self.bands[sb]:
-                            b[sr,sc] = value
-                else:
-                    self.bands[sb][sr,sc] = value
+                raise TypeError("illegal indexing with type {}".format(type(key)))
         return
 
     def __iter__(self):
@@ -348,7 +352,7 @@ class CompressedBand(object):
     def _setblock(self, yoff, xoff, array):
         """ Store block of values in *array* starting at offset *yoff*, *xoff*.
         """
-        size = array.shape
+        size = array.shape[:2]
         chunksize = self._chunksize
 
         for i, yst, yen, xst, xen in self._getchunks(yoff, xoff, *size):
