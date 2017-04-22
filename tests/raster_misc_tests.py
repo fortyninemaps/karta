@@ -14,7 +14,7 @@ class RasterMiscTests(unittest.TestCase):
                         crs=karta.crs.Cartesian)
         hs = misc.hillshade(g)
 
-        self.assertTrue(np.allclose(hs[hs.data_mask],
+        self.assertTrue(np.allclose(hs[hs.data_mask_full],
             [0.84923394351971149, 0.86954042549819088, 0.88846952373817367,
              0.90556229874094718, 0.92054112351316264, 0.93323125018542952,
              0.94347531736616952, 0.95106558877757219, 0.9557056512065355,
@@ -101,10 +101,10 @@ class RasterMiscTests(unittest.TestCase):
         grid = RegularGrid((0, 0, 10, 10, 0, 0), values=x*np.ones_like(y))
         aspect = misc.aspect(grid)
         self.assertTrue(np.all(np.pi == aspect[1:-1,1:-1]))
-        self.assertTrue(np.all(np.isnan(aspect[0,:])))
-        self.assertTrue(np.all(np.isnan(aspect[-1,:])))
-        self.assertTrue(np.all(np.isnan(aspect[:,0])))
-        self.assertTrue(np.all(np.isnan(aspect[:,-1])))
+        self.assertTrue(np.all(np.isnan(aspect[0,:,0])))
+        self.assertTrue(np.all(np.isnan(aspect[-1,:,0])))
+        self.assertTrue(np.all(np.isnan(aspect[:,0,0])))
+        self.assertTrue(np.all(np.isnan(aspect[:,-1,0])))
 
         grid = RegularGrid((0, 0, 10, 10, 0, 0), values=np.ones_like(x)*y)
         aspect = misc.aspect(grid)
@@ -116,8 +116,8 @@ class RasterMiscTests(unittest.TestCase):
         y = np.linspace(-np.pi, np.pi, 256).reshape(-1, 1)
         g = RegularGrid((0, 0, 2*np.pi/255, 2*np.pi/255, 0, 0), values=np.sin(x)*np.cos(y))
         gx, gy = misc.gradient(g)
-        self.assertTrue(np.nansum(np.abs(gx[:,:] - np.cos(x)*np.cos(y))) < 7.0)
-        self.assertTrue(np.nansum(np.abs(gy[:,:] + np.sin(x)*np.sin(y))) < 7.0)
+        self.assertTrue(np.nansum(np.abs(gx[:,:,0] - np.cos(x)*np.cos(y))) < 7.0)
+        self.assertTrue(np.nansum(np.abs(gy[:,:,0] + np.sin(x)*np.sin(y))) < 7.0)
         return
 
     def test_normed_potential_vectors(self):

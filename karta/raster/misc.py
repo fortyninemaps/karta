@@ -24,7 +24,7 @@ def slope(grid, band=0):
     ----------
     grid: RegularGrid
     band: int, optional
-        band to compute hillshade for (default 0)
+        band to compute slope for (default 0)
 
     Returns
     -------
@@ -58,7 +58,7 @@ def aspect(grid, band=0):
     ----------
     grid: RegularGrid
     band: int, optional
-        band to compute hillshade for (default 0)
+        band to compute aspect for (default 0)
 
     Returns
     -------
@@ -113,7 +113,7 @@ def divergence(grid, bands=(0, 1)):
     Parameters
     ----------
     grid: RegularGrid
-    band: tuple of ints, optional (default (0, 1))
+    band: tuple of ints indicating orthogonal velocity bands, optional (default (0, 1))
 
     Returns
     -------
@@ -184,8 +184,8 @@ def hillshade(grid, azimuth=330.0, elevation=60.0, band=0):
     Currently assumes orthogonal coordinates.
     """
     dxgrid, dygrid = gradient(grid, band=band)
-    dx = dxgrid[:,:]
-    dy = dygrid[:,:]
+    dx = dxgrid[:,:,0]
+    dy = dygrid[:,:,0]
     res = grid.resolution
     u = np.array((np.full_like(dx, res[0]), np.zeros_like(dx), dx))
     v = np.array((np.zeros_like(dy), np.full_like(dy, res[1]), dy))

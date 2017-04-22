@@ -46,6 +46,9 @@ class BandIndexer(object):
         if isinstance(key, np.ndarray):
             return self._mask_index(key)
 
+        if isinstance(key, slice):
+            key = (key, slice(None, None, None), slice(None, None, None))
+
         if not isinstance(key, tuple):
             raise TypeError("key should be an array or a tuple")
 
@@ -54,7 +57,8 @@ class BandIndexer(object):
 
         if isinstance(key[0], Integral):
             collapse_rows = True
-            ystart, yend, ystep = (key[0], key[0]+1, 1)
+            r = key[0] % ny
+            ystart, yend, ystep = (r, r+1, 1)
         elif isinstance(key[0], slice):
             ystart, yend, ystep = key[0].indices(ny)
         else:
@@ -62,7 +66,8 @@ class BandIndexer(object):
 
         if isinstance(key[1], Integral):
             collapse_cols = True
-            xstart, xend, xstep = (key[1], key[1]+1, 1)
+            r = key[1] % nx
+            xstart, xend, xstep = (r, r+1, 1)
         elif isinstance(key[1], slice):
             xstart, xend, xstep = key[1].indices(nx)
         else:
@@ -72,11 +77,19 @@ class BandIndexer(object):
             bands = list(range(len(self.bands)))
         elif len(key) == 3 and isinstance(key[2], Integral):
             collapse_bands = True
-            bands = [key[2]]
+            bands = [key[2] % len(self.bands)]
         elif len(key) == 3 and isinstance(key[2], slice):
             bands = list(range(*key[2].indices(len(self.bands))))
         else:
             raise TypeError("third key item should be an integer or a slice")
+
+        if ystep < 0:
+            ystart, yend = yend, ystart
+            ystep = -ystep
+
+        if xstep < 0:
+            xstart, xend = xend, xstart
+            xstep = -xstep
 
         out = np.empty([(yend-ystart)//ystep, (xend-xstart)//xstep, len(bands)],
                        dtype = self.bands[0].dtype)
@@ -84,7 +97,7 @@ class BandIndexer(object):
         results = []
         for i, iband in enumerate(bands):
             band = self.bands[iband]
-            out[:,:,i] = band.getblock(ystart, xstart, yend-ystart, xend-xstart)
+            out[:,:,i] = band.getblock(ystart, xstart, yend-ystart, xend-xstart)[::ystep, ::xstep]
 
         if collapse_bands:
             out = out[:,:,0]

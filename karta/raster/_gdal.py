@@ -33,6 +33,13 @@ class GdalFileBand(object):
         self.dataset = None
         self.gdalband = None
 
+    def getblock(self, yoff, xoff, ny, nx):
+        # Note that GDAL uses the alternative x,y convention
+        return self.gdalband.ReadAsArray(xoff, yoff, nx, ny)
+
+    def setblock(self, yoff, xoff, array):
+        raise NotImplementedError()
+
     def __getitem__(self, idx):
         ny, nx = self.size
 
