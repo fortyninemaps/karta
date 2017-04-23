@@ -22,8 +22,8 @@ def slope(grid, band=0):
 
     Parameters
     ----------
-    grid: RegularGrid
-    band: int, optional
+    grid : RegularGrid
+    band : int, optional
         band to compute slope for (default 0)
 
     Returns
@@ -56,8 +56,8 @@ def aspect(grid, band=0):
 
     Parameters
     ----------
-    grid: RegularGrid
-    band: int, optional
+    grid : RegularGrid
+    band : int, optional
         band to compute aspect for (default 0)
 
     Returns
@@ -85,8 +85,9 @@ def gradient(grid, band=0):
 
     Parameters
     ----------
-    grid: RegularGrid
-    band: int, optional (default 0)
+    grid : RegularGrid
+    band : int, optional
+        (default 0)
 
     Returns
     -------
@@ -112,8 +113,9 @@ def divergence(grid, bands=(0, 1)):
 
     Parameters
     ----------
-    grid: RegularGrid
-    band: tuple of ints indicating orthogonal velocity bands, optional (default (0, 1))
+    grid : RegularGrid
+    band : tuple of ints, optional
+        indicates orthogonal velocity bands (default (0, 1))
 
     Returns
     -------
@@ -129,7 +131,7 @@ def divergence(grid, bands=(0, 1)):
 
 def _normed_potential_vectors(D, res=(1.0, 1.0)):
     """ Computes a U,V vector field of potential D. Scalar components of
-    U,V are normalized to max(|U, V|).
+    U,V are normalized to ``max(|U, V|)``.
     """
     dx, dy = res
     Ddx = ((2 * D[1:-1,2:] + D[:-2,2:] + D[2:,2:]) -
@@ -144,12 +146,12 @@ def _normed_potential_vectors(D, res=(1.0, 1.0)):
 
 def normed_potential_vectors(grid, band=0):
     """ Computes a U,V vector field of a potential grid. Scalar components of
-    U,V are normalized to max(|U, V|).
+    U,V are normalized to ``max(|U, V|)``.
 
     Parameters
     ----------
-    grid: RegularGrid
-    band: int, optional (default 0)
+    grid : RegularGrid
+    band : int, optional (default 0)
 
     Returns
     -------
@@ -167,12 +169,12 @@ def hillshade(grid, azimuth=330.0, elevation=60.0, band=0):
 
     Parameters
     ----------
-    grid: RegularGrid
-    azimuth: float, optional
+    grid : RegularGrid
+    azimuth : float, optional
         direction of light source (default 330.0)
-    elevation: float, optional
+    elevation : float, optional
         height of light source (default 60.0)
-    band: int, optional
+    band : int, optional
         band to compute hillshade for (default 0)
 
     Returns

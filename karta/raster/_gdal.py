@@ -88,8 +88,8 @@ def numpy_dtype(dt_int):
 def gdal_type(dtype):
     """ Return a GDAL type that most closely matches numpy dtype
 
-    Note
-    ----
+    Notes
+    -----
     Returns GDT_Int32 for np.int64, which may result in overflow.
     """
     if dtype == np.uint8:

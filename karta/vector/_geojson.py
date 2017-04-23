@@ -73,6 +73,7 @@ class GeoJSONOutMixin(object):
 
     def as_geojson(self, indent=None, urn=None, force_wgs84=True):
         """ Output representation of internal data as a GeoJSON string.
+
         Parameters
         ----------
         indent : int, optional
@@ -105,6 +106,7 @@ class GeoJSONOutMixin(object):
 
     def to_geojson(self, f, indent=None, urn=None, force_wgs84=True):
         """ Write data as a GeoJSON string to a file-like object `f`.
+
         Parameters
         ----------
         f : str or file-like object

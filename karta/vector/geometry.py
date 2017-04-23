@@ -193,13 +193,13 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
 
         Notes
         -----
-        The output coordinates are computed as
+        The output coordinates are computed as::
 
             xnew        x
                   = M * y
             ynew        1
 
-        or
+        or::
 
             xnew        x
             ynew  = M * y
@@ -505,13 +505,13 @@ class MultiVertexMixin(object):
 
         Notes
         -----
-        The output coordinates are computed as
+        The output coordinates are computed as::
 
             xnew        x
                   = M * y
             ynew        1
 
-        or
+        or::
 
             xnew        x
             ynew  = M * y
@@ -1414,13 +1414,13 @@ class MultiVertexMultipartMixin(object):
 
         Notes
         -----
-        The output coordinates are computed as
+        The output coordinates are computed as::
 
             xnew        x
                   = M * y
             ynew        1
 
-        or
+        or::
 
             xnew        x
             ynew  = M * y
