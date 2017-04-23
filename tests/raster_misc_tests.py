@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import numpy.testing as npt
 import karta
 from karta import RegularGrid
 from karta.raster import misc
@@ -9,12 +10,12 @@ class RasterMiscTests(unittest.TestCase):
     def test_hillshade(self):
         x = np.linspace(0, np.pi, 16)
         y = np.linspace(0, np.pi, 16).reshape((-1, 1))
-
-        g = RegularGrid([0, 0, 1, 1, 0, 0], values=np.sin(x)*np.sin(y),
+        g = RegularGrid([0, 0, 1, 1, 0, 0],
+                        values=np.sin(x)*np.sin(y),
                         crs=karta.crs.Cartesian)
         hs = misc.hillshade(g)
 
-        self.assertTrue(np.allclose(hs[hs.data_mask_full],
+        npt.assert_almost_equal(hs[hs.data_mask_full],
             [0.84923394351971149, 0.86954042549819088, 0.88846952373817367,
              0.90556229874094718, 0.92054112351316264, 0.93323125018542952,
              0.94347531736616952, 0.95106558877757219, 0.9557056512065355,
@@ -80,8 +81,7 @@ class RasterMiscTests(unittest.TestCase):
              0.74896574116128711, 0.74535282029575034, 0.747319217927502,
              0.75490948933890467, 0.76782722131685632, 0.78543520636737574,
              0.80677072133029026, 0.83058699210815123, 0.85543618588181669,
-             0.87979538950981906]))
-        return
+             0.87979538950981906])
 
     def test_slope(self):
         x = np.arange(64)
@@ -93,7 +93,6 @@ class RasterMiscTests(unittest.TestCase):
         grid = RegularGrid((0, 0, 10, 10, 0, 0), values=x+y)
         slope = misc.slope(grid)
         self.assertTrue(np.allclose(0.14142136, slope[:,:]))
-        return
 
     def test_aspect(self):
         x = np.arange(64)
@@ -109,7 +108,6 @@ class RasterMiscTests(unittest.TestCase):
         grid = RegularGrid((0, 0, 10, 10, 0, 0), values=np.ones_like(x)*y)
         aspect = misc.aspect(grid)
         self.assertTrue(np.allclose(0.5*np.pi, aspect[1:-1,1:-1]))
-        return
 
     def test_gradient(self):
         x = np.linspace(-np.pi, np.pi, 256)
@@ -118,7 +116,6 @@ class RasterMiscTests(unittest.TestCase):
         gx, gy = misc.gradient(g)
         self.assertTrue(np.nansum(np.abs(gx[:,:,0] - np.cos(x)*np.cos(y))) < 7.0)
         self.assertTrue(np.nansum(np.abs(gy[:,:,0] + np.sin(x)*np.sin(y))) < 7.0)
-        return
 
     def test_normed_potential_vectors(self):
         x = np.linspace(-np.pi, np.pi, 256)
@@ -126,7 +123,6 @@ class RasterMiscTests(unittest.TestCase):
         g = RegularGrid((0, 0, 2*np.pi/255, 2*np.pi/255, 0, 0), values=np.sin(x)+np.sin(y))
         u, v = misc.normed_potential_vectors(g)
         # TODO: add test for correctness
-        return
 
     def test_divergence(self):
         x = np.linspace(-np.pi, np.pi, 256)
@@ -139,7 +135,6 @@ class RasterMiscTests(unittest.TestCase):
         self.assertTrue(
             np.nansum(np.abs((g[:,:]/g.max() + div[:,:]/div.max()))) < 1.32
         )
-        return
 
 if __name__ == "__main__":
     unittest.main()

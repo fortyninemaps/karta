@@ -47,6 +47,10 @@ class Grid(object):
         else:
             return (np.nan, np.nan)
 
+    def copy(self):
+        """ Return a deep copy """
+        return copy.deepcopy(self)
+
     def apply(self, func, inplace=False, band=None):
         """ Apply a vector function to grid values.
 
@@ -65,23 +69,19 @@ class Grid(object):
         -------
         instance of type(self)
         """
-        msk = self.data_mask
+        msk = self.data_mask_full
         if band is not None:
             if not isinstance(band, int) or not (0 <= band < self.nbands):
                 raise ValueError("band must be an integer in [0, nbands)")
             msk *= np.array([i == band for i in range(self.nbands)])
 
-        if not inplace:
+        if inplace:
+            self[msk] = func(self[msk])
+            return self
+        else:
             newgrid = self.copy()
             newgrid[msk] = func(self[msk])
             return newgrid
-        else:
-            self[msk] = func(self[msk])
-            return self
-
-    def copy(self):
-        """ Return a deep copy """
-        return copy.deepcopy(self)
 
 
 class RegularGrid(Grid):
@@ -480,9 +480,8 @@ class RegularGrid(Grid):
         if np.isnan(self.nodata):
             isdata = lambda a: ~np.isnan(a)
         else:
-            def isdata(a):
-                return a != self.nodata
-        return np.atleast_3d(isdata(self[:,:]))
+            isdata = lambda a: a != self.nodata
+        return np.dstack([isdata(self[:,:,i]) for i in range(len(self.bands))])
 
     @property
     def data_mask(self):

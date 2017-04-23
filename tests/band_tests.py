@@ -220,7 +220,7 @@ class BandIndexerTests(unittest.TestCase):
         indexer = BandIndexer(bands)
         mask = np.array([[True, False, False], [False, True, False], [False, False, True]])
         result = indexer[mask]
-        npt.assert_equal(np.tile(np.array([1, 2, 3]), (3, 1)).T, result)
+        npt.assert_equal(np.tile(np.array([1, 2, 3]), (3, 1)), result)
 
     def test_set_mask2(self):
         values = np.ones([3, 3])
@@ -249,12 +249,14 @@ class BandIndexerTests(unittest.TestCase):
         bands[2].setblock(0, 0, 3*values)
 
         indexer = BandIndexer(bands)
-        mask = np.dstack([
-            np.array([[True, False, False], [False, True, False], [False, False, True]]),
-            np.array([[False, False, False], [False, False, False], [False, True, False]]),
-            np.array([[True, False, False], [False, False, False], [True, False, True]])])
-        result = indexer[mask]
-        expected = np.array([1, 1, 1, 2, 3, 3, 3])
+        # Create mask in band, row, column order than use np.moveaxis to put in
+        # row, column, band order for karta
+        mask = np.array([
+            [[True, False, False], [False, True, False], [False, False, True]],
+            [[False, False, False], [False, False, False], [False, True, False]],
+            [[True, False, False], [False, False, False], [True, False, True]]])
+        result = indexer[np.moveaxis(mask, 0, -1)]
+        expected = np.array([1, 3, 1, 3, 2, 1, 3])
         npt.assert_equal(expected, result)
 
     def test_set_mask3(self):
@@ -267,11 +269,13 @@ class BandIndexerTests(unittest.TestCase):
         bands[2].setblock(0, 0, 3*values)
 
         indexer = BandIndexer(bands)
-        mask = np.dstack([
-            np.array([[True, False, False], [False, True, False], [False, False, True]]),
-            np.array([[False, False, False], [False, False, False], [False, True, False]]),
-            np.array([[True, False, False], [False, False, False], [True, False, True]])])
-        indexer[mask] = -1
+        # Create mask in band, row, column order than use np.moveaxis to put in
+        # row, column, band order for karta
+        mask = np.array([
+            [[True, False, False], [False, True, False], [False, False, True]],
+            [[False, False, False], [False, False, False], [False, True, False]],
+            [[True, False, False], [False, False, False], [True, False, True]]])
+        indexer[np.moveaxis(mask, 0, -1)] = -1
         self.assertEqual(bands[0].getblock(0, 0, 1, 1)[0], -1)
         self.assertEqual(bands[1].getblock(2, 1, 1, 1)[0], -1)
         self.assertEqual(bands[2].getblock(0, 0, 1, 1)[0], -1)

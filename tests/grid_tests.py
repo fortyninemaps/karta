@@ -3,6 +3,7 @@
 import unittest
 import os
 import numpy as np
+import numpy.testing as npt
 from test_helper import TESTDATA
 
 import karta
@@ -99,8 +100,8 @@ class RegularGridTests(unittest.TestCase):
         grid = RegularGrid([0, 0, 1, 1, 0, 0], values=val, nodata_value=-1)
         newgrid = grid.apply(lambda x: x**2)
 
-        self.assertTrue(np.all(newgrid[msk] == -1))
-        self.assertTrue(np.all(newgrid[:,:,0][~msk] == val_[~msk]**2))
+        npt.assert_equal(newgrid[msk], -1)
+        npt.assert_equal(newgrid[:,:,0][~msk], val_[~msk]**2)
 
     def test_apply_inplace(self):
         msk = np.zeros([8, 8], dtype=np.bool)
