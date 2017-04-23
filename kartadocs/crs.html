@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Installation &mdash; Karta 0.9.0b1 documentation</title>
+  <title>Coordinate reference systems &mdash; Karta 0.9.0b1 documentation</title>
   
 
   
@@ -38,8 +38,8 @@
               href="genindex.html"/>
         <link rel="search" title="Search" href="search.html"/>
     <link rel="top" title="Karta 0.9.0b1 documentation" href="index.html"/>
-        <link rel="next" title="Raster indexing" href="raster-indexing.html"/>
-        <link rel="prev" title="Table of Contents" href="karta-manual.html"/> 
+        <link rel="next" title="Examples" href="examples.html"/>
+        <link rel="prev" title="Raster indexing" href="raster-indexing.html"/> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
@@ -93,9 +93,9 @@
             
             
               <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="raster-indexing.html">Raster indexing</a></li>
-<li class="toctree-l1"><a class="reference internal" href="crs.html">Coordinate reference systems</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Coordinate reference systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="reference.html">Package reference</a></li>
 </ul>
@@ -142,13 +142,13 @@
     
       <li><a href="karta-manual.html">Docs</a> &raquo;</li>
         
-      <li>Installation</li>
+      <li>Coordinate reference systems</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/installation.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/crs.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -161,28 +161,49 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="installation">
-<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
-<p>The easiest way to install in production is to use <code class="docutils literal"><span class="pre">pip</span></code>, although on some
-systems <code class="docutils literal"><span class="pre">conda</span></code> may be easier for installing certain dependencies.
-Installation requires <code class="docutils literal"><span class="pre">setuptools</span></code>:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">U</span> <span class="n">setuptools</span>
+  <div class="section" id="coordinate-reference-systems">
+<h1>Coordinate reference systems<a class="headerlink" href="#coordinate-reference-systems" title="Permalink to this headline">¶</a></h1>
+<p>Coordinate reference systems describe how the numerical coordinates of a
+geometry or grid relate to space in the real world. Difference coordinate
+systems take different approaches to reducing position on the curved surface of
+the earth to two-dimensional coordinates, making different assumptions about
+Earth&#8217;s geometry and choosing to preserve different invariants.</p>
+<p>In <em>Karta</em>, coordinate systems objects handle both projection from geographical
+coordinates and geodetic operations such as calculating distances and azimuths.
+Basic coordinate systems (<em>Cartesian</em> and <em>SphericalEarth</em>) are provided, while
+more specialized systems employ <a class="reference external" href="http://jswhit.github.io/pyproj/">pyproj</a> to handle calculations.</p>
+<p>The following predefined coordinate systems instances are available:</p>
+<blockquote>
+<div><ul class="simple">
+<li><em>SphericalEarth</em></li>
+<li><em>LonLatWGS84</em></li>
+<li><em>LonLatNAD27</em></li>
+<li><em>LonLatNAD83</em></li>
+<li><em>UPSNorth</em></li>
+<li><em>UPSSouth</em></li>
+<li><em>NSIDCNorth</em></li>
+<li><em>NSIDCSouth</em></li>
+<li><em>LambertEqualArea</em></li>
+<li><em>GallPetersEqualArea</em></li>
+<li><em>WebMercator</em></li>
+</ul>
+</div></blockquote>
+<p>Additionally, the <em>Cartesian</em> class can be used without instantiation.</p>
+<p>To use a pre-defined coordinate system,</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">karta.crs</span> <span class="k">import</span> <span class="n">LonLatWGS84</span>
 </pre></div>
 </div>
-<p>To install the latest release from PyPI, run:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">karta</span>
+<p>The object <code class="docutils literal"><span class="pre">LonLatWGS84</span></code> can be passed to <em>Geometry</em> and <em>Grid</em> instances in
+<em>Karta</em>. To define their coordinate system.</p>
+<p>To create a specialized coordinate system, provide a <em>proj.4</em> string and a
+spheroid definition.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">karta.crs</span> <span class="k">import</span> <span class="n">ProjectedCRS</span>
+<span class="n">my_crs</span> <span class="o">=</span> <span class="n">ProjectedCRS</span><span class="p">(</span><span class="s2">&quot;+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 &quot;</span>
+                      <span class="s2">&quot;+lon_0=-126 +x_0=1000000 +y_0=0 &quot;</span>
+                      <span class="s2">&quot;+ellps=GRS80 +datum=NAD83 +units=m +no_defs&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Building requires Cython and a C99-compliant compiler:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">Cython</span>
-</pre></div>
-</div>
-<p>Clone the repository and build:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">git</span> <span class="n">clone</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">fortyninemaps</span><span class="o">/</span><span class="n">karta</span><span class="o">.</span><span class="n">git</span> <span class="n">karta</span>
-<span class="n">cd</span> <span class="n">karta</span><span class="o">/</span>
-<span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">build</span>
-</pre></div>
-</div>
+<p>See the <a class="reference external" href="http://trac.osgeo.org/proj/">proj.4</a> documentation for more details.</p>
 </div>
 
 
@@ -195,10 +216,10 @@ Installation requires <code class="docutils literal"><span class="pre">setuptool
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
-        <a href="raster-indexing.html" class="btn btn-neutral float-right" title="Raster indexing" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+        <a href="examples.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="karta-manual.html" class="btn btn-neutral" title="Table of Contents" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="raster-indexing.html" class="btn btn-neutral" title="Raster indexing" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   
