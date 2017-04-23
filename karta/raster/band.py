@@ -173,7 +173,12 @@ class BandIndexer(object):
 
     def _get_from_array_mask(self, mask):
         # TODO: make this more memory efficient
-        return self[:,:,:][mask]
+        if mask.ndim == 2:
+            return self[:,:,:][mask].T
+        elif mask.ndim == 3:
+            return self[:,:,:].T[mask.T]
+        else:
+            raise IndexError("masking array must have two or three dimensions")
 
     def _set_from_array_mask(self, mask, value):
         # TODO: make this more memory efficient

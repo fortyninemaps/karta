@@ -1,5 +1,6 @@
 import unittest
 import numpy as np
+import numpy.testing as npt
 
 from karta.raster import SimpleBand, CompressedBand
 from karta.raster.band import BandIndexer
@@ -10,7 +11,6 @@ class GenericBandTests(object):
     def test_get_dtype(self):
         band = self.type((64, 64), np.float64, **self.initkwargs)
         self.assertEqual(band.dtype, np.float64)
-        return
 
     #def test_setblock_getblock_striped(self):
     #    x, y = np.meshgrid(np.arange(832), np.arange(1024))
@@ -21,7 +21,6 @@ class GenericBandTests(object):
     #    bi[::2, 128:960:3, 0] = d
 
     #    self.assertEqual(np.sum(bi[::2, 128:960:3, 0]-d), 0.0)
-    #    return
 
     def test_setblock_getblock_full(self):
         x, y = np.meshgrid(np.arange(1024), np.arange(1024))
@@ -31,7 +30,6 @@ class GenericBandTests(object):
         band.setblock(0, 0, d)
 
         self.assertEqual(np.sum(band.getblock(0, 0, 1024, 1024) - d), 0.0)
-        return
 
     def test_setblock_getblock_partial(self):
         x, y = np.meshgrid(np.arange(1024), np.arange(832))
@@ -41,7 +39,6 @@ class GenericBandTests(object):
         band.setblock(128, 0, d)
 
         self.assertEqual(np.sum(band.getblock(128, 0, 832, 1024) - d), 0.0)
-        return
 
     def test_get_scalar(self):
         x, y = np.meshgrid(np.arange(1024), np.arange(1024))
@@ -52,12 +49,10 @@ class GenericBandTests(object):
 
         self.assertTrue(band.getblock(4, 3, 1, 1).shape, (1, 1))
         self.assertEqual(band.getblock(4, 3, 1, 1)[0], 11.0)
-        return
 
     def test_initval(self):
         band = self.type((1024, 1024), np.float64, initval=0.0)
         self.assertTrue(band is not None)
-        return
 
 
 class SimpleBandTests(unittest.TestCase, GenericBandTests):
@@ -110,8 +105,7 @@ class BandIndexerTests(unittest.TestCase):
         indexer[mask] = -1
         self.assertEqual(np.sum(indexer[:,:]), 32)
 
-    def test_get_multibanded_errors(self):
-        values = np.ones([16, 16])
+    def test_get_errors(self):
         bands = [CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32)]
@@ -123,8 +117,7 @@ class BandIndexerTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             indexer[0, 0, None]
 
-    def test_set_multibanded_errors(self):
-        values = np.ones([16, 16])
+    def test_set_errors(self):
         bands = [CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32)]
@@ -136,7 +129,7 @@ class BandIndexerTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             indexer[0, 0, None] = 1.0
 
-    def test_get_multibanded_integer(self):
+    def test_get_integer(self):
         values = np.ones([16, 16])
         bands = [CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32),
@@ -147,42 +140,16 @@ class BandIndexerTests(unittest.TestCase):
         indexer = BandIndexer(bands)
 
         result = indexer[10,2]
-        self.assertTrue(np.all(result == np.array([1.0, 2.0, 3.0])))
+        npt.assert_equal(result, np.array([1.0, 2.0, 3.0]))
 
         result = indexer[10,2,:]
-        self.assertTrue(np.all(result == np.array([1.0, 2.0, 3.0])))
+        npt.assert_equal(result, np.array([1.0, 2.0, 3.0]))
 
         # make sure it works with a scalar band index
         result = indexer[10,2,1]
         self.assertEqual(result, 2.0)
-        return
 
-    def test_get_multibanded_slice(self):
-        values = np.ones([16, 16])
-        bands = [CompressedBand((16, 16), np.float32),
-                 CompressedBand((16, 16), np.float32),
-                 CompressedBand((16, 16), np.float32)]
-        bands[0].setblock(0, 0, values)
-        bands[1].setblock(0, 0, 2*values)
-        bands[2].setblock(0, 0, 3*values)
-        indexer = BandIndexer(bands)
-
-        result = indexer[4:7,2:8,:]
-        self.assertEqual(result.shape, (3, 6, 3))
-        self.assertTrue(np.all(result[0,0,:] == np.array([1.0, 2.0, 3.0])))
-
-        result = indexer[12:]
-        self.assertEqual(result.shape, (4, 16, 3))
-        self.assertTrue(np.all(result[0,0,:] == np.array([1.0, 2.0, 3.0])))
-
-        # make sure it works with a scalar band index
-        result = indexer[4:7,2:8,1]
-        self.assertEqual(result.shape, (3, 6))
-        self.assertTrue(np.all(result == 2.0))
-        return
-
-    def test_set_multibanded_integer(self):
-        values = np.ones([16, 16])
+    def test_set_integer(self):
         bands = [CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32)]
@@ -201,7 +168,30 @@ class BandIndexerTests(unittest.TestCase):
         self.assertEqual(bands[1].getblock(5, 6, 1, 1)[0], 5.0)
         self.assertEqual(bands[2].getblock(5, 6, 1, 1)[0], 5.0)
 
-    def test_set_multibanded_slice(self):
+    def test_get_slice(self):
+        values = np.ones([16, 16])
+        bands = [CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32),
+                 CompressedBand((16, 16), np.float32)]
+        bands[0].setblock(0, 0, values)
+        bands[1].setblock(0, 0, 2*values)
+        bands[2].setblock(0, 0, 3*values)
+        indexer = BandIndexer(bands)
+
+        result = indexer[4:7,2:8,:]
+        self.assertEqual(result.shape, (3, 6, 3))
+        npt.assert_equal(result[0,0,:], np.array([1.0, 2.0, 3.0]))
+
+        result = indexer[12:]
+        self.assertEqual(result.shape, (4, 16, 3))
+        npt.assert_equal(result[0,0,:], np.array([1.0, 2.0, 3.0]))
+
+        # make sure it works with a scalar band index
+        result = indexer[4:7,2:8,1]
+        self.assertEqual(result.shape, (3, 6))
+        npt.assert_equal(result, 2.0)
+
+    def test_set_slice(self):
         values = np.ones([16, 16])
         bands = [CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32),
@@ -210,17 +200,84 @@ class BandIndexerTests(unittest.TestCase):
 
         indexer[:,:,0] = values
         indexer[:,:,1:] = 2*values
-        self.assertTrue(np.all(bands[0].getblock(0, 0, 16, 16) == 1.0))
-        self.assertTrue(np.all(bands[1].getblock(0, 0, 16, 16) == 2.0))
-        self.assertTrue(np.all(bands[2].getblock(0, 0, 16, 16) == 2.0))
+        npt.assert_equal(bands[0].getblock(0, 0, 16, 16), 1.0)
+        npt.assert_equal(bands[1].getblock(0, 0, 16, 16), 2.0)
+        npt.assert_equal(bands[2].getblock(0, 0, 16, 16), 2.0)
 
         indexer[:,:,1:] = np.dstack([2*values, 3*values])
-        self.assertTrue(np.all(bands[1].getblock(0, 0, 16, 16) == 2.0))
-        self.assertTrue(np.all(bands[2].getblock(0, 0, 16, 16) == 3.0))
-        return
+        npt.assert_equal(bands[1].getblock(0, 0, 16, 16), 2.0)
+        npt.assert_equal(bands[2].getblock(0, 0, 16, 16), 3.0)
 
-    def test_set_multibanded_masked_scalar(self):
-        values = np.ones([16, 16])
+    def test_get_mask2(self):
+        values = np.ones([3, 3])
+        bands = [CompressedBand((3, 3), np.float32),
+                 CompressedBand((3, 3), np.float32),
+                 CompressedBand((3, 3), np.float32)]
+        bands[0].setblock(0, 0, values)
+        bands[1].setblock(0, 0, 2*values)
+        bands[2].setblock(0, 0, 3*values)
+
+        indexer = BandIndexer(bands)
+        mask = np.array([[True, False, False], [False, True, False], [False, False, True]])
+        result = indexer[mask]
+        npt.assert_equal(np.tile(np.array([1, 2, 3]), (3, 1)).T, result)
+
+    def test_set_mask2(self):
+        values = np.ones([3, 3])
+        bands = [CompressedBand((3, 3), np.float32),
+                 CompressedBand((3, 3), np.float32),
+                 CompressedBand((3, 3), np.float32)]
+        bands[0].setblock(0, 0, values)
+        bands[1].setblock(0, 0, 2*values)
+        bands[2].setblock(0, 0, 3*values)
+
+        indexer = BandIndexer(bands)
+        mask = np.array([[True, False, False], [False, True, False], [False, False, True]])
+        indexer[mask] = -1
+        for band in bands:
+            self.assertEqual(band.getblock(0, 0, 1, 1)[0], -1.0)
+            self.assertEqual(band.getblock(1, 1, 1, 1)[0], -1.0)
+            self.assertEqual(band.getblock(2, 2, 1, 1)[0], -1.0)
+
+    def test_get_mask3(self):
+        values = np.ones([3, 3])
+        bands = [CompressedBand((3, 3), np.float32),
+                 CompressedBand((3, 3), np.float32),
+                 CompressedBand((3, 3), np.float32)]
+        bands[0].setblock(0, 0, values)
+        bands[1].setblock(0, 0, 2*values)
+        bands[2].setblock(0, 0, 3*values)
+
+        indexer = BandIndexer(bands)
+        mask = np.dstack([
+            np.array([[True, False, False], [False, True, False], [False, False, True]]),
+            np.array([[False, False, False], [False, False, False], [False, True, False]]),
+            np.array([[True, False, False], [False, False, False], [True, False, True]])])
+        result = indexer[mask]
+        expected = np.array([1, 1, 1, 2, 3, 3, 3])
+        npt.assert_equal(expected, result)
+
+    def test_set_mask3(self):
+        values = np.ones([3, 3])
+        bands = [CompressedBand((3, 3), np.float32),
+                 CompressedBand((3, 3), np.float32),
+                 CompressedBand((3, 3), np.float32)]
+        bands[0].setblock(0, 0, values)
+        bands[1].setblock(0, 0, 2*values)
+        bands[2].setblock(0, 0, 3*values)
+
+        indexer = BandIndexer(bands)
+        mask = np.dstack([
+            np.array([[True, False, False], [False, True, False], [False, False, True]]),
+            np.array([[False, False, False], [False, False, False], [False, True, False]]),
+            np.array([[True, False, False], [False, False, False], [True, False, True]])])
+        indexer[mask] = -1
+        self.assertEqual(bands[0].getblock(0, 0, 1, 1)[0], -1)
+        self.assertEqual(bands[1].getblock(2, 1, 1, 1)[0], -1)
+        self.assertEqual(bands[2].getblock(0, 0, 1, 1)[0], -1)
+        self.assertEqual(bands[2].getblock(2, 0, 1, 1)[0], -1)
+
+    def test_set_masked_scalar(self):
         bands = [CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32)]
@@ -233,10 +290,8 @@ class BandIndexerTests(unittest.TestCase):
         indexer[mask] = 1.0
 
         self.assertEqual(np.sum(indexer[:,:]), 336)
-        return
 
-    def test_set_multibanded_masked_array(self):
-        values = np.ones([16, 16])
+    def test_set_masked_array(self):
         bands = [CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32),
                  CompressedBand((16, 16), np.float32)]
@@ -249,7 +304,6 @@ class BandIndexerTests(unittest.TestCase):
         indexer[mask] = np.ones(8*14)
 
         self.assertEqual(np.sum(indexer[:,:]), 336)
-        return
 
     def test_shape(self):
         bands = [CompressedBand((16, 16), np.float32),
@@ -261,7 +315,6 @@ class BandIndexerTests(unittest.TestCase):
 
         indexer3 = BandIndexer(bands)
         self.assertEqual(indexer3.shape, (16, 16))
-        return
 
 if __name__ == "__main__":
     unittest.main()
