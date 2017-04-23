@@ -108,7 +108,7 @@ Building requires Cython and a C99-compliant compiler.
 
     pip install Cython
 
-Clone the repository and install.
+Clone the repository and build.
 
     git clone https://github.com/fortyninemaps/karta.git karta
     cd karta/
