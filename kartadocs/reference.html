@@ -221,7 +221,7 @@ and profile extraction.</p>
 <dd><p>Grid base class</p>
 <dl class="method">
 <dt id="karta.raster.grid.Grid.apply">
-<code class="descname">apply</code><span class="sig-paren">(</span><em>func</em>, <em>inplace=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#Grid.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid.apply" title="Permalink to this definition">¶</a></dt>
+<code class="descname">apply</code><span class="sig-paren">(</span><em>func</em>, <em>inplace=False</em>, <em>band=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/grid.html#Grid.apply"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.grid.Grid.apply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Apply a vector function to grid values.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -237,9 +237,13 @@ vector of values with the same type</p>
 <div><p>whether to perform operation in place rather than returning a new
 grid instance (default False)</p>
 </div></blockquote>
+<p><strong>band</strong> : int, optional</p>
+<blockquote>
+<div><p>if provided, only apply <em>func</em> to a specific band</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><em>gridclass</em> instance</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">instance of type(self)</p>
 </td>
 </tr>
 </tbody>
@@ -685,10 +689,10 @@ scheme.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">float or vector</p>
 <blockquote>
-<div><p>The size of the output has one more dimension than the input. If
-the input are scalar, the output is a p-vector representing band
-values. If the input is a n-vector, the ouput is p x n. If the
-input is an m x n array, the output is p x m x n.</p>
+<div><p>the size of the output has one more dimension than the input. if
+the input are scalar, the output is a vector length p representing
+band values. if the input is a vector length n, the ouput is p x n.
+if the input is an m x n array, the output is p x m x n.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -719,10 +723,10 @@ sampling scheme.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first">float or vector</p>
 <blockquote>
-<div><p>The size of the output has one more dimension than the input. If
-the input are scalar, the output is a p-vector representing band
-values. If the input is a n-vector, the ouput is p x n. If the
-input is an m x n array, the output is p x m x n.</p>
+<div><p>the size of the output has one more dimension than the input. if
+the input are scalar, the output is a vector length p representing
+band values. if the input is a vector length n, the ouput is p x n.
+if the input is an m x n array, the output is p x m x n.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -835,6 +839,19 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 <dt id="karta.raster.band.CompressedBand">
 <em class="property">class </em><code class="descclassname">karta.raster.band.</code><code class="descname">CompressedBand</code><span class="sig-paren">(</span><em>size</em>, <em>dtype</em>, <em>chunksize=(256</em>, <em>256)</em>, <em>initval=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/band.html#CompressedBand"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.band.CompressedBand" title="Permalink to this definition">¶</a></dt>
 <dd><p>CompressedBand is a chunked, blosc-compressed array.</p>
+<dl class="method">
+<dt id="karta.raster.band.CompressedBand.getblock">
+<code class="descname">getblock</code><span class="sig-paren">(</span><em>yoff</em>, <em>xoff</em>, <em>ny</em>, <em>nx</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/band.html#CompressedBand.getblock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.band.CompressedBand.getblock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Retrieve values with dimensions <em>size</em>, starting at offset <em>yoff</em>,
+<em>xoff</em>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="karta.raster.band.CompressedBand.setblock">
+<code class="descname">setblock</code><span class="sig-paren">(</span><em>yoff</em>, <em>xoff</em>, <em>array</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/band.html#CompressedBand.setblock"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.band.CompressedBand.setblock" title="Permalink to this definition">¶</a></dt>
+<dd><p>Store block of values in <em>array</em> starting at offset <em>yoff</em>, <em>xoff</em>.</p>
+</dd></dl>
+
 </dd></dl>
 
 </div>
@@ -849,10 +866,10 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
-<p><strong>band: int, optional</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid</strong> : RegularGrid</p>
+<p><strong>band</strong> : int, optional</p>
 <blockquote>
-<div><p>band to compute hillshade for (default 0)</p>
+<div><p>band to compute aspect for (default 0)</p>
 </div></blockquote>
 </td>
 </tr>
@@ -871,8 +888,11 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
-<p><strong>band: tuple of ints, optional (default (0, 1))</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid</strong> : RegularGrid</p>
+<p><strong>band</strong> : tuple of ints, optional</p>
+<blockquote>
+<div><p>indicates orthogonal velocity bands (default (0, 1))</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">RegularGrid</p>
@@ -890,8 +910,11 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
-<p><strong>band: int, optional (default 0)</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid</strong> : RegularGrid</p>
+<p><strong>band</strong> : int, optional</p>
+<blockquote>
+<div><p>(default 0)</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(RegularGrid, RegularGrid)</p>
@@ -909,16 +932,16 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
-<p><strong>azimuth: float, optional</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid</strong> : RegularGrid</p>
+<p><strong>azimuth</strong> : float, optional</p>
 <blockquote>
 <div><p>direction of light source (default 330.0)</p>
 </div></blockquote>
-<p><strong>elevation: float, optional</strong></p>
+<p><strong>elevation</strong> : float, optional</p>
 <blockquote>
 <div><p>height of light source (default 60.0)</p>
 </div></blockquote>
-<p><strong>band: int, optional</strong></p>
+<p><strong>band</strong> : int, optional</p>
 <blockquote>
 <div><p>band to compute hillshade for (default 0)</p>
 </div></blockquote>
@@ -937,13 +960,13 @@ only isometric grids (i.e. <cite>hdr[&#8216;dx&#8217;] == hdr[&#8216;dy&#8217;]<
 <dt id="karta.raster.misc.normed_potential_vectors">
 <code class="descclassname">karta.raster.misc.</code><code class="descname">normed_potential_vectors</code><span class="sig-paren">(</span><em>grid</em>, <em>band=0</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/misc.html#normed_potential_vectors"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster.misc.normed_potential_vectors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes a U,V vector field of a potential grid. Scalar components of
-U,V are normalized to max(<a href="#id3"><span class="problematic" id="id4">|U, V|</span></a>).</p>
+U,V are normalized to <code class="docutils literal"><span class="pre">max(|U,</span> <span class="pre">V|)</span></code>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
-<p><strong>band: int, optional (default 0)</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid</strong> : RegularGrid</p>
+<p><strong>band</strong> : int, optional (default 0)</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last">(RegularGrid, RegularGrid)</p>
@@ -961,10 +984,10 @@ U,V are normalized to max(<a href="#id3"><span class="problematic" id="id4">|U, 
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid: RegularGrid</strong></p>
-<p><strong>band: int, optional</strong></p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>grid</strong> : RegularGrid</p>
+<p><strong>band</strong> : int, optional</p>
 <blockquote>
-<div><p>band to compute hillshade for (default 0)</p>
+<div><p>band to compute slope for (default 0)</p>
 </div></blockquote>
 </td>
 </tr>
@@ -1104,18 +1127,14 @@ datasource.</p>
 <dt id="karta.raster._gdal.gdal_type">
 <code class="descclassname">karta.raster._gdal.</code><code class="descname">gdal_type</code><span class="sig-paren">(</span><em>dtype</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/_gdal.html#gdal_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster._gdal.gdal_type" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a GDAL type that most closely matches numpy dtype</p>
+<p class="rubric">Notes</p>
+<p>Returns GDT_Int32 for np.int64, which may result in overflow.</p>
 </dd></dl>
 
 <dl class="function">
 <dt id="karta.raster._gdal.numpy_dtype">
 <code class="descclassname">karta.raster._gdal.</code><code class="descname">numpy_dtype</code><span class="sig-paren">(</span><em>dt_int</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/_gdal.html#numpy_dtype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster._gdal.numpy_dtype" title="Permalink to this definition">¶</a></dt>
 <dd><p>Return a numpy dtype that matches the band data type.</p>
-</dd></dl>
-
-<dl class="function">
-<dt id="karta.raster._gdal.pytype">
-<code class="descclassname">karta.raster._gdal.</code><code class="descname">pytype</code><span class="sig-paren">(</span><em>dt_int</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/raster/_gdal.html#pytype"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.raster._gdal.pytype" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return a fmt character based on a gdal type integer.</p>
 </dd></dl>
 
 <dl class="function">
@@ -1244,43 +1263,49 @@ respectively.</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>The output coordinates are computed as</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>xnew        x</dt>
-<dd>= M * y</dd>
-</dl>
-<p>ynew        1</p>
-</div></blockquote>
-<p>or</p>
-<blockquote>
-<div><p>xnew        x
-ynew  = M * y
-znew        z</p>
-<blockquote>
-<div>1</div></blockquote>
-</div></blockquote>
+<p>The output coordinates are computed as:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+      <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">ynew</span>        <span class="mi">1</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+<span class="n">ynew</span>  <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">znew</span>        <span class="n">z</span>
+            <span class="mi">1</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
 <dt id="karta.vector.Point.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Point.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.
-Parameters
-&#8212;&#8212;&#8212;-
-indent : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
 <blockquote>
-<div>indentation of generated GeoJSON (default 2)</div></blockquote>
-<dl class="docutils">
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>indentation of generated GeoJSON (default 2)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -1333,7 +1358,7 @@ projected to geographical coordinates, and the geodetic distance is
 computed on the ellipsoid of <em>self</em>.</p>
 <p>If the coordinate system is geographical and a third (z) coordinate
 exists, it is assumed to have the same units as the real-world
-horizontal distance (i.e. meters).</p>
+horizontal coordinates (e.g. meters).</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1416,24 +1441,35 @@ instance (e.g. ellipsoidal or spherical).</li>
 <dl class="method">
 <dt id="karta.vector.Point.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Point.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
-Parameters
-&#8212;&#8212;&#8212;-
-f : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
 <blockquote>
-<div>file to receive GeoJSON string</div></blockquote>
-<dl class="docutils">
-<dt>indent <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd>indentation of generated GeoJSON (default None)</dd>
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>file to receive GeoJSON string</p>
+</div></blockquote>
+<p><strong>indent</strong> : int, optional</p>
+<blockquote>
+<div><p>indentation of generated GeoJSON (default None)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -1531,43 +1567,49 @@ respectively.</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>The output coordinates are computed as</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>xnew        x</dt>
-<dd>= M * y</dd>
-</dl>
-<p>ynew        1</p>
-</div></blockquote>
-<p>or</p>
-<blockquote>
-<div><p>xnew        x
-ynew  = M * y
-znew        z</p>
-<blockquote>
-<div>1</div></blockquote>
-</div></blockquote>
+<p>The output coordinates are computed as:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+      <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">ynew</span>        <span class="mi">1</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+<span class="n">ynew</span>  <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">znew</span>        <span class="n">z</span>
+            <span class="mi">1</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
 <dt id="karta.vector.Line.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.
-Parameters
-&#8212;&#8212;&#8212;-
-indent : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
 <blockquote>
-<div>indentation of generated GeoJSON (default 2)</div></blockquote>
-<dl class="docutils">
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>indentation of generated GeoJSON (default 2)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -1830,24 +1872,35 @@ boundary to a point.</p>
 <dl class="method">
 <dt id="karta.vector.Line.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Line.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
-Parameters
-&#8212;&#8212;&#8212;-
-f : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
 <blockquote>
-<div>file to receive GeoJSON string</div></blockquote>
-<dl class="docutils">
-<dt>indent <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd>indentation of generated GeoJSON (default None)</dd>
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>file to receive GeoJSON string</p>
+</div></blockquote>
+<p><strong>indent</strong> : int, optional</p>
+<blockquote>
+<div><p>indentation of generated GeoJSON (default None)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -1980,22 +2033,19 @@ respectively.</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>The output coordinates are computed as</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>xnew        x</dt>
-<dd>= M * y</dd>
-</dl>
-<p>ynew        1</p>
-</div></blockquote>
-<p>or</p>
-<blockquote>
-<div><p>xnew        x
-ynew  = M * y
-znew        z</p>
-<blockquote>
-<div>1</div></blockquote>
-</div></blockquote>
+<p>The output coordinates are computed as:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+      <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">ynew</span>        <span class="mi">1</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+<span class="n">ynew</span>  <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">znew</span>        <span class="n">z</span>
+            <span class="mi">1</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="attribute">
@@ -2013,22 +2063,31 @@ calculation.</li>
 <dl class="method">
 <dt id="karta.vector.Polygon.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.
-Parameters
-&#8212;&#8212;&#8212;-
-indent : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
 <blockquote>
-<div>indentation of generated GeoJSON (default 2)</div></blockquote>
-<dl class="docutils">
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>indentation of generated GeoJSON (default 2)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="attribute">
@@ -2323,24 +2382,35 @@ boundary to a point.</p>
 <dl class="method">
 <dt id="karta.vector.Polygon.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Polygon.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
-Parameters
-&#8212;&#8212;&#8212;-
-f : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
 <blockquote>
-<div>file to receive GeoJSON string</div></blockquote>
-<dl class="docutils">
-<dt>indent <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd>indentation of generated GeoJSON (default None)</dd>
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>file to receive GeoJSON string</p>
+</div></blockquote>
+<p><strong>indent</strong> : int, optional</p>
+<blockquote>
+<div><p>indentation of generated GeoJSON (default None)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -2437,43 +2507,49 @@ respectively.</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>The output coordinates are computed as</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>xnew        x</dt>
-<dd>= M * y</dd>
-</dl>
-<p>ynew        1</p>
-</div></blockquote>
-<p>or</p>
-<blockquote>
-<div><p>xnew        x
-ynew  = M * y
-znew        z</p>
-<blockquote>
-<div>1</div></blockquote>
-</div></blockquote>
+<p>The output coordinates are computed as:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+      <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">ynew</span>        <span class="mi">1</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+<span class="n">ynew</span>  <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">znew</span>        <span class="n">z</span>
+            <span class="mi">1</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
 <dt id="karta.vector.Multipoint.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.
-Parameters
-&#8212;&#8212;&#8212;-
-indent : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
 <blockquote>
-<div>indentation of generated GeoJSON (default 2)</div></blockquote>
-<dl class="docutils">
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>indentation of generated GeoJSON (default 2)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -2605,24 +2681,35 @@ points are equidistant, only one will be returned.</p>
 <dl class="method">
 <dt id="karta.vector.Multipoint.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipoint.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
-Parameters
-&#8212;&#8212;&#8212;-
-f : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
 <blockquote>
-<div>file to receive GeoJSON string</div></blockquote>
-<dl class="docutils">
-<dt>indent <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd>indentation of generated GeoJSON (default None)</dd>
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>file to receive GeoJSON string</p>
+</div></blockquote>
+<p><strong>indent</strong> : int, optional</p>
+<blockquote>
+<div><p>indentation of generated GeoJSON (default None)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -2726,43 +2813,49 @@ respectively.</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>The output coordinates are computed as</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>xnew        x</dt>
-<dd>= M * y</dd>
-</dl>
-<p>ynew        1</p>
-</div></blockquote>
-<p>or</p>
-<blockquote>
-<div><p>xnew        x
-ynew  = M * y
-znew        z</p>
-<blockquote>
-<div>1</div></blockquote>
-</div></blockquote>
+<p>The output coordinates are computed as:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+      <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">ynew</span>        <span class="mi">1</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+<span class="n">ynew</span>  <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">znew</span>        <span class="n">z</span>
+            <span class="mi">1</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
 <dt id="karta.vector.Multiline.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multiline.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.
-Parameters
-&#8212;&#8212;&#8212;-
-indent : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
 <blockquote>
-<div>indentation of generated GeoJSON (default 2)</div></blockquote>
-<dl class="docutils">
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>indentation of generated GeoJSON (default 2)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -2792,24 +2885,35 @@ If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:d
 <dl class="method">
 <dt id="karta.vector.Multiline.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multiline.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
-Parameters
-&#8212;&#8212;&#8212;-
-f : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
 <blockquote>
-<div>file to receive GeoJSON string</div></blockquote>
-<dl class="docutils">
-<dt>indent <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd>indentation of generated GeoJSON (default None)</dd>
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>file to receive GeoJSON string</p>
+</div></blockquote>
+<p><strong>indent</strong> : int, optional</p>
+<blockquote>
+<div><p>indentation of generated GeoJSON (default None)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -2944,43 +3048,49 @@ respectively.</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>The output coordinates are computed as</p>
-<blockquote>
-<div><dl class="docutils">
-<dt>xnew        x</dt>
-<dd>= M * y</dd>
-</dl>
-<p>ynew        1</p>
-</div></blockquote>
-<p>or</p>
-<blockquote>
-<div><p>xnew        x
-ynew  = M * y
-znew        z</p>
-<blockquote>
-<div>1</div></blockquote>
-</div></blockquote>
+<p>The output coordinates are computed as:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+      <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">ynew</span>        <span class="mi">1</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">xnew</span>        <span class="n">x</span>
+<span class="n">ynew</span>  <span class="o">=</span> <span class="n">M</span> <span class="o">*</span> <span class="n">y</span>
+<span class="n">znew</span>        <span class="n">z</span>
+            <span class="mi">1</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="method">
 <dt id="karta.vector.Multipolygon.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipolygon.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.
-Parameters
-&#8212;&#8212;&#8212;-
-indent : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
 <blockquote>
-<div>indentation of generated GeoJSON (default 2)</div></blockquote>
-<dl class="docutils">
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>indentation of generated GeoJSON (default 2)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -3010,24 +3120,35 @@ If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:d
 <dl class="method">
 <dt id="karta.vector.Multipolygon.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="headerlink" href="#karta.vector.Multipolygon.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
-Parameters
-&#8212;&#8212;&#8212;-
-f : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
 <blockquote>
-<div>file to receive GeoJSON string</div></blockquote>
-<dl class="docutils">
-<dt>indent <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd>indentation of generated GeoJSON (default None)</dd>
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>file to receive GeoJSON string</p>
+</div></blockquote>
+<p><strong>indent</strong> : int, optional</p>
+<blockquote>
+<div><p>indentation of generated GeoJSON (default None)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
@@ -3225,45 +3346,65 @@ functionality.</p>
 <dl class="method">
 <dt id="karta.vector._geojson.GeoJSONOutMixin.as_geojson">
 <code class="descname">as_geojson</code><span class="sig-paren">(</span><em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_geojson.html#GeoJSONOutMixin.as_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._geojson.GeoJSONOutMixin.as_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Output representation of internal data as a GeoJSON string.
-Parameters
-&#8212;&#8212;&#8212;-
-indent : int, optional</p>
+<dd><p>Output representation of internal data as a GeoJSON string.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>indent</strong> : int, optional</p>
 <blockquote>
-<div>indentation of generated GeoJSON (default 2)</div></blockquote>
-<dl class="docutils">
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>indentation of generated GeoJSON (default 2)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 <dl class="method">
 <dt id="karta.vector._geojson.GeoJSONOutMixin.to_geojson">
 <code class="descname">to_geojson</code><span class="sig-paren">(</span><em>f</em>, <em>indent=None</em>, <em>urn=None</em>, <em>force_wgs84=True</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/karta/vector/_geojson.html#GeoJSONOutMixin.to_geojson"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#karta.vector._geojson.GeoJSONOutMixin.to_geojson" title="Permalink to this definition">¶</a></dt>
-<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.
-Parameters
-&#8212;&#8212;&#8212;-
-f : str or file-like object</p>
+<dd><p>Write data as a GeoJSON string to a file-like object <cite>f</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>f</strong> : str or file-like object</p>
 <blockquote>
-<div>file to receive GeoJSON string</div></blockquote>
-<dl class="docutils">
-<dt>indent <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
-<dd>indentation of generated GeoJSON (default None)</dd>
-<dt>force_wgs84 <span class="classifier-delimiter">:</span> <span class="classifier">bool, optional</span></dt>
-<dd>Forces output to use geographical coordinates with the WGS84 datum,
+<div><p>file to receive GeoJSON string</p>
+</div></blockquote>
+<p><strong>indent</strong> : int, optional</p>
+<blockquote>
+<div><p>indentation of generated GeoJSON (default None)</p>
+</div></blockquote>
+<p><strong>force_wgs84</strong> : bool, optional</p>
+<blockquote>
+<div><p>Forces output to use geographical coordinates with the WGS84 datum,
 as recommended by the GeoJSON draft specification
 (<a class="reference external" href="https://datatracker.ietf.org/doc/draft-ietf-geojson/">https://datatracker.ietf.org/doc/draft-ietf-geojson/</a>).
 If <em>urn</em> is not set, &#8220;<a class="reference external" href="urn:ogc:def:crs:OGC:1.3:CRS84">urn:ogc:def:crs:OGC:1.3:CRS84</a>&#8221; is used.
-(default True)</dd>
-<dt>urn <span class="classifier-delimiter">:</span> <span class="classifier">str, optional</span></dt>
-<dd>overrides GeoJSON CRS with provided URN string</dd>
-</dl>
+(default True)</p>
+</div></blockquote>
+<p><strong>urn</strong> : str, optional</p>
+<blockquote class="last">
+<div><p>overrides GeoJSON CRS with provided URN string</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
 </dd></dl>
 
 </dd></dl>
@@ -4063,7 +4204,7 @@ corresponding problem on a sphere.</p>
   <div role="contentinfo">
     <p>
         &copy; Copyright 2016, Nat Wilson.
-      Last updated on Apr 22, 2017.
+      Last updated on Apr 23, 2017.
 
     </p>
   </div>

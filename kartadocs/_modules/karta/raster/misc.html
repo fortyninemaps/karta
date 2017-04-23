@@ -184,9 +184,9 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    grid: RegularGrid</span>
-<span class="sd">    band: int, optional</span>
-<span class="sd">        band to compute hillshade for (default 0)</span>
+<span class="sd">    grid : RegularGrid</span>
+<span class="sd">    band : int, optional</span>
+<span class="sd">        band to compute slope for (default 0)</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -218,9 +218,9 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    grid: RegularGrid</span>
-<span class="sd">    band: int, optional</span>
-<span class="sd">        band to compute hillshade for (default 0)</span>
+<span class="sd">    grid : RegularGrid</span>
+<span class="sd">    band : int, optional</span>
+<span class="sd">        band to compute aspect for (default 0)</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -247,8 +247,9 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    grid: RegularGrid</span>
-<span class="sd">    band: int, optional (default 0)</span>
+<span class="sd">    grid : RegularGrid</span>
+<span class="sd">    band : int, optional</span>
+<span class="sd">        (default 0)</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -274,8 +275,9 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    grid: RegularGrid</span>
-<span class="sd">    band: tuple of ints, optional (default (0, 1))</span>
+<span class="sd">    grid : RegularGrid</span>
+<span class="sd">    band : tuple of ints, optional</span>
+<span class="sd">        indicates orthogonal velocity bands (default (0, 1))</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -291,7 +293,7 @@
 
 <span class="k">def</span> <span class="nf">_normed_potential_vectors</span><span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">res</span><span class="o">=</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)):</span>
     <span class="sd">&quot;&quot;&quot; Computes a U,V vector field of potential D. Scalar components of</span>
-<span class="sd">    U,V are normalized to max(|U, V|).</span>
+<span class="sd">    U,V are normalized to ``max(|U, V|)``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span> <span class="o">=</span> <span class="n">res</span>
     <span class="n">Ddx</span> <span class="o">=</span> <span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="n">D</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[:</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">:]</span> <span class="o">+</span> <span class="n">D</span><span class="p">[</span><span class="mi">2</span><span class="p">:,</span><span class="mi">2</span><span class="p">:])</span> <span class="o">-</span>
@@ -306,12 +308,12 @@
 
 <div class="viewcode-block" id="normed_potential_vectors"><a class="viewcode-back" href="../../../reference.html#karta.raster.misc.normed_potential_vectors">[docs]</a><span class="k">def</span> <span class="nf">normed_potential_vectors</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot; Computes a U,V vector field of a potential grid. Scalar components of</span>
-<span class="sd">    U,V are normalized to max(|U, V|).</span>
+<span class="sd">    U,V are normalized to ``max(|U, V|)``.</span>
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    grid: RegularGrid</span>
-<span class="sd">    band: int, optional (default 0)</span>
+<span class="sd">    grid : RegularGrid</span>
+<span class="sd">    band : int, optional (default 0)</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -329,12 +331,12 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    grid: RegularGrid</span>
-<span class="sd">    azimuth: float, optional</span>
+<span class="sd">    grid : RegularGrid</span>
+<span class="sd">    azimuth : float, optional</span>
 <span class="sd">        direction of light source (default 330.0)</span>
-<span class="sd">    elevation: float, optional</span>
+<span class="sd">    elevation : float, optional</span>
 <span class="sd">        height of light source (default 60.0)</span>
-<span class="sd">    band: int, optional</span>
+<span class="sd">    band : int, optional</span>
 <span class="sd">        band to compute hillshade for (default 0)</span>
 
 <span class="sd">    Returns</span>
@@ -346,8 +348,8 @@
 <span class="sd">    Currently assumes orthogonal coordinates.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">dxgrid</span><span class="p">,</span> <span class="n">dygrid</span> <span class="o">=</span> <span class="n">gradient</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">band</span><span class="o">=</span><span class="n">band</span><span class="p">)</span>
-    <span class="n">dx</span> <span class="o">=</span> <span class="n">dxgrid</span><span class="p">[:,:]</span>
-    <span class="n">dy</span> <span class="o">=</span> <span class="n">dygrid</span><span class="p">[:,:]</span>
+    <span class="n">dx</span> <span class="o">=</span> <span class="n">dxgrid</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">dy</span> <span class="o">=</span> <span class="n">dygrid</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">res</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">resolution</span>
     <span class="n">u</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">dx</span><span class="p">,</span> <span class="n">res</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">dx</span><span class="p">),</span> <span class="n">dx</span><span class="p">))</span>
     <span class="n">v</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">dy</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">full_like</span><span class="p">(</span><span class="n">dy</span><span class="p">,</span> <span class="n">res</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">dy</span><span class="p">))</span>
@@ -380,7 +382,7 @@
   <div role="contentinfo">
     <p>
         &copy; Copyright 2016, Nat Wilson.
-      Last updated on Apr 22, 2017.
+      Last updated on Apr 23, 2017.
 
     </p>
   </div>

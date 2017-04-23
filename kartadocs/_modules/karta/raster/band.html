@@ -176,6 +176,15 @@
 <span class="sd">--------------</span>
 
 <span class="sd">Bands are expected to implement the following methods:</span>
+<span class="sd">    - `__init__(self, size, dtype, initval=None)`</span>
+<span class="sd">    - `getblock(self, yoff, xoff, ny, nx)`</span>
+<span class="sd">    - `setblock(self, yoff, xoff, array)`</span>
+
+<span class="sd">Attributes:</span>
+<span class="sd">    - `dtype`</span>
+<span class="sd">    - `size`</span>
+
+<span class="sd">The following methods are deprecated:</span>
 <span class="sd">    - `__getitem__(self, key)`, accepting as *key* any of</span>
 <span class="sd">        - an int</span>
 <span class="sd">        - a slice</span>
@@ -183,14 +192,11 @@
 <span class="sd">        - a 2-tuple of slices</span>
 <span class="sd">    - `__setitem__(self, key, value)`, accepting as *key* the same</span>
 <span class="sd">      possibilities as __getitem__</span>
-
-<span class="sd">Additionally, a Band should have a `dtype` attribute indicating the type of the</span>
-<span class="sd">stored data.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">blosc</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">numbers</span> <span class="k">import</span> <span class="n">Integral</span>
+<span class="kn">from</span> <span class="nn">numbers</span> <span class="k">import</span> <span class="n">Real</span><span class="p">,</span> <span class="n">Integral</span>
 <span class="kn">from</span> <span class="nn">math</span> <span class="k">import</span> <span class="n">ceil</span>
 
 <span class="k">class</span> <span class="nc">BandIndexer</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -199,70 +205,168 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">bands</span> <span class="o">=</span> <span class="n">bands</span>
 
     <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,:][</span><span class="n">key</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-                <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;third element of key exceeds number of bands&quot;</span><span class="p">)</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">key</span><span class="p">[:</span><span class="mi">2</span><span class="p">]]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">key</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_from_array_mask</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;key should be an array or a tuple&quot;</span><span class="p">)</span>
+
+        <span class="n">collapse_rows</span> <span class="o">=</span> <span class="n">collapse_cols</span> <span class="o">=</span> <span class="n">collapse_bands</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Integral</span><span class="p">):</span>
+            <span class="n">collapse_rows</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">%</span> <span class="n">ny</span>
+            <span class="n">ystart</span><span class="p">,</span> <span class="n">yend</span><span class="p">,</span> <span class="n">ystep</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">ystart</span><span class="p">,</span> <span class="n">yend</span><span class="p">,</span> <span class="n">ystep</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">ny</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">b</span><span class="p">[:,:][</span><span class="n">key</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">])</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;indexing tuple must have length 2 or 3&quot;</span><span class="p">)</span>
-                <span class="n">sr</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">key</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-                <span class="n">sb</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sb</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">dstack</span><span class="p">([</span><span class="n">b</span><span class="p">[</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">sb</span><span class="p">]])</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">sb</span><span class="p">][</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;first key item should be an integer or a slice&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Integral</span><span class="p">):</span>
+            <span class="n">collapse_cols</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="n">nx</span>
+            <span class="n">xstart</span><span class="p">,</span> <span class="n">xend</span><span class="p">,</span> <span class="n">xstep</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">xstart</span><span class="p">,</span> <span class="n">xend</span><span class="p">,</span> <span class="n">xstep</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;second key item should be an integer or a slice&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">bands</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">Integral</span><span class="p">):</span>
+            <span class="n">collapse_bands</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">bands</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">bands</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">*</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">))))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;third key item should be an integer or a slice&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ystep</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">ystart</span><span class="p">,</span> <span class="n">yend</span> <span class="o">=</span> <span class="n">yend</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">ystart</span><span class="o">+</span><span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">xstep</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">xstart</span><span class="p">,</span> <span class="n">xend</span> <span class="o">=</span> <span class="n">xend</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="n">xstart</span><span class="o">+</span><span class="mi">1</span>
+
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">yend</span><span class="o">-</span><span class="n">ystart</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ystep</span><span class="p">),</span>
+                 <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">xend</span><span class="o">-</span><span class="n">xstart</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="nb">abs</span><span class="p">(</span><span class="n">xstep</span><span class="p">),</span>
+                 <span class="nb">len</span><span class="p">(</span><span class="n">bands</span><span class="p">)]</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">shape</span><span class="p">,</span> <span class="n">dtype</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">iband</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bands</span><span class="p">):</span>
+            <span class="n">band</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">iband</span><span class="p">]</span>
+            <span class="n">band_values</span> <span class="o">=</span> <span class="n">band</span><span class="o">.</span><span class="n">getblock</span><span class="p">(</span><span class="n">ystart</span><span class="p">,</span> <span class="n">xstart</span><span class="p">,</span> <span class="n">yend</span><span class="o">-</span><span class="n">ystart</span><span class="p">,</span> <span class="n">xend</span><span class="o">-</span><span class="n">xstart</span><span class="p">)</span>
+            <span class="n">out</span><span class="p">[:,:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">band_values</span><span class="p">[::</span><span class="n">ystep</span><span class="p">,::</span><span class="n">xstep</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">collapse_bands</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">collapse_cols</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">collapse_rows</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">out</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">out</span>
 
     <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                <span class="n">tmp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,:]</span>
-                <span class="n">tmp</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,:]</span> <span class="o">=</span> <span class="n">tmp</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_set_from_array_mask</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;key should be an array or a tuple&quot;</span><span class="p">)</span>
+
+        <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Integral</span><span class="p">):</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">%</span> <span class="n">ny</span>
+            <span class="n">ystart</span><span class="p">,</span> <span class="n">yend</span><span class="p">,</span> <span class="n">ystep</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">ystart</span><span class="p">,</span> <span class="n">yend</span><span class="p">,</span> <span class="n">ystep</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">ny</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-                    <span class="k">for</span> <span class="n">b</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-                        <span class="n">tmp</span> <span class="o">=</span> <span class="n">b</span><span class="p">[:,:]</span>
-                        <span class="n">tmp</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span>
-                        <span class="n">b</span><span class="p">[:,:]</span> <span class="o">=</span> <span class="n">tmp</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">:</span>
-                        <span class="n">tmp</span> <span class="o">=</span> <span class="n">b</span><span class="p">[:,:]</span>
-                        <span class="n">tmp</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-                        <span class="n">b</span><span class="p">[:,:]</span> <span class="o">=</span> <span class="n">tmp</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;indexing tuple must have length 2 or 3&quot;</span><span class="p">)</span>
-                <span class="n">sr</span><span class="p">,</span> <span class="n">sc</span> <span class="o">=</span> <span class="n">key</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-                <span class="n">sb</span> <span class="o">=</span> <span class="nb">slice</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span> <span class="k">else</span> <span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sb</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
-                        <span class="k">for</span> <span class="n">ival</span><span class="p">,</span> <span class="n">iband</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">*</span><span class="n">sb</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)))):</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">iband</span><span class="p">][</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">[:,:,</span><span class="n">ival</span><span class="p">]</span>
-                    <span class="k">else</span><span class="p">:</span>
-                        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">sb</span><span class="p">]:</span>
-                            <span class="n">b</span><span class="p">[</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">sb</span><span class="p">][</span><span class="n">sr</span><span class="p">,</span><span class="n">sc</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;first key item should be an integer or a slice&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">Integral</span><span class="p">):</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="n">nx</span>
+            <span class="n">xstart</span><span class="p">,</span> <span class="n">xend</span><span class="p">,</span> <span class="n">xstep</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">r</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">xstart</span><span class="p">,</span> <span class="n">xend</span><span class="p">,</span> <span class="n">xstep</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;second key item should be an integer or a slice&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">bands</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)))</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">Integral</span><span class="p">):</span>
+            <span class="n">collapse_bands</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">bands</span> <span class="o">=</span> <span class="p">[</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">bands</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="o">*</span><span class="n">key</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">))))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;third key item should be an integer or a slice&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">xstep</span> <span class="o">==</span> <span class="n">ystep</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;setting band values with stepped slices&quot;</span><span class="p">)</span>
+
+            <span class="c1">#if ystep &lt; 0:</span>
+            <span class="c1">#    ystart, yend = yend+1, ystart+1</span>
+
+            <span class="c1">#if xstep &lt; 0:</span>
+            <span class="c1">#    xstart, xend = xend+1, xstart+1</span>
+
+        <span class="n">shape</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">yend</span><span class="o">-</span><span class="n">ystart</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ystep</span><span class="p">),</span>
+                 <span class="mi">1</span> <span class="o">+</span> <span class="p">(</span><span class="n">xend</span><span class="o">-</span><span class="n">xstart</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="nb">abs</span><span class="p">(</span><span class="n">xstep</span><span class="p">),</span>
+                 <span class="nb">len</span><span class="p">(</span><span class="n">bands</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">val_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_3d</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">shape</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">val_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">atleast_3d</span><span class="p">(</span><span class="n">value</span><span class="p">),</span> <span class="n">shape</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">iband</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bands</span><span class="p">):</span>
+            <span class="n">band</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="n">iband</span><span class="p">]</span>
+            <span class="n">band</span><span class="o">.</span><span class="n">setblock</span><span class="p">(</span><span class="n">ystart</span><span class="p">,</span> <span class="n">xstart</span><span class="p">,</span> <span class="n">val_array</span><span class="p">[:,:,</span><span class="n">i</span><span class="p">])</span>
+
         <span class="k">return</span>
 
+    <span class="k">def</span> <span class="nf">_get_from_array_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">):</span>
+        <span class="c1"># The mask is assumed to be in (row, column[, band]) order</span>
+        <span class="c1"># TODO: make this memory efficient</span>
+        <span class="k">if</span> <span class="n">mask</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[:,:,:][</span><span class="n">mask</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">mask</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="p">[:,:,:][</span><span class="n">mask</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;masking array must have two or three dimensions&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_set_from_array_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="c1"># The mask is assumed to be in (row, column[, band]) order</span>
+        <span class="c1"># TODO: make this memory efficient</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">band</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">):</span>
+
+            <span class="k">if</span> <span class="n">mask</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="n">mask_</span> <span class="o">=</span> <span class="n">mask</span><span class="p">[:,:,</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">mask_</span> <span class="o">=</span> <span class="n">mask</span>
+
+            <span class="n">tmp</span> <span class="o">=</span> <span class="n">band</span><span class="o">.</span><span class="n">getblock</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">*</span><span class="n">band</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Real</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">value</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">tmp</span><span class="p">[</span><span class="n">mask_</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">tmp</span><span class="p">[</span><span class="n">mask_</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">band</span><span class="o">.</span><span class="n">setblock</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">tmp</span><span class="p">)</span>
+
     <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">nx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
             <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="n">i</span><span class="p">,:]</span>
+                <span class="k">yield</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">getblock</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">yield</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">b</span><span class="p">[</span><span class="n">i</span><span class="p">,:]</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">])</span>
+                <span class="k">yield</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">([</span><span class="n">b</span><span class="o">.</span><span class="n">getblock</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">])</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">shape</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -272,10 +376,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;no bands&quot;</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">bands</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">size</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">dtype</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -288,16 +390,17 @@
     <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="p">,</span> <span class="n">initval</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">size</span> <span class="o">=</span> <span class="n">size</span>
         <span class="k">if</span> <span class="n">initval</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">initval</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">initval</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span> <span class="o">=</span> <span class="n">dtype</span>
 
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">array</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+    <span class="k">def</span> <span class="nf">getblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">[</span><span class="n">yoff</span><span class="p">:</span><span class="n">yoff</span><span class="o">+</span><span class="n">ny</span><span class="p">,</span> <span class="n">xoff</span><span class="p">:</span><span class="n">xoff</span><span class="o">+</span><span class="n">nx</span><span class="p">]</span>
 
-    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">array</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">def</span> <span class="nf">setblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
+        <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">)</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_array</span><span class="p">[</span><span class="n">yoff</span><span class="p">:</span><span class="n">yoff</span><span class="o">+</span><span class="n">ny</span><span class="p">,</span> <span class="n">xoff</span><span class="p">:</span><span class="n">xoff</span><span class="o">+</span><span class="n">nx</span><span class="p">]</span> <span class="o">=</span> <span class="n">array</span>
         <span class="k">return</span></div>
 
 <div class="viewcode-block" id="CompressedBand"><a class="viewcode-back" href="../../../reference.html#karta.raster.band.CompressedBand">[docs]</a><span class="k">class</span> <span class="nc">CompressedBand</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -337,135 +440,6 @@
         <span class="c1"># 1 =&gt; set</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">chunkstatus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nchunks</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int8</span><span class="p">)</span>
         <span class="k">return</span>
-
-    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">):</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">Integral</span><span class="p">):</span>
-            <span class="n">irow</span> <span class="o">=</span> <span class="n">key</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">icol</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">irow</span><span class="p">,</span> <span class="n">icol</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
-
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;band can only be indexed along two dimensions&quot;</span><span class="p">)</span>
-
-            <span class="n">kr</span><span class="p">,</span> <span class="n">kc</span> <span class="o">=</span> <span class="n">key</span>
-
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="n">Integral</span><span class="p">):</span>
-                <span class="n">yoff</span> <span class="o">=</span> <span class="n">kr</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-                <span class="n">ny</span> <span class="o">=</span> <span class="mi">1</span>
-                <span class="n">ystride</span> <span class="o">=</span> <span class="mi">1</span>
-
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-                <span class="n">ystart</span><span class="p">,</span> <span class="n">ystop</span><span class="p">,</span> <span class="n">ystride</span> <span class="o">=</span> <span class="n">kr</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                <span class="n">yoff</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ystart</span><span class="p">,</span> <span class="n">ystop</span><span class="p">)</span>
-                <span class="n">ny</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ystop</span><span class="o">-</span><span class="n">ystart</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">ystride</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">yoff</span> <span class="o">+=</span> <span class="mi">1</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;slicing with instances of &#39;</span><span class="si">{0}</span><span class="s2">&#39; not &quot;</span>
-                                 <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">kr</span><span class="p">)))</span>
-
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="n">Integral</span><span class="p">):</span>
-                <span class="n">xoff</span> <span class="o">=</span> <span class="n">kc</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-                <span class="n">nx</span> <span class="o">=</span> <span class="mi">1</span>
-                <span class="n">xstride</span> <span class="o">=</span> <span class="mi">1</span>
-
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-                <span class="n">xstart</span><span class="p">,</span> <span class="n">xstop</span><span class="p">,</span> <span class="n">xstride</span> <span class="o">=</span> <span class="n">kc</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-                <span class="n">xoff</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">xstart</span><span class="p">,</span> <span class="n">xstop</span><span class="p">)</span>
-                <span class="n">nx</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">xstop</span><span class="o">-</span><span class="n">xstart</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">xstride</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-                    <span class="n">xoff</span> <span class="o">+=</span> <span class="mi">1</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;slicing with instances of &#39;</span><span class="si">{0}</span><span class="s2">&#39; not &quot;</span>
-                                 <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">kc</span><span class="p">)))</span>
-
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="n">Integral</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="n">Integral</span><span class="p">):</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">))[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">]</span>
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">))[::</span><span class="n">ystride</span><span class="p">,::</span><span class="n">xstride</span><span class="p">]</span>
-
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-            <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">stride</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">yoff</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">stride</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">yoff</span> <span class="o">+=</span> <span class="mi">1</span>
-            <span class="n">ny</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">stop</span><span class="o">-</span><span class="n">start</span><span class="p">)</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">]))[::</span><span class="n">stride</span><span class="p">]</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;indexing with instances of &#39;</span><span class="si">{0}</span><span class="s2">&#39; not &quot;</span>
-                             <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
-
-    <span class="k">def</span> <span class="nf">__setitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">Integral</span><span class="p">):</span>
-            <span class="n">irow</span> <span class="o">=</span> <span class="n">key</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">icol</span> <span class="o">=</span> <span class="mi">0</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;__iter__&quot;</span><span class="p">):</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">value</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">))</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_setblock</span><span class="p">(</span><span class="n">irow</span><span class="p">,</span> <span class="n">icol</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
-
-            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;band can only be indexed along two dimensions&quot;</span><span class="p">)</span>
-
-            <span class="n">kr</span><span class="p">,</span> <span class="n">kc</span> <span class="o">=</span> <span class="n">key</span>
-
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-                <span class="n">yoff</span> <span class="o">=</span> <span class="n">kr</span>
-                <span class="n">ny</span> <span class="o">=</span> <span class="mi">1</span>
-                <span class="n">sy</span> <span class="o">=</span> <span class="mi">1</span>
-
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kr</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-                <span class="n">yoff</span><span class="p">,</span> <span class="n">_ystop</span><span class="p">,</span> <span class="n">sy</span> <span class="o">=</span> <span class="n">kr</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-                <span class="n">ny</span> <span class="o">=</span> <span class="n">_ystop</span> <span class="o">-</span> <span class="n">yoff</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;slicing with instances of &#39;</span><span class="si">{0}</span><span class="s2">&#39; not &quot;</span>
-                                 <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">kr</span><span class="p">)))</span>
-
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-                <span class="n">xoff</span> <span class="o">=</span> <span class="n">kc</span>
-                <span class="n">nx</span> <span class="o">=</span> <span class="mi">1</span>
-                <span class="n">sx</span> <span class="o">=</span> <span class="mi">1</span>
-
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kc</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
-                <span class="n">xoff</span><span class="p">,</span> <span class="n">_xstop</span><span class="p">,</span> <span class="n">sx</span> <span class="o">=</span> <span class="n">kc</span><span class="o">.</span><span class="n">indices</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-                <span class="n">nx</span> <span class="o">=</span> <span class="n">_xstop</span> <span class="o">-</span> <span class="n">xoff</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;slicing with instances of &#39;</span><span class="si">{0}</span><span class="s2">&#39; not &quot;</span>
-                                 <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">kc</span><span class="p">)))</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="s2">&quot;shape&quot;</span><span class="p">):</span>
-                <span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">))</span>
-
-            <span class="n">vny</span><span class="p">,</span> <span class="n">vnx</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
-            <span class="k">if</span> <span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">ny</span><span class="p">)</span><span class="o">/</span><span class="n">sy</span><span class="p">)</span> <span class="o">!=</span> <span class="n">vny</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span><span class="n">ceil</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">nx</span><span class="p">)</span><span class="o">/</span><span class="n">sx</span><span class="p">)</span> <span class="o">!=</span> <span class="n">vnx</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;Cannot insert array with size (</span><span class="si">{vny}</span><span class="s2">, </span><span class="si">{vnx}</span><span class="s2">))&quot;</span>
-                        <span class="s2">&quot; into slice with size (</span><span class="si">{ny}</span><span class="s2">, </span><span class="si">{nx}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                            <span class="n">vny</span><span class="o">=</span><span class="n">vny</span><span class="p">,</span> <span class="n">vnx</span><span class="o">=</span><span class="n">vnx</span><span class="p">,</span> <span class="n">ny</span><span class="o">=</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="o">=</span><span class="n">nx</span><span class="p">))</span>
-
-            <span class="k">if</span> <span class="n">sy</span> <span class="o">==</span> <span class="n">sx</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_setblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
-
-            <span class="k">else</span><span class="p">:</span>
-                <span class="n">temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">))</span>
-                <span class="n">temp</span><span class="p">[::</span><span class="n">sy</span><span class="p">,::</span><span class="n">sx</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_setblock</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">temp</span><span class="p">)</span>
-
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span><span class="s2">&quot;indexing with instances of &#39;</span><span class="si">{0}</span><span class="s2">&#39; not &quot;</span>
-                             <span class="s2">&quot;supported&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">)))</span>
-
-        <span class="k">return</span>
-
 
     <span class="k">def</span> <span class="nf">_store</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">array</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="n">blosc</span><span class="o">.</span><span class="n">compress</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">tostring</span><span class="p">(),</span>
@@ -507,10 +481,10 @@
 
             <span class="n">i</span><span class="o">+=</span> <span class="mi">1</span>
 
-    <span class="k">def</span> <span class="nf">_setblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
+<div class="viewcode-block" id="CompressedBand.setblock"><a class="viewcode-back" href="../../../reference.html#karta.raster.band.CompressedBand.setblock">[docs]</a>    <span class="k">def</span> <span class="nf">setblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">array</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Store block of values in *array* starting at offset *yoff*, *xoff*.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">size</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="n">array</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
         <span class="n">chunksize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_chunksize</span>
 
         <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">yst</span><span class="p">,</span> <span class="n">yen</span><span class="p">,</span> <span class="n">xst</span><span class="p">,</span> <span class="n">xen</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getchunks</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="o">*</span><span class="n">size</span><span class="p">):</span>
@@ -537,20 +511,20 @@
 
             <span class="c1"># Return to data store</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_store</span><span class="p">(</span><span class="n">chunkdata</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
-        <span class="k">return</span>
+        <span class="k">return</span></div>
 
-    <span class="k">def</span> <span class="nf">_getblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">size</span><span class="p">):</span>
+<div class="viewcode-block" id="CompressedBand.getblock"><a class="viewcode-back" href="../../../reference.html#karta.raster.band.CompressedBand.getblock">[docs]</a>    <span class="k">def</span> <span class="nf">getblock</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot; Retrieve values with dimensions *size*, starting at offset *yoff*,</span>
 <span class="sd">        *xoff*.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">yst</span><span class="p">,</span> <span class="n">yen</span><span class="p">,</span> <span class="n">xst</span><span class="p">,</span> <span class="n">xen</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getchunks</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="o">*</span><span class="n">size</span><span class="p">):</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">([</span><span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">yst</span><span class="p">,</span> <span class="n">yen</span><span class="p">,</span> <span class="n">xst</span><span class="p">,</span> <span class="n">xen</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getchunks</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">xoff</span><span class="p">,</span> <span class="n">ny</span><span class="p">,</span> <span class="n">nx</span><span class="p">):</span>
 
             <span class="c1"># Compute the bounds in the output</span>
             <span class="n">oy0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">yst</span><span class="o">-</span><span class="n">yoff</span><span class="p">)</span>
-            <span class="n">oy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">yen</span><span class="o">-</span><span class="n">yoff</span><span class="p">)</span>
+            <span class="n">oy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">ny</span><span class="p">,</span> <span class="n">yen</span><span class="o">-</span><span class="n">yoff</span><span class="p">)</span>
             <span class="n">ox0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">xst</span><span class="o">-</span><span class="n">xoff</span><span class="p">)</span>
-            <span class="n">ox1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">xen</span><span class="o">-</span><span class="n">xoff</span><span class="p">)</span>
+            <span class="n">ox1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">nx</span><span class="p">,</span> <span class="n">xen</span><span class="o">-</span><span class="n">xoff</span><span class="p">)</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">chunkstatus</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">CHUNKUNSET</span><span class="p">:</span>
                 <span class="n">result</span><span class="p">[</span><span class="n">oy0</span><span class="p">:</span><span class="n">oy1</span><span class="p">,</span> <span class="n">ox0</span><span class="p">:</span><span class="n">ox1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">full</span><span class="p">((</span><span class="n">oy1</span><span class="o">-</span><span class="n">oy0</span><span class="p">,</span> <span class="n">ox1</span><span class="o">-</span><span class="n">ox0</span><span class="p">),</span>
@@ -560,13 +534,13 @@
             <span class="k">else</span><span class="p">:</span>
                 <span class="c1"># Compute the extents from the chunk to retain</span>
                 <span class="n">cy0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">yoff</span><span class="p">,</span> <span class="n">yst</span><span class="p">)</span> <span class="o">-</span> <span class="n">yst</span>
-                <span class="n">cy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">yoff</span><span class="o">+</span><span class="n">size</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">yen</span><span class="p">)</span> <span class="o">-</span> <span class="n">yst</span>
+                <span class="n">cy1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">yoff</span><span class="o">+</span><span class="n">ny</span><span class="p">,</span> <span class="n">yen</span><span class="p">)</span> <span class="o">-</span> <span class="n">yst</span>
                 <span class="n">cx0</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">xoff</span><span class="p">,</span> <span class="n">xst</span><span class="p">)</span> <span class="o">-</span> <span class="n">xst</span>
-                <span class="n">cx1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">xoff</span><span class="o">+</span><span class="n">size</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">xen</span><span class="p">)</span> <span class="o">-</span> <span class="n">xst</span>
+                <span class="n">cx1</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">xoff</span><span class="o">+</span><span class="n">nx</span><span class="p">,</span> <span class="n">xen</span><span class="p">)</span> <span class="o">-</span> <span class="n">xst</span>
 
                 <span class="n">result</span><span class="p">[</span><span class="n">oy0</span><span class="p">:</span><span class="n">oy1</span><span class="p">,</span> <span class="n">ox0</span><span class="p">:</span><span class="n">ox1</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_retrieve</span><span class="p">(</span><span class="n">i</span><span class="p">)[</span><span class="n">cy0</span><span class="p">:</span><span class="n">cy1</span><span class="p">,</span> <span class="n">cx0</span><span class="p">:</span><span class="n">cx1</span><span class="p">]</span>
 
-        <span class="k">return</span> <span class="n">result</span></div>
+        <span class="k">return</span> <span class="n">result</span></div></div>
 
 </pre></div>
 
@@ -583,7 +557,7 @@
   <div role="contentinfo">
     <p>
         &copy; Copyright 2016, Nat Wilson.
-      Last updated on Apr 22, 2017.
+      Last updated on Apr 23, 2017.
 
     </p>
   </div>
