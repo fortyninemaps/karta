@@ -76,22 +76,6 @@ ELLIPSOID_DATA = {
  "WGS84": (6378137.0, None, 298.257223563, "WGS 84"),
  "sphere": (6370997.0, 6370997.0, None, "Normal Sphere (r=6370997)")}
 
-def ellipsoid_major_axis(name):
-    a, _, _ = ELLIPSOID_DATA[name]
-    return a
-
-def ellipsoid_minor_axis(name):
-    a, b, rf = ELLIPSOID_DATA[name]
-    if b is None:
-        b = a-a/rf
-    return b
-
-def ellipsoid_flattening(name):
-    a, b, rf = ELLIPSOID_DATA[name]
-    if rf is None:
-        rf = a/(a-b)
-    return 1.0/rf
-
 class Ellipsoid(object):
     def __init__(self, name, a=None, b=None, f=None, rf=None):
         if a is None:
@@ -285,14 +269,11 @@ class ProjectedCRS(CartesianCRS):
         return
 
     def __eq__(self, other):
-        if (not hasattr(other, "_proj")) or (not hasattr(other, "_geod")):
-            return False
-
-        if (getattr(self._proj, "srs", 0) == getattr(other._proj, "srs", 1) and
+        if (hasattr(other, "_proj") and hasattr(other, "_geod") and
+            getattr(self._proj, "srs", 0) == getattr(other._proj, "srs", 1) and
             getattr(self._geod, "initstring", 0) == getattr(other._geod, "initstring", 1)):
             return True
-        else:
-            return False
+        return False
 
     def __ne__(self, other):
         return not self.__eq__(other)
