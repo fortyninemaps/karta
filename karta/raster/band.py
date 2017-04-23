@@ -89,10 +89,11 @@ class BandIndexer(object):
         if xstep < 0:
             xstart, xend = xend+1, xstart+1
 
-        out = np.empty([1 + (yend-ystart-1) // abs(ystep),
-                        1 + (xend-xstart-1) // abs(xstep),
-                        len(bands)],
-                       dtype = self.bands[0].dtype)
+        shape = [1 + (yend-ystart-1) // abs(ystep),
+                 1 + (xend-xstart-1) // abs(xstep),
+                 len(bands)]
+
+        out = np.empty(shape, dtype = self.bands[0].dtype)
 
         for i, iband in enumerate(bands):
             band = self.bands[iband]
@@ -159,7 +160,10 @@ class BandIndexer(object):
                  1 + (xend-xstart-1) // abs(xstep),
                  len(bands)]
 
-        val_array = np.broadcast_to(np.atleast_3d(value), shape)
+        if isinstance(value, np.ndarray) and (value.ndim == 1) and (shape[0] == shape[1] == 1):
+            val_array = np.reshape(np.atleast_3d(value), shape)
+        else:
+            val_array = np.broadcast_to(np.atleast_3d(value), shape)
 
         for i, iband in enumerate(bands):
             band = self.bands[iband]
@@ -203,10 +207,8 @@ class BandIndexer(object):
         """
         if len(self.bands) == 0:
             raise ValueError("no bands")
-        elif len(self.bands) == 1:
-            return self.bands[0].size
         else:
-            return (len(self.bands), self.bands[0].size[0], self.bands[0].size[1])
+            return self.bands[0].size
 
     @property
     def dtype(self):
