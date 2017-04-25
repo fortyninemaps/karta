@@ -51,7 +51,7 @@ class Grid(object):
         """ Return a deep copy """
         return copy.deepcopy(self)
 
-    def apply(self, func, inplace=False, band=None):
+    def apply(self, func, inplace=False):
         """ Apply a vector function to grid values.
 
         Parameters
@@ -62,18 +62,12 @@ class Grid(object):
         inplace : boolean, optional
             whether to perform operation in place rather than returning a new
             grid instance (default False)
-        band : int, optional
-            if provided, only apply *func* to a specific band
 
         Returns
         -------
         instance of type(self)
         """
         msk = self.data_mask_full
-        if band is not None:
-            if not isinstance(band, int) or not (0 <= band < self.nbands):
-                raise ValueError("band must be an integer in [0, nbands)")
-            msk *= np.array([i == band for i in range(self.nbands)])
 
         if inplace:
             self[msk] = func(self[msk])

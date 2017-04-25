@@ -176,6 +176,8 @@ def read(fnm, in_memory, ibands=ALL, bandclass=CompressedBand):
             bands = [bandclass((ny, nx), dtype) for _ in ibands]
             for i, rb in enumerate(rasterbands):
                 _arr = rb.ReadAsArray(buf_obj=np.empty([ny, nx], dtype=dtype))
+                if _arr is None:
+                    raise IOError("error reading GDAL band {}".format(i+1))
                 bands[i].setblock(0, 0, _arr.squeeze()[::-1])
         else:
             bands = [GdalFileBand(rb, dataset) for rb in rasterbands]
