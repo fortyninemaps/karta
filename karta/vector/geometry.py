@@ -398,7 +398,7 @@ class MultiVertexMixin(object):
         """
         x, y = self.vertices.vectors()[:2]
         if crs is not None and (crs != self.crs):
-            x, y = _reproject((x,y), self.crs, crs)
+            x, y = _reproject((x, y), self.crs, crs)
         return x, y
 
     @property
@@ -422,7 +422,9 @@ class MultiVertexMixin(object):
                 return self.vertices.asarray()[:,:2]
         else:
             v = self.vertices.vectors(drop_z=drop_z)
-            vt = _reproject(v, self.crs, crs)
+            vt = _reproject(v[:2], self.crs, crs)
+            if len(v) == 3:
+                vt.append(v[2])
             return np.vstack(vt).T
 
     @property
