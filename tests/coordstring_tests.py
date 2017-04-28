@@ -86,5 +86,10 @@ class CoordStringTests(unittest.TestCase):
         arr = cs.asarray()
         self.assertTrue(np.all(arr == np.array([[]], dtype=np.float64)))
 
+    def test_nan_raises(self):
+        coords = [(1,2), (3,4), (5,np.nan), (7,8), (9,10)]
+        with self.assertRaises(ValueError):
+            CoordString(coords)
+
 if __name__ == "__main__":
     unittest.main()

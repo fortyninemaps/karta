@@ -1,3 +1,4 @@
+from libc.math cimport isnan, NAN
 import numpy as np
 cimport numpy as np
 from cpython cimport bool
@@ -57,6 +58,8 @@ cdef class CoordString:
         cdef object xy
         for xy in coords:
             for j in range(self.rank):
+                if isnan(xy[j]):
+                    raise ValueError("coordinate object contains NaN values")
                 self.coords[i+j] = xy[j]
             i = i + self.rank
         return
@@ -125,7 +128,7 @@ cdef class CoordString:
 
     cdef double getZ(self, int index):
         if self.rank != 3:
-            return np.nan
+            return NAN
         if self.ring and index == self.length:
             index = 0
         return self.coords[index*self.rank+2]
@@ -162,7 +165,7 @@ cdef class CoordString:
         cdef int offset = 0
 
         if self.length == 0:
-            return (np.nan, np.nan, np.nan, np.nan)
+            return (NAN, NAN, NAN, NAN)
 
         xmin = self.coords[0]
         xmax = self.coords[0]
