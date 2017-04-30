@@ -3,7 +3,7 @@ from cpython cimport bool
 
 cdef class CoordString:
     cdef int length
-    cdef readonly double[:] coords
+    cdef double *coords
     cdef readonly int rank
     cdef readonly bool ring
     cpdef np.ndarray slice(self, int start, int stop=?, int step=?)
