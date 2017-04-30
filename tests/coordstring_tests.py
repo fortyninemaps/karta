@@ -86,6 +86,13 @@ class CoordStringTests(unittest.TestCase):
         arr = cs.asarray()
         self.assertTrue(np.all(arr == np.array([[]], dtype=np.float64)))
 
+    def test_hash(self):
+        A = CoordString([(i, i+1) for i in range(0, 100, 3)])
+        B = CoordString([(i+1, i) for i in range(100, 0, -3)])
+        C = CoordString([(i, i+1) for i in range(0, 100, 3)])
+        self.assertEqual(hash(A), hash(C))
+        self.assertNotEqual(hash(A), hash(B))
+
     def test_nan_raises(self):
         coords = [(1,2), (3,4), (5,np.nan), (7,8), (9,10)]
         with self.assertRaises(ValueError):

@@ -101,8 +101,12 @@ cdef class CoordString:
         for i in range(self.rank):
             self.coords[idx+i] = value[i]
 
-    #def __hash__(self):
-    #    return hash(self.coords)
+    def __hash__(self):
+        cdef np.ndarray buf = np.empty(self.length, dtype=np.double)
+        cdef int i = 0
+        for i in range(self.length):
+            buf[i] = self.coords[i]
+        return hash(buf.tostring())
 
     def __richcmp__(self, other, int op):
         if op == 2:
@@ -155,7 +159,7 @@ cdef class CoordString:
         else:
             raise ValueError("step cannot equal zero")
 
-        cdef np.ndarray result = np.empty(outlength*self.rank, dtype=np.float64)
+        cdef np.ndarray result = np.empty(outlength*self.rank, dtype=np.double)
         cdef int i = 0, j = 0, pos = start
         cdef int rank = self.rank
         while pos < stop:
@@ -190,8 +194,8 @@ cdef class CoordString:
     def vectors(self, bool drop_z=False):
         cdef int i = 0, pos = 0
         cdef np.ndarray x, y
-        x = np.empty(self.length, dtype=np.float64)
-        y = np.empty(self.length, dtype=np.float64)
+        x = np.empty(self.length, dtype=np.double)
+        y = np.empty(self.length, dtype=np.double)
         while i < self.length:
             x[i] = self.coords[pos]
             y[i] = self.coords[pos+1]
@@ -201,7 +205,7 @@ cdef class CoordString:
             return x, y
 
         cdef np.ndarray z
-        z = np.empty(self.length, dtype=np.float64)
+        z = np.empty(self.length, dtype=np.double)
         pos = 0
         i = 0
         while i < self.length:
@@ -212,8 +216,8 @@ cdef class CoordString:
 
     def asarray(self):
         if self.rank == -1:
-            return np.array([[]], dtype=np.float64)
-        cdef np.ndarray arr = np.empty(self.rank*self.length, dtype=np.float64)
+            return np.array([[]], dtype=np.double)
+        cdef np.ndarray arr = np.empty(self.rank*self.length, dtype=np.double)
         cdef int i = 0
         for i in range(self.length*self.rank):
             arr[i] = self.coords[i]
