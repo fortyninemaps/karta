@@ -102,7 +102,7 @@ cdef class CoordString:
             self.coords[idx+i] = value[i]
 
     def __hash__(self):
-        cdef np.ndarray buf = np.empty(self.length, dtype=np.double)
+        cdef np.ndarray[np.double_t, ndim=1] buf = np.empty(self.length, dtype=np.double)
         cdef int i = 0
         for i in range(self.length):
             buf[i] = self.coords[i]
@@ -159,7 +159,7 @@ cdef class CoordString:
         else:
             raise ValueError("step cannot equal zero")
 
-        cdef np.ndarray result = np.empty(outlength*self.rank, dtype=np.double)
+        cdef np.ndarray[np.double_t, ndim=1] result = np.empty(outlength*self.rank, dtype=np.double)
         cdef int i = 0, j = 0, pos = start
         cdef int rank = self.rank
         while pos < stop:
@@ -193,7 +193,7 @@ cdef class CoordString:
 
     def vectors(self, bool drop_z=False):
         cdef int i = 0, pos = 0
-        cdef np.ndarray x, y
+        cdef np.ndarray[np.double_t, ndim=1] x, y
         x = np.empty(self.length, dtype=np.double)
         y = np.empty(self.length, dtype=np.double)
         while i < self.length:
@@ -204,7 +204,7 @@ cdef class CoordString:
         if (self.rank == 2) or drop_z:
             return x, y
 
-        cdef np.ndarray z
+        cdef np.ndarray[np.double_t, ndim=1] z
         z = np.empty(self.length, dtype=np.double)
         pos = 0
         i = 0
@@ -217,7 +217,7 @@ cdef class CoordString:
     def asarray(self):
         if self.rank == -1:
             return np.array([[]], dtype=np.double)
-        cdef np.ndarray arr = np.empty(self.rank*self.length, dtype=np.double)
+        cdef np.ndarray[np.double_t, ndim=1] arr = np.empty(self.rank*self.length, dtype=np.double)
         cdef int i = 0
         for i in range(self.length*self.rank):
             arr[i] = self.coords[i]
