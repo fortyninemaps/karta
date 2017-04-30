@@ -1,8 +1,9 @@
 from libc.math cimport fabs
+from cpython cimport bool
 from coordstring cimport CoordString
 from vectorgeo cimport Vector2
 
-cdef double isleft(Vector2 pt, Vector2 pt0, Vector2 pt1):
+cdef double isleft(Vector2 pt, Vector2 pt0, Vector2 pt1) nogil:
     """ tests whether *pt* is left of segment (pt0, pt1).
 
     returns > 0 if left, < 0 if right, and = 0 if pt is on the segment
@@ -12,18 +13,22 @@ cdef double isleft(Vector2 pt, Vector2 pt0, Vector2 pt1):
 def contains(double x, double y, CoordString poly):
     """ Uses a winding number scheme to compute whether *poly* contains a point
     (x, y) """
+    if not poly.ring:
+        raise TypeError("contains requires a closed CoordString")
+
     cdef int cnt = 0
     cdef int i
-    cdef int n = len(poly)
     cdef Vector2 pt, pt0, pt1
 
-    if not poly.ring:
-        raise TypeError("no membership test for non-ring coordinate strings")
-
     pt = Vector2(x, y)
-    pt0 = Vector2(poly.getX(0), poly.getY(0))
-    for i in range(n):
-        pt1 = Vector2(poly.getX(i+1), poly.getY(i+1))
+    pt0 = Vector2(poly.coords[0], poly.coords[1])
+    for i in range(poly.length):
+        if i != poly.length-1:
+            pt1.x = poly.coords[(i+1)*poly.rank]
+            pt1.y = poly.coords[(i+1)*poly.rank+1]
+        else:
+            pt1.x = poly.coords[0]
+            pt1.y = poly.coords[1]
         if (pt0.y <= pt.y < pt1.y):
             # crosses upward
             if isleft(pt, pt0, pt1) > 0:
@@ -36,7 +41,7 @@ def contains(double x, double y, CoordString poly):
 
     return cnt != 0
 
-def contains_proj(double x, double y, CoordString poly, crs):
+def contains_proj(double x, double y, CoordString poly, object crs):
     """ contains implementation for geographical coordinates.
     calls crs.inverse n times, making this relatively inefficient.
     """

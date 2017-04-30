@@ -1176,8 +1176,8 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
             return _ccontains.contains_proj(x, y, self.vertices, self.crs) \
                     and not any(p.contains(point) for p in self.subs)
         else:
-            return _ccontains.contains(x, y, self.vertices) \
-                    and not any(p.contains(point) for p in self.subs)
+            return _ccontains.contains(x, y, self.vertices) and \
+                    not any(p.contains(point) for p in self.subs)
 
     def to_line(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
@@ -1265,7 +1265,7 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
 
         super(Multipoint, self).__init__(vertices, **kwargs)
         if build_index:
-            self.quadtree = QuadTree(self.vertices)
+            self.quadtree = QuadTree(self.vertices, leaf_capacity=50)
         self._geotype = "Multipoint"
         return
 
