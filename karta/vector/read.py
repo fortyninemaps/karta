@@ -57,17 +57,6 @@ def read_geojson(f, crs=LonLatWGS84):
     crs : karta.crs.CRS
         CRS object to bind to new geometries
     """
-    def _convert_crs(crsdict):
-        # Deprecated
-        if crsdict.get("type", None) not in ("name", "link"):
-            crs = LonLatWGS84
-        elif crsdict["type"] == "name":
-            crs = picogeojson.GeoJSONNamedCRS(crsdict["properties"]["name"])
-        elif crsdict["type"] == "link":
-            crs = picogeojson.GeoJSONLinkedCRS(crsdict["properties"]["href"],
-                                               crsdict["properties"]["type"])
-        return crs
-
     def convert(geom, **kw):
         if isinstance(geom, picogeojson.Feature):
             res = [convert_feature(geom, **kw)]
