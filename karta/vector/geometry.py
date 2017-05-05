@@ -1027,6 +1027,7 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
 
     @property
     def vertices_ring(self):
+        """ Return vertices as a closed ring """
         # inefficient implementation
         vertices = [xy for xy in self.vertices]
         vertices.append(vertices[0])
@@ -1650,7 +1651,7 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
     def geomdict(self):
         return {"type" : "MultiPolygon",
                 "bbox" : self.bbox,
-                "coordinates" : _as_nested_lists(self.vertices)}
+                "coordinates" : _as_nested_lists(self.vertices_ring)}
 
     @property
     def __geo_interface__(self):
