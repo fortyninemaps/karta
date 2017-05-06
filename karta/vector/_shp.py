@@ -13,6 +13,7 @@ shapefile
 import os
 import datetime
 import numbers
+import warnings
 from .. import errors
 import osgeo
 from osgeo import ogr
@@ -219,26 +220,60 @@ def ogr_write(fnm, *objs):
 
     keys = set.intersection(*[set(obj["properties"].keys()) for obj in objs])
     keys = [k for k in keys if not k.startswith("_karta")]
+
+    # Get field types
+    key_mapping = {}
+
     for k in keys:
-        typ, default_width = ogr_get_fieldtype(objs[0]["properties"][k])
-        fd = ogr.FieldDefn(k, typ)
-        fd.SetWidth(default_width)
-        lyr.CreateField(fd)
+
+        dbase_key = str(k)[:10].upper()
+        i = 2
+        while dbase_key in key_mapping:
+            dbase_key = "{}{}".format(dbase_key[:-len(str(i))], str(i))
+            warnings.warn("attribute name clash: {} renamed {}"\
+                          .format(k, dbase_key))
+            i += 1
+
+        typ, default_width = infer_field_type(objs, k, max_iter=100)
+        if typ is not None:
+            fd = ogr.FieldDefn(dbase_key, typ)
+            fd.SetWidth(default_width)
+            lyr.CreateField(fd)
+            key_mapping[dbase_key] = k
+        else:
+            warnings.warn("appropriate DBF type for {} not found - skipping".format(k))
 
     # add geometries
     for i, obj in enumerate(objs):
-        ogr_write_feature(lyr, obj, id=i)
+        ogr_write_feature(lyr, obj, id=i, key_mapping=key_mapping)
     return
 
-def ogr_write_feature(lyr, gi, id=0):
+def infer_field_type(objs, key, max_iter=100):
+    typ = None
+    default_width = -1
+    i = 0
+    while i != min(max_iter, len(objs)):
+        try:
+            typ, default_width = ogr_get_fieldtype(objs[i]["properties"][key])
+            break
+        except TypeError:
+            pass
+        i += 1
+    return typ, default_width
+
+def ogr_write_feature(lyr, gi, id=0, key_mapping=None):
     """ Write the geometry encoded in a __geointerface__ dictionary to an OGR
     Layer. """
+    if key_mapping is None:
+        key_mapping = {}
+
     layer_def = lyr.GetLayerDefn()
     feature = ogr.Feature(layer_def)
     feature.SetField("id", id)
     for i in range(1, layer_def.GetFieldCount()):
         attr_name = layer_def.GetFieldDefn(i).GetNameRef()
-        feature.SetField(attr_name, gi["properties"][attr_name])
+        key_name = key_mapping.get(attr_name, attr_name)
+        feature.SetField(attr_name, gi["properties"][key_name])
 
     if gi["geometry"]["type"] == "Point":
         geom = ogr_asPoint(gi["geometry"])
