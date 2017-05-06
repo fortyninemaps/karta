@@ -132,9 +132,12 @@ class Table(Sequence):
 
     def setfield(self, field, values):
         """ Modify or add a field with *values* """
-        if len(values) != self.__len__():
+        if len(self) != 0 and len(values) != len(self):
             raise ValueError("mismatch between table length and field values")
-        if field in self._fields:
+        elif len(self) == 0:
+            self._fields = (field,)
+            self._data = [(v,) for v in values]
+        elif field in self._fields:
             idx = self._fields.index(field)
             self._data = [tuplemut(row, v, idx) for row, v in zip(self._data, values)]
         else:
@@ -145,8 +148,8 @@ class Table(Sequence):
 
     def extend(self, other):
         """ Extend Table from another Table instance. If *other* has field f in
-        *self*, it is copied. Otherwise, the None is appended. """
-        # TODO: appended None value should be approariate to the type of field f.
+        *self*, it is copied. Otherwise, None is appended. """
+        # TODO: appended None value should be appropriate to the type of field f.
         idxs_other = []
         for f in self._fields:
             if f in other._fields:
@@ -158,6 +161,31 @@ class Table(Sequence):
             self._data.append(tuple([None if idxs_other[j] is None
                                           else other._data[i][idxs_other[j]]
                                           for j in range(len(self._fields))]))
+
+    def updated(self, mapping):
+        """ Update Table by adding columns from another table instance or a
+        dictionary. Returns a new Table. """
+        length = len(self)
+        new_table = Table(size=length)
+        if hasattr(mapping, "fields"):
+            if length != 0 and (len(mapping) != length):
+                raise ValueError("cannot update Table from another Table with unequal length")
+
+            for fieldname in mapping.fields:
+                new_table.setfield(fieldname, mapping.getfield(fieldname))
+
+        else:
+            # assume mapping to be dict-like
+            for fieldname, values in mapping.items():
+                if length != 0 and len(values) != length:
+                    raise ValueError("cannot update Table with value with unequal length")
+                new_table.setfield(fieldname, values)
+
+        for fieldname in self.fields:
+            if fieldname not in new_table.fields:
+                new_table.setfield(fieldname, self.getfield(fieldname))
+
+        return new_table
 
     def asjson(self):
         """ Return a JSON-serialized string. """
