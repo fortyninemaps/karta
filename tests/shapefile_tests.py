@@ -5,6 +5,7 @@ import numpy as np
 from test_helper import TESTDIR, TESTDATA, TMPDATA
 import datetime
 from copy import copy
+import warnings
 
 from karta.vector import shp, read_shapefile
 from karta.vector.geometry import (Point, Line, Polygon,
@@ -238,7 +239,11 @@ class ShapefileAttributeTests(unittest.TestCase):
                         "description_en": "Line for testing."
                         },
                     crs=LonLatWGS84)
-        line.to_shapefile(os.path.join(TESTDIR, "data/line_truncated_attr"))
+
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            line.to_shapefile(os.path.join(TESTDIR, "data/line_truncated_attr"))
+
         for fnm in ("line_truncated_attr.shx",
                     "line_truncated_attr.shx",
                     "line_truncated_attr.dbf",
