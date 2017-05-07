@@ -1190,10 +1190,10 @@ class Multipart(Geometry):
 
     def __init__(self, vertices, data=None, **kwargs):
         super(Multipart, self).__init__(**kwargs)
-        if data is None or len(data) == 0:
-            self.data = Table(size=len(self.vertices))
-        elif isinstance(data, Table):
+        if isinstance(data, Table):
             self.data = data
+        elif data is None or len(data) == 0:
+            self.data = Table(size=len(self.vertices))
         else:
             for k, v in data.items():
                 if len(v) != len(vertices):
@@ -1262,6 +1262,8 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
             self.vertices = CoordString(vertices)
         else:
             self.vertices = CoordString([point.vertex for point in vertices])
+            data = merge_properties([point.properties for point in vertices])
+            kwargs["data"] = Table(kwargs.get("data", {})).updated(data)
             kwargs.setdefault("crs", vertices[0].crs)
 
         super(Multipoint, self).__init__(vertices, **kwargs)
@@ -1538,6 +1540,8 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
             self.vertices = []
         elif isinstance(vertices[0], Line):
             self.vertices = [line.vertices for line in vertices]
+            data = merge_properties([line.properties for line in vertices])
+            kwargs["data"] = Table(kwargs.get("data", {})).updated(data)
             kwargs.setdefault("crs", vertices[0].crs)
         else:
             self.vertices = [CoordString(part) for part in vertices]
@@ -1620,6 +1624,8 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
                 for sub in polygon.subs:
                     rings.append(sub)
                 self.vertices.append(rings)
+            data = merge_properties([polygon.properties for polygon in vertices])
+            kwargs["data"] = Table(kwargs.get("data", {})).updated(data)
             kwargs.setdefault("crs", vertices[0].crs)
         else:
             self.vertices = []
@@ -1713,6 +1719,18 @@ def _sign(a):
     else:
         return a/abs(a)
 
+def merge_properties(prop_sets):
+    keys = list(prop_sets[0].keys())
+    for properties in prop_sets[1:]:
+        for key in keys:
+            if key not in properties:
+                keys.pop(keys.index(key))
+
+    data = {}
+    for key in keys:
+        data[key] = [properties[key] for properties in prop_sets]
+    return data
+
 def multipart_from_singleparts(parts, crs=None):
     """ Merge singlepart geometries into a multipart geometry.
     Properties contained by all inputs are stored in Multipart data attribute.
@@ -1735,18 +1753,7 @@ def multipart_from_singleparts(parts, crs=None):
     if crs is None:
         crs = parts[0].crs
 
-    keys = list(parts[0].properties.keys())
-    for part in parts[1:]:
-        for key in keys:
-            if key not in part.properties:
-                keys.pop(keys.index(key))
-
-    if len(keys) == 0:
-        data = None
-    else:
-        data = {}
-        for key in keys:
-            data[key] = [part.properties[key] for part in parts]
+    data = merge_properties([part.properties for part in parts])
 
     gt = parts[0]._geotype
     if gt == "Point":
