@@ -1188,7 +1188,7 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
 class Multipart(Geometry):
     """ Base for objects consisting of multiple singular types. """
 
-    def __init__(self, vertices, data=None, **kwargs):
+    def __init__(self, inputs, data=None, **kwargs):
         super(Multipart, self).__init__(**kwargs)
         if isinstance(data, Table):
             self.data = data
@@ -1196,10 +1196,10 @@ class Multipart(Geometry):
             self.data = Table(size=len(self.vertices))
         else:
             for k, v in data.items():
-                if len(v) != len(vertices):
+                if len(v) != len(inputs):
                     raise ValueError("length of `data` member '{k}' ({n}) not "
-                                     "equal to length of vertices ({m})".format(
-                                         k=k, n=len(v), m=len(vertices)))
+                                     "equal to length of inputs ({m})".format(
+                                         k=k, n=len(v), m=len(inputs)))
             self.data = Table(data)
         return
 
@@ -1242,8 +1242,8 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
 
     Parameters
     ----------
-    coords : list
-        list of 2-tuples or 3-tuples defining vertices
+    inputs : list
+        list of 2-tuples, 3-tuples, or Points defining vertices
     data : list, dict, Table object, or None
         point-specific data [default None]
     properties : dict or None
@@ -1252,21 +1252,22 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
         [default Cartesian]
     """
 
-    def __init__(self, vertices, build_index=True, **kwargs):
-        if hasattr(vertices, "__next__"):
-            vertices = list(vertices)
+    def __init__(self, inputs, build_index=True, **kwargs):
+        if hasattr(inputs, "__next__"):
+            inputs = list(inputs)
 
-        if len(vertices) == 0:
+        if len(inputs) == 0:
             self.vertices = CoordString([])
-        elif not isinstance(vertices[0], Point):
-            self.vertices = CoordString(vertices)
-        else:
-            self.vertices = CoordString([point.vertex for point in vertices])
-            data = merge_properties([point.properties for point in vertices])
+        elif isinstance(inputs[0], Point):
+            crs = kwargs.get("crs", inputs[0].crs)
+            self.vertices = CoordString([point.get_vertex(crs=crs) for point in inputs])
+            data = merge_properties([point.properties for point in inputs])
             kwargs["data"] = Table(kwargs.get("data", {})).updated(data)
-            kwargs.setdefault("crs", vertices[0].crs)
+            kwargs.setdefault("crs", inputs[0].crs)
+        else:
+            self.vertices = CoordString(inputs)
 
-        super(Multipoint, self).__init__(vertices, **kwargs)
+        super(Multipoint, self).__init__(inputs, **kwargs)
         if build_index:
             self.quadtree = QuadTree(self.vertices, leaf_capacity=50)
         self._geotype = "Multipoint"
@@ -1525,8 +1526,8 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
 
     Parameters
     ----------
-    coords : list
-        list of lists of 2-tuples or 3-tuples defining lines
+    inputs : list
+        list of lists of 2-tuples, 3-tuples, or Lines defining lines
     data : list, dict, Table object, or None
         point-specific data [default None]
     properties : dict or None
@@ -1535,17 +1536,19 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
         [default Cartesian]
     """
 
-    def __init__(self, vertices, build_index=True, **kwargs):
-        if len(vertices) == 0:
+    def __init__(self, inputs, build_index=True, **kwargs):
+        if len(inputs) == 0:
             self.vertices = []
-        elif isinstance(vertices[0], Line):
-            self.vertices = [line.vertices for line in vertices]
-            data = merge_properties([line.properties for line in vertices])
+        elif isinstance(inputs[0], Line):
+            crs = kwargs.get("crs", inputs[0].crs)
+            self.vertices = [CoordString(line.get_vertices(crs=crs))
+                             for line in inputs]
+            data = merge_properties([line.properties for line in inputs])
             kwargs["data"] = Table(kwargs.get("data", {})).updated(data)
-            kwargs.setdefault("crs", vertices[0].crs)
+            kwargs.setdefault("crs", inputs[0].crs)
         else:
-            self.vertices = [CoordString(part) for part in vertices]
-        super(Multiline, self).__init__(vertices, **kwargs)
+            self.vertices = [CoordString(part) for part in inputs]
+        super(Multiline, self).__init__(inputs, **kwargs)
         if build_index:
             self.rtree = RTree(self.vertices)
         self._geotype = "Multiline"
@@ -1605,8 +1608,9 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
 
     Parameters
     ----------
-    coords : list
-        list of lists of polygon rings, each consisting of 2-tuples or 3-tuples
+    inputs : list
+        list of Polygons or lists of polygon rings, each consisting of 2-tuples
+        or 3-tuples
     data : list, dict, Table object, or None
         point-specific data [default None]
     properties : dict or None
@@ -1614,25 +1618,26 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
     crs : karta.crs.CRS subclass
         [default Cartesian]
     """
-    def __init__(self, vertices, build_index=True, **kwargs):
-        if len(vertices) == 0:
+    def __init__(self, inputs, build_index=True, **kwargs):
+        if len(inputs) == 0:
             self.vertices = []
-        elif isinstance(vertices[0], Polygon):
+        elif isinstance(inputs[0], Polygon):
+            crs = kwargs.get("crs", inputs[0].crs)
             self.vertices = []
-            for polygon in vertices:
-                rings = [polygon.vertices]
+            for polygon in inputs:
+                rings = [CoordString(polygon.get_vertices(crs=crs))]
                 for sub in polygon.subs:
                     rings.append(sub)
                 self.vertices.append(rings)
-            data = merge_properties([polygon.properties for polygon in vertices])
+            data = merge_properties([polygon.properties for polygon in inputs])
             kwargs["data"] = Table(kwargs.get("data", {})).updated(data)
-            kwargs.setdefault("crs", vertices[0].crs)
+            kwargs.setdefault("crs", inputs[0].crs)
         else:
             self.vertices = []
-            for part in vertices:
+            for part in inputs:
                 rings = [CoordString(ring) for ring in part]
                 self.vertices.append(rings)
-        super(Multipolygon, self).__init__(vertices, **kwargs)
+        super(Multipolygon, self).__init__(inputs, **kwargs)
         if build_index:
             self.rtree = RTree([v[0] for v in self.vertices])
         self._geotype = "Multipolygon"
@@ -1730,48 +1735,6 @@ def merge_properties(prop_sets):
     for key in keys:
         data[key] = [properties[key] for properties in prop_sets]
     return data
-
-def multipart_from_singleparts(parts, crs=None):
-    """ Merge singlepart geometries into a multipart geometry.
-    Properties contained by all inputs are stored in Multipart data attribute.
-
-    Parameters
-    ----------
-    parts : iterable of singlepart Geometry instances
-        e.g. list of Points, Lines, or Polygons
-    crs : karta.CRS
-        coordinate system of output Geometry
-
-    Returns
-    -------
-    Multipart
-        e.g. Multipoint, Multiline, or Multipolygon
-    """
-    if len(parts) == 0:
-        raise ValueError("cannot construct multipart from zero singleparts")
-
-    if crs is None:
-        crs = parts[0].crs
-
-    data = merge_properties([part.properties for part in parts])
-
-    gt = parts[0]._geotype
-    if gt == "Point":
-        vertices = [part.get_vertex(crs=crs) for part in parts]
-        return Multipoint(vertices, data=data, crs=crs)
-    elif gt == "Line":
-        vertices = [part.get_vertices(crs=crs) for part in parts]
-        return Multiline(vertices, data=data, crs=crs)
-    elif gt == "Polygon":
-        vertices = []
-        for part in parts:
-            part_vertices = [part.get_vertices(crs=crs)]
-            for sub in part.subs:
-                part_vertices.append(sub.get_vertices(crs=crs))
-            vertices.append(part_vertices)
-        return Multipolygon(vertices, data=data, crs=crs)
-    else:
-        raise GeometryError("cannot convert type '{0}' to multipart".format(gt))
 
 def merge_multiparts(*multiparts, **kw):
 
