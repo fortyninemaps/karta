@@ -3,7 +3,7 @@
 import unittest
 import numpy as np
 from karta import Point, Line, Polygon, Multipoint, Multiline, Multipolygon
-from karta.vector.geometry import multipart_from_singleparts, merge_multiparts
+from karta.vector.geometry import merge_multiparts
 from karta.crs import LonLatWGS84, WebMercator
 
 class TestSinglepartGeometry(unittest.TestCase):
@@ -76,7 +76,7 @@ class TestMultipartGeometry(unittest.TestCase):
         pts = [Point((x, y), properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(vertices, data))]
 
-        mp = multipart_from_singleparts(pts)
+        mp = Multipoint(pts)
         ans = Multipoint(vertices, data={"p":range(len(pts))}, crs=LonLatWGS84)
         self.assertEqual(mp, ans)
 
@@ -113,7 +113,7 @@ class TestMultipartGeometry(unittest.TestCase):
                 sub.append((2*j+i, -1.5*j+2*i))
             lines.append(Line(sub, properties={"d": i*j}, crs=LonLatWGS84))
 
-        g = multipart_from_singleparts(lines)
+        g = Multiline(lines)
         self.assertEqual(g.d["d"], [0, 4, 8, 12, 16])
         self.assertEqual(g.crs, LonLatWGS84)
 
@@ -162,7 +162,7 @@ class TestMultipartGeometry(unittest.TestCase):
                 sub.append((2*j+i, -1.5*j+2*i))
             polys.append(Polygon(sub, properties={"d": i*j}, crs=LonLatWGS84))
 
-        g = multipart_from_singleparts(polys)
+        g = Multipolygon(polys)
         self.assertEqual(g.d["d"], [0, 4, 8, 12, 16])
         self.assertEqual(g.crs, LonLatWGS84)
 

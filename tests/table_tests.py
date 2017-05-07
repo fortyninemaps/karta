@@ -1,7 +1,7 @@
 import unittest
 import json
 import numpy as np
-from karta.vector.table import Table
+from karta.vector.table import Table, merge
 
 class TestTable(unittest.TestCase):
 
@@ -76,12 +76,12 @@ class TestTable(unittest.TestCase):
     def test_init_specified_fields(self):
         md = Table([(1,2,3),(4,5,6),(7,8,9)], fields=("a","b","c"))
         self.assertEqual(md.data, [(1,2,3),(4,5,6),(7,8,9)])
-        self.assertEqual(md.fields, ("a","b","c"))
+        self.assertEqual(md.fields, set(("a","b","c")))
 
     def test_init_specified_fields2(self):
         md = Table([("by air",),("by land,"),("by sea",)], fields=("mode",))
         self.assertEqual(md.data, [("by air",),("by land,"),("by sea",)])
-        self.assertEqual(md.fields, ("mode",))
+        self.assertEqual(md.fields, set(("mode",)))
 
     def test_extend(self):
         md1 = Table({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
@@ -139,6 +139,19 @@ class TestTable(unittest.TestCase):
 
         self.assertFalse("color" in tbl1.fields)
         self.assertEqual(tbl1.getfield("number"), [3784, 78, 83])
+
+    def test_merge(self):
+        tbl1 = Table({"street": ["F. R. Lillie", "School St.", "Quissett Ave."],
+                      "number": [3784, 78, 83]})
+        tbl2 = Table({"street": ["Winding Ln.", "Oyster Pond Rd."],
+                      "number": [17, 33]})
+        d1 = {"street": "Fern Lane", "number": 33}
+
+        merged = merge([tbl1, d1, tbl2])
+        self.assertEqual(len(merged), 6)
+        self.assertEqual(merged.fields, set(("street", "number")))
+        self.assertEqual(set(merged[3]), set(("Fern Lane", 33)))
+
 
 if __name__ == "__main__":
     unittest.main()

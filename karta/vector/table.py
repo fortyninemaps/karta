@@ -27,7 +27,10 @@ class Table(Sequence):
         if data is None:
             if size is None:
                 raise ValueError("either `data` or `size` must be specified")
-            self._fields = ()
+            if fields is None:
+                self._fields = ()
+            else:
+                self._fields = tuple(fields)
             self._data = [() for _ in range(size)]
         elif fields is None:
             if hasattr(data, "_fields"):
@@ -105,7 +108,7 @@ class Table(Sequence):
 
     @property
     def fields(self):
-        return self._fields
+        return set(self._fields)
 
     @property
     def types(self):
@@ -254,4 +257,17 @@ def tupleinsert(tpl, val, idx):
     """ Return a tuple with *val* inserted into position *idx* """
     lst = list(tpl[:idx]) + [val] + list(tpl[idx:])
     return tuple(lst)
+
+def merge(mappings):
+    keys = set.intersection(*[m.fields if isinstance(m, Table)
+                                       else set(m.keys())
+                              for m in mappings])
+    tbl = Table(fields=keys, size=0)
+    for m in mappings:
+        if isinstance(m, Table):
+            tbl.extend(m)
+        else:
+            tbl._data.append(tuple([m.get(k, None) for k in tbl._fields]))
+
+    return tbl
 

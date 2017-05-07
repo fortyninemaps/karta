@@ -9,8 +9,7 @@ import warnings
 
 from karta.vector import shp, read_shapefile
 from karta.vector.geometry import (Point, Line, Polygon,
-                                   Multipoint, Multiline, Multipolygon,
-                                   multipart_from_singleparts)
+                                   Multipoint, Multiline, Multipolygon)
 from karta.crs import LonLatWGS84
 
 class TestShapefile(unittest.TestCase):
@@ -151,7 +150,7 @@ class TestShapefile(unittest.TestCase):
         self.assertTrue("+proj=lonlat" in pt.crs.get_proj4())
         self.assertTrue("+a=6378137.0" in pt.crs.get_proj4())
         self.assertTrue("+f=0.00335281" in pt.crs.get_proj4())
-        mp = multipart_from_singleparts(points)
+        mp = Multipoint(points)
         self.assertEqual(mp.d["species"], ['T. officianale', 'C. tectorum', 'M. alba', 'V. cracca'])
         self.assertEqual(mp.d["ID"], ['0', '1', '2', '3'])
         x, y = mp.coordinates

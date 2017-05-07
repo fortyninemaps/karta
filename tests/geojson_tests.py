@@ -197,8 +197,7 @@ class TestGeoJSONOutput(unittest.TestCase):
         return
 
     def test_write_data_crs(self):
-        capitols = vector.geometry.multipart_from_singleparts(
-                              [Point((-112.1, 33.57), crs=LonLatWGS84),
+        capitols = Multipoint([Point((-112.1, 33.57), crs=LonLatWGS84),
                                Point((-121.5, 38.57), crs=LonLatWGS84),
                                Point((-84.42, 33.76), crs=LonLatWGS84),
                                Point((-86.15, 39.78), crs=LonLatWGS84),
