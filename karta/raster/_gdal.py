@@ -223,10 +223,8 @@ def write(fnm, grid, compress=None, tiled=False, **kw):
     for i, _ in enumerate(grid.bands):
         band = dataset.GetRasterBand(i+1)
         band.SetNoDataValue(grid.nodata)
+        band.WriteArray(grid[::-1,:,i])
 
-        tmp = grid[:,:,i]
-        band.WriteArray(tmp)
-        grid[:,:,i] = tmp[::-1]
     band = None
     dataset = None
     return
