@@ -1065,7 +1065,7 @@ class RegularGrid(Grid):
         if resolution is None:
             resolution = min(self.transform[2:4])
         points = line.to_points(resolution)
-        z = self.sample(*points.coordinates, **kw)
+        z = self.sample(*points.get_coordinate_lists(crs=self.crs), **kw)
         if len(self.bands) != 1:
             for i in range(self.nbands):
                 points.data.setfield("band_{0}".format(i), z[i])
