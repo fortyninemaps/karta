@@ -246,10 +246,14 @@ class RegularGrid(Grid):
         Parameters
         ----------
         val : number
+
+        Returns
+        -------
+        self
         """
         self[:,:,:] = np.where(self.data_mask_full, self[:,:,:], val)
         self._nodata = val
-        return
+        return self
 
     def center_llref(self):
         """ Return the 'lower-left' reference in terms of a center coordinate.
@@ -1142,7 +1146,7 @@ class RegularGrid(Grid):
                             '\n' for row in data_a.tolist()])
         finally:
             f.close()
-        return
+        return self
 
 def merge(grids, weights=None):
     """ Construct a grid mosiac by averaging multiple grids. Currently limited

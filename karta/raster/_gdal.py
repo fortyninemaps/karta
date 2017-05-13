@@ -195,7 +195,27 @@ def srs_from_crs(crs):
     return srs
 
 def write(fnm, grid, compress=None, tiled=False, **kw):
-    """ Write a grid-like object to *fnm* """
+    """ Write a grid-like object with the GTiff driver.
+
+    Parameters
+    ----------
+    fnm : string
+        path to write to
+    grid : raster.RegularGrid
+        opbject to write
+    compress : str, optional
+        compression type (default no compression). 'LZW', 'PACKBITS',
+        'DEFLATE', and 'LZMA' supported.
+    tiled : bool, optional
+        whether to write a tiled dataset (default False)
+
+    Additional keyword arguments passed directly to GDAL driver as creation
+    options.
+
+    Returns
+    -------
+    reference to *grid*
+    """
     co = []
     if compress == "LZW":
         co.append("COMPRESS=LZW")
@@ -227,5 +247,5 @@ def write(fnm, grid, compress=None, tiled=False, **kw):
 
     band = None
     dataset = None
-    return
+    return grid
 

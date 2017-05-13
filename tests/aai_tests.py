@@ -21,7 +21,9 @@ class AAITests(unittest.TestCase):
     def test_write_aai(self):
         pe = peaks(n=49)
         grid = karta.RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
-        grid.to_aai(os.path.join(TMPDATA, "peaks49.asc"))
+        ret = grid.to_aai(os.path.join(TMPDATA, "peaks49.asc"))
+        self.assertEqual(ret, grid)
+
         with open(os.path.join(TMPDATA, "peaks49.asc")) as f:
             lines = f.readlines()
         self.assertEqual(len(lines), 55)

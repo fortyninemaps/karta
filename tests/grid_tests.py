@@ -652,7 +652,8 @@ class RegularGridTests(unittest.TestCase):
         v[2:4, 5:7] = -1
         grid = RegularGrid([0, 0, 1, 1, 0, 0], values=v, nodata_value=-1)
         self.assertEqual(grid.nodata, -1.0)
-        grid.set_nodata_value(np.nan)
+        ret = grid.set_nodata_value(np.nan)
+        self.assertEqual(ret, grid)
         self.assertTrue(np.isnan(grid.nodata))
         self.assertEqual(np.sum(np.isnan(grid[:,:])), 4)
         self.assertEqual(np.sum(grid[:,:] == -1.0), 0)
