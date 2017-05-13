@@ -824,7 +824,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
 
         def _seg_crosses_dateline(seg):
             a, b = seg[0], seg[1]
-            return (_sign(a.x) != _sign(b.x)) and (abs(a.x-b.x) > 180.0)
+            return (sign(a.x) != sign(b.x)) and (abs(a.x-b.x) > 180.0)
 
         return any(_seg_crosses_dateline(seg) for seg in self.segments)
 
@@ -1317,11 +1317,21 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
                 "properties": p}
 
     @classmethod
-    def merge(cls, *items, crs=None):
+    def merge(cls, *items, **kwargs):
+        """ Merge multiple Point and Multipoint instances.
+
+        Parameters
+        ----------
+        *items : Point/Multipolygon instances
+        crs : CRS object, optional
+
+        Returns
+        -------
+        Multipoint
+        """
         if len(items) == 0:
             raise ValueError("must provide at least one geometry")
-        if crs is None:
-            crs = items[0].crs
+        crs = kwargs.get("crs", items[0].crs)
 
         vertices, mappings = [], []
         for item in items:
@@ -1606,11 +1616,21 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
                 "properties": p}
 
     @classmethod
-    def merge(cls, *items, crs=None):
+    def merge(cls, *items, **kwargs):
+        """ Merge multiple Line and Multiline instances.
+
+        Parameters
+        ----------
+        *items : Line/Multiline instances
+        crs : CRS object, optional
+
+        Returns
+        -------
+        Multiline
+        """
         if len(items) == 0:
             raise ValueError("must provide at least one geometry")
-        if crs is None:
-            crs = items[0].crs
+        crs = kwargs.get("crs", items[0].crs)
 
         vertices, mappings = [], []
         for item in items:
@@ -1725,11 +1745,21 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
                 "properties": p}
 
     @classmethod
-    def merge(cls, *items, crs=None):
+    def merge(cls, *items, **kwargs):
+        """ Merge multiple Polygon and Multipolygon instances.
+
+        Parameters
+        ----------
+        *items : Polygon/Multipolygon instances
+        crs : CRS object, optional
+
+        Returns
+        -------
+        Multipolygon
+        """
         if len(items) == 0:
             raise ValueError("must provide at least one geometry")
-        if crs is None:
-            crs = items[0].crs
+        crs = kwargs.get("crs", items[0].crs)
 
         vertices, mappings = [], []
         for item in items:
@@ -1799,7 +1829,7 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
             ret.append(poly)
         return ret
 
-def _sign(a):
+def sign(a):
     """ Return the sign of *a* """
     if a == 0.0:
         return 1
@@ -1807,73 +1837,12 @@ def _sign(a):
         return a/abs(a)
 
 def merge_properties(prop_sets):
-    keys = list(prop_sets[0].keys())
-    for properties in prop_sets[1:]:
-        for key in keys:
-            if key not in properties:
-                keys.pop(keys.index(key))
-
+    """ Perform an inner join on a list of dictionaries """
+    inner_keys = set.intersection(*[set(p.keys()) for p in prop_sets])
     data = {}
-    for key in keys:
-        data[key] = [properties[key] for properties in prop_sets]
+    for key in inner_keys:
+        data[key] = [p[key] for p in prop_sets]
     return data
-
-def merge_multiparts(*multiparts, **kw):
-
-    """ Merge a list of multipart geometries of the same type and return the
-    combined geometry. Shared data keys are retained. Properties are combined,
-    with the first definition of a duplicate property persisting.
-
-    Parameters
-    ----------
-    multiparts... : Multipart
-        multipart instances to merge
-    crs : karta.crs.CRS, optional
-        CRS to use, if provided. By default, the CRS of the first multipart is used.
-
-    Returns
-    -------
-    Multipart instance with the same type as the input *multiparts*
-
-    Raises
-    ------
-    TypeError if inputs are not Multipart
-    GeometryError if inputs are not all of the same derived type
-    """
-    if len(multiparts) == 1:
-        if isinstance(multiparts[0], Multipart):
-            return multiparts[0]
-        else:
-            raise TypeError("first parameter not instance of Multipart")
-
-    t = type(multiparts[0])
-    if not all(isinstance(mp, t) for mp in multiparts[1:]):
-        raise GeometryError("not all inputs are the same kind of geometry")
-
-    crs = kw.get("crs", None)
-    if crs is None:
-        crs = multiparts[0].crs
-
-    vertices = multiparts[0].get_vertices(crs=crs)
-    _p = multiparts[0].properties
-    keys = set(multiparts[0].data.fields)
-    for mp in multiparts[1:]:
-        vertices = np.vstack([vertices, mp.get_vertices(crs=crs)])
-
-        p = mp.properties
-        p.update(_p)
-        _p = p
-
-        keys = keys.intersection(mp.data.fields)
-
-    d = {}
-    for k in keys:
-        v = []
-        for mp in multiparts:
-            v.extend(mp.d[k])
-        d[k] = v
-
-    return t(vertices, properties=p, data=d, crs=crs)
 
 def affine_matrix(mpa, mpb):
     """ Compute the affine transformation matrix that best matches two

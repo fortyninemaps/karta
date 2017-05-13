@@ -3,7 +3,6 @@
 import unittest
 import numpy as np
 from karta import Point, Line, Polygon, Multipoint, Multiline, Multipolygon
-from karta.vector.geometry import merge_multiparts
 from karta.crs import LonLatWGS84, WebMercator
 
 class TestSinglepartGeometry(unittest.TestCase):
@@ -185,31 +184,23 @@ class TestMultipartGeometry(unittest.TestCase):
 
     def test_merge_multipoints(self):
         mp1 = Multipoint(zip(np.arange(0, 5), np.arange(3, 8)),
-                         properties={"a": 1, "b": 2},
                          data={"A": np.arange(5), "B": np.arange(10, 15)})
         mp2 = Multipoint(zip(np.arange(0, 5)+1, np.arange(3, 8)-2),
-                         properties={"a": 1, "c": 3},
                          data={"A": np.arange(5), "C": np.arange(15, 20)})
-        mp = merge_multiparts(mp1, mp2)
+        mp = Multipoint.merge(mp1, mp2)
         self.assertTrue(len(mp), 10)
         self.assertEqual(set(mp.data.fields), set(["A"]))
-        self.assertEqual(set(mp.properties.keys()), set(["a", "b", "c"]))
-        self.assertEqual(mp.properties["a"], 1)
 
     def test_merge_multipoints_different_crs(self):
         mp1 = Multipoint(zip(np.arange(0, 5), np.arange(3, 8)),
-                         properties={"a": 1, "b": 2},
                          data={"A": np.arange(5), "B": np.arange(10, 15)},
                          crs=LonLatWGS84)
         mp2 = Multipoint(zip(np.arange(0, 5)+1, np.arange(3, 8)-2),
-                         properties={"a": 1, "c": 3},
                          data={"A": np.arange(5), "C": np.arange(15, 20)},
                          crs=WebMercator)
-        mp = merge_multiparts(mp1, mp2, crs=WebMercator)
+        mp = Multipoint.merge(mp1, mp2, crs=WebMercator)
         self.assertTrue(len(mp), 10)
         self.assertEqual(set(mp.data.fields), set(["A"]))
-        self.assertEqual(set(mp.properties.keys()), set(["a", "b", "c"]))
-        self.assertEqual(mp.properties["a"], 1)
         self.assertEqual(mp.crs, WebMercator)
         self.assertTrue(np.allclose(mp.coordinates,
             np.array([[0.00000000e+00, 1.11319491e+05, 2.22638982e+05,
@@ -225,16 +216,12 @@ class TestMultipartGeometry(unittest.TestCase):
         x = np.arange(5)
         y = np.arange(5, 10)
         mp1 = Multiline([list(zip(x, y)), list(zip(-x, -y)), list(zip(x, -y))],
-                         properties={"a": 1, "b": 2},
                          data={"A": np.arange(3), "B": np.arange(10, 13)})
         mp2 = Multiline([list(zip(x, 2*y)), list(zip(-2*x, y)), list(zip(1.5*x, y))],
-                         properties={"a": 1, "c": 3},
                          data={"A": np.arange(3), "C": np.arange(15, 18)})
-        mp = merge_multiparts(mp1, mp2)
-        self.assertTrue(len(mp), 10)
-        self.assertEqual(set(mp.data.fields), set(["A"]))
-        self.assertEqual(set(mp.properties.keys()), set(["a", "b", "c"]))
-        self.assertEqual(mp.properties["a"], 1)
+        ml = Multiline.merge(mp1, mp2)
+        self.assertTrue(len(ml), 10)
+        self.assertEqual(set(ml.data.fields), set(["A"]))
 
 
 if __name__ == "__main__":

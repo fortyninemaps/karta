@@ -259,6 +259,8 @@ def tupleinsert(tpl, val, idx):
     return tuple(lst)
 
 def merge(mappings):
+    """ Perform an inner join on a mixed list of Table and dictionary instances.
+    """
     keys = set.intersection(*[m.fields if isinstance(m, Table)
                                        else set(m.keys())
                               for m in mappings])

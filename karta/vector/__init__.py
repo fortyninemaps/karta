@@ -18,8 +18,7 @@ from . import _shp as shp
 #from . import redblack
 
 from .geometry import (Geometry, Point, Line, Polygon,
-                       Multipoint, Multiline, Multipolygon,
-                       merge_multiparts)
+                       Multipoint, Multiline, Multipolygon)
 from .read import (from_shape, read_geojson, read_shapefile,
                    read_gpx_waypts, read_gpx_tracks)
 from .table import Table
