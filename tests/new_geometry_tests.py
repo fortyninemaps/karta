@@ -202,7 +202,7 @@ class TestMultipartGeometry(unittest.TestCase):
         self.assertTrue(len(mp), 10)
         self.assertEqual(set(mp.data.fields), set(["A"]))
         self.assertEqual(mp.crs, WebMercator)
-        self.assertTrue(np.allclose(mp.coordinates,
+        self.assertTrue(np.allclose(mp.coords(),
             np.array([[0.00000000e+00, 1.11319491e+05, 2.22638982e+05,
                        3.33958472e+05, 4.45277963e+05, 1.00000000e+00,
                        2.00000000e+00, 3.00000000e+00,   4.00000000e+00,

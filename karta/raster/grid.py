@@ -657,7 +657,7 @@ class RegularGrid(Grid):
         msk = np.zeros([ny, nx], dtype=np.bool)
         for poly in polys:
 
-            x, y = poly.get_coordinate_lists(self.crs)[:2]
+            x, y = poly.coords(self.crs)[:2]
             if not poly.isclockwise():
                 x = x[::-1]
                 y = y[::-1]
@@ -1017,7 +1017,7 @@ class RegularGrid(Grid):
             if args[0]._geotype == "Point":
                 x, y = args[0].get_vertex(crs=self.crs)[:2]
             elif args[0]._geotype == "Multipoint":
-                x, y = args[0].get_coordinate_lists(crs=self.crs)
+                x, y = args[0].coords(crs=self.crs)
             else:
                 raise argerror
         else:
@@ -1065,7 +1065,7 @@ class RegularGrid(Grid):
         if resolution is None:
             resolution = min(self.transform[2:4])
         points = line.to_points(resolution)
-        z = self.sample(*points.get_coordinate_lists(crs=self.crs), **kw)
+        z = self.sample(*points.coords(crs=self.crs), **kw)
         if len(self.bands) != 1:
             for i in range(self.nbands):
                 points.data.setfield("band_{0}".format(i), z[i])

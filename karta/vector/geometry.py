@@ -389,7 +389,7 @@ class MultiVertexBase(Geometry):
 
 class MultiVertexMixin(object):
 
-    def get_coordinate_lists(self, crs=None):
+    def coords(self, crs=None):
         """ Return horizontal coordinate lists.
 
         Parameters
@@ -401,10 +401,6 @@ class MultiVertexMixin(object):
         if crs is not None and (crs != self.crs):
             x, y = _reproject((x, y), self.crs, crs)
         return x, y
-
-    @property
-    def coordinates(self):
-        return self.get_coordinate_lists()
 
     def vertices(self, crs=None, drop_z=False):
         """ Return vertices as an array.
@@ -1136,7 +1132,7 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
 
         else:
             # Cartesian coordinate systems
-            x, y = self.coordinates
+            x, y = self.coords()
             x0 = np.min(x)
             area = (0.5*(x[0] + x[-1]) - x0) * (y[0] - y[-1])
             area += sum((0.5*(x[i+1]+x[i]) - x0) * (y[i+1] - y[i]) for i in range(len(x)-1))
@@ -1145,7 +1141,7 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
     @property
     def centroid(self):
         """ Return Polygon centroid as a Point, ignoring sub-polygons. """
-        x, y = self.coordinates
+        x, y = self.coords()
         A = 0.5 * sum(x[i]*y[i+1] - x[i+1]*y[i] for i in range(-1, len(self)-1))
         cx = sum((x[i] + x[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
                     for i in range(-1, len(self)-1)) / (6*A)
@@ -1652,7 +1648,7 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
                 vertices.append(np.array(line_vertices))
             return vertices
 
-    def get_coordinate_lists(self, crs=None):
+    def coords(self, crs=None):
         """ Returns a list of 2xn arrays representing lists of coordinates """
         ret = []
         for line_vertices in self.vertices(crs=crs):
@@ -1803,7 +1799,7 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
                 vertices.append(poly)
             return vertices
 
-    def get_coordinate_lists(self, crs=None):
+    def coords(self, crs=None):
         """ Returns a list of 2xn arrays representing lists of coordinates """
         ret = []
         for poly_vertices in self.vertices(crs=crs):

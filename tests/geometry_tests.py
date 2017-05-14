@@ -320,10 +320,10 @@ class TestGeometryAnalysis(unittest.TestCase):
         self.assertEqual(geom.bbox(), (-3, -4, 7, 8))
         return
 
-    def test_multiline_get_coordinate_lists(self):
+    def test_multiline_coords(self):
         g = Multiline([[(0, 1), (1, 2), (2, 3), (3, 4)],
                        [(5, 3), (4, 2), (3, 1), (2, 0)]])
-        lists = g.get_coordinate_lists()
+        lists = g.coords()
         self.assertTrue(np.all(lists[0] == np.array([[0, 1, 2, 3], [1, 2, 3, 4]])))
         self.assertTrue(np.all(lists[1] == np.array([[5, 4, 3, 2], [3, 2, 1, 0]])))
         return
@@ -331,7 +331,7 @@ class TestGeometryAnalysis(unittest.TestCase):
     def test_multipolygon(self):
         g = Multipolygon([[[(0, 1), (1, 2), (2, 3), (3, 4)]],
                           [[(5, 3), (4, 2), (3, 1), (2, 0)]]])
-        lists = g.get_coordinate_lists()
+        lists = g.coords()
         self.assertTrue(np.all(lists[0] == np.array([[[0, 1, 2, 3], [1, 2, 3, 4]]])))
         self.assertTrue(np.all(lists[1] == np.array([[[5, 4, 3, 2], [3, 2, 1, 0]]])))
         return
@@ -468,11 +468,11 @@ class TestGeometryAnalysis(unittest.TestCase):
     def test_poly_rotate(self):
         poly = Polygon([(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])
         rot45 = poly.rotate(45, (0.5, 0.5))
-        self.assertTrue(np.allclose(rot45.coordinates,
+        self.assertTrue(np.allclose(rot45.coords(),
                                     np.array([[ 0.5,  1.20710678, 0.5, -0.20710678],
                                               [-0.20710678, 0.5,  1.20710678, 0.5 ]])))
         rot90 = poly.rotate(90, (0.0, 0.0))
-        self.assertTrue(np.allclose(rot90.coordinates,
+        self.assertTrue(np.allclose(rot90.coords(),
                                     np.array([[0.0, 0.0, -1.0, -1.0],
                                               [0.0, 1.0, 1.0, 0.0]])))
         return
