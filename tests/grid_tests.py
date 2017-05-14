@@ -15,11 +15,11 @@ class RegularGridTests(unittest.TestCase):
         pe = peaks(n=49)
         self.rast = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
 
-    def test_get_resolution(self):
+    def test_resolution(self):
         grid = RegularGrid([0.0, 0.0, 25.0, 35.0, 10.0, 10.0])
         self.assertEqual(grid.resolution, (25.0, 35.0))
 
-    def test_get_coordinates(self):
+    def test_coordinates(self):
         cg = self.rast.coordinates()
         self.assertTrue(isinstance(cg, karta.raster.coordgen.CoordinateGenerator))
         self.assertEqual(cg.transform, self.rast.transform)
@@ -29,14 +29,14 @@ class RegularGridTests(unittest.TestCase):
         pe[40:,:] = np.nan
         pe[:,:5] = np.nan
         grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
-        self.assertEqual(grid.bbox, (0, 0, 30*49, 30*49))
+        self.assertEqual(grid.bbox(), (0, 0, 30*49, 30*49))
 
     def test_data_bbox(self):
         pe = peaks(n=49)
         pe[40:,:] = np.nan
         pe[:,:5] = np.nan
         grid = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
-        self.assertEqual(grid.data_bbox, (5*30, 0, 30*49, 30*40))
+        self.assertEqual(grid.data_bbox(), (5*30, 0, 30*49, 30*40))
 
     def test_add_rgrid(self):
         rast2 = RegularGrid(self.rast.transform,
@@ -335,33 +335,32 @@ class RegularGridTests(unittest.TestCase):
         self.assertTrue(np.sum(self.rast.vertex_coords()[0] - ans[0]) < 1e-10)
         self.assertTrue(np.sum(self.rast.vertex_coords()[1] - ans[1]) < 1e-10)
 
-    def test_get_extent(self):
+    def test_extent(self):
         ereg = (0.0, 1470.0, 0.0, 1470.0)
         creg = (15.0, 1455.0, 15.0, 1455.0)
-        self.assertEqual(self.rast.get_extent(reference='center'), creg)
-        self.assertEqual(self.rast.get_extent(reference='edge'), ereg)
+        self.assertEqual(self.rast.extent(reference='center'), creg)
+        self.assertEqual(self.rast.extent(reference='edge'), ereg)
 
-    def test_get_extent_crs(self):
+    def test_extent_crs(self):
         pe = peaks(n=49)
         crs = karta.crs.ProjectedCRS("+proj=utm +zone=12 +ellps=WGS84 +north=True", "UTM 12N (WGS 84)")
         rast_utm12N = RegularGrid((0.0, 0.0, 10000.0, 10000.0, 0.0, 0.0),
                                         values=pe,
                                         crs=crs)
-        a,b,c,d = rast_utm12N.get_extent(reference='center',
-                                         crs=karta.crs.LonLatWGS84)
+        a,b,c,d = rast_utm12N.extent(reference='center', crs=karta.crs.LonLatWGS84)
         self.assertAlmostEqual(a, -115.45687156)
         self.assertAlmostEqual(b, -111.13480112)
         self.assertAlmostEqual(c, 0.0450996517)
         self.assertAlmostEqual(d, 4.3878488543)
 
-    def test_get_data_extent(self):
+    def test_data_extent(self):
         grid = RegularGrid((0, 0, 1, 1, 0, 0), values=np.zeros((128, 128), dtype=np.float64))
         grid[:,:4] = grid.nodata
         grid[:,-7:] = grid.nodata
         grid[:21,:] = grid.nodata
         grid[-17:,:] = grid.nodata
-        self.assertEqual(grid.get_data_extent("edge"), (4, 121, 21, 111))
-        self.assertEqual(grid.get_data_extent("center"), (4.5, 120.5, 21.5, 110.5))
+        self.assertEqual(grid.data_extent("edge"), (4, 121, 21, 111))
+        self.assertEqual(grid.data_extent("center"), (4.5, 120.5, 21.5, 110.5))
 
     def test_minmax_nodata(self):
         values = np.array([[4, 5, 3], [4, 2, -9], [3, 6, 1]])
@@ -402,7 +401,7 @@ class RegularGridTests(unittest.TestCase):
 
     def test_clip_to_extent(self):
         proto = RegularGrid((500, 500, 30, 30, 0, 0), np.zeros((15,15)))
-        clipped = self.rast.clip(*proto.get_extent("edge"))
+        clipped = self.rast.clip(*proto.extent("edge"))
         self.assertEqual(clipped.size, (15, 15))
         self.assertEqual(clipped.transform, (510, 510, 30, 30, 0, 0))
         X, Y = clipped.center_coords()
@@ -548,29 +547,28 @@ class RegularGridTests(unittest.TestCase):
 
         self.assertEqual(int(np.nansum(masked_grid[:,:])), 73399874364)
 
-    def test_get_positions(self):
+    def test_positions(self):
         grid = RegularGrid([0.0, 0.0, 1.0, 1.0, 0.0, 0.0],
                                  values=np.zeros((3,3)))
-        (i, j) = grid.get_positions(1.5, 1.5)
+        (i, j) = grid.positions(1.5, 1.5)
         self.assertEqual((i,j), (1.0, 1.0))
-        (i, j) = grid.get_positions(2.0, 1.5)
+        (i, j) = grid.positions(2.0, 1.5)
         self.assertEqual((i,j), (1.0, 1.5))
 
-    def test_get_indices(self):
-        ind = self.rast.get_indices(15.0, 15.0)
+    def test_indices(self):
+        ind = self.rast.indices(15.0, 15.0)
         self.assertEqual(tuple(ind), (0, 0))
-        ind = self.rast.get_indices(1455.0, 1455.0)
+        ind = self.rast.indices(1455.0, 1455.0)
         self.assertEqual(tuple(ind), (48, 48))
 
-    def test_get_indices_onevec(self):
-        ind = self.rast.get_indices([15.0], [15.0])
+    def test_indices_onevec(self):
+        ind = self.rast.indices([15.0], [15.0])
         self.assertEqual(tuple(ind), (0, 0))
-        ind = self.rast.get_indices(1455.0, 1455.0)
+        ind = self.rast.indices(1455.0, 1455.0)
         self.assertEqual(tuple(ind), (48, 48))
 
-    def test_get_indices_vec(self):
-        ind = self.rast.get_indices(np.arange(15.0, 1470, 5),
-                                    np.arange(15.0, 1470, 5))
+    def test_indices_vec(self):
+        ind = self.rast.indices(np.arange(15.0, 1470, 5), np.arange(15.0, 1470, 5))
 
         xi = np.array([ 0,  0,  0,  0,  1,  1,  1,  1,  1,  2,  2,  2,  2, 2,
             2, 2,  3, 3,  3,  3,  3,  4,  4,  4,  4,  4,  4,  4,  5,  5, 5,  5,
