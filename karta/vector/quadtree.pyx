@@ -70,7 +70,7 @@ cdef class QuadTree:
         cdef int idup = 0
         cdef dict duplicates = {}
 
-        xmin, ymin, xmax, ymax = points.bbox
+        xmin, ymin, xmax, ymax = points.bbox()
         bbox = qt_new_bbox(xmin, ymin, xmax, ymax)
         self.root.leafnode = qt_new_leaf(leaf_capacity, bbox)
 

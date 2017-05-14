@@ -68,7 +68,7 @@ class ReadGPXTests(unittest.TestCase):
         tracks = vector.read_gpx_tracks(os.path.join(TESTDATA, "gpx_input", "fishermans-trail.gpx"))
         track1 = tracks[0]
         seg1 = track1[0]
-        self.assertEqual(seg1.bbox, (-123.00702, 49.32947, -122.991408, 49.392751))
+        self.assertEqual(seg1.bbox(), (-123.00702, 49.32947, -122.991408, 49.392751))
 
 if __name__ == "__main__":
     unittest.main()

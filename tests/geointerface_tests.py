@@ -78,7 +78,7 @@ class TestGeoInterface(unittest.TestCase):
     def test_poly_output(self):
         p = Polygon([(4, 2), (3, 5), (3, 2), (7, 3)])
         sp = shapely.geometry.shape(p.geomdict)
-        self.assertEqual(p.bbox, sp.bounds)
+        self.assertEqual(p.bbox(), sp.bounds)
         return
 
     @unittest.skipIf(not HAS_SHAPELY, "shapely required")
@@ -103,7 +103,7 @@ class TestGeoInterface(unittest.TestCase):
     def test_poly_input(self):
         sp = shapely.geometry.Polygon([(4, 2), (3, 5), (3, 2), (7, 3)])
         p = vector.read.from_shape(sp)
-        self.assertEqual(p.bbox, sp.bounds)
+        self.assertEqual(p.bbox(), sp.bounds)
         return
 
     @unittest.skipIf(not HAS_SHAPELY, "shapely required")
@@ -113,8 +113,8 @@ class TestGeoInterface(unittest.TestCase):
         smp = shapely.geometry.MultiPolygon([sp1, sp2])
         mpoly = vector.read.from_shape(smp)
         p1, p2 = mpoly
-        self.assertEqual(p1.bbox, sp1.bounds)
-        self.assertEqual(p2.bbox, sp2.bounds)
+        self.assertEqual(p1.bbox(), sp1.bounds)
+        self.assertEqual(p2.bbox(), sp2.bounds)
         return
 
     @unittest.skipIf(not HAS_SHAPELY, "shapely required")

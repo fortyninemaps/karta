@@ -169,7 +169,6 @@ cdef class CoordString:
             pos += step
         return result.reshape([outlength, self.rank])
 
-    @property
     def bbox(self):
         cdef double xmin, ymin, xmax, ymax
         cdef int i = 0

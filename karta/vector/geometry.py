@@ -428,12 +428,8 @@ class MultiVertexMixin(object):
                 vt.append(v[2])
             return np.vstack(vt).T
 
-    @property
-    def bbox(self):
-        return self.get_bbox()
-
     @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
+    def bbox(self, crs=None):
         """ Return the bounding box.
 
         Parameters
@@ -481,13 +477,13 @@ class MultiVertexMixin(object):
         tuple
             (xmin, xmax, ymin, ymax)
         """
-        bb = self.get_bbox(crs=crs)
+        bb = self.bbox(crs=crs)
         return bb[0], bb[2], bb[1], bb[3]
 
     def _bbox_overlap(self, other):
         """ Whether bounding box overlaps with that of another Geometry. """
-        reg0 = self.bbox
-        reg1 = other.bbox
+        reg0 = self.bbox()
+        reg1 = other.bbox(crs=self.crs)
         return (reg0[0] <= reg1[2] and reg1[0] <= reg0[2] and
                 reg0[1] <= reg1[3] and reg1[1] <= reg0[3])
 
@@ -627,8 +623,8 @@ class MultiVertexMixin(object):
 class ConnectedMultiVertexMixin(MultiVertexMixin):
 
     @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
-        """ Dateline-aware get_bbox for geometries consisting of connected
+    def bbox(self, crs=None):
+        """ Dateline-aware bbox for geometries consisting of connected
         vertices.
 
         Parameters
@@ -651,7 +647,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         if isinstance(crs, GeographicalCRS):
             bbox = _cdateline.bbox(cs)
         else:
-            bbox = super(ConnectedMultiVertexMixin, self).get_bbox(crs=crs)
+            bbox = super(ConnectedMultiVertexMixin, self).bbox(crs=crs)
         return bbox
 
     @property
@@ -698,7 +694,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         -----
         - If CRS is Geographical, uses a spherical approximation.
         """
-        if _cintersection.bboxes_overlap(self.bbox, other.bbox):
+        if _cintersection.bboxes_overlap(self.bbox(), other.bbox(self.crs)):
             if isinstance(self.crs, GeographicalCRS):
                 return _cintersection.intersects_sph(self.vertices, other.vertices)
             else:
@@ -862,7 +858,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixi
     @property
     def geomdict(self):
         return {"type" : "LineString",
-                "bbox" : self.bbox,
+                "bbox" : self.bbox(),
                 "coordinates" : _as_nested_lists(self.vertices)}
 
     def extend(self, other):
@@ -1040,7 +1036,7 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
         for geom in self.subs:
             coords.append(_as_nested_lists(geom.vertices_ring))
         return {"type" : "Polygon",
-                "bbox" : self.bbox,
+                "bbox" : self.bbox(),
                 "coordinates" : coords}
 
     def _subset(self, idxs):
@@ -1305,7 +1301,7 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
     @property
     def geomdict(self):
         return {"type" : "MultiPoint",
-                "bbox" : self.bbox,
+                "bbox" : self.bbox(),
                 "coordinates" : _as_nested_lists(self.vertices)}
 
     @property
@@ -1398,7 +1394,7 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
         """ Return Multipoint subset that is within a polygon.
         """
         if hasattr(self, "quadtree"):
-            bbox = poly.get_bbox(crs=self.crs)
+            bbox = poly.bbox(crs=self.crs)
             candidate_indices = self.quadtree.search_within(*bbox)
             confirmed_indices = []
             for i in candidate_indices:
@@ -1419,8 +1415,8 @@ class MultiVertexMultipartMixin(object):
     - "which members are contained by this Polygon?"
     """
     @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
-        bbs = [part.get_bbox(crs=crs) for part in self]
+    def bbox(self, crs=None):
+        bbs = [part.bbox(crs=crs) for part in self]
         xmin = min([bb[0] for bb in bbs])
         ymin = min([bb[1] for bb in bbs])
         xmax = max([bb[2] for bb in bbs])
@@ -1429,12 +1425,8 @@ class MultiVertexMultipartMixin(object):
 
     @cache_decorator("extent")
     def get_extent(self, crs=None):
-        bb = self.get_bbox(crs=crs)
+        bb = self.bbox(crs=crs)
         return bb[0], bb[2], bb[1], bb[3]
-
-    @property
-    def bbox(self):
-        return self.get_bbox()
 
     @property
     def extent(self):
@@ -1521,7 +1513,7 @@ class MultiVertexMultipartMixin(object):
         Returns
         -------
         """
-        indices = self.rtree.search_overlapping(geom.get_bbox(self.crs))
+        indices = self.rtree.search_overlapping(geom.bbox(self.crs))
         results = []
         if isinstance(geom, Line):
             for i in indices:
@@ -1548,7 +1540,7 @@ class MultiVertexMultipartMixin(object):
         """
         if not isinstance(geom, Polygon):
             raise TypeError("argument must be Polygon")
-        indices = self.rtree.search_overlapping(geom.bbox)
+        indices = self.rtree.search_overlapping(geom.bbox(crs=self.crs))
         results = []
         for i in indices:
             test_geom = self[i]
@@ -1605,7 +1597,7 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
     @property
     def geomdict(self):
         return {"type" : "MultiLineString",
-                "bbox" : self.bbox,
+                "bbox" : self.bbox(),
                 "coordinates" : _as_nested_lists(self.vertices)}
 
     @property
@@ -1734,7 +1726,7 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
     @property
     def geomdict(self):
         return {"type" : "MultiPolygon",
-                "bbox" : self.bbox,
+                "bbox" : self.bbox(),
                 "coordinates" : _as_nested_lists(self.vertices_ring)}
 
     @property

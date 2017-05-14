@@ -39,7 +39,7 @@ class TestDateline(unittest.TestCase):
     def test_bbox_geographical(self):
         for crs in (SphericalEarth, LonLatWGS84):
             poly = Polygon([(179, -1), (-179, -1), (-179, 1), (179, 1)], crs=crs)
-            bb = poly.bbox
+            bb = poly.bbox()
             self.assertEqual((bb[0], bb[2]), (179, -179))
             self.assertAlmostEqual(bb[1], -1.000152297, places=8)
             self.assertAlmostEqual(bb[3], 1.000152297, places=8)

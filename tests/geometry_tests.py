@@ -289,17 +289,17 @@ class TestGeometryAnalysis(unittest.TestCase):
     def test_multipoint_bbox(self):
         mp = Multipoint(self.vertices, data=self.data)
         bbox = (1.0, 0.0, 9.0, 9.0)
-        self.assertEqual(mp.bbox, bbox)
+        self.assertEqual(mp.bbox(), bbox)
         return
 
     def test_empty_multipoint_bbox(self):
         mp = Multipoint([], crs=Cartesian)
-        bb = mp.bbox
+        bb = mp.bbox()
         for item in bb:
             self.assertTrue(np.isnan(item))
 
         mp = Multipoint([], crs=LonLatWGS84)
-        bb = mp.bbox
+        bb = mp.bbox()
         for item in bb:
             self.assertTrue(np.isnan(item))
         return
@@ -309,7 +309,7 @@ class TestGeometryAnalysis(unittest.TestCase):
                           [(6,8),(2,6),(3,0)],
                           [(-3,-4), (7, -1), (3, 2), (2, -3)]],
                          crs=LonLatWGS84)
-        self.assertEqual(geom.bbox, (-3, -4, 7, 8))
+        self.assertEqual(geom.bbox(), (-3, -4, 7, 8))
         return
 
     def test_multipolygon_bbox(self):
@@ -317,7 +317,7 @@ class TestGeometryAnalysis(unittest.TestCase):
                              [[(6,8),(2,6),(3,0)]],
                              [[(-3,-4), (7, -1), (3, 2), (2, -3)]]],
                             crs=LonLatWGS84)
-        self.assertEqual(geom.bbox, (-3, -4, 7, 8))
+        self.assertEqual(geom.bbox(), (-3, -4, 7, 8))
         return
 
     def test_multiline_get_coordinate_lists(self):
