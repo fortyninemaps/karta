@@ -127,19 +127,19 @@ cdef class CoordString:
         return True
 
     cdef double getX(self, int index):
-        if self.ring and index == self.length:
+        if index == self.length and self.ring:
             index = 0
         return self.coords[index*self.rank]
 
     cdef double getY(self, int index):
-        if self.ring and index == self.length:
+        if index == self.length and self.ring:
             index = 0
         return self.coords[index*self.rank+1]
 
     cdef double getZ(self, int index):
         if self.rank != 3:
             return NAN
-        if self.ring and index == self.length:
+        if index == self.length and self.ring:
             index = 0
         return self.coords[index*self.rank+2]
 
