@@ -459,12 +459,8 @@ class MultiVertexMixin(object):
         else:
             return _cvectorgeo.bbox(cs)
 
-    @property
-    def extent(self):
-        return self.get_extent()
-
     @cache_decorator("extent")
-    def get_extent(self, crs=None):
+    def extent(self, crs=None):
         """ Calculate geometry extent.
 
         Parameters
@@ -1424,13 +1420,9 @@ class MultiVertexMultipartMixin(object):
         return (xmin, ymin, xmax, ymax)
 
     @cache_decorator("extent")
-    def get_extent(self, crs=None):
+    def extent(self, crs=None):
         bb = self.bbox(crs=crs)
         return bb[0], bb[2], bb[1], bb[3]
-
-    @property
-    def extent(self):
-        return self.get_extent()
 
     def apply_transform(self, M):
         """ Apply an affine transform given by matrix *M* to data and return a
