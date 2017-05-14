@@ -143,7 +143,7 @@ class TestGeoInterface(unittest.TestCase):
                 'geometry': Pointy.__geo_interface__ }
         p = vector.read.from_shape(Placemark())
         self.assertEqual(p.properties["name"], "Phoo")
-        self.assertEqual(p.vertex, (0.0, 0.0))
+        self.assertEqual(p.vertex(), (0.0, 0.0))
         return
 
 if __name__ == "__main__":

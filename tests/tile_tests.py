@@ -8,7 +8,7 @@ class TileTests(unittest.TestCase):
     def test_tile_tuple(self):
         t = tile_from_point(Point((0, 0), crs=LonLatWGS84), 0)
         self.assertEqual(t, Tile(0, 0, 0))
-        
+
         t = tile_from_point(Point((0, 0), crs=LonLatWGS84), 8)
         self.assertEqual(t, Tile(8, 128, 128))
 
@@ -22,7 +22,7 @@ class TileTests(unittest.TestCase):
         self.assertAlmostEqual(pt.y, 85.05112877, places=7)
 
         pt = Tile(1, 1, 1).nw_corner()
-        self.assertEqual(pt.vertex, (0, 0))
+        self.assertEqual(pt.vertex(), (0, 0))
         return
 
     def test_tile_bbox(self):

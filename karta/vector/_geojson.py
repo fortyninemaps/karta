@@ -1,5 +1,5 @@
 import picogeojson
-from .utilities import _as_nested_lists, _reproject_nested
+from .utilities import _as_nested_lists
 from ..crs import LonLatWGS84
 
 def crs_from_urn(urn):
@@ -45,18 +45,18 @@ class GeoJSONOutMixin(object):
             crs = crs_from_karta(geoms[0].crs)
 
         if geom._geotype == "Point":
-            g = picogeojson.Point(geom.vertex, crs)
+            g = picogeojson.Point(geom.vertex(), crs)
         elif geom._geotype == "Line":
-            g = picogeojson.LineString(_as_nested_lists(geom.vertices), crs)
+            g = picogeojson.LineString(_as_nested_lists(geom.vertices()), crs)
         elif geom._geotype == "Polygon":
             verts = [_as_nested_lists(geom.vertices_ring)]
             for sub in geom.subs:
-                verts.append(_as_nested_lists(sub.vertices))
+                verts.append(_as_nested_lists(sub.vertices()))
             g = picogeojson.Polygon(verts, crs)
         elif geom._geotype == "Multipoint":
-            g = picogeojson.MultiPoint(_as_nested_lists(geom.vertices), crs)
+            g = picogeojson.MultiPoint(_as_nested_lists(geom.vertices()), crs)
         elif geom._geotype == "Multiline":
-            g = picogeojson.MultiLineString(_as_nested_lists(geom.vertices), crs)
+            g = picogeojson.MultiLineString(_as_nested_lists(geom.vertices()), crs)
         elif geom._geotype == "Multipolygon":
             g = picogeojson.MultiPolygon(_as_nested_lists(geom.vertices_ring), crs)
         else:
@@ -94,9 +94,9 @@ class GeoJSONOutMixin(object):
             if hasattr(self, "data"):
                 kw["data"] = self.data
             if hasattr(self, "vertices"):
-                vertices = _reproject_nested(self.vertices, self.crs, LonLatWGS84)
+                vertices = self.vertices(crs=LonLatWGS84)
             else:
-                vertices = _reproject(self.vertex, self.crs, LonLatWGS84)
+                vertices = self.vertex(crs=LonLatWGS84)
             geo = type(self)(vertices, **kw)
         else:
             geo = self

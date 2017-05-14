@@ -30,7 +30,7 @@ class TestSinglepartGeometry(unittest.TestCase):
         pts = [Point((x, y), properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(vertices, data))]
 
-        line = Line([pt.vertex for pt in pts], crs=LonLatWGS84)
+        line = Line(pts, crs=LonLatWGS84)
         ans = Line(vertices, crs=LonLatWGS84)
         self.assertEqual(line, ans)
 
@@ -42,7 +42,7 @@ class TestSinglepartGeometry(unittest.TestCase):
 
         pts = [Point((x, y), properties={"p":i}, crs=LonLatWGS84)
                 for i,((x,y),d) in enumerate(zip(vertices, data))]
-        poly = Polygon([pt.vertex for pt in pts], crs=LonLatWGS84)
+        poly = Polygon(pts, crs=LonLatWGS84)
         ans = Polygon(vertices, crs=LonLatWGS84)
         self.assertEqual(poly, ans)
 
@@ -101,7 +101,7 @@ class TestMultipartGeometry(unittest.TestCase):
 
         g = Multiline(lines)
         for l, l_ in zip(g, lines):
-            self.assertTrue(np.all(l.vertices == l_.vertices))
+            self.assertTrue(np.all(l.vertices() == l_.vertices()))
         self.assertEqual(g.crs, LonLatWGS84)
 
     def test_multiline_from_lines(self):
@@ -150,7 +150,7 @@ class TestMultipartGeometry(unittest.TestCase):
 
         g = Multipolygon(polys)
         for p, p_ in zip(g, polys):
-            self.assertEqual(p.vertices, p_.vertices)
+            self.assertEqual(p.vertices(), p_.vertices())
         self.assertEqual(g.crs, LonLatWGS84)
 
     def test_multipolygon_from_polygons(self):

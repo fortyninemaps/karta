@@ -125,7 +125,7 @@ class TestShapefile(unittest.TestCase):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
 
     def test_write_collection_multipoint(self):
-        mp = Multipoint([p.vertex for p in self.points])
+        mp = Multipoint(self.points)
         mp0 = copy(mp)
         mp1 = copy(mp.shift((4, 2)))
         mp2 = copy(mp.shift((-2, 3)))
@@ -185,7 +185,7 @@ class TestShapefile(unittest.TestCase):
         for part in proj4.split():
             self.assertTrue(part[:8] in newp[0].crs.get_proj4())
 
-        coords = list(zip(*[pt.vertex[:2] for pt in newp]))
+        coords = list(zip(*[pt.vertex()[:2] for pt in newp]))
         self.assertEqual(coords, [(521236.8297444395, 521236.8297444395,
                                    521236.8297444395, 547490.4452879033,
                                    547490.4452879033, 547490.4452879033,

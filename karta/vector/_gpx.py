@@ -190,7 +190,7 @@ class GPX(object):
                 properties[key] = str(waypoint.properties[key])
             else:
                 extensions[key] = str(waypoint.properties[key])
-        waypt = Point(waypoint.vertex, properties, extensions)
+        waypt = Point(waypoint.vertex(), properties, extensions)
         self.waypts.append(waypt)
         return
 
@@ -242,7 +242,7 @@ class GPX(object):
                 pt_properties = []
                 pt_extensions = []
 
-            for i, xy in enumerate(line.vertices):
+            for i, xy in enumerate(line.vertices()):
 
                 ptprop = {}
                 ptexte = {}
@@ -276,7 +276,7 @@ class GPX(object):
         Needs to properly add and <ele> property for Lines of rank 3
         """
         points = []
-        for i, vertex in enumerate(route.vertices):
+        for i, vertex in enumerate(route.vertices()):
             prop = {}
             if route.data is not None:
                 for k in route.data.fields:
