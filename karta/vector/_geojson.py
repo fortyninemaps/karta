@@ -20,7 +20,8 @@ class GeoJSONOutMixin(object):
     """
 
     _serializer = picogeojson.Serializer(antimeridian_cutting=False,
-                                         enforce_poly_winding=False)
+                                         enforce_poly_winding=False,
+                                         write_crs=True)
 
     @staticmethod
     def _as_named_tuple(geom, **kwargs):
@@ -69,7 +70,7 @@ class GeoJSONOutMixin(object):
 
         properties = geom.properties
         properties.update(data)
-        return picogeojson.Feature(g, properties)
+        return picogeojson.Feature(g, properties, None, g.crs)
 
     def as_geojson(self, indent=None, urn=None, force_wgs84=True):
         """ Output representation of internal data as a GeoJSON string.
