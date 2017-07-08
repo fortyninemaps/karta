@@ -19,9 +19,7 @@ class GeoJSONOutMixin(object):
     functionality.
     """
 
-    _serializer = picogeojson.Serializer(antimeridian_cutting=False,
-                                         enforce_poly_winding=False,
-                                         write_crs=True)
+    _serializer = picogeojson.Serializer(antimeridian_cutting=False, write_crs=True)
 
     @staticmethod
     def _as_named_tuple(geom, **kwargs):
