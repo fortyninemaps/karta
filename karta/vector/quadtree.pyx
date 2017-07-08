@@ -1,7 +1,6 @@
 """ Cython wrapper quadtree """
 
-# from .coordstring import Coordstring
-# from .coordstring cimport Coordstring
+from libc.math cimport isnan
 
 cdef extern from "quadtree.h":
 
@@ -76,6 +75,8 @@ cdef class QuadTree:
 
         while i != len(points):
             x, y = points[i][:2]
+            if isnan(x) or isnan(y):
+                raise ValueError("NaN value at position {}".format(i))
             pos = qt_new_position(i, x, y)
             retnode = qt_insert(self.root, pos[0], &idup)
             if idup != -1:
