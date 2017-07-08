@@ -85,7 +85,7 @@ setup(
                         "pyproj>=1.9",
                         "gdal>=1.10",
                         "blosc>=1.2.8",
-                        "picogeojson>=0.6.0"],
+                        "picogeojson==0.5.0"],
     author = "Nat Wilson",
     author_email = "natw@fortyninemaps.com",
     packages = ["karta", "karta.vector", "karta.raster"],

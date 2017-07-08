@@ -1,6 +1,6 @@
 setuptools >= 17.0
 numpy >= 1.10
-picogeojson >= 0.6.0
+picogeojson == 0.5.0
 pyproj >= 1.9
 gdal >= 1.10
 blosc >= 1.2.8
