@@ -40,7 +40,7 @@ class CoordStringTests(unittest.TestCase):
         x = np.linspace(0, 5)
         y = x**2
         cs = CoordString(np.c_[x, y])
-        self.assertEqual(cs.bbox, (0, 0, 5, 25))
+        self.assertEqual(cs.bbox(), (0, 0, 5, 25))
         return
 
     def test_bbox3(self):
@@ -48,7 +48,7 @@ class CoordStringTests(unittest.TestCase):
         y = x**2
         z = x**3
         cs = CoordString(np.c_[x, y, z])
-        self.assertEqual(cs.bbox, (0, 0, 5, 25))
+        self.assertEqual(cs.bbox(), (0, 0, 5, 25))
         return
 
     def test_setitem(self):

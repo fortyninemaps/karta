@@ -52,7 +52,7 @@ class TestGeometry(unittest.TestCase):
 
     def test_point_vertex(self):
         point = Point((1.0, 2.0, 3.0))
-        self.assertEqual(point.get_vertex(), (1.0, 2.0, 3.0))
+        self.assertEqual(point.vertex(), (1.0, 2.0, 3.0))
         return
 
     def test_point_index(self):
@@ -194,8 +194,8 @@ class TestGeometry(unittest.TestCase):
     def test_segments(self):
         line = Line(self.vertices)
         for i, seg in enumerate(line.segments):
-            self.assertTrue(np.all(np.equal(seg.vertices[0], self.vertices[i])))
-            self.assertTrue(np.all(np.equal(seg.vertices[1], self.vertices[i+1])))
+            self.assertTrue(np.all(np.equal(seg.vertices()[0], self.vertices[i])))
+            self.assertTrue(np.all(np.equal(seg.vertices()[1], self.vertices[i+1])))
         return
 
 class TestGeometryAnalysis(unittest.TestCase):
@@ -289,17 +289,17 @@ class TestGeometryAnalysis(unittest.TestCase):
     def test_multipoint_bbox(self):
         mp = Multipoint(self.vertices, data=self.data)
         bbox = (1.0, 0.0, 9.0, 9.0)
-        self.assertEqual(mp.bbox, bbox)
+        self.assertEqual(mp.bbox(), bbox)
         return
 
     def test_empty_multipoint_bbox(self):
         mp = Multipoint([], crs=Cartesian)
-        bb = mp.bbox
+        bb = mp.bbox()
         for item in bb:
             self.assertTrue(np.isnan(item))
 
         mp = Multipoint([], crs=LonLatWGS84)
-        bb = mp.bbox
+        bb = mp.bbox()
         for item in bb:
             self.assertTrue(np.isnan(item))
         return
@@ -309,7 +309,7 @@ class TestGeometryAnalysis(unittest.TestCase):
                           [(6,8),(2,6),(3,0)],
                           [(-3,-4), (7, -1), (3, 2), (2, -3)]],
                          crs=LonLatWGS84)
-        self.assertEqual(geom.bbox, (-3, -4, 7, 8))
+        self.assertEqual(geom.bbox(), (-3, -4, 7, 8))
         return
 
     def test_multipolygon_bbox(self):
@@ -317,13 +317,13 @@ class TestGeometryAnalysis(unittest.TestCase):
                              [[(6,8),(2,6),(3,0)]],
                              [[(-3,-4), (7, -1), (3, 2), (2, -3)]]],
                             crs=LonLatWGS84)
-        self.assertEqual(geom.bbox, (-3, -4, 7, 8))
+        self.assertEqual(geom.bbox(), (-3, -4, 7, 8))
         return
 
-    def test_multiline_get_coordinate_lists(self):
+    def test_multiline_coords(self):
         g = Multiline([[(0, 1), (1, 2), (2, 3), (3, 4)],
                        [(5, 3), (4, 2), (3, 1), (2, 0)]])
-        lists = g.get_coordinate_lists()
+        lists = g.coords()
         self.assertTrue(np.all(lists[0] == np.array([[0, 1, 2, 3], [1, 2, 3, 4]])))
         self.assertTrue(np.all(lists[1] == np.array([[5, 4, 3, 2], [3, 2, 1, 0]])))
         return
@@ -331,7 +331,7 @@ class TestGeometryAnalysis(unittest.TestCase):
     def test_multipolygon(self):
         g = Multipolygon([[[(0, 1), (1, 2), (2, 3), (3, 4)]],
                           [[(5, 3), (4, 2), (3, 1), (2, 0)]]])
-        lists = g.get_coordinate_lists()
+        lists = g.coords()
         self.assertTrue(np.all(lists[0] == np.array([[[0, 1, 2, 3], [1, 2, 3, 4]]])))
         self.assertTrue(np.all(lists[1] == np.array([[[5, 4, 3, 2], [3, 2, 1, 0]]])))
         return
@@ -360,7 +360,7 @@ class TestGeometryAnalysis(unittest.TestCase):
         ch = mp.convex_hull()
         hull_vertices = [(27, 990), (88, 254), (187, 85), (953, 198),
                          (986, 271), (965, 704), (863, 979)]
-        self.assertTrue(np.all(np.equal(ch.vertices, hull_vertices)))
+        self.assertTrue(np.all(np.equal(ch.vertices(), hull_vertices)))
         return
 
     def test_multipoint_convex_hull2(self):
@@ -373,7 +373,7 @@ class TestGeometryAnalysis(unittest.TestCase):
         hull_vertices = [(-482, 26), (-400, -491), (2, -499), (431, -492),
                          (476, 235), (402, 301), (314, 331), (-59, 355),
                          (-421, 172)]
-        self.assertTrue(np.all(np.equal(ch.vertices, hull_vertices)))
+        self.assertTrue(np.all(np.equal(ch.vertices(), hull_vertices)))
         return
 
     def test_multipoint_convex_hull_sph(self):
@@ -381,7 +381,7 @@ class TestGeometryAnalysis(unittest.TestCase):
         vertices = [(-50, 70), (0, 71), (50, 70), (0, 50)]
         mp = Multipoint(vertices, crs=SphericalEarth)
         ch = mp.convex_hull()
-        self.assertTrue(np.all(np.equal(ch.vertices, [(-50, 70), (0, 50), (50, 70)])))
+        self.assertTrue(np.all(np.equal(ch.vertices(), [(-50, 70), (0, 50), (50, 70)])))
         return
 
     def test_connected_multipoint_shortest_distance_to(self):
@@ -403,7 +403,7 @@ class TestGeometryAnalysis(unittest.TestCase):
         return
 
     def assertPointAlmostEqual(self, a, b):
-        for (a_, b_) in zip(a.vertex, b.vertex):
+        for (a_, b_) in zip(a.vertex(), b.vertex()):
             self.assertAlmostEqual(a_, b_, places=5)
         self.assertEqual(a.properties, b.properties)
         self.assertEqual(a.crs, b.crs)
@@ -431,19 +431,17 @@ class TestGeometryAnalysis(unittest.TestCase):
     def test_poly_extent(self):
         poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)])
         poly3 = Polygon([(0.0, 8.0, 0.5), (0.0, 5.0, 0.8), (6.0, 1.0, 0.6)])
-        self.assertEqual(poly.get_extent(), (0.0, 6.0, 1.0, 8.0))
-        self.assertEqual(poly3.get_extent(), (0.0, 6.0, 1.0, 8.0))
+        self.assertEqual(poly.extent(), (0.0, 6.0, 1.0, 8.0))
+        self.assertEqual(poly3.extent(), (0.0, 6.0, 1.0, 8.0))
         return
 
     def test_poly_extent_foreign_crs(self):
         poly = Polygon([(0.0, 8.0), (0.0, 5.0), (6.0, 1.0)], crs=LonLatWGS84)
         poly3 = Polygon([(0.0, 8.0, 0.5), (0.0, 5.0, 0.8), (6.0, 1.0, 0.6)],
                         crs=LonLatWGS84)
-        x, y = zip(*poly.get_vertices(crs=NSIDCNorth))
-        self.assertEqual(poly.get_extent(NSIDCNorth),
-                         (min(x), max(x), min(y), max(y)))
-        self.assertEqual(poly3.get_extent(NSIDCNorth),
-                         (min(x), max(x), min(y), max(y)))
+        x, y = zip(*poly.vertices(crs=NSIDCNorth))
+        self.assertEqual(poly.extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
+        self.assertEqual(poly3.extent(NSIDCNorth), (min(x), max(x), min(y), max(y)))
         return
 
     def test_poly_length(self):
@@ -470,11 +468,11 @@ class TestGeometryAnalysis(unittest.TestCase):
     def test_poly_rotate(self):
         poly = Polygon([(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)])
         rot45 = poly.rotate(45, (0.5, 0.5))
-        self.assertTrue(np.allclose(rot45.coordinates,
+        self.assertTrue(np.allclose(rot45.coords(),
                                     np.array([[ 0.5,  1.20710678, 0.5, -0.20710678],
                                               [-0.20710678, 0.5,  1.20710678, 0.5 ]])))
         rot90 = poly.rotate(90, (0.0, 0.0))
-        self.assertTrue(np.allclose(rot90.coordinates,
+        self.assertTrue(np.allclose(rot90.coords(),
                                     np.array([[0.0, 0.0, -1.0, -1.0],
                                               [0.0, 1.0, 1.0, 0.0]])))
         return
@@ -658,9 +656,9 @@ class TestGeometryProj(unittest.TestCase):
         return
 
     def test_greatcircle_projected(self):
-        van = Point(self.vancouver.get_vertex(GallPetersEqualArea), crs=GallPetersEqualArea)
-        whi = Point(self.whitehorse.get_vertex(GallPetersEqualArea), crs=GallPetersEqualArea)
-        ott = Point(self.ottawa.get_vertex(GallPetersEqualArea), crs=GallPetersEqualArea)
+        van = Point(self.vancouver.vertex(GallPetersEqualArea), crs=GallPetersEqualArea)
+        whi = Point(self.whitehorse.vertex(GallPetersEqualArea), crs=GallPetersEqualArea)
+        ott = Point(self.ottawa.vertex(GallPetersEqualArea), crs=GallPetersEqualArea)
 
         d1 = van.distance(ott, projected=False)
         d2 = van.distance(whi, projected=False)
@@ -720,13 +718,13 @@ class TestAffineTransforms(unittest.TestCase):
         pi = math.pi
         gnew = g.apply_transform(np.array([[math.cos(0.5*pi), -math.sin(0.5*pi), 0],
                                            [math.sin(0.5*pi), math.cos(0.5*pi), 0]]))
-        l1, l2 = gnew.get_vertices()
+        l1, l2 = gnew.vertices()
         self.assertTrue(np.allclose(l1, np.array([(0,0), (-1,1), (-2,1)])))
         self.assertTrue(np.allclose(l2, np.array([(-2,-3), (1,-2), (-1,0)])))
 
         gnew2 = gnew.apply_transform(np.array([[2, 0, 0],
                                                [0, -3, 0]]))
-        l1, l2 = gnew2.get_vertices()
+        l1, l2 = gnew2.vertices()
         self.assertTrue(np.allclose(l1, np.array([(0,0), (-2,-3), (-4,-3)])))
         self.assertTrue(np.allclose(l2, np.array([(-4,9), (2,6), (-2,0)])))
         return
@@ -739,7 +737,7 @@ class TestAffineTransforms(unittest.TestCase):
 
         translated_square = self.square.apply_transform(M)
         ans = np.array([[1, 0], [1, 1], [2, 1], [2, 0]])
-        self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
+        self.assertTrue(np.allclose(translated_square.vertices(), ans))
         return
 
     def test_rotate_multipoint(self):
@@ -751,7 +749,7 @@ class TestAffineTransforms(unittest.TestCase):
 
         translated_square = self.square.apply_transform(M)
         ans = np.array([[0, 0], [-s2, s2], [0, 2*s2], [s2, s2]])
-        self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
+        self.assertTrue(np.allclose(translated_square.vertices(), ans))
         return
 
     def test_stretch_multipoint(self):
@@ -762,7 +760,7 @@ class TestAffineTransforms(unittest.TestCase):
 
         translated_square = self.square.apply_transform(M)
         ans = np.array([[0, 0], [0, 2], [2, 2], [2, 0]])
-        self.assertTrue(np.allclose(translated_square.get_vertices(), ans))
+        self.assertTrue(np.allclose(translated_square.vertices(), ans))
         return
 
 class VectorCRSTests(unittest.TestCase):
@@ -775,14 +773,14 @@ class VectorCRSTests(unittest.TestCase):
 
     def test_vertices_in_crs(self):
         point = Point((-123.0, 49.0), crs=SphericalEarth)
-        self.assertEqual(point.get_vertex(SphericalEarth), (-123.0, 49.0))
+        self.assertEqual(point.vertex(SphericalEarth), (-123.0, 49.0))
 
     def test_vertices_in_crs2(self):
         point = Point((-123.0, 49.0), crs=LonLatWGS84)
         BCAlbers = ProjectedCRS("+proj=aea +lat_1=50 +lat_2=58.5 +lat_0=45 "
                     "+lon_0=-126 +x_0=1000000 +y_0=0 +ellps=GRS80 +datum=NAD83 "
                     "+units=m +no_defs", "BC Albers")
-        self.assertTupleAlmostEqual(point.get_vertex(BCAlbers),
+        self.assertTupleAlmostEqual(point.vertex(BCAlbers),
                                     (1219731.770879303, 447290.49891930853))
         return
 
@@ -795,7 +793,7 @@ class VectorCRSTests(unittest.TestCase):
         ans = [[407650.39665729, 3762606.65987638],
                [421687.71905897, 3784658.46708431],
                [472328.10951276, 3773284.48524179]]
-        for v0, v1 in zip(line.get_vertices(UTM31N), ans):
+        for v0, v1 in zip(line.vertices(UTM31N), ans):
             self.assertTupleAlmostEqual(v0, v1, places=6)
         return
 

@@ -47,7 +47,7 @@ class GPXTests(unittest.TestCase):
         g = vector.gpx.GPX()
         g.add_track(track)
         expected = self.Track([self.Trkseg(
-                        [self.Point(tuple(xy), {}, {}) for xy in track.vertices],
+                        [self.Point(tuple(xy), {}, {}) for xy in track.vertices()],
                         {"name":"segment0"}, {})], {}, {})
         self.assertEqual(g.tracks[0], expected)
         return
@@ -57,7 +57,7 @@ class GPXTests(unittest.TestCase):
                       for i in range(10)], properties={"name":"route0"})
         g = vector.gpx.GPX()
         g.add_route(route)
-        expected = self.Route([self.Point(tuple(xy), {}, {}) for xy in route.vertices],
+        expected = self.Route([self.Point(tuple(xy), {}, {}) for xy in route.vertices()],
                               {"name":"route0"}, {})
         self.assertEqual(g.routes[0], expected)
         return
@@ -68,7 +68,7 @@ class ReadGPXTests(unittest.TestCase):
         tracks = vector.read_gpx_tracks(os.path.join(TESTDATA, "gpx_input", "fishermans-trail.gpx"))
         track1 = tracks[0]
         seg1 = track1[0]
-        self.assertEqual(seg1.bbox, (-123.00702, 49.32947, -122.991408, 49.392751))
+        self.assertEqual(seg1.bbox(), (-123.00702, 49.32947, -122.991408, 49.392751))
 
 if __name__ == "__main__":
     unittest.main()

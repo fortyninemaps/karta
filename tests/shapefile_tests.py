@@ -58,13 +58,6 @@ class TestShapefile(unittest.TestCase):
         for (geom, fnm) in testfiles:
             geom.to_shapefile(os.path.join(TMPDATA, "shapefiles", fnm))
 
-    def assertGeomEqual(self, this, that):
-        self.assertTrue(np.all(this.get_vertices() == that.get_vertices()))
-        try:
-            self.assertEqual(this.crs.get_proj4(), that.crs.get_proj4())
-        except AttributeError:
-            print("warning: crs equality not established")
-
     def test_write_point(self):
         point = self.points[0]
         point.to_shapefile(os.path.join(TESTDIR, "data/point"))
@@ -125,7 +118,7 @@ class TestShapefile(unittest.TestCase):
             self.assertTrue(os.path.isfile(os.path.join(TESTDIR, "data", fnm)))
 
     def test_write_collection_multipoint(self):
-        mp = Multipoint([p.vertex for p in self.points])
+        mp = Multipoint(self.points)
         mp0 = copy(mp)
         mp1 = copy(mp.shift((4, 2)))
         mp2 = copy(mp.shift((-2, 3)))
@@ -153,7 +146,7 @@ class TestShapefile(unittest.TestCase):
         mp = Multipoint(points)
         self.assertEqual(mp.d["species"], ['T. officianale', 'C. tectorum', 'M. alba', 'V. cracca'])
         self.assertEqual(mp.d["ID"], ['0', '1', '2', '3'])
-        x, y = mp.coordinates
+        x, y = mp.coords()
         self.assertTrue(np.all(x == np.array((1.0, 3.0, 4.0, 2.0))))
         self.assertTrue(np.all(y == np.array((1.0, 1.0, 3.0, 2.0))))
 
@@ -162,7 +155,7 @@ class TestShapefile(unittest.TestCase):
         self.assertTrue("+proj=lonlat" in line.crs.get_proj4())
         self.assertTrue("+a=6378137.0" in line.crs.get_proj4())
         self.assertTrue("+f=0.00335281" in line.crs.get_proj4())
-        x, y = line.coordinates
+        x, y = line.coords()
         self.assertTrue(np.all(x == np.array([1.0, 5.0, 5.0, 3.0, 1.0])))
         self.assertTrue(np.all(y == np.array([5.0, 5.0, 1.0, 3.0, 1.0])))
 
@@ -171,7 +164,7 @@ class TestShapefile(unittest.TestCase):
         self.assertTrue("+proj=lonlat" in polygon.crs.get_proj4())
         self.assertTrue("+a=6378137.0" in polygon.crs.get_proj4())
         self.assertTrue("+f=0.00335281" in polygon.crs.get_proj4())
-        x, y = polygon.coordinates
+        x, y = polygon.coords()
         self.assertTrue(np.all(x == np.array([1.0, 5.0, 5.0, 3.0, 1.0])))
         self.assertTrue(np.all(y == np.array([5.0, 5.0, 1.0, 3.0, 1.0])))
 
@@ -185,7 +178,7 @@ class TestShapefile(unittest.TestCase):
         for part in proj4.split():
             self.assertTrue(part[:8] in newp[0].crs.get_proj4())
 
-        coords = list(zip(*[pt.vertex[:2] for pt in newp]))
+        coords = list(zip(*[pt.vertex()[:2] for pt in newp]))
         self.assertEqual(coords, [(521236.8297444395, 521236.8297444395,
                                    521236.8297444395, 547490.4452879033,
                                    547490.4452879033, 547490.4452879033,

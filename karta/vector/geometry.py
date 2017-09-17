@@ -78,19 +78,19 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
         if len(coords) not in (2, 3):
             raise TypeError("Point coordinates must have length 2 or 3")
         super(Point, self).__init__(properties=properties, **kwargs)
-        self.vertex = tuple(coords)
+        self._vertex = tuple(coords)
         self._geotype = "Point"
         return
 
     def __getitem__(self, idx):
-        return self.vertex[idx]
+        return self._vertex[idx]
 
     def __repr__(self):
         return 'Point({0}, {1})'.format(self.x, self.y)
 
     def __eq__(self, other):
         try:
-            return (tuple(self.vertex) == tuple(other.vertex)) and \
+            return (tuple(self._vertex) == tuple(other._vertex)) and \
                    (self.properties == other.properties) and \
                    (self.crs == other.crs)
         except AttributeError:
@@ -101,12 +101,12 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
 
     def __hash__(self):
         ht = hash(self._geotype)
-        hd = hash(self.vertex)
+        hd = hash(self._vertex)
         hc = hash(str(self.crs))
         return ht + (hd << 1) + hd + hc
 
     def __add__(self, other):
-        return Multipoint([self.vertex, other.get_vertex(self.crs)], crs=self.crs)
+        return Multipoint([self._vertex, other.vertex(self.crs)], crs=self.crs)
 
     @property
     def __geo_interface__(self):
@@ -118,24 +118,24 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
 
     @property
     def geomdict(self):
-        return {"type" : "Point", "coordinates" : self.vertex}
+        return {"type" : "Point", "coordinates" : self._vertex}
 
     @property
     def x(self):
-        return self.vertex[0]
+        return self._vertex[0]
 
     @property
     def y(self):
-        return self.vertex[1]
+        return self._vertex[1]
 
     @property
     def z(self):
-        return self.vertex[2]
+        return self._vertex[2]
 
-    def get_vertex(self, crs=None):
+    def vertex(self, crs=None):
         """ Return the Point vertex as a tuple. """
         if crs is None or crs==self.crs:
-            return self.vertex
+            return self._vertex
         else:
             return _reproject((self.x, self.y), self.crs, crs)
 
@@ -165,8 +165,8 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
         """
         az = np.nan
         if projected and not isinstance(self.crs, GeographicalCRS):
-            x0, y0 = self.get_vertex()[:2]
-            x1, y1 = other.get_vertex(self.crs)[:2]
+            x0, y0 = self.vertex()[:2]
+            x1, y1 = other.vertex(self.crs)[:2]
             if (x0 != x1) or (y0 != y1):
                 az = 90.0 - math.atan2(y1-y0, x1-x0)*180.0/math.pi
                 az = (az+180) % 360 - 180
@@ -216,14 +216,14 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
         elif M.shape != (3, 4):
             raise ValueError("invalid affine matrix size: {0}".format(M.shape))
 
-        if len(self.vertex) == 2:
+        if len(self._vertex) == 2:
             old_vertex = (self.x, self.y, 0)
         else:
-            old_vertex = self.vertex
+            old_vertex = self._vertex
 
         x = old_vertex[0]*M[0,0] + old_vertex[1]*M[0,1] + old_vertex[2]*M[0,2] + M[0,3]
         y = old_vertex[0]*M[1,0] + old_vertex[1]*M[1,1] + old_vertex[2]*M[1,2] + M[1,3]
-        if len(self.vertex) == 2:
+        if len(self._vertex) == 2:
             return Point((x, y), properties=self.properties, crs=self.crs)
         else:
             z = old_vertex[0]*M[2,0] + old_vertex[1]*M[2,1] + old_vertex[2]*M[2,2] + M[2,3]
@@ -300,15 +300,15 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
             lon1, lat1 = other.crs.project(other.x, other.y, inverse=True)
             _, _, dist = self.crs.inverse(lon0, lat0, lon1, lat1)
         elif projected:
-            x0, y0 = self.vertex[:2]
-            x1, y1 = other.get_vertex(self.crs)[:2]
+            x0, y0 = self._vertex[:2]
+            x1, y1 = other.vertex(self.crs)[:2]
             dist = math.sqrt((x1-x0)*(x1-x0) + (y1-y0)*(y1-y0))
         else:
             lon0, lat0 = self.crs.project(self.x, self.y, inverse=True)
             lon1, lat1 = other.crs.project(other.x, other.y, inverse=True)
             _, _, dist = self.crs.inverse(lon0, lat0, lon1, lat1)
 
-        if 3 == len(self.vertex) == len(other.vertex):
+        if 3 == len(self._vertex) == len(other._vertex):
             dz = self.z - other.z
             dist = math.sqrt(dist*dist + dz*dz)
         return dist
@@ -325,7 +325,7 @@ class Point(Geometry, Rotatable, GeoJSONOutMixin, ShapefileOutMixin):
         """
         if len(shift_vector) != 2:
             raise ValueError("shift vector must be of the form (xshift, yshift)")
-        if len(self.vertex) == 2:
+        if len(self._vertex) == 2:
             vertex = (self.x+shift_vector[0], self.y+shift_vector[1])
         else:
             vertex = (self.x+shift_vector[0], self.y+shift_vector[1], self.z)
@@ -340,23 +340,23 @@ class MultiVertexBase(Geometry):
             vertices = list(vertices)
 
         if len(vertices) == 0:
-            self.vertices = CoordString([], ring=ring)
+            self._vertices = CoordString([], ring=ring)
         elif not isinstance(vertices[0], Point):
-            self.vertices = CoordString(_flatten(vertices), ring=ring)
+            self._vertices = CoordString(_flatten(vertices), ring=ring)
         else:
-            self.vertices = CoordString([point.vertex for point in vertices], ring=ring)
+            self._vertices = CoordString([point._vertex for point in vertices], ring=ring)
             if "crs" not in kwargs:
                 self.crs = vertices[0].crs
 
-        if self.vertices.rank not in (2, 3):
+        if self._vertices.rank not in (2, 3):
             raise TypeError("Coordinates must be a sequence of sequences")
         return
 
     def __eq__(self, other):
         try:
             return (self._geotype == other._geotype) and \
-                   (len(self.vertices) == len(other.vertices)) and \
-                   np.all(np.equal(self.vertices, other.vertices)) and \
+                   (len(self._vertices) == len(other._vertices)) and \
+                   np.all(np.equal(self._vertices, other._vertices)) and \
                    (self.properties == other.properties) and \
                    (self.crs == other.crs)
         except (AttributeError, TypeError, ValueError):
@@ -367,16 +367,16 @@ class MultiVertexBase(Geometry):
 
     def __hash__(self):
         ht = hash(self._geotype)
-        hd = hash(self.vertices.asarray().tostring())
+        hd = hash(self._vertices.asarray().tostring())
         hc = hash(str(self.crs))
         return ht + (hd << 1) + hd + hc
 
     def __getitem__(self, key):
         if isinstance(key, (int, np.int64)):
-            return Point(self.vertices[key], properties=self.properties, crs=self.crs)
+            return Point(self._vertices[key], properties=self.properties, crs=self.crs)
         elif isinstance(key, slice):
-            start, stop, stride = key.indices(len(self.vertices))
-            verts = self.vertices.slice(start, stop, stride)
+            start, stop, stride = key.indices(len(self._vertices))
+            verts = self._vertices.slice(start, stop, stride)
             return type(self)(verts, properties=self.properties, crs=self.crs)
         else:
             raise KeyError('index must be integer or slice object')
@@ -385,11 +385,11 @@ class MultiVertexBase(Geometry):
         return (self[i] for i in range(len(self)))
 
     def __len__(self):
-        return len(self.vertices)
+        return len(self._vertices)
 
 class MultiVertexMixin(object):
 
-    def get_coordinate_lists(self, crs=None):
+    def coords(self, crs=None):
         """ Return horizontal coordinate lists.
 
         Parameters
@@ -397,16 +397,12 @@ class MultiVertexMixin(object):
         crs : karta.CRS, optional
             coordinate system of output vertices
         """
-        x, y = self.vertices.vectors()[:2]
+        x, y = self._vertices.vectors()[:2]
         if crs is not None and (crs != self.crs):
             x, y = _reproject((x, y), self.crs, crs)
         return x, y
 
-    @property
-    def coordinates(self):
-        return self.get_coordinate_lists()
-
-    def get_vertices(self, crs=None, drop_z=False):
+    def vertices(self, crs=None, drop_z=False):
         """ Return vertices as an array.
 
         Parameters
@@ -418,22 +414,18 @@ class MultiVertexMixin(object):
         """
         if (crs is None) or (crs is self.crs):
             if not drop_z:
-                return self.vertices.asarray()
+                return self._vertices.asarray()
             else:
-                return self.vertices.asarray()[:,:2]
+                return self._vertices.asarray()[:,:2]
         else:
-            v = self.vertices.vectors(drop_z=drop_z)
+            v = self._vertices.vectors(drop_z=drop_z)
             vt = _reproject(v[:2], self.crs, crs)
             if len(v) == 3:
                 vt.append(v[2])
             return np.vstack(vt).T
 
-    @property
-    def bbox(self):
-        return self.get_bbox()
-
     @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
+    def bbox(self, crs=None):
         """ Return the bounding box.
 
         Parameters
@@ -453,9 +445,9 @@ class MultiVertexMixin(object):
         """
         if crs is not None and (crs != self.crs):
             cs = CoordString(list(zip(
-                *self.crs.transform(crs, *self.vertices.vectors(drop_z=True)))))
+                *self.crs.transform(crs, *self._vertices.vectors(drop_z=True)))))
         else:
-            cs = self.vertices
+            cs = self._vertices
             crs = self.crs
 
         if isinstance(crs, GeographicalCRS):
@@ -463,12 +455,8 @@ class MultiVertexMixin(object):
         else:
             return _cvectorgeo.bbox(cs)
 
-    @property
-    def extent(self):
-        return self.get_extent()
-
     @cache_decorator("extent")
-    def get_extent(self, crs=None):
+    def extent(self, crs=None):
         """ Calculate geometry extent.
 
         Parameters
@@ -481,13 +469,13 @@ class MultiVertexMixin(object):
         tuple
             (xmin, xmax, ymin, ymax)
         """
-        bb = self.get_bbox(crs=crs)
+        bb = self.bbox(crs=crs)
         return bb[0], bb[2], bb[1], bb[3]
 
     def _bbox_overlap(self, other):
         """ Whether bounding box overlaps with that of another Geometry. """
-        reg0 = self.bbox
-        reg1 = other.bbox
+        reg0 = self.bbox()
+        reg1 = other.bbox(crs=self.crs)
         return (reg0[0] <= reg1[2] and reg1[0] <= reg0[2] and
                 reg0[1] <= reg1[3] and reg1[1] <= reg0[3])
 
@@ -521,7 +509,7 @@ class MultiVertexMixin(object):
             znew        z
                         1
         """
-        if len(self.vertices) == 0:
+        if len(self._vertices) == 0:
             raise ValueError("cannot transform zero length geometry")
 
         if M.shape == (2, 3):
@@ -533,7 +521,7 @@ class MultiVertexMixin(object):
         elif M.shape != (3, 4):
             raise ValueError("invalid affine matrix size: {0}".format(M.shape))
 
-        xy = self.get_vertices()
+        xy = self.vertices()
         if xy.shape[1] == 2:
             rank = 2
             xy = np.hstack([xy, np.zeros((len(xy), 1), dtype=np.float64)])
@@ -565,7 +553,7 @@ class MultiVertexMixin(object):
 
     def _subset(self, idxs):
         """ Return a subset defined by indices. """
-        vertices = [self.vertices[i] for i in idxs]
+        vertices = [self._vertices[i] for i in idxs]
         if hasattr(self, "data"):
             data = Table(data=[self.data._data[i] for i in idxs], fields=self.data.fields)
             return type(self)(vertices, properties=self.properties, data=data, crs=self.crs)
@@ -574,8 +562,8 @@ class MultiVertexMixin(object):
 
     def flat_distances_to(self, pt):
         """ Return the "flat Earth" distance from each vertex to a point. """
-        A = self.vertices.asarray()
-        P = np.tile(np.array(pt.vertex), (A.shape[0], 1))
+        A = self._vertices.asarray()
+        P = np.tile(np.array(pt._vertex), (A.shape[0], 1))
         d = np.sqrt(np.sum((A-P)**2, 1))
         return d
 
@@ -618,17 +606,17 @@ class MultiVertexMixin(object):
           position.
         """
         if isinstance(self.crs, GeographicalCRS):
-            indices = _cconvexhull.convexhull_sph(self.vertices)
+            indices = _cconvexhull.convexhull_sph(self._vertices)
         else:
-            indices = _cconvexhull.convexhull(self.vertices)
-        return Polygon([self.vertices[i] for i in indices], crs=self.crs)
+            indices = _cconvexhull.convexhull(self._vertices)
+        return Polygon([self._vertices[i] for i in indices], crs=self.crs)
 
 
 class ConnectedMultiVertexMixin(MultiVertexMixin):
 
     @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
-        """ Dateline-aware get_bbox for geometries consisting of connected
+    def bbox(self, crs=None):
+        """ Dateline-aware bbox for geometries consisting of connected
         vertices.
 
         Parameters
@@ -643,15 +631,15 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         """
         if crs is not None and (crs != self.crs):
             cs = CoordString(list(zip(
-                *self.crs.transform(crs, *self.vertices.vectors(drop_z=True)))))
+                *self.crs.transform(crs, *self._vertices.vectors(drop_z=True)))))
         else:
-            cs = self.vertices
+            cs = self._vertices
             crs = self.crs
 
         if isinstance(crs, GeographicalCRS):
             bbox = _cdateline.bbox(cs)
         else:
-            bbox = super(ConnectedMultiVertexMixin, self).get_bbox(crs=crs)
+            bbox = super(ConnectedMultiVertexMixin, self).bbox(crs=crs)
         return bbox
 
     @property
@@ -665,15 +653,15 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
           provided by the CRS instance.
         """
         if isinstance(self.crs, GeographicalCRS):
-            lon, lat = self.get_vertices()[0][:2]
+            lon, lat = self.vertices()[0][:2]
             d = 0.0
-            for xy in self.get_vertices()[1:]:
+            for xy in self.vertices()[1:]:
                 d += self.crs.inverse(lon, lat, xy[0], xy[1])[2]
                 lon = xy[0]
                 lat = xy[1]
             return d
         else:
-            return _cvectorgeo.length(self.vertices)
+            return _cvectorgeo.length(self._vertices)
 
     @property
     def segments(self):
@@ -683,8 +671,8 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
     @property
     def segment_tuples(self):
         """ Returns an generator of adjacent line segments as coordinate tuples. """
-        return ((self.vertices[i], self.vertices[i+1])
-                for i in range(len(self.vertices)-1))
+        return ((self._vertices[i], self._vertices[i+1])
+                for i in range(len(self._vertices)-1))
 
     def intersects(self, other):
         """ Return whether an intersection exists with another geometry.
@@ -698,11 +686,11 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         -----
         - If CRS is Geographical, uses a spherical approximation.
         """
-        if _cintersection.bboxes_overlap(self.bbox, other.bbox):
+        if _cintersection.bboxes_overlap(self.bbox(), other.bbox(self.crs)):
             if isinstance(self.crs, GeographicalCRS):
-                return _cintersection.intersects_sph(self.vertices, other.vertices)
+                return _cintersection.intersects_sph(self._vertices, other._vertices)
             else:
-                return _cintersection.intersects(self.vertices, other.vertices)
+                return _cintersection.intersects(self._vertices, other._vertices)
 
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint.
@@ -719,7 +707,7 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         - If CRS is Geographical, uses a spherical approximation.
         """
         if isinstance(self.crs, CartesianCRS):
-            interx = _cintersection.all_intersections(self.vertices, other.vertices)
+            interx = _cintersection.all_intersections(self._vertices, other._vertices)
             if not keep_duplicates:
                 interx = list(set(interx))
             return Multipoint(interx, crs=self.crs)
@@ -745,8 +733,8 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         -----
         - If CRS is Geographical, uses distance defined by the CRS instance.
         """
-        ptvertex = point.get_vertex(crs=self.crs)
-        segments = zip(self.vertices.slice(0, -1), self.vertices.slice(1, 0))
+        ptvertex = point.vertex(crs=self.crs)
+        segments = zip(self._vertices.slice(0, -1), self._vertices.slice(1, 0))
 
         if isinstance(self.crs, CartesianCRS):
             func = _cvectorgeo.pt_nearest_planar
@@ -848,7 +836,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixi
         return
 
     def __add__(self, other):
-        return Multiline([self.vertices, other.get_vertices(self.crs)],
+        return Multiline([self._vertices, other.vertices(self.crs)],
                          crs=self.crs)
 
     @property
@@ -862,21 +850,21 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixi
     @property
     def geomdict(self):
         return {"type" : "LineString",
-                "bbox" : self.bbox,
-                "coordinates" : _as_nested_lists(self.vertices)}
+                "bbox" : self.bbox(),
+                "coordinates" : _as_nested_lists(self._vertices)}
 
     def extend(self, other):
         """ Combine two lines, provided that that the data formats are similar.
         """
-        if len(self.vertices[0]) != len(other.vertices[0]):
+        if len(self._vertices[0]) != len(other._vertices[0]):
             raise ValueError("Rank mismatch ({0} != "
-                    "{1})".format(self.vertices.shape[1],
-                                  other.vertices.shape[1]))
+                    "{1})".format(self._vertices.shape[1],
+                                  other._vertices.shape[1]))
         if self._geotype != other._geotype:
             raise TypeError("Geometry mismatch ({0} != "
                     "{1})".format(self._geotype, other._geotype))
 
-        self.vertices = np.vstack([self.vertices, other.vertices])
+        self._vertices = np.vstack([self._vertices, other._vertices])
         self._cache = {}
         return self
 
@@ -905,7 +893,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixi
         """
         remainder = 0
         pt0 = self[0]
-        vertices = [pt0.get_vertex()]
+        vertices = [pt0.vertex()]
 
         for seg in self.segments:
             pos = 0
@@ -916,7 +904,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixi
                 if distance_to_endpt >= dx:
                     pt1 = pt0.walk(dx - remainder, az)
                     pos += dx - remainder
-                    vertices.append(pt1.get_vertex())
+                    vertices.append(pt1.vertex())
                     remainder = 0
                     pt0 = pt1
                 else:
@@ -938,7 +926,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixi
         step = Ltotal / float(n-1)
         step_remaining = step
 
-        vertices = [self[0].get_vertex()]
+        vertices = [self[0].vertex()]
         x = 0.0
         pos = self[0]
         seg = next(segments)
@@ -952,8 +940,8 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixi
                 x += step_remaining
                 seg_remaining -= step_remaining
                 step_remaining = step
-                vertices.append(pos.get_vertex())
-                seg.vertices[0] = np.array(pos.vertex, dtype=np.float64)
+                vertices.append(pos.vertex())
+                seg._vertices[0] = np.array(pos._vertex, dtype=np.float64)
 
             else:
                 pos = seg[1]
@@ -964,7 +952,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixi
                 seg_remaining = seg.displacement()
 
         if len(vertices) == n-1:
-            vertices.append(seg[-1].get_vertex())
+            vertices.append(seg[-1].vertex())
         return Multipoint(vertices, crs=self.crs)
 
     def displacement(self):
@@ -978,7 +966,7 @@ class Line(MultiVertexBase, ConnectedMultiVertexMixin, Rotatable, GeoJSONOutMixi
 
     def to_polygon(self):
         """ Returns a polygon. """
-        return Polygon(self.vertices, properties=self.properties, crs=self.crs)
+        return Polygon(self._vertices, properties=self.properties, crs=self.crs)
 
 class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
     """ Polygon, composed of a closed sequence of vertices.
@@ -1007,15 +995,15 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            start, stop, stride = key.indices(len(self.vertices))
+            start, stop, stride = key.indices(len(self._vertices))
             if len(self) != ((stop - start) // stride):
-                return Line(self.vertices.slice(start, stop, stride),
+                return Line(self._vertices.slice(start, stop, stride),
                             properties=self.properties,
                             crs=self.crs)
         return super(Polygon, self).__getitem__(key)
 
     def __add__(self, other):
-        return Multipolygon([[self.vertices], [other.get_vertices(self.crs)]],
+        return Multipolygon([[self._vertices], [other.vertices(self.crs)]],
                             crs=self.crs)
 
     @property
@@ -1030,7 +1018,7 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
     def vertices_ring(self):
         """ Return vertices as a closed ring """
         # inefficient implementation
-        vertices = [xy for xy in self.vertices]
+        vertices = [xy for xy in self._vertices]
         vertices.append(vertices[0])
         return CoordString(vertices)
 
@@ -1040,12 +1028,12 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
         for geom in self.subs:
             coords.append(_as_nested_lists(geom.vertices_ring))
         return {"type" : "Polygon",
-                "bbox" : self.bbox,
+                "bbox" : self.bbox(),
                 "coordinates" : coords}
 
     def _subset(self, idxs):
         """ Return a subset defined by index in *idxs*. """
-        vertices = [self.vertices[i] for i in idxs]
+        vertices = [self._vertices[i] for i in idxs]
         subset = Line(vertices, properties=self.properties, crs=self.crs)
         return subset
 
@@ -1071,9 +1059,9 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
         if pole is None:
             pole = Point((0, 90), crs=SphericalEarth)
 
-        lon0 = geodesy.reduce_deg(self[-1].vertex[0])
+        lon0 = geodesy.reduce_deg(self[-1]._vertex[0])
         sum_angle = 0.0
-        for vertex in self.vertices:
+        for vertex in self._vertices:
             lon1 = geodesy.reduce_deg(vertex[0])
             if _cdateline.crosses_dateline(lon0, lon1):
                 sum_angle += 360.0 + lon1 - lon0
@@ -1087,7 +1075,7 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
     def segments(self):
         """ Returns a generator of adjacent line segments.
         """
-        L = len(self.vertices)
+        L = len(self._vertices)
         return itertools.chain((self._subset((i,i+1)) for i in range(len(self)-1)),
                                (self._subset((L-1,0)),))
 
@@ -1095,8 +1083,8 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
     def segment_tuples(self):
         """ Returns a generator of adjacent line segments as coordinate
         tuples. """
-        return ((self.vertices[i-1], self.vertices[i])
-                for i in range(len(self.vertices)))
+        return ((self._vertices[i-1], self._vertices[i])
+                for i in range(len(self._vertices)))
 
     @property
     def length(self):
@@ -1144,7 +1132,7 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
 
         else:
             # Cartesian coordinate systems
-            x, y = self.coordinates
+            x, y = self.coords()
             x0 = np.min(x)
             area = (0.5*(x[0] + x[-1]) - x0) * (y[0] - y[-1])
             area += sum((0.5*(x[i+1]+x[i]) - x0) * (y[i+1] - y[i]) for i in range(len(x)-1))
@@ -1153,7 +1141,7 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
     @property
     def centroid(self):
         """ Return Polygon centroid as a Point, ignoring sub-polygons. """
-        x, y = self.coordinates
+        x, y = self.coords()
         A = 0.5 * sum(x[i]*y[i+1] - x[i+1]*y[i] for i in range(-1, len(self)-1))
         cx = sum((x[i] + x[i+1]) * (x[i]*y[i+1] - x[i+1]*y[i])
                     for i in range(-1, len(self)-1)) / (6*A)
@@ -1173,17 +1161,17 @@ class Polygon(MultiVertexBase, Rotatable, ConnectedMultiVertexMixin, GeoJSONOutM
           NSIDCSouth beforehand.
         - Otherwise, a planar algorithm is used.
         """
-        x, y = point.get_vertex(crs=self.crs)[:2]
+        x, y = point.vertex(crs=self.crs)[:2]
         if isinstance(self.crs, GeographicalCRS) and self.ispolar():
-            return _ccontains.contains_proj(x, y, self.vertices, self.crs) \
+            return _ccontains.contains_proj(x, y, self._vertices, self.crs) \
                     and not any(p.contains(point) for p in self.subs)
         else:
-            return _ccontains.contains(x, y, self.vertices) and \
+            return _ccontains.contains(x, y, self._vertices) and \
                     not any(p.contains(point) for p in self.subs)
 
     def to_line(self):
         """ Returns a self-closing polyline. Discards sub-polygons. """
-        v = self.vertices + self.vertices[0]
+        v = self._vertices + self._vertices[0]
         return Line(v, properties=self.properties, crs=self.crs)
 
 class Multipart(Geometry):
@@ -1194,7 +1182,7 @@ class Multipart(Geometry):
         if isinstance(data, Table):
             self.data = data
         elif data is None or len(data) == 0:
-            self.data = Table(size=len(self.vertices))
+            self.data = Table(size=len(self._vertices))
         else:
             for k, v in data.items():
                 if len(v) != len(inputs):
@@ -1211,8 +1199,8 @@ class Multipart(Geometry):
     def __eq__(self, other):
         try:
             return (self._geotype == other._geotype) and \
-                   (len(self.vertices) == len(other.vertices)) and \
-                   np.all(np.equal(self.vertices, other.vertices)) and \
+                   (len(self._vertices) == len(other._vertices)) and \
+                   np.all(np.equal(self._vertices, other._vertices)) and \
                    (self.data == other.data) and \
                    (self.properties == other.properties) and \
                    (self.crs == other.crs)
@@ -1224,7 +1212,7 @@ class Multipart(Geometry):
 
     def __hash__(self):
         ht = hash(self._geotype)
-        hd = hash(self.vertices.asarray().tostring())
+        hd = hash(self._vertices.asarray().tostring())
         hc = hash(str(self.crs))
         return ht + (hd << 1) + hd + hc
 
@@ -1235,7 +1223,7 @@ class Multipart(Geometry):
             return False
 
     def __len__(self):
-        return len(self.vertices)
+        return len(self._vertices)
 
 
 class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, ShapefileOutMixin):
@@ -1258,19 +1246,19 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
             inputs = list(inputs)
 
         if len(inputs) == 0:
-            self.vertices = CoordString([])
+            self._vertices = CoordString([])
         elif isinstance(inputs[0], Point):
             crs = kwargs.get("crs", inputs[0].crs)
-            self.vertices = CoordString([point.get_vertex(crs=crs) for point in inputs])
+            self._vertices = CoordString([point.vertex(crs=crs) for point in inputs])
             data = merge_properties([point.properties for point in inputs])
             kwargs["data"] = Table(kwargs.get("data", {})).updated(data)
             kwargs.setdefault("crs", inputs[0].crs)
         else:
-            self.vertices = CoordString(inputs)
+            self._vertices = CoordString(inputs)
 
         super(Multipoint, self).__init__(inputs, **kwargs)
         if build_index:
-            self.quadtree = QuadTree(self.vertices, leaf_capacity=50)
+            self.quadtree = QuadTree(self._vertices, leaf_capacity=50)
         self._geotype = "Multipoint"
         return
 
@@ -1278,10 +1266,10 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
         if isinstance(key, numbers.Integral):
             p = self.d[key]
             p.update(self.properties)
-            return Point(self.vertices[key], properties=p, crs=self.crs)
+            return Point(self._vertices[key], properties=p, crs=self.crs)
         elif isinstance(key, slice):
-            start, stop, stride = key.indices(len(self.vertices))
-            return Multipoint(self.vertices.slice(start, stop, stride),
+            start, stop, stride = key.indices(len(self._vertices))
+            return Multipoint(self._vertices.slice(start, stop, stride),
                               properties=self.properties,
                               data=self.d[key], crs=self.crs)
         else:
@@ -1290,23 +1278,23 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
     def __setitem__(self, key, value):
         if isinstance(key, numbers.Integral):
             if hasattr(value, "vertex"):
-                self.vertices[key] = np.array(value.get_vertex(self.crs), dtype=np.float64)
+                self._vertices[key] = np.array(value.vertex(self.crs), dtype=np.float64)
                 row = []
                 for field in self.data.fields:
                     row.append(value.properties.get(field, None))
                 self.data[key] = tuple(row)
             else:
-                if len(value) == len(self.vertices[0]):
-                    verts = self.vertices.asarray()
+                if len(value) == len(self._vertices[0]):
+                    verts = self._vertices.asarray()
                     verts[key] = value
-                    self.vertices = CoordString(verts)
+                    self._vertices = CoordString(verts)
                 self.data[key] = (None for _ in self.data.fields)
 
     @property
     def geomdict(self):
         return {"type" : "MultiPoint",
-                "bbox" : self.bbox,
-                "coordinates" : _as_nested_lists(self.vertices)}
+                "bbox" : self.bbox(),
+                "coordinates" : _as_nested_lists(self._vertices)}
 
     @property
     def __geo_interface__(self):
@@ -1337,10 +1325,10 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
         for item in items:
             t = getattr(item, "_geotype", None)
             if t == "Multipoint":
-                vertices.append(item.get_vertices(crs=crs))
+                vertices.append(item.vertices(crs=crs))
                 mappings.append(item.data)
             elif t == "Point":
-                vertices.append(np.array(item.get_vertex(crs=crs))[np.newaxis, :])
+                vertices.append(np.array(item.vertex(crs=crs))[np.newaxis, :])
                 mappings.append(item.properties)
 
         rankmin = min(arr.shape[1] for arr in vertices)
@@ -1398,7 +1386,7 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
         """ Return Multipoint subset that is within a polygon.
         """
         if hasattr(self, "quadtree"):
-            bbox = poly.get_bbox(crs=self.crs)
+            bbox = poly.bbox(crs=self.crs)
             candidate_indices = self.quadtree.search_within(*bbox)
             confirmed_indices = []
             for i in candidate_indices:
@@ -1419,8 +1407,8 @@ class MultiVertexMultipartMixin(object):
     - "which members are contained by this Polygon?"
     """
     @cache_decorator("bbox")
-    def get_bbox(self, crs=None):
-        bbs = [part.get_bbox(crs=crs) for part in self]
+    def bbox(self, crs=None):
+        bbs = [part.bbox(crs=crs) for part in self]
         xmin = min([bb[0] for bb in bbs])
         ymin = min([bb[1] for bb in bbs])
         xmax = max([bb[2] for bb in bbs])
@@ -1428,17 +1416,9 @@ class MultiVertexMultipartMixin(object):
         return (xmin, ymin, xmax, ymax)
 
     @cache_decorator("extent")
-    def get_extent(self, crs=None):
-        bb = self.get_bbox(crs=crs)
+    def extent(self, crs=None):
+        bb = self.bbox(crs=crs)
         return bb[0], bb[2], bb[1], bb[3]
-
-    @property
-    def bbox(self):
-        return self.get_bbox()
-
-    @property
-    def extent(self):
-        return self.get_extent()
 
     def apply_transform(self, M):
         """ Apply an affine transform given by matrix *M* to data and return a
@@ -1521,7 +1501,7 @@ class MultiVertexMultipartMixin(object):
         Returns
         -------
         """
-        indices = self.rtree.search_overlapping(geom.get_bbox(self.crs))
+        indices = self.rtree.search_overlapping(geom.bbox(self.crs))
         results = []
         if isinstance(geom, Line):
             for i in indices:
@@ -1548,7 +1528,7 @@ class MultiVertexMultipartMixin(object):
         """
         if not isinstance(geom, Polygon):
             raise TypeError("argument must be Polygon")
-        indices = self.rtree.search_overlapping(geom.bbox)
+        indices = self.rtree.search_overlapping(geom.bbox(crs=self.crs))
         results = []
         for i in indices:
             test_geom = self[i]
@@ -1575,19 +1555,19 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
 
     def __init__(self, inputs, build_index=True, **kwargs):
         if len(inputs) == 0:
-            self.vertices = []
+            self._vertices = []
         elif isinstance(inputs[0], Line):
             crs = kwargs.get("crs", inputs[0].crs)
-            self.vertices = [CoordString(line.get_vertices(crs=crs))
+            self._vertices = [CoordString(line.vertices(crs=crs))
                              for line in inputs]
             data = merge_properties([line.properties for line in inputs])
             kwargs["data"] = Table(kwargs.get("data", {})).updated(data)
             kwargs.setdefault("crs", inputs[0].crs)
         else:
-            self.vertices = [CoordString(part) for part in inputs]
+            self._vertices = [CoordString(part) for part in inputs]
         super(Multiline, self).__init__(inputs, **kwargs)
         if build_index:
-            self.rtree = RTree(self.vertices)
+            self.rtree = RTree(self._vertices)
         self._geotype = "Multiline"
         return
 
@@ -1595,9 +1575,9 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
         if isinstance(key, numbers.Integral):
             properties = self.d[key]
             properties.update(self.properties)
-            return Line(self.vertices[key], properties=properties, crs=self.crs)
+            return Line(self._vertices[key], properties=properties, crs=self.crs)
         elif isinstance(key, slice):
-            return Multiline(self.vertices[key], properties=self.properties,
+            return Multiline(self._vertices[key], properties=self.properties,
                              data=self.d[key], crs=self.crs)
         else:
             raise KeyError(type(key))
@@ -1605,8 +1585,8 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
     @property
     def geomdict(self):
         return {"type" : "MultiLineString",
-                "bbox" : self.bbox,
-                "coordinates" : _as_nested_lists(self.vertices)}
+                "bbox" : self.bbox(),
+                "coordinates" : _as_nested_lists(self._vertices)}
 
     @property
     def __geo_interface__(self):
@@ -1636,10 +1616,10 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
         for item in items:
             t = getattr(item, "_geotype", None)
             if t == "Multiline":
-                vertices.extend(item.get_vertices(crs=crs))
+                vertices.extend(item.vertices(crs=crs))
                 mappings.append(item.data)
             elif t == "Line":
-                vertices.append(item.get_vertices(crs=crs))
+                vertices.append(item.vertices(crs=crs))
                 mappings.append(item.properties)
 
         rankmin = min(arr.shape[1] for arr in vertices)
@@ -1651,7 +1631,7 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
         data = table.merge(mappings)
         return Multiline(vertices, data=data, crs=crs)
 
-    def get_vertices(self, crs=None):
+    def vertices(self, crs=None):
         """ Return vertices as a list of arrays.
 
         Parameters
@@ -1660,18 +1640,18 @@ class Multiline(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
             coordinate system of output vertices
         """
         if crs is None or (crs == self.crs):
-            return [v.asarray() for v in self.vertices]
+            return [v.asarray() for v in self._vertices]
         else:
             vertices = []
-            for line in self.vertices:
+            for line in self._vertices:
                 line_vertices = [_reproject(v[:2], self.crs, crs) for v in line]
                 vertices.append(np.array(line_vertices))
             return vertices
 
-    def get_coordinate_lists(self, crs=None):
+    def coords(self, crs=None):
         """ Returns a list of 2xn arrays representing lists of coordinates """
         ret = []
-        for line_vertices in self.get_vertices(crs=crs):
+        for line_vertices in self.vertices(crs=crs):
             ret.append(line_vertices.T)
         return ret
 
@@ -1693,26 +1673,26 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
     """
     def __init__(self, inputs, build_index=True, **kwargs):
         if len(inputs) == 0:
-            self.vertices = []
+            self._vertices = []
         elif isinstance(inputs[0], Polygon):
             crs = kwargs.get("crs", inputs[0].crs)
-            self.vertices = []
+            self._vertices = []
             for polygon in inputs:
-                rings = [CoordString(polygon.get_vertices(crs=crs))]
+                rings = [CoordString(polygon.vertices(crs=crs))]
                 for sub in polygon.subs:
                     rings.append(sub)
-                self.vertices.append(rings)
+                self._vertices.append(rings)
             data = merge_properties([polygon.properties for polygon in inputs])
             kwargs["data"] = Table(kwargs.get("data", {})).updated(data)
             kwargs.setdefault("crs", inputs[0].crs)
         else:
-            self.vertices = []
+            self._vertices = []
             for part in inputs:
                 rings = [CoordString(ring) for ring in part]
-                self.vertices.append(rings)
+                self._vertices.append(rings)
         super(Multipolygon, self).__init__(inputs, **kwargs)
         if build_index:
-            self.rtree = RTree([v[0] for v in self.vertices])
+            self.rtree = RTree([v[0] for v in self._vertices])
         self._geotype = "Multipolygon"
         return
 
@@ -1721,12 +1701,12 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
             properties = self.d[key]
             properties.update(self.properties)
             subs = []
-            for vertices in self.vertices[key][1:]:
+            for vertices in self._vertices[key][1:]:
                 subs.append(Polygon(vertices, properties=properties, crs=self.crs))
-            vertices = self.vertices[key][0]
+            vertices = self._vertices[key][0]
             return Polygon(vertices, subs=subs, properties=properties, crs=self.crs)
         elif isinstance(key, slice):
-            return Multipolygon(self.vertices[key], properties=self.properties,
+            return Multipolygon(self._vertices[key], properties=self.properties,
                                 data=self.d[key], crs=self.crs)
         else:
             raise KeyError(type(key))
@@ -1734,7 +1714,7 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
     @property
     def geomdict(self):
         return {"type" : "MultiPolygon",
-                "bbox" : self.bbox,
+                "bbox" : self.bbox(),
                 "coordinates" : _as_nested_lists(self.vertices_ring)}
 
     @property
@@ -1765,12 +1745,12 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
         for item in items:
             t = getattr(item, "_geotype", None)
             if t == "Multipolygon":
-                vertices.extend(item.get_vertices(crs=crs))
+                vertices.extend(item.vertices(crs=crs))
                 mappings.append(item.data)
             elif t == "Polygon":
-                v = [item.get_vertices(crs=crs)]
+                v = [item.vertices(crs=crs)]
                 for sub in item.subs:
-                    v.append(sub.get_vertices(crs=crs))
+                    v.append(sub.vertices(crs=crs))
                 vertices.append(v)
                 mappings.append(item.properties)
 
@@ -1787,7 +1767,7 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
     def vertices_ring(self):
         # inefficient implementation
         vertices = []
-        for poly in self.vertices:
+        for poly in self._vertices:
             rings = []
             for ring in poly:
                 xys = [xy for xy in ring]
@@ -1796,7 +1776,7 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
             vertices.append(rings)
         return vertices
 
-    def get_vertices(self, crs=None):
+    def vertices(self, crs=None):
         """ Return vertices as a list of arrays.
 
         Parameters
@@ -1806,12 +1786,12 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
         """
         if crs is None or (crs == self.crs):
             vertices = []
-            for poly_vertices in self.vertices:
+            for poly_vertices in self._vertices:
                 vertices.append([v.asarray() for v in poly_vertices])
             return vertices
         else:
             vertices = []
-            for poly_vertices in self.vertices:
+            for poly_vertices in self._vertices:
                 poly = []
                 for ring_vertices in poly_vertices:
                     poly.append(np.array([_reproject(v[:2], self.crs, crs)
@@ -1819,10 +1799,10 @@ class Multipolygon(Multipart, MultiVertexMultipartMixin, GeoJSONOutMixin,
                 vertices.append(poly)
             return vertices
 
-    def get_coordinate_lists(self, crs=None):
+    def coords(self, crs=None):
         """ Returns a list of 2xn arrays representing lists of coordinates """
         ret = []
-        for poly_vertices in self.get_vertices(crs=crs):
+        for poly_vertices in self.vertices(crs=crs):
             poly = []
             for ring_vertices in poly_vertices:
                 poly.append(ring_vertices.T)
@@ -1858,9 +1838,9 @@ def affine_matrix(mpa, mpb):
     """
     if len(mpa) != len(mpb):
         raise GeometryError("Input geometries must have identical length")
-    vecp = np.asarray(mpb.get_vertices(mpa.crs)).ravel()
+    vecp = np.asarray(mpb.vertices(mpa.crs)).ravel()
     A = np.empty([2*len(mpa), 6], dtype=np.float64)
-    for i, (x, y) in enumerate(mpa.get_vertices()):
+    for i, (x, y) in enumerate(mpa.vertices()):
         A[2*i:2*i+2,:] = np.kron(np.eye(2), [x, y, 1])
     M, res, rank, singvals = np.linalg.lstsq(A, vecp)
     return np.reshape(M, [2, 3])

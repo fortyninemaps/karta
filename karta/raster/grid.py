@@ -331,25 +331,15 @@ class RegularGrid(Grid):
     def skew(self):
         return self.transform[4:]
 
-    @property
-    def bbox(self):
-        extent = self.get_extent(reference="edge")
+    def data_bbox(self, crs=None):
+        extent = self.data_extent(reference="edge", crs=crs)
         return extent[0], extent[2], extent[1], extent[3]
 
-    @property
-    def data_bbox(self):
-        extent = self.get_data_extent(reference="edge")
-        return extent[0], extent[2], extent[1], extent[3]
-
-    @property
-    def extent(self):
-        return self.get_extent()
-
-    def get_bbox(self, crs=None):
-        a, b, c, d = self.get_extent(reference="edge", crs=crs)
+    def bbox(self, crs=None):
+        a, b, c, d = self.extent(reference="edge", crs=crs)
         return a, c, b, d
 
-    def get_extent(self, reference='center', crs=None):
+    def extent(self, reference='center', crs=None):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
         ymax).
 
@@ -396,7 +386,7 @@ class RegularGrid(Grid):
             d = max(yg0, yg1, yg2, yg3)
         return a, b, c, d
 
-    def get_data_extent(self, reference='center', nodata=None, crs=None):
+    def data_extent(self, reference='center', nodata=None, crs=None):
         """ Return the region characteristics as a tuple (xmin, xmax, ymin,
         ymax).
 
@@ -555,10 +545,10 @@ class RegularGrid(Grid):
         # Convert to center coords
         t = self.transform
 
-        ll = self.get_positions(xmin, ymin)
-        lr = self.get_positions(xmax, ymin)
-        ul = self.get_positions(xmin, ymax)
-        ur = self.get_positions(xmax, ymax)
+        ll = self.positions(xmin, ymin)
+        lr = self.positions(xmax, ymin)
+        ul = self.positions(xmin, ymax)
+        ur = self.positions(xmax, ymax)
 
         i0 = int(np.ceil(min(ll[0], lr[0], ul[0], ur[0])))
         i1 = int(np.floor(max(ll[0], lr[0], ul[0], ur[0]))) + 1
@@ -590,7 +580,7 @@ class RegularGrid(Grid):
             else:
                 return a//1+1
 
-        bb = self.bbox
+        bb = self.bbox()
         bbnew = list(bboxnew)
         dx, dy, sx, sy = self.transform[2:]
 
@@ -657,7 +647,7 @@ class RegularGrid(Grid):
         msk = np.zeros([ny, nx], dtype=np.bool)
         for poly in polys:
 
-            x, y = poly.get_coordinate_lists(self.crs)[:2]
+            x, y = poly.coords(self.crs)[:2]
             if not poly.isclockwise():
                 x = x[::-1]
                 y = y[::-1]
@@ -748,7 +738,7 @@ class RegularGrid(Grid):
             raise ValueError("resolution must be positive "
                              "(got {0}, {1})".format(dx, dy))
 
-        xmin, xmax, ymin, ymax = self.get_extent()
+        xmin, xmax, ymin, ymax = self.extent()
         ny = int((ymax - ymin) // dy) + 1
         nx = int((xmax - xmin) // dx) + 1
 
@@ -769,7 +759,7 @@ class RegularGrid(Grid):
         return RegularGrid(tnew, values=values, crs=self.crs,
                            nodata_value=self.nodata)
 
-    def get_positions(self, x, y):
+    def positions(self, x, y):
         """ Return the float row and column indices for the point nearest
         geographical coordinates.
 
@@ -795,9 +785,9 @@ class RegularGrid(Grid):
             I, J = crfuncs.get_positions_vec(self.transform, x, y)
             return I[0], J[0]
 
-    def _get_indices(self, x, y):
+    def _indices(self, x, y):
         """ Return the integer row and column indices for the point nearest
-        geographical coordinates. Unlike `get_positions()`, this method raises
+        geographical coordinates. Unlike `positions()`, this method raises
         and exception when points are out of range.
 
         Parameters
@@ -805,14 +795,14 @@ class RegularGrid(Grid):
         x, y : float or vector
             vertices of points to compute indices for
         """
-        i, j = self.get_positions(x, y)
+        i, j = self.positions(x, y)
         i = np.round(i).astype(np.int32)
         j = np.round(j).astype(np.int32)
         return i,j
 
-    def get_indices(self, x, y):
+    def indices(self, x, y):
         """ Return the integer row and column indices for the point nearest
-        geographical coordinates. Unlike `get_positions()`, this method raises
+        geographical coordinates. Unlike `positions()`, this method raises
         and exception when points are out of range.
 
         Parameters
@@ -826,15 +816,15 @@ class RegularGrid(Grid):
             points outside of Grid bbox
         """
         ny, nx = self.size
-        i, j = self._get_indices(x, y)
+        i, j = self._indices(x, y)
         if hasattr(i, "__iter__"):
             if i.min() < 0 or i.max() > ny-1 or j.min() < 0 or j.max() > nx-1:
                 raise IndexError("coordinates outside grid region "
-                                 "({0})".format(self.bbox))
+                                 "({0})".format(self.bbox()))
         else:
             if i < 0 or i > ny-1 or j < 0 or j > nx-1:
                 raise IndexError("coordinate outside grid region "
-                                 "({0})".format(self.bbox))
+                                 "({0})".format(self.bbox()))
         return i,j
 
     def sample_nearest(self, x, y):
@@ -862,7 +852,7 @@ class RegularGrid(Grid):
         m, n = self.size
 
         if not hasattr(x, "__iter__"):
-            i, j = self._get_indices(x, y)
+            i, j = self._indices(x, y)
             if (0 <= i < m) and (0 <= j < n):
                 return np.atleast_1d(self[i,j])
             else:
@@ -872,7 +862,7 @@ class RegularGrid(Grid):
             x = np.array(x)
             y = np.array(y)
 
-        I, J = self._get_indices(x.ravel(), y.ravel())
+        I, J = self._indices(x.ravel(), y.ravel())
         out_of_bounds_mask = (I < 0) | (I >= m) | (J < 0) | (J >= n)
         I = I[~out_of_bounds_mask]
         J = J[~out_of_bounds_mask]
@@ -934,7 +924,7 @@ class RegularGrid(Grid):
         else:
             dim = x.ndim
 
-        I, J = self.get_positions(x.ravel(), y.ravel())
+        I, J = self.positions(x.ravel(), y.ravel())
 
         # If the grid is large, decompressing everthing is expensive, so
         # compute only the region necessary
@@ -1015,9 +1005,9 @@ class RegularGrid(Grid):
         if hasattr(args[0], "_geotype"):
             crs = args[0].crs
             if args[0]._geotype == "Point":
-                x, y = args[0].get_vertex(crs=self.crs)[:2]
+                x, y = args[0].vertex(crs=self.crs)[:2]
             elif args[0]._geotype == "Multipoint":
-                x, y = args[0].get_coordinate_lists(crs=self.crs)
+                x, y = args[0].coords(crs=self.crs)
             else:
                 raise argerror
         else:
@@ -1065,7 +1055,7 @@ class RegularGrid(Grid):
         if resolution is None:
             resolution = min(self.transform[2:4])
         points = line.to_points(resolution)
-        z = self.sample(*points.get_coordinate_lists(crs=self.crs), **kw)
+        z = self.sample(*points.coords(crs=self.crs), **kw)
         if len(self.bands) != 1:
             for i in range(self.nbands):
                 points.data.setfield("band_{0}".format(i), z[i])
@@ -1197,9 +1187,9 @@ def merge(grids, weights=None):
     normalizedweights = weights * len(weights) / weights.sum()
 
     # Compute final grid extent
-    xmin, xmax, ymin, ymax = grids[0].get_extent(reference='edge')
+    xmin, xmax, ymin, ymax = grids[0].extent(reference='edge')
     for grid in grids[1:]:
-        _xmin, _xmax, _ymin, _ymax = grid.get_extent(reference='edge')
+        _xmin, _xmax, _ymin, _ymax = grid.extent(reference='edge')
         xmin = min(xmin, _xmin)
         xmax = max(xmax, _xmax)
         ymin = min(ymin, _ymin)
@@ -1217,7 +1207,7 @@ def merge(grids, weights=None):
         counts = np.zeros([ny, nx], dtype=np.float32)
 
         for grid, weight in zip(grids, normalizedweights):
-            _xmin, _xmax, _ymin, _ymax = grid.get_extent(reference='edge')
+            _xmin, _xmax, _ymin, _ymax = grid.extent(reference='edge')
             offx = int((_xmin-xmin) / T[2])
             offy = int((_ymin-ymin) / T[3])
             _ny, _nx = grid.size
@@ -1288,7 +1278,7 @@ def gridpoints(x, y, z, transform, crs):
                        nodata_value=np.nan)
 
     array = np.zeros([ny, nx])
-    (I, J) = grid.get_indices(x, y)
+    (I, J) = grid.indices(x, y)
 
     try:
         err = crfuncs.fillarray_double(array,
@@ -1392,4 +1382,10 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
         j0 = j1
 
     return mask.astype(np.bool)
+
+def newgrid(bbox, resolution=(1, 1), skew=(0, 0), dtype=np.float64, **kw):
+    """ Simplified constructor for RegularGrid """
+    raise NotImplementedError()
+    return RegularGrid([x0, y0, dx, dy, sx, sy],
+                       values=np.zeros([ny, nx], dtype=dtype), **kw)
 

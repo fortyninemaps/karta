@@ -51,7 +51,7 @@ cdef class RTree:
             if not hasattr(geom, "bbox"):
                 raise AttributeError("cannot construct R-tree index from items "
                                      "missing a `bbox` attribute")
-            _bb = geom.bbox
+            _bb = geom.bbox()
             bb = rt_new_bbox()
             bb.xmin = _bb[0]
             bb.ymin = _bb[1]

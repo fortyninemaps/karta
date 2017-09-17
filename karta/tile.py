@@ -13,7 +13,7 @@ class Tile(object):
         if not isinstance(other, Tile):
             return False
         return (self.z == other.z) and (self.x == other.x) and (self.y == other.y)
-    
+
     def __neq__(self, other):
         return not (self == other)
 
@@ -68,7 +68,7 @@ def tile_from_point(point, zoom):
     dlon = 256
     dlat = 256
 
-    lon0, lat0 = point.crs.project(*point.vertex[:2], inverse=True)
+    lon0, lat0 = point.crs.project(*point.vertex()[:2], inverse=True)
     c = 128/math.pi * 2**z
     x0 = c * (lon0*math.pi/180+math.pi)
     y0 = c * (math.pi-math.log(math.tan(math.pi/4+lat0*math.pi/360)))
