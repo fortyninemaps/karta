@@ -15,6 +15,13 @@ class RegularGridTests(unittest.TestCase):
         pe = peaks(n=49)
         self.rast = RegularGrid((0.0, 0.0, 30.0, 30.0, 0.0, 0.0), values=pe)
 
+    # def test_newgrid(self):
+    #     g = newgrid([0, 0, 10, 5], resolution=(2, 2), skew=(0, 0))
+    #     self.assertEqual(g.shape, (3, 5))
+
+    #     g = newgrid([0, 0, 10, 10], resolution=(2, 2), skew=(1, -1))
+    #     self.assertEqual(g.shape, (3, 5))
+
     def test_resolution(self):
         grid = RegularGrid([0.0, 0.0, 25.0, 35.0, 10.0, 10.0])
         self.assertEqual(grid.resolution, (25.0, 35.0))

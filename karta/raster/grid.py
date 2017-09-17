@@ -1383,3 +1383,9 @@ def mask_poly(xpoly, ypoly, nx, ny, transform):
 
     return mask.astype(np.bool)
 
+def newgrid(bbox, resolution=(1, 1), skew=(0, 0), dtype=np.float64, **kw):
+    """ Simplified constructor for RegularGrid """
+    raise NotImplementedError()
+    return RegularGrid([x0, y0, dx, dy, sx, sy],
+                       values=np.zeros([ny, nx], dtype=dtype), **kw)
+
