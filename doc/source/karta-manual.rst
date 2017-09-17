@@ -7,10 +7,10 @@ Table of Contents
    :maxdepth: 2
 
    installation
-   raster-indexing
+   vector
+   raster
    crs
    examples
-   reference
 
 Karta Documentation
 ===================
