@@ -5,8 +5,6 @@ geospatial data.
 
 __all__ = ["vector", "raster", "crs", "tile", "errors"]
 
-from .version import __version__
-
 from . import vector
 from . import raster
 from . import crs

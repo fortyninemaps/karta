@@ -5,9 +5,6 @@ from os.path import exists
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext as _build_ext
 
-sys.path.append("karta")
-from version import __version__ as VERSION
-
 class build_ext(_build_ext):
 
     # solution taken from http://stackoverflow.com/questions/19919905/ \
@@ -79,7 +76,7 @@ extensions = [
 
 setup(
     name = "karta",
-    version = VERSION,
+    version = "0.10.0dev0",
     setup_requires = ["numpy>=1.10"],
     install_requires = ["numpy>=1.10",
                         "pyproj>=1.9",

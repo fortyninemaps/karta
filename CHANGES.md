@@ -1,5 +1,14 @@
 # Highlights
 
+## changes with 0.10dev
+
+- breaking API cleanups
+    - convert properties to methods, e.g. `Geometry.bbox` becomes
+      `Geometry.bbox(\*\*kwargs)`
+    - remove `.get\_\*` methods
+    - remove `multipart_from_singleparts` and `merge_multiparts` methods, which are
+      now handled by constructors
+
 ## changes with 0.8
 
 - refactor GeoJSON support into external module,
