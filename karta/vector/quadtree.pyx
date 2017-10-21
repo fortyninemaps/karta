@@ -68,8 +68,14 @@ cdef class QuadTree:
         cdef int i = 0
         cdef int idup = 0
         cdef dict duplicates = {}
+        cdef tuple _bb
 
-        xmin, ymin, xmax, ymax = points.bbox()
+        _bb = points.bbox()
+        if len(_bb) == 4:
+            xmin, ymin, xmax, ymax = _bb
+        else:
+            xmin, ymin, _,  xmax, ymax, _ = _bb
+
         bbox = qt_new_bbox(xmin, ymin, xmax, ymax)
         self.root.leafnode = qt_new_leaf(leaf_capacity, bbox)
 
