@@ -80,7 +80,7 @@ setup(
                         "pyproj>=1.9",
                         "gdal>=1.10",
                         "blosc>=1.2.8",
-                        "coordstring>=0.1.1",
+                        "coordstring>=0.1.2",
                         "picogeojson>=0.6.1"],
     author = "Nat Wilson",
     author_email = "natw@fortyninemaps.com",
