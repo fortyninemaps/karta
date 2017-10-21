@@ -2,10 +2,10 @@ import unittest
 import sys
 import ctypes
 from ctypes import c_int, c_double, c_char_p, c_bool
+from coordstring import CoordString
 import numpy as np
 
 import karta
-from karta.vector.coordstring import CoordString
 from karta.vector.quadtree import QuadTree
 
 class BBOX(ctypes.Structure):

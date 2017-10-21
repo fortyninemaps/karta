@@ -1,6 +1,6 @@
 from libc.math cimport NAN, M_PI, sin, cos, fmin, fmax, isnan
 from cpython cimport bool
-from coordstring cimport CoordString
+from coordstring.coordstring cimport CoordString
 from vectorgeo cimport (Vector2, Vector3,
                         cross2, cross3,
                         azimuth_sph, cart2sph, sph2cart,

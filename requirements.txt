@@ -1,5 +1,6 @@
 setuptools >= 17.0
 numpy >= 1.10
+coordstring >= 0.1.1
 picogeojson >= 0.6.1
 pyproj >= 1.9
 gdal >= 1.10

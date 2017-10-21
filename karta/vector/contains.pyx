@@ -1,6 +1,6 @@
 from libc.math cimport fabs
 from cpython cimport bool
-from coordstring cimport CoordString
+from coordstring.coordstring cimport CoordString
 from vectorgeo cimport Vector2
 
 cdef double isleft(Vector2 pt, Vector2 pt0, Vector2 pt1) nogil:

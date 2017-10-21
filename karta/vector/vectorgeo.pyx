@@ -5,7 +5,7 @@ from libc.math cimport (NAN, M_PI, sqrt,
                         fmin, fmax, fabs)
 from cpython cimport bool
 cimport cython
-from coordstring cimport CoordString
+from coordstring.coordstring cimport CoordString
 
 cdef struct Vector2:
     double x

@@ -10,12 +10,12 @@ import math
 import itertools
 import numbers
 import numpy as np
+from coordstring import CoordString
 from .decorators import cache_decorator
 from ._geojson import GeoJSONOutMixin
 from ._shp import ShapefileOutMixin
 from .table import Table
 from .utilities import _reproject, _flatten, _as_nested_lists
-from .coordstring import CoordString
 from .rtree import RTree
 from .quadtree import QuadTree
 from . import vectorgeo as _cvectorgeo
@@ -336,6 +336,10 @@ class MultiVertexBase(Geometry):
     def __init__(self, vertices, ring=False, **kwargs):
         super(MultiVertexBase, self).__init__(**kwargs)
 
+        if isinstance(vertices, CoordString):
+            self._vertices = vertices
+            return
+
         if hasattr(vertices, "__next__"):
             vertices = list(vertices)
 
@@ -347,9 +351,6 @@ class MultiVertexBase(Geometry):
             self._vertices = CoordString([point._vertex for point in vertices], ring=ring)
             if "crs" not in kwargs:
                 self.crs = vertices[0].crs
-
-        if self._vertices.rank not in (2, 3):
-            raise TypeError("Coordinates must be a sequence of sequences")
         return
 
     def __eq__(self, other):
@@ -734,7 +735,8 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
         - If CRS is Geographical, uses distance defined by the CRS instance.
         """
         ptvertex = point.vertex(crs=self.crs)
-        segments = zip(self._vertices.slice(0, -1), self._vertices.slice(1, 0))
+        segments = zip(self._vertices.slice(0, -1).asarray(),
+                       self._vertices.slice(1, 0).asarray())
 
         if isinstance(self.crs, CartesianCRS):
             func = _cvectorgeo.pt_nearest_planar
@@ -1242,10 +1244,12 @@ class Multipoint(Multipart, Rotatable, MultiVertexMixin, GeoJSONOutMixin, Shapef
     """
 
     def __init__(self, inputs, build_index=True, **kwargs):
-        if hasattr(inputs, "__next__"):
+        if hasattr(inputs, "__next__") and not isinstance(inputs, CoordString):
             inputs = list(inputs)
 
-        if len(inputs) == 0:
+        if isinstance(inputs, CoordString):
+            self._vertices = inputs
+        elif len(inputs) == 0:
             self._vertices = CoordString([])
         elif isinstance(inputs[0], Point):
             crs = kwargs.get("crs", inputs[0].crs)

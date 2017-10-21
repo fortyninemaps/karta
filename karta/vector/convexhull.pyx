@@ -1,6 +1,6 @@
 from libc.math cimport M_PI, M_PI_2
 from cpython cimport bool
-from coordstring cimport CoordString
+from coordstring.coordstring cimport CoordString
 from vectorgeo cimport Vector2, azimuth, azimuth_sph, dist2, dist_sph
 
 cdef bool isleft(Vector2 pt0, Vector2 pt1, Vector2 pt2):

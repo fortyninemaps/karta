@@ -1,6 +1,6 @@
 from libc.math cimport fmin, fmax, NAN
 from vectorgeo cimport Vector2, fsign, bndlat_sph
-from coordstring cimport CoordString
+from coordstring.coordstring cimport CoordString
 
 cpdef int crosses_dateline(double x0, double x1):
     """ check whether geodesic with longitudes x0, x1 [-180, 180) crosses the dateline.

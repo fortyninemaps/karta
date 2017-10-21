@@ -54,8 +54,6 @@ class build_ext(_build_ext):
 extensions = [
         Extension("karta.raster.crfuncs", ["karta/raster/crfuncs.pyx"]),
 
-        Extension("karta.vector.coordstring", ["karta/vector/coordstring.pyx"]),
-
         Extension("karta.vector.vectorgeo", ["karta/vector/vectorgeo.pyx"],
                   extra_compile_args=["-std=c99"]),
 
@@ -82,6 +80,7 @@ setup(
                         "pyproj>=1.9",
                         "gdal>=1.10",
                         "blosc>=1.2.8",
+                        "coordstring>=0.1.1",
                         "picogeojson>=0.6.1"],
     author = "Nat Wilson",
     author_email = "natw@fortyninemaps.com",
