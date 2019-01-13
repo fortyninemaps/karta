@@ -7,8 +7,7 @@ Table of Contents
    :maxdepth: 2
 
    installation
-   vector
-   raster
+   tutorial
    crs
    examples
 
