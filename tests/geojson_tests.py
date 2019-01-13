@@ -102,6 +102,18 @@ class TestGeoJSONOutput(unittest.TestCase):
 
     maxDiff = None
 
+    def verify(self, a, b, precision):
+        if type(a) != type(b):
+            raise AssertionError("{} != {}".format(type(a), type(b)))
+        if isinstance(a, list):
+            for (_a, _b) in zip(a, b):
+                self.verify(_a, _b, precision)
+        elif isinstance(a, float):
+            self.assertAlmostEqual(a, b, places=precision)
+        else:
+            self.assertEqual(a, b)
+        return
+
     def verifyDict(self, d1, d2, precision):
         for key, v in d1.items():
             try:
@@ -110,10 +122,8 @@ class TestGeoJSONOutput(unittest.TestCase):
                 raise AssertionError("key '{}' not in dict 2".format(key))
             if isinstance(v, dict):
                 self.verifyDict(v, d2[key], precision)
-            if isinstance(v, (int, float)):
-                self.assertAlmostEqual(v, d2[key], places=precision)
             else:
-                self.assertEqual(v, d2[key])
+                self.verify(v, d2[key], precision)
         return
 
     def verifyJson(self, json1, json2, precision=7):
