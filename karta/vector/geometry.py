@@ -692,6 +692,8 @@ class ConnectedMultiVertexMixin(MultiVertexMixin):
                 return _cintersection.intersects_sph(self._vertices, other._vertices)
             else:
                 return _cintersection.intersects(self._vertices, other._vertices)
+        else:
+            return False
 
     def intersections(self, other, keep_duplicates=False):
         """ Return the intersections with another geometry as a Multipoint.
