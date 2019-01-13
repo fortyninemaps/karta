@@ -45,7 +45,7 @@ Getting Started
 
 For a whirlwind tour of some basic usage of *Karta*, look through the `tutorial`_.
 
-.. _`tutorial`: _static/tutorial.html
+.. _`tutorial`: tutorial.html
 
 Data Formats
 ------------
@@ -71,13 +71,6 @@ it, such as Shapely_ and ArcPy_.
 .. _geo_interface: https://gist.github.com/sgillies/2217756
 .. _Shapely: https://github.com/Toblerity/Shapely
 .. _ArcPy: http://help.arcgis.com/en/arcgisdesktop/10.0/help/index.html#//000v00000153000000
-
-
-
-Indices and tables
-------------------
-
-* :ref:`genindex`
 
 .. * :ref:`search`
 
