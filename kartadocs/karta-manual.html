@@ -26,26 +26,18 @@
 
   
 
-  
-  
-    <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
-  
-
-  
-
-  
-        <link rel="index" title="Index"
-              href="genindex.html"/>
-        <link rel="search" title="Search" href="search.html"/>
-    <link rel="top" title="Karta 0.9.0b1 documentation" href="index.html"/>
-        <link rel="next" title="Installation" href="installation.html"/> 
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="installation.html" /> 
 
   
   <script src="_static/js/modernizr.min.js"></script>
 
 </head>
 
-<body class="wy-body-for-nav" role="document">
+<body class="wy-body-for-nav">
 
    
   <div class="wy-grid-for-nav">
@@ -93,10 +85,9 @@
             
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="raster-indexing.html">Raster indexing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Karta tutorial</a></li>
 <li class="toctree-l1"><a class="reference internal" href="crs.html">Coordinate reference systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference.html">Package reference</a></li>
 </ul>
 
             
@@ -108,7 +99,7 @@
     <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
 
       
-      <nav class="wy-nav-top" role="navigation" aria-label="top navigation">
+      <nav class="wy-nav-top" aria-label="top navigation">
         
           <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
           <a href="#">Karta</a>
@@ -116,9 +107,10 @@
       </nav>
 
 
-      
       <div class="wy-nav-content">
+        
         <div class="rst-content">
+        
           
 
 
@@ -165,19 +157,16 @@
 <div class="toctree-wrapper compound">
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="raster-indexing.html">Raster indexing</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="raster-indexing.html#grid-slicing">Grid slicing</a></li>
-<li class="toctree-l2"><a class="reference internal" href="raster-indexing.html#grid-masking">Grid masking</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial.html">Karta tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#definitions">Definitions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#vector-data">Vector data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#raster-data">Raster data</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tutorial.html#coordinate-reference-systems">Coordinate reference systems</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="crs.html">Coordinate reference systems</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="reference.html">Package reference</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="reference.html#raster-package-karta-raster">Raster package (<code class="docutils literal"><span class="pre">karta.raster</span></code>)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference.html#vector-package-karta-vector">Vector package (<code class="docutils literal"><span class="pre">karta.vector</span></code>)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="reference.html#managing-coordinate-systems">Managing coordinate systems</a></li>
-</ul>
-</li>
 </ul>
 </div>
 </div>
@@ -186,15 +175,15 @@
 <p><em>Karta</em> is a package for spatial analysis in Python. It streamlines data
 processing by providing generic geographical types for vector and raster sources
 as well as a selection of analysis functions.</p>
-<p><em>Karta</em> is divided into two major sections, <code class="docutils literal"><span class="pre">karta.raster</span></code> for gridded
-image-like data, and <code class="docutils literal"><span class="pre">karta.vector</span></code> for point-wise geometry data. Users of GIS
+<p><em>Karta</em> is divided into two major sections, <code class="docutils literal notranslate"><span class="pre">karta.raster</span></code> for gridded
+image-like data, and <code class="docutils literal notranslate"><span class="pre">karta.vector</span></code> for point-wise geometry data. Users of GIS
 software will find the distinction familiar. Rasters are typically used for
 applications such as satellite imagery, elevation and hillshade maps, and
 heatmaps. Vector datasets are used when it makes sense to talk about discrete
 geometries, as in a network of stations, a road system, or maps administrative
 boundaries.</p>
-<p>In addition to the above, <em>Karta</em> contains the modules <code class="docutils literal"><span class="pre">karta.crs</span></code> and
-<code class="docutils literal"><span class="pre">karta.geodesy</span></code>, which together provide support classes and functions that
+<p>In addition to the above, <em>Karta</em> contains the modules <code class="docutils literal notranslate"><span class="pre">karta.crs</span></code> and
+<code class="docutils literal notranslate"><span class="pre">karta.geodesy</span></code>, which together provide support classes and functions that
 help represent raster and vector object as positions on earth. There are
 numerous ways of representing positions, including geographical
 longitude/latitude, n-vectors, and easting/northings on various projected
@@ -238,9 +227,7 @@ it, such as <a class="reference external" href="https://github.com/Toblerity/Sha
 
 
            </div>
-           <div class="articleComments">
-            
-           </div>
+           
           </div>
           <footer>
   
@@ -256,12 +243,12 @@ it, such as <a class="reference external" href="https://github.com/Toblerity/Sha
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2016, Nat Wilson.
-      Last updated on Apr 23, 2017.
+        &copy; Copyright 2016, Nat Wilson
+      Last updated on Jan 13, 2019.
 
     </p>
   </div>
-  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/snide/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
 
 </footer>
 
@@ -276,36 +263,24 @@ it, such as <a class="reference external" href="https://github.com/Toblerity/Sha
 
   
 
-    <script type="text/javascript">
-        var DOCUMENTATION_OPTIONS = {
-            URL_ROOT:'./',
-            VERSION:'0.9.0b1',
-            COLLAPSE_INDEX:false,
-            FILE_SUFFIX:'.html',
-            HAS_SOURCE:  true,
-            SOURCELINK_SUFFIX: '.txt'
-        };
-    </script>
-      <script type="text/javascript" src="_static/jquery.js"></script>
-      <script type="text/javascript" src="_static/underscore.js"></script>
-      <script type="text/javascript" src="_static/doctools.js"></script>
-      <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
 
   
 
-  
-  
-    <script type="text/javascript" src="_static/js/theme.js"></script>
-  
+  <script type="text/javascript" src="_static/js/theme.js"></script>
 
-  
-  
   <script type="text/javascript">
       jQuery(function () {
-          SphinxRtdTheme.StickyNav.enable();
+          SphinxRtdTheme.Navigation.enable(true);
       });
-  </script>
-   
+  </script> 
 
 </body>
 </html>
