@@ -102,23 +102,25 @@ class TestGeoJSONOutput(unittest.TestCase):
 
     maxDiff = None
 
-    def verifyDict(self, d1, d2):
+    def verifyDict(self, d1, d2, precision):
         for key, v in d1.items():
             try:
                 self.assertTrue(key in d2)
             except AssertionError as e:
                 raise AssertionError("key '{}' not in dict 2".format(key))
             if isinstance(v, dict):
-                self.verifyDict(v, d2[key])
+                self.verifyDict(v, d2[key], precision)
+            if isinstance(v, (int, float)):
+                self.assertAlmostEqual(v, d2[key], places=precision)
             else:
                 self.assertEqual(v, d2[key])
         return
 
-    def verifyJSON(self, json1, json2):
+    def verifyJSON(self, json1, json2, precision=7):
         """ Verify that two JSON strings are equivalent """
         obj1 = json.loads(json1)
         obj2 = json.loads(json2)
-        self.verifyDict(obj1, obj2)
+        self.verifyDict(obj1, obj2, precision)
         return
 
     def test_point_write_cartesian(self):
