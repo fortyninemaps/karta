@@ -1,0 +1,847 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Karta tutorial &mdash; Karta 0.9.0b1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+  
+  
+  
+
+  
+
+  
+  
+    
+
+  
+
+  <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Coordinate reference systems" href="crs.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+
+  
+  <script src="_static/js/modernizr.min.js"></script>
+
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search">
+          
+
+          
+            <a href="karta-manual.html" class="icon icon-home"> Karta
+          
+
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.9
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Karta tutorial</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#definitions">Definitions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#vector-data">Vector data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#associated-data">Associated data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#visualizing-and-importing-exporting-data">Visualizing and importing/exporting data</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#raster-data">Raster data</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#bands">Bands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grid-sampling">Grid sampling</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#grid-resizing">Grid resizing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#creating-regulargrid-instances">Creating <code class="docutils literal notranslate"><span class="pre">RegularGrid</span></code> instances</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#coordinate-reference-systems">Coordinate reference systems</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="crs.html">Coordinate reference systems</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="karta-manual.html">Karta</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="karta-manual.html">Docs</a> &raquo;</li>
+        
+      <li>Karta tutorial</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="_sources/tutorial.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <p><a class="reference external" href="../karta-manual.html">Back to manual</a></p>
+<p><a class="reference external" href="../introduction.html">Back to introduction</a></p>
+<div class="section" id="karta-tutorial">
+<h1>Karta tutorial<a class="headerlink" href="#karta-tutorial" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<p><em>Karta</em> provides a set of tools for analysing geographical data. The
+organization of <em>Karta</em> is around a set of classes for representing
+vector and raster data. These classes contain built-in methods for
+common tasks, and are easily extended for more specialized processing.
+This tutorial provides a brief introduction to the elements of <em>Karta</em>.</p>
+<p>Should you come across any mistakes, please file a bug or submit a pull
+request on <a class="reference external" href="https://github.com/fortyninemaps/karta">Github</a>!</p>
+<p>The following examples are shown using Python 3, however <em>Karta</em> is
+supported on Python 2.7+ and Python 3.4+.</p>
+</div>
+<div class="section" id="definitions">
+<h2>Definitions<a class="headerlink" href="#definitions" title="Permalink to this headline">¶</a></h2>
+<p><strong>Vector data</strong> are data that can be treated as a set of connected or
+disconnected vertices. Examples might be road networks, a set of
+borders, geophysical survey lines, or the path taken by a bottle
+floating in an ocean current. In <em>Karta</em>, these data are classified as
+belonging to <em>Point</em>, <em>Line</em> and <em>Polygon</em> classes, and their
+<em>Multipart</em> equivalents <em>Multipoint</em>, <em>Multiline</em>, and <em>Multipolygon</em>.
+Some questions that might be asked of vector data include</p>
+<ul class="simple">
+<li>which of these points are contained in this Polygon?</li>
+<li>do these Lines intersect, and where?</li>
+<li>what is the average distance travelled by a particle?</li>
+<li>what municipalities does this river flow through?</li>
+</ul>
+<p><strong>Raster data</strong> is data that are typically thought of in terms of pixels
+or a grid of values covering a surface. Examples might be an elevation
+model, a satellite image, or an upstream area map. Depending on what the
+data represents, one might</p>
+<ul class="simple">
+<li>compute slope, aspect, and hillshades on an elevation model</li>
+<li>resample or interpolate a grid</li>
+<li>mask a land cover map according to management boundaries</li>
+<li>apply a pansharpening algorithm to multispectral satellite imagery</li>
+<li>extract an elevation profile along a path</li>
+</ul>
+<p>The term <strong>coordinate reference system</strong> refers to a system of relating
+numerical coordinates to actual positions on Earth. <em>Karta</em> includes
+methods for geodetic calculations and basic support of projected and
+geographical coordinates, as well as coordinate system classes backed by
+<em>pyproj</em>.</p>
+</div>
+<div class="section" id="vector-data">
+<h2>Vector data<a class="headerlink" href="#vector-data" title="Permalink to this headline">¶</a></h2>
+<p>This section demonstrates the creation and manipulation of vector data.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">karta</span> <span class="k">import</span> <span class="n">Point</span><span class="p">,</span> <span class="n">Line</span><span class="p">,</span> <span class="n">Polygon</span><span class="p">,</span> <span class="n">Multipoint</span><span class="p">,</span> <span class="n">Multiline</span><span class="p">,</span> <span class="n">Multipolygon</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">Point</span></code>, <code class="docutils literal notranslate"><span class="pre">Line</span></code>, and <code class="docutils literal notranslate"><span class="pre">Polygon</span></code> classes can all be instantiated
+by providing vertices, and optionally, associated properties. The
+<em>Multipart</em> <code class="docutils literal notranslate"><span class="pre">Multipoint</span></code>, <code class="docutils literal notranslate"><span class="pre">Multiline</span></code>, and <code class="docutils literal notranslate"><span class="pre">Multipolygon</span></code> classes
+are similar, and can additionally include part-specific tabular
+metadata.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">123.1</span><span class="p">,</span> <span class="mf">49.25</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Point</span><span class="p">(</span><span class="o">-</span><span class="mf">123.1</span><span class="p">,</span> <span class="mf">49.25</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mpt</span> <span class="o">=</span> <span class="n">Multipoint</span><span class="p">([(</span><span class="o">-</span><span class="mf">122.93</span><span class="p">,</span> <span class="mf">48.62</span><span class="p">),</span>
+                  <span class="p">(</span><span class="o">-</span><span class="mf">123.10</span><span class="p">,</span> <span class="mf">48.54</span><span class="p">),</span>
+                  <span class="p">(</span><span class="o">-</span><span class="mf">122.90</span><span class="p">,</span> <span class="mf">48.49</span><span class="p">),</span>
+                  <span class="p">(</span><span class="o">-</span><span class="mf">122.81</span><span class="p">,</span> <span class="mf">48.56</span><span class="p">)],</span>
+                 <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;color&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;red&quot;</span><span class="p">,</span> <span class="s2">&quot;blue&quot;</span><span class="p">,</span> <span class="s2">&quot;green&quot;</span><span class="p">,</span> <span class="s2">&quot;yellow&quot;</span><span class="p">],</span>
+                       <span class="s2">&quot;value&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">5</span><span class="p">]})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mpt</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mpt</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">karta</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Multipoint</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fe2e041e2e8</span><span class="o">&gt;</span>
+<span class="n">D</span><span class="p">[</span><span class="n">color</span><span class="p">,</span> <span class="n">value</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">line</span> <span class="o">=</span> <span class="n">Line</span><span class="p">([(</span><span class="o">-</span><span class="mf">124.35713</span><span class="p">,</span> <span class="mf">49.31437</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.37857</span><span class="p">,</span> <span class="mf">49.31720</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.39442</span><span class="p">,</span> <span class="mf">49.31833</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.40311</span><span class="p">,</span> <span class="mf">49.31942</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.41052</span><span class="p">,</span> <span class="mf">49.32203</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.41681</span><span class="p">,</span> <span class="mf">49.32477</span><span class="p">),</span>
+             <span class="p">(</span><span class="o">-</span><span class="mf">124.42278</span><span class="p">,</span> <span class="mf">49.32588</span><span class="p">)])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">karta</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Line</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fe2e041e0f0</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">poly</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">([(</span><span class="o">-</span><span class="mf">25.41</span><span class="p">,</span> <span class="mf">67.03</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">24.83</span><span class="p">,</span> <span class="mf">62.92</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">12.76</span><span class="p">,</span> <span class="mf">63.15</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">11.44</span><span class="p">,</span> <span class="mf">66.82</span><span class="p">)])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">poly</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">karta</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Polygon</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fe324633be0</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Each geometrical object now contains a vertex/vertices in a cartesian
+plane.</p>
+<p>We may be interested in determining whether the <code class="docutils literal notranslate"><span class="pre">Point</span></code> created about
+is within the <code class="docutils literal notranslate"><span class="pre">Polygon</span></code>:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">pt</span><span class="p">))</span>       <span class="c1"># False</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">False</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># but this one is:</span>
+<span class="n">pt2</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mi">25</span><span class="p">,</span> <span class="mi">65</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">contains</span><span class="p">(</span><span class="n">pt2</span><span class="p">))</span>      <span class="c1"># True</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">True</span>
+</pre></div>
+</div>
+<p>We also can test whether the <code class="docutils literal notranslate"><span class="pre">Line</span></code> from above crosses the
+<code class="docutils literal notranslate"><span class="pre">Polygon</span></code>:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">intersects</span><span class="p">(</span><span class="n">poly</span><span class="p">))</span>   <span class="c1"># False</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">False</span>
+</pre></div>
+</div>
+<p>Or compute the shortest distance between the <code class="docutils literal notranslate"><span class="pre">Point</span></code> and the <code class="docutils literal notranslate"><span class="pre">Line</span></code>:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">line</span><span class="o">.</span><span class="n">shortest_distance_to</span><span class="p">(</span><span class="n">pt</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">1.2587769197915923</span>
+</pre></div>
+</div>
+<p>There are methods for computing the nearest vertex to an external point,
+or the nearest point on an edge to an external point:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">60.0</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">nearest_vertex_to</span><span class="p">(</span><span class="n">pt</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">poly</span><span class="o">.</span><span class="n">nearest_on_boundary</span><span class="p">(</span><span class="n">pt</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">2</span>
+<span class="n">Point</span><span class="p">(</span><span class="o">-</span><span class="mf">12.301580009598124</span><span class="p">,</span> <span class="mf">64.42454648846582</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The positions of objects with multiple vertices can be sliced and
+iterated through:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">subline</span> <span class="o">=</span> <span class="n">line</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">subline</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">subline</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">pt</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">karta</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Line</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fe2e0419da0</span><span class="o">&gt;</span>
+<span class="n">Point</span><span class="p">(</span><span class="o">-</span><span class="mf">124.39442</span><span class="p">,</span> <span class="mf">49.31833</span><span class="p">)</span>
+<span class="n">Point</span><span class="p">(</span><span class="o">-</span><span class="mf">124.40311</span><span class="p">,</span> <span class="mf">49.31942</span><span class="p">)</span>
+<span class="n">Point</span><span class="p">(</span><span class="o">-</span><span class="mf">124.41052</span><span class="p">,</span> <span class="mf">49.32203</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>A slice that takes part of a polygon returns a line.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">poly</span><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">karta</span><span class="o">.</span><span class="n">vector</span><span class="o">.</span><span class="n">geometry</span><span class="o">.</span><span class="n">Line</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fe2e0419ac8</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Points have a <code class="docutils literal notranslate"><span class="pre">distance()</span></code> method that calculates the distance to
+another point.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">123.1</span><span class="p">,</span> <span class="mf">49.25</span><span class="p">))</span>
+<span class="n">pt2</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">70.66</span><span class="p">,</span> <span class="mf">41.52</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">pt2</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">53.00666467530286</span>
+</pre></div>
+</div>
+<p>By default, geometries in Karta use a planar cartesian coordinate
+system. If our positions are meant to be geographical coordinates, then
+we can provide the <code class="docutils literal notranslate"><span class="pre">crs</span></code> argument to each geometry at creation, as in</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">karta.crs</span> <span class="k">import</span> <span class="n">LonLatWGS84</span>
+
+<span class="n">pt</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">123.1</span><span class="p">,</span> <span class="mf">49.25</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+<span class="n">pt2</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">70.66</span><span class="p">,</span> <span class="mf">41.52</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+<span class="n">pt</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">pt2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">4109559.5877279835</span>
+</pre></div>
+</div>
+<p>which now gives the great circle distance between point on the Earth, in
+meters. We can mix coordinate systems to some degree, with <em>Karta</em>
+performing the necessary transformations in the background:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">karta.crs</span> <span class="k">import</span> <span class="n">WebMercator</span>
+
+<span class="n">pt_web</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mi">14000000</span><span class="p">,</span> <span class="mi">6300000</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">WebMercator</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pt</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">pt_web</span><span class="p">))</span>   <span class="c1"># distance in coordinate system units of *pt*</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mf">194483.5977009545</span>
+</pre></div>
+</div>
+<p>When the coordinate system is specified, all geometrical methods obey
+that coordinate system. We can use this to perform queries, such which
+American state capitols are within 2000 km of Mexico City?</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">karta.examples</span> <span class="k">import</span> <span class="n">us_capitols</span>
+<span class="n">mexico_city</span> <span class="o">=</span> <span class="n">Point</span><span class="p">((</span><span class="o">-</span><span class="mf">99.13</span><span class="p">,</span> <span class="mf">19.43</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+
+<span class="c1"># Filter those within 2000 km of Mexico City</span>
+<span class="n">nearby</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pt</span><span class="p">:</span> <span class="n">pt</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">mexico_city</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">2000e3</span><span class="p">,</span> <span class="n">us_capitols</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">capitol</span> <span class="ow">in</span> <span class="n">nearby</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{0:4.0f}</span><span class="s2"> km      </span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">mexico_city</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">capitol</span><span class="p">)</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">capitol</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1785</span> <span class="n">km</span>      <span class="n">Oklahoma</span> <span class="n">City</span><span class="p">,</span> <span class="n">Oklahoma</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1923</span> <span class="n">km</span>      <span class="n">Montgomery</span><span class="p">,</span> <span class="n">Alabama</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1822</span> <span class="n">km</span>      <span class="n">Little</span> <span class="n">Rock</span><span class="p">,</span> <span class="n">Arkansas</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1933</span> <span class="n">km</span>      <span class="n">Tallahassee</span><span class="p">,</span> <span class="n">Florida</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1463</span> <span class="n">km</span>      <span class="n">Baton</span> <span class="n">Rouge</span><span class="p">,</span> <span class="n">Louisiana</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1683</span> <span class="n">km</span>      <span class="n">Jackson</span><span class="p">,</span> <span class="n">Mississippi</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1922</span> <span class="n">km</span>      <span class="n">Santa</span> <span class="n">Fe</span><span class="p">,</span> <span class="n">New</span> <span class="n">Mexico</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1213</span> <span class="n">km</span>      <span class="n">Austin</span><span class="p">,</span> <span class="n">Texas</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Or, list capitols from nearest to furthest from Mexico City</span>
+<span class="n">distances</span> <span class="o">=</span> <span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">pt</span><span class="p">:</span> <span class="n">mexico_city</span><span class="o">.</span><span class="n">distance</span><span class="p">(</span><span class="n">pt</span><span class="p">),</span> <span class="n">us_capitols</span><span class="p">)</span>
+<span class="n">distances_capitols</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">distances</span><span class="p">,</span> <span class="n">us_capitols</span><span class="p">))</span>
+<span class="k">for</span> <span class="n">d</span><span class="p">,</span> <span class="n">pt</span> <span class="ow">in</span> <span class="n">distances_capitols</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{km:.0f}</span><span class="s2"> km      </span><span class="si">{name}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">km</span><span class="o">=</span><span class="n">d</span><span class="o">/</span><span class="mf">1e3</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">pt</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s2">&quot;n&quot;</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1213</span> <span class="n">km</span>      <span class="n">Austin</span><span class="p">,</span> <span class="n">Texas</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1463</span> <span class="n">km</span>      <span class="n">Baton</span> <span class="n">Rouge</span><span class="p">,</span> <span class="n">Louisiana</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1683</span> <span class="n">km</span>      <span class="n">Jackson</span><span class="p">,</span> <span class="n">Mississippi</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1785</span> <span class="n">km</span>      <span class="n">Oklahoma</span> <span class="n">City</span><span class="p">,</span> <span class="n">Oklahoma</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1822</span> <span class="n">km</span>      <span class="n">Little</span> <span class="n">Rock</span><span class="p">,</span> <span class="n">Arkansas</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1922</span> <span class="n">km</span>      <span class="n">Santa</span> <span class="n">Fe</span><span class="p">,</span> <span class="n">New</span> <span class="n">Mexico</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1923</span> <span class="n">km</span>      <span class="n">Montgomery</span><span class="p">,</span> <span class="n">Alabama</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">1933</span> <span class="n">km</span>      <span class="n">Tallahassee</span><span class="p">,</span> <span class="n">Florida</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2027</span> <span class="n">km</span>      <span class="n">Phoenix</span><span class="p">,</span> <span class="n">Arizona</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2155</span> <span class="n">km</span>      <span class="n">Atlanta</span><span class="p">,</span> <span class="n">Georgia</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2199</span> <span class="n">km</span>      <span class="n">Topeka</span><span class="p">,</span> <span class="n">Kansas</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2214</span> <span class="n">km</span>      <span class="n">Nashville</span><span class="p">,</span> <span class="n">Tennessee</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2225</span> <span class="n">km</span>      <span class="n">Jefferson</span> <span class="n">City</span><span class="p">,</span> <span class="n">Missouri</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2320</span> <span class="n">km</span>      <span class="n">Denver</span><span class="p">,</span> <span class="n">Colorado</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2382</span> <span class="n">km</span>      <span class="n">Lincoln</span><span class="p">,</span> <span class="n">Nebraska</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2414</span> <span class="n">km</span>      <span class="n">Columbia</span><span class="p">,</span> <span class="n">South</span> <span class="n">Carolina</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2429</span> <span class="n">km</span>      <span class="n">Springfield</span><span class="p">,</span> <span class="n">Illinois</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2467</span> <span class="n">km</span>      <span class="n">Cheyenne</span><span class="p">,</span> <span class="n">Wyoming</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2495</span> <span class="n">km</span>      <span class="n">Frankfort</span><span class="p">,</span> <span class="n">Kentucky</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2510</span> <span class="n">km</span>      <span class="n">Des</span> <span class="n">Moines</span><span class="p">,</span> <span class="n">Iowa</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2576</span> <span class="n">km</span>      <span class="n">Indianapolis</span><span class="p">,</span> <span class="n">Indiana</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2661</span> <span class="n">km</span>      <span class="n">Salt</span> <span class="n">Lake</span> <span class="n">City</span><span class="p">,</span> <span class="n">Utah</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2694</span> <span class="n">km</span>      <span class="n">Charleston</span><span class="p">,</span> <span class="n">West</span> <span class="n">Virginia</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2708</span> <span class="n">km</span>      <span class="n">Raleigh</span><span class="p">,</span> <span class="n">North</span> <span class="n">Carolina</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2752</span> <span class="n">km</span>      <span class="n">Columbus</span><span class="p">,</span> <span class="n">Ohio</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2769</span> <span class="n">km</span>      <span class="n">Pierre</span><span class="p">,</span> <span class="n">South</span> <span class="n">Dakota</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2777</span> <span class="n">km</span>      <span class="n">Madison</span><span class="p">,</span> <span class="n">Wisconsin</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2885</span> <span class="n">km</span>      <span class="n">Saint</span> <span class="n">Paul</span><span class="p">,</span> <span class="n">Minnesota</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2904</span> <span class="n">km</span>      <span class="n">Richmond</span><span class="p">,</span> <span class="n">Virginia</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2922</span> <span class="n">km</span>      <span class="n">Lansing</span><span class="p">,</span> <span class="n">Michigan</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">2947</span> <span class="n">km</span>      <span class="n">Carson</span> <span class="n">City</span><span class="p">,</span> <span class="n">Nevada</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3025</span> <span class="n">km</span>      <span class="n">Sacramento</span><span class="p">,</span> <span class="n">California</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3030</span> <span class="n">km</span>      <span class="n">Washington</span><span class="p">,</span> <span class="n">District</span> <span class="n">of</span> <span class="n">Columbia</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3041</span> <span class="n">km</span>      <span class="n">Bismarck</span><span class="p">,</span> <span class="n">North</span> <span class="n">Dakota</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3070</span> <span class="n">km</span>      <span class="n">Annapolis</span><span class="p">,</span> <span class="n">Maryland</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3118</span> <span class="n">km</span>      <span class="n">Boise</span><span class="p">,</span> <span class="n">Idaho</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3137</span> <span class="n">km</span>      <span class="n">Harrisburg</span><span class="p">,</span> <span class="n">Pennsylvania</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3150</span> <span class="n">km</span>      <span class="n">Dover</span><span class="p">,</span> <span class="n">Delaware</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3235</span> <span class="n">km</span>      <span class="n">Helena</span><span class="p">,</span> <span class="n">Montana</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3274</span> <span class="n">km</span>      <span class="n">Trenton</span><span class="p">,</span> <span class="n">New</span> <span class="n">Jersey</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3506</span> <span class="n">km</span>      <span class="n">Albany</span><span class="p">,</span> <span class="n">New</span> <span class="n">York</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3517</span> <span class="n">km</span>      <span class="n">Hartford</span><span class="p">,</span> <span class="n">Connecticut</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3585</span> <span class="n">km</span>      <span class="n">Salem</span><span class="p">,</span> <span class="n">Oregon</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3605</span> <span class="n">km</span>      <span class="n">Providence</span><span class="p">,</span> <span class="n">Rhode</span> <span class="n">Island</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3665</span> <span class="n">km</span>      <span class="n">Boston</span><span class="p">,</span> <span class="n">Massachusetts</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3688</span> <span class="n">km</span>      <span class="n">Concord</span><span class="p">,</span> <span class="n">New</span> <span class="n">Hampshire</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3696</span> <span class="n">km</span>      <span class="n">Montpelier</span><span class="p">,</span> <span class="n">Vermont</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3748</span> <span class="n">km</span>      <span class="n">Olympia</span><span class="p">,</span> <span class="n">Washington</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">3879</span> <span class="n">km</span>      <span class="n">Augusta</span><span class="p">,</span> <span class="n">Maine</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">5172</span> <span class="n">km</span>      <span class="n">Juneau</span><span class="p">,</span> <span class="n">Alaska</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+<span class="mi">6093</span> <span class="n">km</span>      <span class="n">Honolulu</span><span class="p">,</span> <span class="n">Hawaii</span><span class="p">,</span> <span class="n">United</span> <span class="n">States</span>
+</pre></div>
+</div>
+<p>All of the above calculations are performed on a geoid. The
+<code class="docutils literal notranslate"><span class="pre">LonLatWGS84</span></code> coordinate system means to use geographical (longitude
+and latitude) coordinates on the WGS 84 ellipsoid.</p>
+<div class="section" id="associated-data">
+<h3>Associated data<a class="headerlink" href="#associated-data" title="Permalink to this headline">¶</a></h3>
+<p>By using the <code class="docutils literal notranslate"><span class="pre">data</span></code> keyword argument, additional data can be
+associated with a <em>Multipart</em> vector geometry. The data can be a list or
+a dictionary of lists.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mp</span> <span class="o">=</span> <span class="n">Multipoint</span><span class="p">([(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)],</span>
+                <span class="n">data</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;species&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;T. officianale&quot;</span><span class="p">,</span> <span class="s2">&quot;C. tectorum&quot;</span><span class="p">,</span>
+                                  <span class="s2">&quot;M. alba&quot;</span><span class="p">,</span> <span class="s2">&quot;V. cracca&quot;</span><span class="p">]})</span>
+</pre></div>
+</div>
+<p>These data live in the <code class="docutils literal notranslate"><span class="pre">.data</span></code> attribute, which is a <code class="docutils literal notranslate"><span class="pre">Table</span></code>
+instance. For convenience, the data can also be accessed via the <code class="docutils literal notranslate"><span class="pre">.d</span></code>
+attribute, which provides a streamlined syntax supporting key-lookups,
+indexing, and slicing.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mp</span><span class="o">.</span><span class="n">d</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Indexer</span><span class="p">(</span><span class="n">D</span><span class="p">[</span><span class="n">species</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mp</span><span class="o">.</span><span class="n">d</span><span class="p">[</span><span class="s2">&quot;species&quot;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;T. officianale&#39;</span><span class="p">,</span> <span class="s1">&#39;C. tectorum&#39;</span><span class="p">,</span> <span class="s1">&#39;M. alba&#39;</span><span class="p">,</span> <span class="s1">&#39;V. cracca&#39;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mp</span><span class="o">.</span><span class="n">d</span><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;species&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;C. tectorum&#39;</span><span class="p">,</span> <span class="s1">&#39;M. alba&#39;</span><span class="p">]}</span>
+</pre></div>
+</div>
+<p>The data are propagated through indexing operations on their parent
+geometry:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pt</span> <span class="o">=</span> <span class="n">mp</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">pt</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="n">pt</span><span class="o">.</span><span class="n">properties</span><span class="p">[</span><span class="s2">&quot;species&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Point</span><span class="p">(</span><span class="mf">4.0</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">-</span> <span class="n">M</span><span class="o">.</span> <span class="n">alba</span>
+</pre></div>
+</div>
+<p>Geometry-level metadata at the geometry level can be provided using the
+<code class="docutils literal notranslate"><span class="pre">properties</span></code> keyword argument, which accepts a dictionary. Derived
+geometries carry the properties of their parent geometry.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">poly</span> <span class="o">=</span> <span class="n">Polygon</span><span class="p">([(</span><span class="o">-</span><span class="mf">25.41</span><span class="p">,</span> <span class="mf">67.03</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">24.83</span><span class="p">,</span> <span class="mf">62.92</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">12.76</span><span class="p">,</span> <span class="mf">63.15</span><span class="p">),</span>
+                <span class="p">(</span><span class="o">-</span><span class="mf">11.44</span><span class="p">,</span> <span class="mf">66.82</span><span class="p">)],</span>
+               <span class="n">properties</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;geology&quot;</span><span class="p">:</span> <span class="s2">&quot;volcanic&quot;</span><span class="p">,</span>
+                           <span class="s2">&quot;alcohol&quot;</span><span class="p">:</span> <span class="s2">&quot;brennivin&quot;</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">poly</span><span class="p">[</span><span class="mi">0</span><span class="p">:</span><span class="mi">3</span><span class="p">]</span><span class="o">.</span><span class="n">properties</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;geology&#39;</span><span class="p">:</span> <span class="s1">&#39;volcanic&#39;</span><span class="p">,</span> <span class="s1">&#39;alcohol&#39;</span><span class="p">:</span> <span class="s1">&#39;brennivin&#39;</span><span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="visualizing-and-importing-exporting-data">
+<h3>Visualizing and importing/exporting data<a class="headerlink" href="#visualizing-and-importing-exporting-data" title="Permalink to this headline">¶</a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">get_coordinate_lists</span></code> method and <code class="docutils literal notranslate"><span class="pre">coordinates</span></code> attribute
+provide lists of coordinates for plotting or data export.</p>
+<p>Higher-level plotting operations are provided by the separate
+<code class="docutils literal notranslate"><span class="pre">`karta.plotting</span></code> &lt;<a class="reference external" href="https://github.com/fortyninemaps/karta-map">https://github.com/fortyninemaps/karta-map</a>&gt;`__
+submodule, not described here.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="o">%</span><span class="n">matplotlib</span> <span class="n">inline</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="o">*</span><span class="n">line</span><span class="o">.</span><span class="n">coords</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">Line2D</span> <span class="n">at</span> <span class="mh">0x7fe2dbc026a0</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<img alt="_images/output_43_1.png" src="_images/output_43_1.png" />
+<p>Data can be read from and written to several common formats, including
+ESRI shapefiles (through bindings to the <em>pyshp</em> module), GeoJSON, and
+GPX. Convenience functions are kept in the <code class="docutils literal notranslate"><span class="pre">karta.vector.read</span></code>
+namespace.</p>
+<p>Each geometry has appropriate methods to write data:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">line</span><span class="o">.</span><span class="n">to_shapefile</span><span class="p">(</span><span class="s2">&quot;line.shp&quot;</span><span class="p">)</span>
+<span class="n">pt_web</span><span class="o">.</span><span class="n">to_geojson</span><span class="p">(</span><span class="s2">&quot;point.geojson&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="raster-data">
+<h2>Raster data<a class="headerlink" href="#raster-data" title="Permalink to this headline">¶</a></h2>
+<p>Raster data are primarily represented by the <code class="docutils literal notranslate"><span class="pre">karta.RegularGrid</span></code>
+class. <code class="docutils literal notranslate"><span class="pre">RegularGrid</span></code> instances have a CRS, a Null-data value, a
+geotransform, and one or more <em>bands</em>, which containing the actual data.</p>
+<div class="section" id="bands">
+<h3>Bands<a class="headerlink" href="#bands" title="Permalink to this headline">¶</a></h3>
+<p>To provide flexibility, different band classes are provided by
+<code class="docutils literal notranslate"><span class="pre">karta.raster.bands</span></code> using different strategies for data storage.</p>
+<ul>
+<li><p class="first">The simplest case, <code class="docutils literal notranslate"><span class="pre">SimpleBand</span></code>, uses a numpy array to store all
+data. This makes it reasonably fast, but can be memory-hungry with
+large rasters.</p>
+</li>
+<li><p class="first">The default case, <code class="docutils literal notranslate"><span class="pre">CompressedBand</span></code>, uses chunking and compression
+via the <em>blosc</em> library to reduce the memory footprint of the raster
+data at a small speed cost.</p>
+</li>
+<li><p class="first"><code class="docutils literal notranslate"><span class="pre">GdalFileBand</span></code> reads data directly from a valid GDAL datasource,
+using the least memory but performing the slowest.</p>
+<blockquote>
+<div><p>Note: <code class="docutils literal notranslate"><span class="pre">GdalFileBand</span></code> doesn’t currently handle all raster
+operations supported by the other band types. Many operations
+implicitly convert to in-memory <code class="docutils literal notranslate"><span class="pre">CompressedBand</span></code> representation.</p>
+</div></blockquote>
+</li>
+</ul>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">karta.raster</span> <span class="k">import</span> <span class="n">RegularGrid</span><span class="p">,</span> <span class="n">SimpleBand</span><span class="p">,</span> <span class="n">CompressedBand</span><span class="p">,</span> <span class="n">read_gtiff</span>
+
+<span class="n">ls8</span> <span class="o">=</span> <span class="n">read_gtiff</span><span class="p">(</span><span class="s2">&quot;LC08_L1TP_011031_20180930_20181010_01_T1_B8.TIF&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ls8</span><span class="o">.</span><span class="n">bands</span><span class="p">)</span>     <span class="c1"># list of one CompressedBand instance</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="o">&lt;</span><span class="n">karta</span><span class="o">.</span><span class="n">raster</span><span class="o">.</span><span class="n">band</span><span class="o">.</span><span class="n">CompressedBand</span> <span class="nb">object</span> <span class="n">at</span> <span class="mh">0x7fe2dbbcd400</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Print grid dimensions</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ls8</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mi">15861</span><span class="p">,</span> <span class="mi">15601</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Print grid extent</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ls8</span><span class="o">.</span><span class="n">extent</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mf">319200.0</span><span class="p">,</span> <span class="mf">553200.0</span><span class="p">,</span> <span class="mf">4503900.0</span><span class="p">,</span> <span class="mf">4741800.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Visualize data</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">ls8</span><span class="p">[::</span><span class="mi">10</span><span class="p">,::</span><span class="mi">10</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">origin</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">ls8</span><span class="o">.</span><span class="n">extent</span><span class="p">(),</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mf">3e3</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">10e3</span><span class="p">)</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">colorbar</span><span class="o">.</span><span class="n">Colorbar</span> <span class="n">at</span> <span class="mh">0x7fe2dbb6a198</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="_images/output_50_1.png" src="_images/output_50_1.png" />
+<p>When opening or creating a <code class="docutils literal notranslate"><span class="pre">RegularGrid</span></code>, a non-default band type can
+be specified as a keyword argument. The following code re-opens the same
+grid as a <code class="docutils literal notranslate"><span class="pre">SimpleBand</span></code> and verifies that all data are the same.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ls8_numpy</span> <span class="o">=</span> <span class="n">read_gtiff</span><span class="p">(</span><span class="s2">&quot;LC08_L1TP_011031_20180930_20181010_01_T1_B8.TIF&quot;</span><span class="p">,</span> <span class="n">bandclass</span><span class="o">=</span><span class="n">SimpleBand</span><span class="p">)</span>
+<span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">ls8</span><span class="p">[:,:]</span> <span class="o">==</span> <span class="n">ls8_numpy</span><span class="p">[:,:])</span>    <span class="c1"># True</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kc">True</span>
+</pre></div>
+</div>
+<p>In the above, the slice syntax <code class="docutils literal notranslate"><span class="pre">[:,:]</span></code> is used to get an array of all
+grid data. Because the grid <code class="docutils literal notranslate"><span class="pre">ls8</span></code> has only a single band in this case,
+the data array has two dimensions. The normal simple slicing rules
+apply, i.e. one can do things like:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">subgrid</span> <span class="o">=</span> <span class="n">ls8</span><span class="p">[</span><span class="mi">2000</span><span class="p">:</span><span class="mi">3000</span><span class="p">,</span> <span class="mi">4000</span><span class="p">:</span><span class="mi">4500</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">subgrid</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mi">1000</span><span class="p">,</span> <span class="mi">500</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">every_other</span> <span class="o">=</span> <span class="n">ls8</span><span class="p">[::</span><span class="mi">2</span><span class="p">,</span> <span class="p">::</span><span class="mi">2</span><span class="p">]</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">every_other</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mi">7931</span><span class="p">,</span> <span class="mi">7801</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ls8</span><span class="o">.</span><span class="n">transform</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mf">319192.5</span><span class="p">,</span> <span class="mf">4503892.5</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Grid geolocation is based on an affine matrix transformation represented
+by the <code class="docutils literal notranslate"><span class="pre">.transform</span></code> attribute, as well as an associated coordinate
+system under the <code class="docutils literal notranslate"><span class="pre">.crs</span></code> attribute. The extent and bounding box of the
+grid can be retrieved using the respective properties:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">ls8</span><span class="o">.</span><span class="n">bbox</span><span class="p">())</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">ls8</span><span class="o">.</span><span class="n">extent</span><span class="p">())</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mf">319192.5</span><span class="p">,</span> <span class="mf">4503892.5</span><span class="p">,</span> <span class="mf">553207.5</span><span class="p">,</span> <span class="mf">4741807.5</span><span class="p">)</span>
+<span class="p">(</span><span class="mf">319200.0</span><span class="p">,</span> <span class="mf">553200.0</span><span class="p">,</span> <span class="mf">4503900.0</span><span class="p">,</span> <span class="mf">4741800.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">extent</span></code> is of the form <em>(xmin, xmax, ymin, xmax)</em>, and refers to
+grid centers. The <code class="docutils literal notranslate"><span class="pre">bbox</span></code> is of the form <em>(xmin, ymin, xmax, ymax)</em>,
+and refers to grid edges.</p>
+<p>To get swaths of grid coordinates conveniently and in arbitrary
+coordinate systems, used the <code class="docutils literal notranslate"><span class="pre">.coordinates()</span></code> method, which returns a
+<code class="docutils literal notranslate"><span class="pre">CoordinateGenerator</span></code> instance that can be indexed to generate
+coordinate pairs.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">coords</span> <span class="o">=</span> <span class="n">ls8</span><span class="o">.</span><span class="n">coordinates</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">coords</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">coords</span><span class="p">[:</span><span class="mi">5</span><span class="p">,:</span><span class="mi">5</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="o">-</span><span class="mf">71.13895087509408</span><span class="p">,</span> <span class="mf">40.66617380088692</span><span class="p">)</span>
+<span class="p">(</span><span class="o">-</span><span class="mf">71.13912389811426</span><span class="p">,</span> <span class="mf">40.66603547707743</span><span class="p">)</span>
+<span class="p">(</span><span class="n">array</span><span class="p">([[</span><span class="o">-</span><span class="mf">71.13895088</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13877354</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.1385962</span> <span class="p">,</span> <span class="o">-</span><span class="mf">71.13841886</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">71.13824152</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">71.13895519</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13877785</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13860051</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13842317</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">71.13824583</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">71.13895951</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13878217</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13860483</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13842749</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">71.13825015</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">71.13896382</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13878648</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13860914</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.1384318</span> <span class="p">,</span>
+        <span class="o">-</span><span class="mf">71.13825446</span><span class="p">],</span>
+       <span class="p">[</span><span class="o">-</span><span class="mf">71.13896814</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.1387908</span> <span class="p">,</span> <span class="o">-</span><span class="mf">71.13861346</span><span class="p">,</span> <span class="o">-</span><span class="mf">71.13843612</span><span class="p">,</span>
+        <span class="o">-</span><span class="mf">71.13825878</span><span class="p">]]),</span> <span class="n">array</span><span class="p">([[</span><span class="mf">40.6661738</span> <span class="p">,</span> <span class="mf">40.66617709</span><span class="p">,</span> <span class="mf">40.66618037</span><span class="p">,</span> <span class="mf">40.66618366</span><span class="p">,</span> <span class="mf">40.66618695</span><span class="p">],</span>
+       <span class="p">[</span><span class="mf">40.66630884</span><span class="p">,</span> <span class="mf">40.66631212</span><span class="p">,</span> <span class="mf">40.66631541</span><span class="p">,</span> <span class="mf">40.6663187</span> <span class="p">,</span> <span class="mf">40.66632198</span><span class="p">],</span>
+       <span class="p">[</span><span class="mf">40.66644388</span><span class="p">,</span> <span class="mf">40.66644716</span><span class="p">,</span> <span class="mf">40.66645045</span><span class="p">,</span> <span class="mf">40.66645373</span><span class="p">,</span> <span class="mf">40.66645702</span><span class="p">],</span>
+       <span class="p">[</span><span class="mf">40.66657891</span><span class="p">,</span> <span class="mf">40.6665822</span> <span class="p">,</span> <span class="mf">40.66658548</span><span class="p">,</span> <span class="mf">40.66658877</span><span class="p">,</span> <span class="mf">40.66659206</span><span class="p">],</span>
+       <span class="p">[</span><span class="mf">40.66671395</span><span class="p">,</span> <span class="mf">40.66671724</span><span class="p">,</span> <span class="mf">40.66672052</span><span class="p">,</span> <span class="mf">40.66672381</span><span class="p">,</span> <span class="mf">40.66672709</span><span class="p">]]))</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="grid-sampling">
+<h3>Grid sampling<a class="headerlink" href="#grid-sampling" title="Permalink to this headline">¶</a></h3>
+<p><em>Nearest-neighbour</em> and <em>bilinear</em> sampling of grid points is supported
+via the <code class="docutils literal notranslate"><span class="pre">.sample()</span></code> method. It is also possible to resample the full
+grid at a new resolution, or to sample along a profile.</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">val</span> <span class="o">=</span> <span class="n">ls8</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">Point</span><span class="p">((</span><span class="mi">500000</span><span class="p">,</span> <span class="mi">8750000</span><span class="p">),</span> <span class="n">crs</span><span class="o">=</span><span class="n">ls8</span><span class="o">.</span><span class="n">crs</span><span class="p">))</span>     <span class="c1"># sample a point using the grid CRS</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="mi">65535</span><span class="p">]</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Resample grid at 100 m postings:</span>
+<span class="n">ls8_coarse</span> <span class="o">=</span> <span class="n">ls8</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">100</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Original resolution:&quot;</span><span class="p">,</span> <span class="n">ls8</span><span class="o">.</span><span class="n">resolution</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Resampled resolution:&quot;</span><span class="p">,</span> <span class="n">ls8_coarse</span><span class="o">.</span><span class="n">resolution</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Original</span> <span class="n">resolution</span><span class="p">:</span> <span class="p">(</span><span class="mf">15.0</span><span class="p">,</span> <span class="mf">15.0</span><span class="p">)</span>
+<span class="n">Resampled</span> <span class="n">resolution</span><span class="p">:</span> <span class="p">(</span><span class="mf">100.0</span><span class="p">,</span> <span class="mf">100.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Generate a line and sample at intervals along it</span>
+<span class="n">transit</span> <span class="o">=</span> <span class="n">Line</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">350000</span><span class="p">,</span> <span class="mi">450000</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">4550000</span><span class="p">,</span> <span class="mi">4700000</span><span class="p">)),</span> <span class="n">crs</span><span class="o">=</span><span class="n">ls8</span><span class="o">.</span><span class="n">crs</span><span class="p">)</span>
+<span class="n">mp</span><span class="p">,</span> <span class="n">val</span> <span class="o">=</span> <span class="n">ls8</span><span class="o">.</span><span class="n">profile</span><span class="p">(</span><span class="n">transit</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">mp</span><span class="o">.</span><span class="n">coords</span><span class="p">()</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">val</span><span class="o">.</span><span class="n">flatten</span><span class="p">(),</span> <span class="n">edgecolor</span><span class="o">=</span><span class="s2">&quot;none&quot;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">binary</span><span class="p">)</span>
+
+<span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">dist</span> <span class="o">=</span> <span class="n">Line</span><span class="p">(</span><span class="n">mp</span><span class="p">)</span><span class="o">.</span><span class="n">cumulength</span><span class="p">()</span>    <span class="c1"># convert sample points to a line and extract</span>
+                                <span class="c1"># the cumulative distance along it</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">dist</span><span class="p">,</span> <span class="n">val</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">lines</span><span class="o">.</span><span class="n">Line2D</span> <span class="n">at</span> <span class="mh">0x7fe2db936588</span><span class="o">&gt;</span><span class="p">]</span>
+</pre></div>
+</div>
+<img alt="_images/output_65_1.png" src="_images/output_65_1.png" />
+</div>
+<div class="section" id="grid-resizing">
+<h3>Grid resizing<a class="headerlink" href="#grid-resizing" title="Permalink to this headline">¶</a></h3>
+<p>Grids can be trimmed or expanded using the <code class="docutils literal notranslate"><span class="pre">.resize()</span></code> method, which
+takes a new bounding box as an argument.</p>
+<p><strong>Note</strong></p>
+<p>When getting raster data, the array provided by slicing is not
+necessarily a view of the underlying data, and may be a copy instead.
+Modifying the array is not guaranteed to modify the raster. When the
+raster data must be replaced by an element-wise computation, use the
+<code class="docutils literal notranslate"><span class="pre">Grid.apply(func)</span></code> method, which operates in-place. The <code class="docutils literal notranslate"><span class="pre">apply</span></code>
+method may be chained.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example</span>
+<span class="n">grid</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span> \
+    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">)</span> \
+    <span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">grid</span><span class="o">.</span><span class="n">nodata</span><span class="p">,</span> <span class="n">x</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>This handles nodata pixels automatically. If the raster data must be
+replaced by arbitrary data, set it explicitly with <code class="docutils literal notranslate"><span class="pre">Grid[:,:]</span> <span class="pre">=</span> <span class="pre">...</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Example</span>
+<span class="n">grid</span><span class="p">[:,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">convolve</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">([</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">])</span><span class="o">/</span><span class="mf">9.0</span><span class="p">,</span> <span class="n">grid</span><span class="p">[:,:],</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;same&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">ls8_small</span> <span class="o">=</span> <span class="n">ls8</span><span class="o">.</span><span class="n">resize</span><span class="p">((</span><span class="mi">350000</span><span class="p">,</span> <span class="mi">4600000</span><span class="p">,</span> <span class="mi">450000</span><span class="p">,</span> <span class="mi">4650000</span><span class="p">))</span>
+<span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">ls8_small</span><span class="p">[:,:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">origin</span><span class="o">=</span><span class="s2">&quot;bottom&quot;</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="n">ls8_small</span><span class="o">.</span><span class="n">extent</span><span class="p">(),</span> <span class="n">cmap</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">binary</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="mf">3e3</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">12e3</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">&lt;</span><span class="n">matplotlib</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">AxesImage</span> <span class="n">at</span> <span class="mh">0x7fe2db8aada0</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<img alt="_images/output_68_1.png" src="_images/output_68_1.png" />
+</div>
+<div class="section" id="creating-regulargrid-instances">
+<h3>Creating <code class="docutils literal notranslate"><span class="pre">RegularGrid</span></code> instances<a class="headerlink" href="#creating-regulargrid-instances" title="Permalink to this headline">¶</a></h3>
+<p>New <code class="docutils literal notranslate"><span class="pre">RegularGrid</span></code> instances are created by specifying a geotransform.
+The geotransform is represented by a tuple of the form</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">transform</span> <span class="o">=</span> <span class="p">(</span><span class="n">xll</span><span class="p">,</span> <span class="n">yll</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dy</span><span class="p">,</span> <span class="n">sx</span><span class="p">,</span> <span class="n">sy</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>where <code class="docutils literal notranslate"><span class="pre">xll</span></code> and <code class="docutils literal notranslate"><span class="pre">yll</span></code> are the coordinates of the lower left grid
+corner, <code class="docutils literal notranslate"><span class="pre">dx</span></code> and <code class="docutils literal notranslate"><span class="pre">dy</span></code> specify resolution, and <code class="docutils literal notranslate"><span class="pre">sx</span></code> and <code class="docutils literal notranslate"><span class="pre">sy</span></code>
+specify grid skew and rotation.</p>
+<p>The following creates an empty global grid with 5 degree resolution,
+oriented “north-up” and “east-right”, and then plots the pixel centers:</p>
+<div class="code ipython3 highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">karta.crs</span> <span class="k">import</span> <span class="n">LonLatWGS84</span><span class="p">,</span> <span class="n">GallPetersEqualArea</span>
+<span class="n">newgrid</span> <span class="o">=</span> <span class="n">RegularGrid</span><span class="p">((</span><span class="o">-</span><span class="mi">180</span><span class="p">,</span> <span class="o">-</span><span class="mi">80</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">values</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">160</span><span class="o">//</span><span class="mi">5</span><span class="p">,</span> <span class="mi">360</span><span class="o">//</span><span class="mi">5</span><span class="p">)),</span> <span class="n">crs</span><span class="o">=</span><span class="n">LonLatWGS84</span><span class="p">)</span>
+
+<span class="c1"># visualize the coordinate positions on a Gall-Peters projection</span>
+<span class="n">coords</span> <span class="o">=</span> <span class="n">newgrid</span><span class="o">.</span><span class="n">coordinates</span><span class="p">(</span><span class="n">crs</span><span class="o">=</span><span class="n">GallPetersEqualArea</span><span class="p">)</span>
+<span class="n">x</span><span class="p">,</span> <span class="n">y</span> <span class="o">=</span> <span class="n">coords</span><span class="p">[:,:]</span>
+<span class="n">_</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="s2">&quot;.k&quot;</span><span class="p">,</span> <span class="n">ms</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="_images/output_71_0.png" src="_images/output_71_0.png" />
+</div>
+</div>
+<div class="section" id="coordinate-reference-systems">
+<h2>Coordinate reference systems<a class="headerlink" href="#coordinate-reference-systems" title="Permalink to this headline">¶</a></h2>
+<p>TODO</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="crs.html" class="btn btn-neutral float-right" title="Coordinate reference systems" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="installation.html" class="btn btn-neutral" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2016, Nat Wilson
+      Last updated on Jan 13, 2019.
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  
+
+    
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+        <script type="text/javascript" src="_static/jquery.js"></script>
+        <script type="text/javascript" src="_static/underscore.js"></script>
+        <script type="text/javascript" src="_static/doctools.js"></script>
+        <script type="text/javascript" src="_static/language_data.js"></script>
+    
+
+  
+
+  <script type="text/javascript" src="_static/js/theme.js"></script>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
