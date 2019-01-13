@@ -1,8 +1,4 @@
 
-`Back to manual <../karta-manual.html>`__
-
-`Back to introduction <../introduction.html>`__
-
 Karta tutorial
 ==============
 
@@ -94,7 +90,7 @@ metadata.
 
 .. parsed-literal::
 
-    <karta.vector.geometry.Multipoint object at 0x7fe2e041e2e8>
+    <karta.vector.geometry.Multipoint object at 0x7f24e2880470>
     D[color, value]
 
 
@@ -112,7 +108,7 @@ metadata.
 
 .. parsed-literal::
 
-    <karta.vector.geometry.Line object at 0x7fe2e041e0f0>
+    <karta.vector.geometry.Line object at 0x7f24e2880278>
 
 
 .. code:: ipython3
@@ -126,7 +122,7 @@ metadata.
 
 .. parsed-literal::
 
-    <karta.vector.geometry.Polygon object at 0x7fe324633be0>
+    <karta.vector.geometry.Polygon object at 0x7f2510a1ba20>
 
 
 Each geometrical object now contains a vertex/vertices in a cartesian
@@ -212,7 +208,7 @@ iterated through:
 
 .. parsed-literal::
 
-    <karta.vector.geometry.Line object at 0x7fe2e0419da0>
+    <karta.vector.geometry.Line object at 0x7f24e28a60b8>
     Point(-124.39442, 49.31833)
     Point(-124.40311, 49.31942)
     Point(-124.41052, 49.32203)
@@ -227,7 +223,7 @@ A slice that takes part of a polygon returns a line.
 
 .. parsed-literal::
 
-    <karta.vector.geometry.Line object at 0x7fe2e0419ac8>
+    <karta.vector.geometry.Line object at 0x7f24e28a60f0>
 
 
 Points have a ``distance()`` method that calculates the distance to
@@ -490,12 +486,12 @@ submodule, not described here.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7fe2dbc026a0>]
+    [<matplotlib.lines.Line2D at 0x7f24ca003128>]
 
 
 
 
-.. image:: output_43_1.png
+.. image:: output_42_1.png
 
 
 Data can be read from and written to several common formats, including
@@ -547,7 +543,7 @@ To provide flexibility, different band classes are provided by
 
 .. parsed-literal::
 
-    [<karta.raster.band.CompressedBand object at 0x7fe2dbbcd400>]
+    [<karta.raster.band.CompressedBand object at 0x7f24c9fe19b0>]
 
 
 .. code:: ipython3
@@ -583,12 +579,12 @@ To provide flexibility, different band classes are provided by
 
 .. parsed-literal::
 
-    <matplotlib.colorbar.Colorbar at 0x7fe2dbb6a198>
+    <matplotlib.colorbar.Colorbar at 0x7f24c9ee7828>
 
 
 
 
-.. image:: output_50_1.png
+.. image:: output_49_1.png
 
 
 When opening or creating a ``RegularGrid``, a non-default band type can
@@ -755,12 +751,12 @@ grid at a new resolution, or to sample along a profile.
 
 .. parsed-literal::
 
-    [<matplotlib.lines.Line2D at 0x7fe2db936588>]
+    [<matplotlib.lines.Line2D at 0x7f24c9db9fd0>]
 
 
 
 
-.. image:: output_65_1.png
+.. image:: output_64_1.png
 
 
 Grid resizing
@@ -803,12 +799,12 @@ replaced by arbitrary data, set it explicitly with ``Grid[:,:] = ...``.
 
 .. parsed-literal::
 
-    <matplotlib.image.AxesImage at 0x7fe2db8aada0>
+    <matplotlib.image.AxesImage at 0x7f24c9cf4be0>
 
 
 
 
-.. image:: output_68_1.png
+.. image:: output_67_1.png
 
 
 Creating ``RegularGrid`` instances
@@ -840,10 +836,5 @@ oriented "north-up" and "east-right", and then plots the pixel centers:
 
 
 
-.. image:: output_71_0.png
+.. image:: output_70_0.png
 
-
-Coordinate reference systems
-----------------------------
-
-TODO
