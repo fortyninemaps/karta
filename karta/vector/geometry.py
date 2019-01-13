@@ -1838,6 +1838,6 @@ def affine_matrix(mpa, mpb):
     A = np.empty([2*len(mpa), 6], dtype=np.float64)
     for i, (x, y) in enumerate(mpa.get_vertices()):
         A[2*i:2*i+2,:] = np.kron(np.eye(2), [x, y, 1])
-    M, res, rank, singvals = np.linalg.lstsq(A, vecp)
+    M, res, rank, singvals = np.linalg.lstsq(A, vecp, rcond=None)
     return np.reshape(M, [2, 3])
 
