@@ -286,8 +286,8 @@ class CompressedBand(object):
         return
 
     def _retrieve(self, index):
-        bytestr = blosc.decompress(self._data[index])
-        return np.fromstring(bytestr, dtype=self.dtype).reshape(self._chunksize)
+        bytestr = blosc.decompress(self._data[index], as_bytearray=True)
+        return np.frombuffer(bytestr, dtype=self.dtype).reshape(self._chunksize)
 
     def _getchunks(self, yoff, xoff, ny, nx):
         """ Return a generator returning tuples identifying chunks covered by a
