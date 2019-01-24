@@ -81,7 +81,7 @@ setup(
                         "gdal>=1.10",
                         "blosc>=1.2.8",
                         "coordstring>=0.1.2",
-                        "picogeojson>=0.6.1"],
+                        "picogeojson==0.6.3"],
     author = "Nat Wilson",
     author_email = "natw@fortyninemaps.com",
     packages = ["karta", "karta.vector", "karta.raster"],
