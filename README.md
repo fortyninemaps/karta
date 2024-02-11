@@ -116,9 +116,9 @@ Clone the repository and build.
 
 ## Documentation
 
-See the [online manual](http://karta.fortyninemaps.com/kartadocs/karta-manual.html),
-the [tutorial](http://karta.fortyninemaps.com/kartadocs/_static/tutorial.html), or read the
-[API documentation](http://karta.fortyninemaps.com/kartadocs/reference.html).
+See the [online manual](https://karta.49fold.com/kartadocs/karta-manual.html),
+the [tutorial](https://karta.49fold.com/kartadocs/_static/tutorial.html), or read the
+[API documentation](https://karta.49fold.com/kartadocs/reference.html).
 
 ## Contributing
 

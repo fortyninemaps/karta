@@ -85,7 +85,7 @@ setup(
     author = "Nat Wilson",
     author_email = "natw@fortyninemaps.com",
     packages = ["karta", "karta.vector", "karta.raster"],
-    url = "http://www.fortyninemaps.com/karta.html",
+    url = "https://karta.49fold.com",
     description = "Geospatial analysis in Python",
     long_description = """
 |Build Status| |Build status| |Coverage Status|
@@ -231,11 +231,11 @@ Documentation
 -------------
 
 See the `online
-manual <http://www.fortyninemaps.com/kartadocs/introduction.html>`__,
+manual <https://karta.49fold.com/kartadocs/introduction.html>`__,
 the
-`tutorial <http://www.fortyninemaps.com/kartadocs/_static/tutorial.html>`__,
+`tutorial <https://karta.49fold.com/kartadocs/_static/tutorial.html>`__,
 or read the `API
-documentation <http://www.fortyninemaps.com/kartadocs/reference.html>`__.
+documentation <https://karta.49fold.com/kartadocs/reference.html>`__.
 
 Contributing
 ------------
